@@ -72,7 +72,8 @@ function makeDrone(): Drone {
 
 const CONTROLS_H = 68; // px reserved below canvas for mobile buttons
 
-// Remove white/near-white background from a sprite sheet that was exported without transparency
+// Remove white/near-white background from a sprite sheet exported without transparency.
+// Uses perceptual brightness so anti-aliased edges fade out smoothly instead of leaving a white fringe.
 function stripWhiteBackground(src: HTMLImageElement): HTMLImageElement {
   const canvas = document.createElement('canvas');
   canvas.width = src.naturalWidth;
@@ -83,12 +84,17 @@ function stripWhiteBackground(src: HTMLImageElement): HTMLImageElement {
   const px = imageData.data;
   for (let i = 0; i < px.length; i += 4) {
     const r = px[i], g = px[i + 1], b = px[i + 2];
-    if (r > 220 && g > 220 && b > 220) {
-      px[i + 3] = 0;
+    // Perceptual brightness (0-255)
+    const brightness = r * 0.299 + g * 0.587 + b * 0.114;
+    if (brightness > 180) {
+      // Fully transparent above 230, linearly fading from 180→230
+      const t = Math.min(1, (brightness - 180) / 50);
+      px[i + 3] = Math.round((1 - t) * px[i + 3]);
     }
   }
   ctx.putImageData(imageData, 0, 0);
   const out = new Image();
+  // data URLs decode synchronously; but guard with onload for safety
   out.src = canvas.toDataURL('image/png');
   return out;
 }
