@@ -274,10 +274,11 @@ export function updatePlayer(
     p.isClimbing = false;
   }
 
-  // Wall run trigger — Horácio bate na parede em velocidade no ar
+  // Wall run trigger — só ativa se Horácio encostar na parede durante a subida do pulo
   if (
     !p.isWallRunning &&
     !p.isClimbing &&
+    !p.onGround &&
     p.touchingWall &&
     !p.isRolling &&
     !p.isDivejumping &&
@@ -285,7 +286,7 @@ export function updatePlayer(
     Math.abs(incomingVx) > 3 &&
     ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
       (p.wallSide === 'left' && (keys.left || incomingVx < 0))) &&
-    p.vy > -4        // não acionar se subindo muito rápido (ex: logo após um pulo)
+    p.vy < -2.5
   ) {
     p.isWallRunning = true;
     p.onGround = false;
