@@ -524,12 +524,6 @@ export function drawStartingBackWall(ctx: CanvasRenderingContext2D, camX: number
     ctx.stroke();
   }
 
-  for (let x = wallX + 86; x < wallX + wallW - 80; x += 184) {
-    if (x + 72 < -60 || x > CANVAS_W + 60) continue;
-    ctx.fillStyle = 'rgba(8,7,7,0.62)';
-    ctx.fillRect(x, wallY + 48, 72, 92);
-  }
-
   const gateX = wallX + 62;
   ctx.fillStyle = 'rgba(10,8,8,0.88)';
   ctx.fillRect(gateX, wallY + 32, 120, wallH - 32);
