@@ -70,9 +70,12 @@ export function updatePlayer(
   spawnParticle: (x: number, y: number, color: string) => void
 ): void {
   const prevOnGround = p.onGround;
+  const previousWallSide = p.wallSide;
+  const previousWallX = p.wallX;
   p.onGround = false;
   p.touchingWall = false;
   p.wallSide = null;
+  p.wallX = previousWallX;
   p.isCrouching = false;
 
   if (p.state === 'dead') return;
@@ -153,8 +156,10 @@ export function updatePlayer(
       // Timer esgotou ou tocou no chão — sai do wall run
       p.isWallRunning = false;
     } else {
+      const wallSide = p.wallSide ?? previousWallSide;
       // Sobe pela parede enquanto o timer durar
-      p.vx = 0;
+      p.wallSide = wallSide;
+      p.vx = wallSide === 'right' ? 1.2 : wallSide === 'left' ? -1.2 : 0;
       p.vy = -WALLRUN_RISE_SPEED;
       // Partículas de faísca enquanto sobe
       if (Math.random() < 0.4) {
@@ -273,15 +278,19 @@ export function updatePlayer(
   if (
     !p.isWallRunning &&
     !p.isClimbing &&
-    !p.onGround &&
     p.touchingWall &&
     !p.isRolling &&
     !p.isDivejumping &&
     p.state !== 'hurt' &&
     Math.abs(incomingVx) > 3 &&
+    ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
+      (p.wallSide === 'left' && (keys.left || incomingVx < 0))) &&
     p.vy > -4        // não acionar se subindo muito rápido (ex: logo após um pulo)
   ) {
     p.isWallRunning = true;
+    p.onGround = false;
+    p.coyoteTime = 0;
+    p.vy = -WALLRUN_RISE_SPEED;
     p.wallRunTimer = WALLRUN_DURATION;
     for (let i = 0; i < 8; i++) {
       spawnParticle(
