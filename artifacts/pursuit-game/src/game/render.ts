@@ -18,7 +18,7 @@ const SPRITE_REGIONS = {
 // appear roughly the same perceived size as the idle sprite
 const SPRITE_DISPLAY_H = 131;   // idle reference height
 const RUN_DISPLAY_H    = 160;   // run sheet
-const JUMP_DISPLAY_H   = 74;    // jump/fall sprite display height (reduced to match other sprites)
+const JUMP_DISPLAY_H   = 125;   // jump/fall sprite display height
 
 const SPRITE_DISPLAY_W: Record<string, number> = {
   idle: Math.round(SPRITE_DISPLAY_H * (272 / 720)),
@@ -1224,6 +1224,18 @@ export function drawHUD(
   ctx.font = 'bold 13px monospace';
   ctx.fillText(`DIST: ${score}m`, 20, 52);
 
+  // Distance progress bar
+  ctx.fillStyle = 'rgba(40,35,60,0.8)';
+  ctx.fillRect(CANVAS_W - 210, 10, 200, 20);
+  ctx.fillStyle = 'rgba(0,180,255,0.5)';
+  const progress = Math.min(p.distanceTraveled / 100000, 1);
+  ctx.fillRect(CANVAS_W - 210, 10, 200 * progress, 20);
+  ctx.strokeStyle = 'rgba(0,200,255,0.4)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(CANVAS_W - 210, 10, 200, 20);
+  ctx.fillStyle = COLORS.uiText;
+  ctx.font = '10px monospace';
+  ctx.fillText('RUN', CANVAS_W - 207, 24);
 
   // Time
   const secs = Math.floor(gs.time / 1000);

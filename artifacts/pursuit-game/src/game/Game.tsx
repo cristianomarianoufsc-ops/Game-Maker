@@ -84,11 +84,15 @@ function stripWhiteBackground(src: HTMLImageElement): HTMLImageElement {
   const px = imageData.data;
   for (let i = 0; i < px.length; i += 4) {
     const r = px[i], g = px[i + 1], b = px[i + 2];
-    // Perceptual brightness (0-255)
     const brightness = r * 0.299 + g * 0.587 + b * 0.114;
-    if (brightness > 180) {
-      // Fully transparent above 230, linearly fading from 180→230
-      const t = Math.min(1, (brightness - 180) / 50);
+    // Saturation: 0 = grey/white, 1 = fully saturated color
+    const maxC = Math.max(r, g, b);
+    const minC = Math.min(r, g, b);
+    const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
+    // Target pixels that are bright AND low-saturation (i.e. white/near-white, not colored pixels)
+    if (brightness > 140 && saturation < 0.18) {
+      // Smooth fade: fully opaque at brightness 140 → fully transparent at 220
+      const t = Math.min(1, (brightness - 140) / 80);
       px[i + 3] = Math.round((1 - t) * px[i + 3]);
     }
   }
@@ -377,6 +381,7 @@ export default function Game() {
           height: cssH,
           imageRendering: 'pixelated',
           border: '1px solid rgba(80,50,40,0.5)',
+          outline: 'none',
           boxShadow: '0 0 60px rgba(0,0,0,0.95), 0 0 20px rgba(120,20,10,0.25)',
           flexShrink: 0,
         }}
