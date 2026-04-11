@@ -733,10 +733,11 @@ const SPRITE_NATURAL_FACING_LEFT: Partial<Record<keyof typeof SPRITE_REGIONS, bo
   jump: true, // sprite in image is facing left — flip when facingRight
 };
 
-// Jump animation sheet: 851×300px, 4 frames side by side
+// Jump animation sheet: 851×300px, 3 frames side by side
+// Frame 0: launching (going up), Frame 1: mid-air (peak), Frame 2: falling (going down)
 const JUMP_SHEET = {
-  frameCount: 4,
-  frameW: Math.round(851 / 4),  // ~213px per frame
+  frameCount: 3,
+  frameW: Math.round(851 / 3),  // ~284px per frame
   frameH: 300,
   displayH: JUMP_DISPLAY_H,
   get displayW() { return Math.round(this.displayH * (this.frameW / this.frameH)); },
@@ -925,7 +926,9 @@ export function drawPlayer(
         destX, destY, dw, dh,
       );
     } else if (isJumpAnim) {
-      const frame = Math.floor(Date.now() / 120) % JUMP_SHEET.frameCount;
+      // Pick frame based on vertical velocity:
+      // frame 0 = launching (vy < -3), frame 1 = peak (|vy| <= 3), frame 2 = falling (vy > 3)
+      const frame = p.vy < -3 ? 0 : p.vy > 3 ? 2 : 1;
       ctx.drawImage(
         jumpSheetImg!,
         frame * JUMP_SHEET.frameW, 0, JUMP_SHEET.frameW, JUMP_SHEET.frameH,

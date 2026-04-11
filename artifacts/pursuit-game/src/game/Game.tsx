@@ -72,6 +72,27 @@ function makeDrone(): Drone {
 
 const CONTROLS_H = 68; // px reserved below canvas for mobile buttons
 
+// Remove white/near-white background from a sprite sheet that was exported without transparency
+function stripWhiteBackground(src: HTMLImageElement): HTMLImageElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = src.naturalWidth;
+  canvas.height = src.naturalHeight;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(src, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const px = imageData.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const r = px[i], g = px[i + 1], b = px[i + 2];
+    if (r > 220 && g > 220 && b > 220) {
+      px[i + 3] = 0;
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+  const out = new Image();
+  out.src = canvas.toDataURL('image/png');
+  return out;
+}
+
 function getScale() {
   const scaleX = window.innerWidth / CANVAS_W;
   const scaleY = (window.innerHeight - CONTROLS_H) / CANVAS_H;
@@ -143,8 +164,10 @@ export default function Game() {
     rollSheetImgRef.current = rollImg;
 
     const jumpImg = new Image();
+    jumpImg.onload = () => {
+      jumpSheetImgRef.current = stripWhiteBackground(jumpImg);
+    };
     jumpImg.src = jumpSheetUrl;
-    jumpSheetImgRef.current = jumpImg;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       const k = keysRef.current;
