@@ -5,6 +5,7 @@ import {
   DRONE_BASE_SPEED, DRONE_TARGET_OFFSET_X, DRONE_TARGET_OFFSET_Y,
   BULLET_SPEED, SHOOT_COOLDOWN, GROUND_Y, HIT_INVINCIBILITY, CANVAS_H, CANVAS_W,
   LANDING_ROLL_THRESHOLD, LANDING_ROLL_DURATION, HIT_STUN_DURATION,
+  DIVEJUMP_SPEED, DIVEJUMP_JUMP_FORCE,
 } from './constants';
 
 function rectOverlap(ax: number, ay: number, aw: number, ah: number,
@@ -91,6 +92,7 @@ export function updatePlayer(
       p.hurtStunTimer = 0;
       p.state = p.onGround ? 'idle' : 'fall';
     }
+    p.isDivejumping = false;
   }
 
   // Roll timer
@@ -144,7 +146,10 @@ export function updatePlayer(
     }
   } else if (p.state !== 'hurt') {
     // Horizontal movement
-    if (!p.isRolling) {
+    if (p.isDivejumping) {
+      // During dive jump: maintain boosted speed with minimal deceleration
+      p.vx *= 0.995;
+    } else if (!p.isRolling) {
       if (keys.left) {
         p.vx = -PLAYER_SPEED;
         p.facingRight = false;
@@ -166,8 +171,20 @@ export function updatePlayer(
       p.vx = p.facingRight ? ROLL_SPEED : -ROLL_SPEED;
     }
 
-    // Jump
-    if ((keys.space || (keys.up && !p.touchingWall)) && (p.onGround || p.coyoteTime > 0)) {
+    // Dive jump: running + down + space/jump simultaneously
+    const diveTriggered = (keys.dive || (keys.down && (keys.space || keys.up)));
+    if (diveTriggered && !p.touchingWall && (p.coyoteTime > 0) && !p.isRolling && !p.isDivejumping && Math.abs(p.vx) > 3) {
+      p.isDivejumping = true;
+      p.vy = DIVEJUMP_JUMP_FORCE;
+      p.vx = p.facingRight ? DIVEJUMP_SPEED : -DIVEJUMP_SPEED;
+      p.onGround = false;
+      p.coyoteTime = 0;
+      p.landingCrouch = false;
+      for (let i = 0; i < 10; i++) {
+        spawnParticle(p.x + p.w / 2, p.y + ph, i % 2 === 0 ? '#808090' : '#555060');
+      }
+    // Normal jump
+    } else if ((keys.space || (keys.up && !p.touchingWall)) && (p.coyoteTime > 0)) {
       p.vy = JUMP_FORCE;
       p.onGround = false;
       p.coyoteTime = 0;
@@ -244,6 +261,8 @@ export function updatePlayer(
       p.state = 'roll';
     } else if (p.isClimbing) {
       p.state = 'climb';
+    } else if (p.isDivejumping) {
+      p.state = 'divejump';
     } else if (!p.onGround) {
       p.state = p.vy < 0 ? 'jump' : 'fall';
     } else if (p.isCrouching) {
@@ -276,7 +295,18 @@ export function updatePlayer(
     const landingGroundY = p.y + PLAYER_H;
     const droppedDown = landingGroundY > p.jumpOriginGroundY + 10;
 
-    if (fallVy >= LANDING_ROLL_THRESHOLD && droppedDown && Math.abs(p.vx) >= 3 && !p.isRolling && p.state !== 'hurt') {
+    if (p.isDivejumping && !p.isRolling && p.state !== 'hurt') {
+      // Dive jump always lands in a roll
+      p.isDivejumping = false;
+      p.isRolling = true;
+      p.autoRoll = true;
+      p.rollTimer = LANDING_ROLL_DURATION;
+      p.landingRollFrame = 0;
+      p.state = 'roll';
+      for (let i = 0; i < 14; i++) {
+        spawnParticle(p.x + p.w / 2, p.y + PLAYER_ROLL_H, i % 2 === 0 ? '#808090' : '#555060');
+      }
+    } else if (fallVy >= LANDING_ROLL_THRESHOLD && droppedDown && Math.abs(p.vx) >= 3 && !p.isRolling && p.state !== 'hurt') {
       // Fell to a lower surface with horizontal momentum — full auto-roll
       p.isRolling = true;
       p.autoRoll = true;

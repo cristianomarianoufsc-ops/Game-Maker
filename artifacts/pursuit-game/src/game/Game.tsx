@@ -5,6 +5,7 @@ import runSheetUrl from '/run_sheet_transparent.png';
 import idleUrl from '/idle_transparent.png';
 import rollSheetUrl from '/roll_sheet.png';
 import jumpSheetUrl from '/jump_sheet.png';
+import diveJumpSheetUrl from '/dive_jump_sheet.png';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, PLAYER_W, PLAYER_H, DRONE_W, DRONE_H,
   PLAYER_MAX_HEALTH, SHOOT_COOLDOWN, CAMERA_LEAD_X, COLORS,
@@ -52,6 +53,7 @@ function makePlayer(): Player {
     landingCrouch: false,
     landingCrouchTimer: 0,
     isCrouching: false,
+    isDivejumping: false,
   };
 }
 
@@ -113,7 +115,7 @@ function getScale() {
 export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gsRef = useRef<GameState | null>(null);
-  const keysRef = useRef<Keys>({ left: false, right: false, up: false, down: false, space: false, shift: false, z: false });
+  const keysRef = useRef<Keys>({ left: false, right: false, up: false, down: false, space: false, shift: false, z: false, dive: false });
   const spaceJustPressed = useRef(false);
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
@@ -125,6 +127,7 @@ export default function Game() {
   const idleImgRef = useRef<HTMLImageElement | null>(null);
   const rollSheetImgRef = useRef<HTMLImageElement | null>(null);
   const jumpSheetImgRef = useRef<HTMLImageElement | null>(null);
+  const diveSheetImgRef = useRef<HTMLImageElement | null>(null);
 
   // Responsive scale: fit canvas inside available viewport
   const [scale, setScale] = useState(getScale);
@@ -179,6 +182,12 @@ export default function Game() {
       jumpSheetImgRef.current = stripWhiteBackground(jumpImg);
     };
     jumpImg.src = jumpSheetUrl;
+
+    const diveImg = new Image();
+    diveImg.onload = () => {
+      diveSheetImgRef.current = stripWhiteBackground(diveImg);
+    };
+    diveImg.src = diveJumpSheetUrl;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       const k = keysRef.current;
@@ -330,7 +339,7 @@ export default function Game() {
 
       drawPlatforms(ctx, gs.platforms, gs.camera.x);
       drawParticles(ctx, gs);
-      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current);
+      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current);
       drawDrone(ctx, gs);
       drawBullets(ctx, gs);
 
@@ -475,6 +484,12 @@ function MobileControls({
           onPointerUp={release('shift')}
           onPointerLeave={release('shift')}
         >ROLAR</button>
+        <button
+          style={btnStyle('rgba(40,60,20,0.92)')}
+          onPointerDown={press('dive')}
+          onPointerUp={release('dive')}
+          onPointerLeave={release('dive')}
+        >MERGULHO</button>
         <button
           style={btnStyle('rgba(25,45,90,0.92)')}
           onPointerDown={press('space')}

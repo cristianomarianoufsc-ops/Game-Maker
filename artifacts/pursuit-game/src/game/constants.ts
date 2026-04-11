@@ -11,6 +11,12 @@ export const LANDING_ROLL_DURATION = 300;
 export const CLIMB_SPEED = 3.2;
 export const MAX_FALL_SPEED = 18;
 
+export const DIVEJUMP_SPEED = 14;
+export const DIVEJUMP_JUMP_FORCE = -9.5;
+export const DIVE_FRAME_W = 284;
+export const DIVE_FRAME_H = 300;
+export const DIVE_DISPLAY_H = 100;
+
 export const DRONE_BASE_SPEED = 5.5;
 export const DRONE_TARGET_OFFSET_X = -140; // drone stays close behind player
 export const DRONE_TARGET_OFFSET_Y = -80; // above player

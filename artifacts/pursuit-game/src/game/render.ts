@@ -4,6 +4,7 @@ import {
   CANVAS_W, CANVAS_H, GROUND_Y, COLORS,
   PARALLAX_FAR, PARALLAX_MID, PARALLAX_NEAR,
   PLAYER_W, PLAYER_H, PLAYER_ROLL_H, DRONE_W, DRONE_H,
+  DIVE_FRAME_W, DIVE_FRAME_H, DIVE_DISPLAY_H,
 } from './constants';
 
 // Sprite sheet regions in the 1024x1024 source image
@@ -755,6 +756,15 @@ const ROLL_SHEET = {
   get displayW() { return Math.round(this.displayH * (this.frameW / this.frameH)); },
 };
 
+const DIVE_SHEET = {
+  frameCount: 3,
+  frameW: DIVE_FRAME_W,
+  frameH: DIVE_FRAME_H,
+  displayH: DIVE_DISPLAY_H,
+  get displayW() { return Math.round(this.displayH * (this.frameW / this.frameH)); },
+  frameSrcX: [0, DIVE_FRAME_W, DIVE_FRAME_W * 2] as const,
+};
+
 export function drawPlayer(
   ctx: CanvasRenderingContext2D,
   gs: GameState,
@@ -763,6 +773,7 @@ export function drawPlayer(
   idleImg: HTMLImageElement | null,
   rollSheetImg: HTMLImageElement | null = null,
   jumpSheetImg: HTMLImageElement | null = null,
+  diveSheetImg: HTMLImageElement | null = null,
 ): void {
   const p = gs.player;
   const px = p.x - gs.camera.x;
@@ -771,6 +782,51 @@ export function drawPlayer(
 
   // Blink when invincible
   if (p.invincible && Math.floor(gs.time / 80) % 2 === 0) return;
+
+  // Dive jump animation
+  if (p.state === 'divejump' && diveSheetImg && diveSheetImg.complete && diveSheetImg.naturalWidth > 0) {
+    // Frame selection based on vertical velocity
+    let frame = 0;
+    if (p.vy < -4) {
+      frame = 0; // launching up
+    } else if (p.vy <= 2) {
+      frame = 1; // near apex, flat horizontal
+    } else {
+      frame = 2; // diving down
+    }
+    const dh = DIVE_SHEET.displayH;
+    const dw = DIVE_SHEET.displayW;
+    const anchorX = px + p.w / 2;
+    const anchorY = py + PLAYER_H / 2;
+    const destX = anchorX - dw / 2;
+    const destY = anchorY - dh / 2;
+
+    ctx.save();
+    // Flip for left-facing (sprite faces right naturally)
+    if (!p.facingRight) {
+      ctx.translate(anchorX, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-anchorX, 0);
+    }
+    ctx.drawImage(
+      diveSheetImg,
+      DIVE_SHEET.frameSrcX[frame], 0, DIVE_SHEET.frameW, DIVE_SHEET.frameH,
+      destX, destY, dw, dh,
+    );
+    ctx.restore();
+
+    // Speed trail lines
+    ctx.strokeStyle = 'rgba(200,200,255,0.18)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 5; i++) {
+      const lx = px + (p.facingRight ? -8 - i * 10 : p.w + 8 + i * 10);
+      ctx.beginPath();
+      ctx.moveTo(lx, py + PLAYER_H / 2 - 4 + i * 3);
+      ctx.lineTo(lx + (p.facingRight ? 6 : -6), py + PLAYER_H / 2 - 4 + i * 3);
+      ctx.stroke();
+    }
+    return;
+  }
 
   // Same-level landing/manual crouch — frame 0 of roll sheet, no roll
   if (!p.autoRoll && (p.landingCrouch || p.isCrouching) && rollSheetImg && rollSheetImg.complete && rollSheetImg.naturalWidth > 0) {
@@ -1262,14 +1318,14 @@ export function drawHUD(
 
 export function drawControls(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = 'rgba(14,12,24,0.7)';
-  ctx.fillRect(10, CANVAS_H - 70, 240, 60);
+  ctx.fillRect(10, CANVAS_H - 70, 340, 60);
   ctx.strokeStyle = 'rgba(80,75,100,0.5)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(10, CANVAS_H - 70, 240, 60);
+  ctx.strokeRect(10, CANVAS_H - 70, 340, 60);
   ctx.fillStyle = COLORS.uiText;
   ctx.font = '10px monospace';
-  ctx.fillText('←→ CORRER  |  SPACE/↑ PULAR', 18, CANVAS_H - 52);
-  ctx.fillText('↑ + PAREDE ESCALAR  |  SHIFT/Z ROLAR', 18, CANVAS_H - 37);
+  ctx.fillText('←→ CORRER  |  SPACE/↑ PULAR  |  ↑+PAREDE ESCALAR', 18, CANVAS_H - 52);
+  ctx.fillText('SHIFT/Z ROLAR  |  ↓+SPACE (correndo) MERGULHO', 18, CANVAS_H - 37);
   ctx.fillStyle = 'rgba(150,140,180,0.6)';
   ctx.fillText('[controles]', 18, CANVAS_H - 22);
 }
@@ -1337,8 +1393,8 @@ export function drawMenuScreen(ctx: CanvasRenderingContext2D): void {
 
   ctx.fillStyle = 'rgba(160,155,180,0.7)';
   ctx.font = '11px monospace';
-  ctx.fillText('← → CORRER  |  ESPAÇO / ↑ PULAR', CANVAS_W / 2, CANVAS_H / 2 + 28);
-  ctx.fillText('↑ NUMA PAREDE  ESCALAR  |  SHIFT/Z  ROLAR', CANVAS_W / 2, CANVAS_H / 2 + 45);
+  ctx.fillText('← → CORRER  |  ESPAÇO / ↑ PULAR  |  ↑ PAREDE ESCALAR', CANVAS_W / 2, CANVAS_H / 2 + 28);
+  ctx.fillText('SHIFT/Z ROLAR  |  ↓+ESPAÇO (correndo)  MERGULHO', CANVAS_W / 2, CANVAS_H / 2 + 45);
 
   ctx.fillStyle = 'rgba(0,200,255,0.7)';
   ctx.font = 'bold 16px monospace';

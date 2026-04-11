@@ -21,6 +21,7 @@ export type PlayerState =
   | 'jump'
   | 'fall'
   | 'roll'
+  | 'divejump'
   | 'climb'
   | 'hurt'
   | 'dead';
@@ -57,6 +58,7 @@ export interface Player {
   landingCrouch: boolean;
   landingCrouchTimer: number;
   isCrouching: boolean;
+  isDivejumping: boolean;
 }
 
 export interface Bullet {
@@ -126,4 +128,5 @@ export interface Keys {
   space: boolean;
   shift: boolean;
   z: boolean;
+  dive: boolean;
 }
