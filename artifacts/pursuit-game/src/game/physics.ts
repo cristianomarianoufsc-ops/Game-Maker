@@ -6,6 +6,7 @@ import {
   BULLET_SPEED, SHOOT_COOLDOWN, GROUND_Y, HIT_INVINCIBILITY, CANVAS_H, CANVAS_W,
   LANDING_ROLL_THRESHOLD, LANDING_ROLL_DURATION, HIT_STUN_DURATION,
   DIVEJUMP_SPEED, DIVEJUMP_JUMP_FORCE,
+  WALLRUN_DURATION, WALLRUN_RISE_SPEED, WALLRUN_JUMP_VX, WALLRUN_JUMP_VY,
 } from './constants';
 
 function rectOverlap(ax: number, ay: number, aw: number, ah: number,
@@ -144,6 +145,42 @@ export function updatePlayer(
       p.vx = p.wallSide === 'right' ? -5 : 5;
       p.facingRight = p.wallSide === 'right' ? false : true;
     }
+
+  // --- Wall Run ---
+  } else if (p.isWallRunning) {
+    p.wallRunTimer -= dt;
+    if (p.wallRunTimer <= 0 || p.onGround) {
+      // Timer esgotou ou tocou no chão — sai do wall run
+      p.isWallRunning = false;
+    } else {
+      // Sobe pela parede enquanto o timer durar
+      p.vx = 0;
+      p.vy = -WALLRUN_RISE_SPEED;
+      // Partículas de faísca enquanto sobe
+      if (Math.random() < 0.4) {
+        spawnParticle(
+          p.x + (p.wallSide === 'right' ? p.w : 0),
+          p.y + PLAYER_H * 0.6,
+          Math.random() < 0.5 ? '#ffcc44' : '#ff8822',
+        );
+      }
+      // Salto da parede — Horácio se lança para o lado oposto
+      if (keys.space || keys.up) {
+        p.isWallRunning = false;
+        p.coyoteTime = 0;
+        p.vy = WALLRUN_JUMP_VY;
+        p.vx = p.wallSide === 'right' ? -WALLRUN_JUMP_VX : WALLRUN_JUMP_VX;
+        p.facingRight = p.wallSide !== 'right';
+        for (let i = 0; i < 14; i++) {
+          spawnParticle(
+            p.x + p.w / 2,
+            p.y + PLAYER_H / 2,
+            i % 2 === 0 ? '#ffcc44' : '#ff8822',
+          );
+        }
+      }
+    }
+
   } else if (p.state !== 'hurt') {
     // Horizontal movement
     if (p.isDivejumping) {
@@ -206,11 +243,14 @@ export function updatePlayer(
     }
   }
 
-  // Gravity
-  if (!p.isClimbing) {
+  // Gravity — não aplica durante climb ou wall run
+  if (!p.isClimbing && !p.isWallRunning) {
     p.vy += GRAVITY;
     if (p.vy > MAX_FALL_SPEED) p.vy = MAX_FALL_SPEED;
   }
+
+  // Guarda velocidade horizontal antes da colisão para detectar impacto em parede
+  const incomingVx = p.vx;
 
   // Move
   p.x += p.vx;
@@ -227,6 +267,34 @@ export function updatePlayer(
   // If climbing, check still touching a wall
   if (p.isClimbing && !p.touchingWall) {
     p.isClimbing = false;
+  }
+
+  // Wall run trigger — Horácio bate na parede em velocidade no ar
+  if (
+    !p.isWallRunning &&
+    !p.isClimbing &&
+    !p.onGround &&
+    p.touchingWall &&
+    !p.isRolling &&
+    !p.isDivejumping &&
+    p.state !== 'hurt' &&
+    Math.abs(incomingVx) > 3 &&
+    p.vy > -4        // não acionar se subindo muito rápido (ex: logo após um pulo)
+  ) {
+    p.isWallRunning = true;
+    p.wallRunTimer = WALLRUN_DURATION;
+    for (let i = 0; i < 8; i++) {
+      spawnParticle(
+        p.x + (p.wallSide === 'right' ? p.w : 0),
+        p.y + PLAYER_H * 0.5,
+        i % 2 === 0 ? '#ffcc44' : '#ff8822',
+      );
+    }
+  }
+
+  // Se estiver em wall run mas perdeu contato com a parede, encerra
+  if (p.isWallRunning && !p.touchingWall) {
+    p.isWallRunning = false;
   }
 
   if (keys.down && p.onGround && !p.isRolling && !p.isClimbing && p.state !== 'hurt') {
@@ -261,6 +329,8 @@ export function updatePlayer(
       p.state = 'roll';
     } else if (p.isClimbing) {
       p.state = 'climb';
+    } else if (p.isWallRunning) {
+      p.state = 'wallrun';
     } else if (p.isDivejumping) {
       p.state = 'divejump';
     } else if (!p.onGround) {

@@ -11,6 +11,11 @@ export const LANDING_ROLL_DURATION = 300;
 export const CLIMB_SPEED = 3.2;
 export const MAX_FALL_SPEED = 18;
 
+export const WALLRUN_DURATION   = 750;   // ms que o wall run dura
+export const WALLRUN_RISE_SPEED = 3.5;   // velocidade de subida na parede
+export const WALLRUN_JUMP_VX    = 9;     // impulso horizontal no salto da parede
+export const WALLRUN_JUMP_VY    = -13;   // impulso vertical no salto da parede
+
 export const DIVEJUMP_SPEED = 14;
 export const DIVEJUMP_JUMP_FORCE = -9.5;
 export const DIVE_FRAME_W = 284;

@@ -54,6 +54,8 @@ function makePlayer(): Player {
     landingCrouchTimer: 0,
     isCrouching: false,
     isDivejumping: false,
+    isWallRunning: false,
+    wallRunTimer: 0,
   };
 }
 

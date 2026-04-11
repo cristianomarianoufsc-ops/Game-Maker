@@ -717,14 +717,15 @@ export function drawPlatforms(
 
 function getSpriteKey(state: string): keyof typeof SPRITE_REGIONS {
   switch (state) {
-    case 'run':   return 'run';
-    case 'climb': return 'run';
-    case 'jump':  return 'jump';
-    case 'fall':  return 'jump';
-    case 'roll':  return 'jump';
-    case 'hurt':  return 'jump';
-    case 'dead':  return 'jump';
-    default:      return 'idle';
+    case 'run':     return 'run';
+    case 'climb':   return 'run';
+    case 'wallrun': return 'run';  // usa run sprite girado lateralmente
+    case 'jump':    return 'jump';
+    case 'fall':    return 'jump';
+    case 'roll':    return 'jump';
+    case 'hurt':    return 'jump';
+    case 'dead':    return 'jump';
+    default:        return 'idle';
   }
 }
 
@@ -897,7 +898,7 @@ export function drawPlayer(
 
   if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
     const key = getSpriteKey(p.state);
-    const isRunAnim = (p.state === 'run' || p.state === 'climb') &&
+    const isRunAnim = (p.state === 'run' || p.state === 'climb' || p.state === 'wallrun') &&
                       runSheetImg && runSheetImg.complete && runSheetImg.naturalWidth > 0;
     const isIdleAnim = p.state === 'idle' &&
                        idleImg && idleImg.complete && idleImg.naturalWidth > 0;
@@ -936,7 +937,10 @@ export function drawPlayer(
     let scaleX  = 1;
     let scaleY  = 1;
 
-    if (p.state === 'jump') {
+    if (p.state === 'wallrun') {
+      // Rotaciona 90° para mostrar Horácio correndo pela parede lateralmente
+      leanRad = p.wallSide === 'right' ? -Math.PI / 2 : Math.PI / 2;
+    } else if (p.state === 'jump') {
       leanRad = (p.facingRight ? -1 : 1) * 0.08;
       scaleY = 1.04; scaleX = 0.97;
     } else if (p.state === 'fall') {
