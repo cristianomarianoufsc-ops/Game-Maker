@@ -5,6 +5,9 @@ const GH = 30;
 const CAN_W = 90;
 const CAN_H = 58;
 
+const WALL_CLEAR_BEFORE = 420;
+const WALL_CLEAR_AFTER = 180;
+
 // ──────────────────────────────────────────────────────────────────
 //  ALTERNAÇÃO DE ZONAS:
 //
@@ -18,6 +21,25 @@ const CAN_H = 58;
 
 export function generateLevel(): Platform[] {
   const platforms: Platform[] = [];
+
+  const walls: Array<{ x: number; y: number; h: number }> = [
+    { x: 4050, y: GROUND_Y - 195, h: 195 },
+    { x: 5500, y: GROUND_Y - 215, h: 215 },
+    { x: 6500, y: GROUND_Y - 235, h: 235 },
+
+    { x: 12100, y: GROUND_Y - 260, h: 260 },
+    { x: 13300, y: GROUND_Y - 280, h: 280 },
+    { x: 14500, y: GROUND_Y - 265, h: 265 },
+    { x: 15200, y: GROUND_Y - 250, h: 250 },
+
+    { x: 20900, y: GROUND_Y - 300, h: 300 },
+    { x: 22100, y: GROUND_Y - 320, h: 320 },
+    { x: 23100, y: GROUND_Y - 310, h: 310 },
+    { x: 24100, y: GROUND_Y - 290, h: 290 },
+  ];
+
+  const isNearWallBase = (x: number, w: number): boolean =>
+    walls.some((wall) => x < wall.x + WALL_CLEAR_AFTER && x + w > wall.x - WALL_CLEAR_BEFORE);
 
   // ── GROUND SEGMENTS ────────────────────────────────────────────
 
@@ -117,7 +139,7 @@ export function generateLevel(): Platform[] {
     { x: 24500 },
   ];
 
-  cans.forEach(({ x }) => {
+  cans.filter(({ x }) => !isNearWallBase(x, CAN_W)).forEach(({ x }) => {
     platforms.push({ x, y: GROUND_Y - CAN_H, w: CAN_W, h: CAN_H, type: 'obstacle' });
   });
 
@@ -231,31 +253,12 @@ export function generateLevel(): Platform[] {
     { x: 24290, y: GROUND_Y - 100, w: 115 },
   ];
 
-  plats.forEach(({ x, y, w }) => {
+  plats.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, y, w }) => {
     platforms.push({ x, y, w, h: 18, type: 'platform' });
   });
 
   // ── CLIMBABLE WALLS — SOMENTE dentro das WALL ZONES ──────────
   // Zonas livres têm ZERO paredes — essa é a alternância principal.
-
-  const walls: Array<{ x: number; y: number; h: number }> = [
-    // WALL ZONE 1 — 3 paredes espaçadas
-    { x: 4050, y: GROUND_Y - 195, h: 195 },
-    { x: 5500, y: GROUND_Y - 215, h: 215 },
-    { x: 6500, y: GROUND_Y - 235, h: 235 },
-
-    // WALL ZONE 2 — 4 paredes maiores
-    { x: 12100, y: GROUND_Y - 260, h: 260 },
-    { x: 13300, y: GROUND_Y - 280, h: 280 },
-    { x: 14500, y: GROUND_Y - 265, h: 265 },
-    { x: 15200, y: GROUND_Y - 250, h: 250 },
-
-    // WALL ZONE 3 — 4 paredes, as maiores do jogo
-    { x: 20900, y: GROUND_Y - 300, h: 300 },
-    { x: 22100, y: GROUND_Y - 320, h: 320 },
-    { x: 23100, y: GROUND_Y - 310, h: 310 },
-    { x: 24100, y: GROUND_Y - 290, h: 290 },
-  ];
 
   walls.forEach(({ x, y, h }) => {
     platforms.push({ x, y, w: 20, h, type: 'wall', climbable: true });
