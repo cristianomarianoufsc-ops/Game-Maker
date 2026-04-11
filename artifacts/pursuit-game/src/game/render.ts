@@ -733,14 +733,17 @@ const SPRITE_NATURAL_FACING_LEFT: Partial<Record<keyof typeof SPRITE_REGIONS, bo
   jump: true, // sprite in image is facing left — flip when facingRight
 };
 
-// Jump animation sheet: 851×300px, 3 frames side by side
-// Frame 0: launching (going up), Frame 1: mid-air (peak), Frame 2: falling (going down)
+// Jump animation sheet: 851×300px, 2 frames side by side (1px black separator at center)
+// Frame 0 (left):  character going up   — sx=0,   w=425
+// Frame 1 (right): character falling    — sx=426,  w=425
 const JUMP_SHEET = {
-  frameCount: 3,
-  frameW: Math.round(851 / 3),  // ~284px per frame
+  frameCount: 2,
+  frameW: 425,          // each frame width (skip 1px separator)
   frameH: 300,
   displayH: JUMP_DISPLAY_H,
   get displayW() { return Math.round(this.displayH * (this.frameW / this.frameH)); },
+  // source X for each frame (manually offsets to skip the separator between frames)
+  frameSrcX: [0, 426] as const,
 };
 
 // Roll spritesheet: 851×300, 4 frames side by side
@@ -926,12 +929,11 @@ export function drawPlayer(
         destX, destY, dw, dh,
       );
     } else if (isJumpAnim) {
-      // Pick frame based on vertical velocity:
-      // frame 0 = launching (vy < -3), frame 1 = peak (|vy| <= 3), frame 2 = falling (vy > 3)
-      const frame = p.vy < -3 ? 0 : p.vy > 3 ? 2 : 1;
+      // Frame 0 = going up (vy < 0), Frame 1 = falling (vy >= 0)
+      const frame = p.vy < 0 ? 0 : 1;
       ctx.drawImage(
         jumpSheetImg!,
-        frame * JUMP_SHEET.frameW, 0, JUMP_SHEET.frameW, JUMP_SHEET.frameH,
+        JUMP_SHEET.frameSrcX[frame], 0, JUMP_SHEET.frameW, JUMP_SHEET.frameH,
         destX, destY, dw, dh,
       );
     } else if (isIdleAnim) {
