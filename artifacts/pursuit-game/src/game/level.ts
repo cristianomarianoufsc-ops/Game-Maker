@@ -6,14 +6,14 @@ const CAN_W = 90;
 const CAN_H = 58;
 
 // ──────────────────────────────────────────────────────────────────
-//  LEVEL DESIGN — alternating pattern:
+//  ALTERNAÇÃO DE ZONAS:
 //
-//  FREE ZONE 1  (x: -400 → 2500)  sprint runway, zero walls
-//  WALL ZONE 1  (x: 2500 → 5600)  gaps + cans + platforms + ≥3 walls
-//  FREE ZONE 2  (x: 5600 → 7700)  gaps + cans + platforms, NO walls
-//  WALL ZONE 2  (x: 7700 → 10400) bigger gaps + cans + platforms + ≥3 walls
-//  FREE ZONE 3  (x:10400 →12200)  gaps + cans + platforms, NO walls
-//  WALL ZONE 3  (x:12200 →14600+) large gaps + cans + platforms + ≥3 walls
+//  FREE ZONE 1   x: -400  →  3000   sprint livre, zero paredes
+//  WALL ZONE 1   x: 3000  →  7200   paredes (≥3), buracos, lixeiras, plataformas
+//  FREE ZONE 2   x: 7200  → 11500   ZERO paredes — buracos + lixeiras + plataformas
+//  WALL ZONE 2   x:11500  → 16000   paredes (≥3), mais buracos, plataformas altas
+//  FREE ZONE 3   x:16000  → 20000   ZERO paredes — buracos + lixeiras + plataformas
+//  WALL ZONE 3   x:20000  → 25000   paredes (≥4), buracos grandes, parkour difícil
 // ──────────────────────────────────────────────────────────────────
 
 export function generateLevel(): Platform[] {
@@ -22,39 +22,50 @@ export function generateLevel(): Platform[] {
   // ── GROUND SEGMENTS ────────────────────────────────────────────
 
   const groundSegments: Array<{ x: number; w: number }> = [
-    // FREE ZONE 1 — continuous flat runway, no interruption
-    { x: -400, w: 3000 },   // -400 → 2600
+    // FREE ZONE 1 — pista lisa, sem buracos
+    { x: -400, w: 3500 },   // -400 → 3100
 
-    // WALL ZONE 1 — first gaps appear
-    { x: 2700, w: 800  },   // 2700 → 3500
-    { x: 3600, w: 700  },   // 3600 → 4300
-    { x: 4400, w: 600  },   // 4400 → 5000
-    { x: 5100, w: 450  },   // 5100 → 5550
+    // WALL ZONE 1 — primeiros buracos e paredes
+    { x: 3200, w: 900  },
+    { x: 4200, w: 800  },
+    { x: 5100, w: 700  },
+    { x: 5900, w: 600  },
+    { x: 6600, w: 500  },
 
-    // FREE ZONE 2 — moderate gaps, no walls
-    { x: 5700, w: 550  },   // 5700 → 6250
-    { x: 6350, w: 450  },   // 6350 → 6800
-    { x: 6900, w: 550  },   // 6900 → 7450
-    { x: 7550, w: 200  },   // 7550 → 7750
+    // FREE ZONE 2 — buracos moderados, ZERO paredes
+    { x: 7300, w: 700  },
+    { x: 8100, w: 650  },
+    { x: 8850, w: 600  },
+    { x: 9550, w: 700  },
+    { x: 10350, w: 600 },
+    { x: 11050, w: 500 },
 
-    // WALL ZONE 2 — bigger gaps
-    { x: 7900, w: 400  },   // 7900 → 8300
-    { x: 8400, w: 450  },   // 8400 → 8850
-    { x: 8950, w: 380  },   // 8950 → 9330
-    { x: 9430, w: 370  },   // 9430 → 9800
-    { x: 9900, w: 500  },   // 9900 → 10400
+    // WALL ZONE 2 — buracos maiores + paredes
+    { x: 11700, w: 550 },
+    { x: 12350, w: 500 },
+    { x: 12950, w: 500 },
+    { x: 13550, w: 450 },
+    { x: 14100, w: 550 },
+    { x: 14750, w: 500 },
+    { x: 15350, w: 600 },
 
-    // FREE ZONE 3 — moderate gaps, no walls
-    { x: 10500, w: 550 },   // 10500 → 11050
-    { x: 11150, w: 480 },   // 11150 → 11630
-    { x: 11730, w: 450 },   // 11730 → 12180
+    // FREE ZONE 3 — buracos moderados, ZERO paredes
+    { x: 16100, w: 700 },
+    { x: 16900, w: 650 },
+    { x: 17650, w: 600 },
+    { x: 18350, w: 700 },
+    { x: 19150, w: 600 },
+    { x: 19850, w: 500 },
 
-    // WALL ZONE 3 — largest gaps
-    { x: 12280, w: 350 },   // 12280 → 12630
-    { x: 12730, w: 380 },   // 12730 → 13110
-    { x: 13200, w: 360 },   // 13200 → 13560
-    { x: 13660, w: 560 },   // 13660 → 14220
-    { x: 14320, w: 2000},   // 14320+ long tail
+    // WALL ZONE 3 — buracos grandes + muitas paredes
+    { x: 20500, w: 500 },
+    { x: 21100, w: 450 },
+    { x: 21650, w: 500 },
+    { x: 22250, w: 450 },
+    { x: 22800, w: 550 },
+    { x: 23450, w: 500 },
+    { x: 24050, w: 550 },
+    { x: 24700, w: 2000},
   ];
 
   groundSegments.forEach(({ x, w }) => {
@@ -62,37 +73,48 @@ export function generateLevel(): Platform[] {
   });
 
   // ── TRASH CAN OBSTACLES ────────────────────────────────────────
-  // (present in both zone types; walls only in WALL zones)
 
   const cans: Array<{ x: number }> = [
     // Wall zone 1
-    { x: 2850 },
     { x: 3400 },
-    { x: 4150 },
-    { x: 4700 },
-    { x: 5200 },
+    { x: 4000 },
+    { x: 4500 },
+    { x: 5300 },
+    { x: 6000 },
+    { x: 6700 },
 
-    // Free zone 2 — obstacles without walls
-    { x: 5900 },
-    { x: 6550 },
-    { x: 7050 },
+    // Free zone 2 — só lixeiras, sem paredes
+    { x: 7500 },
+    { x: 8300 },
+    { x: 9000 },
+    { x: 9800 },
+    { x: 10500 },
+    { x: 11200 },
 
     // Wall zone 2
-    { x: 8050 },
-    { x: 8600 },
-    { x: 9100 },
-    { x: 9650 },
-
-    // Free zone 3 — obstacles without walls
-    { x: 10650 },
-    { x: 11300 },
     { x: 11900 },
+    { x: 12600 },
+    { x: 13200 },
+    { x: 13900 },
+    { x: 14400 },
+    { x: 15100 },
+
+    // Free zone 3 — só lixeiras, sem paredes
+    { x: 16300 },
+    { x: 17100 },
+    { x: 17800 },
+    { x: 18600 },
+    { x: 19300 },
+    { x: 20000 },
 
     // Wall zone 3
-    { x: 12450 },
-    { x: 13000 },
-    { x: 13550 },
-    { x: 14050 },
+    { x: 20700 },
+    { x: 21350 },
+    { x: 22000 },
+    { x: 22600 },
+    { x: 23200 },
+    { x: 23900 },
+    { x: 24500 },
   ];
 
   cans.forEach(({ x }) => {
@@ -102,101 +124,137 @@ export function generateLevel(): Platform[] {
   // ── ELEVATED PLATFORMS ─────────────────────────────────────────
 
   const plats: Array<{ x: number; y: number; w: number }> = [
-    // ── WALL ZONE 1 platforms ──
-    { x: 3650, y: GROUND_Y - 85,  w: 110 },
-    { x: 3850, y: GROUND_Y - 155, w: 95  },
-    { x: 4070, y: GROUND_Y - 85,  w: 85  },
+    // ── WALL ZONE 1 ──
+    { x: 3500, y: GROUND_Y - 90,  w: 110 },
+    { x: 3700, y: GROUND_Y - 165, w: 95  },
+    { x: 3920, y: GROUND_Y - 85,  w: 90  },
 
-    { x: 4420, y: GROUND_Y - 105, w: 115 },
-    { x: 4620, y: GROUND_Y - 180, w: 85  },
-    { x: 4800, y: GROUND_Y - 95,  w: 95  },
+    { x: 4350, y: GROUND_Y - 110, w: 115 },
+    { x: 4580, y: GROUND_Y - 190, w: 90  },
+    { x: 4800, y: GROUND_Y - 100, w: 100 },
 
-    { x: 5120, y: GROUND_Y - 120, w: 110 },
-    { x: 5300, y: GROUND_Y - 200, w: 85  },
+    { x: 5200, y: GROUND_Y - 120, w: 110 },
+    { x: 5420, y: GROUND_Y - 205, w: 90  },
+    { x: 5640, y: GROUND_Y - 115, w: 95  },
 
-    // ── FREE ZONE 2 platforms (NO walls nearby) ──
-    // Staircase climb — pure platforming, no walls to grab
-    { x: 5750, y: GROUND_Y - 80,  w: 85  },
-    { x: 5890, y: GROUND_Y - 165, w: 85  },
-    { x: 6040, y: GROUND_Y - 250, w: 85  },
-    { x: 6190, y: GROUND_Y - 165, w: 85  },
-    { x: 6340, y: GROUND_Y - 80,  w: 85  },
+    { x: 5980, y: GROUND_Y - 100, w: 115 },
+    { x: 6200, y: GROUND_Y - 185, w: 85  },
+    { x: 6420, y: GROUND_Y - 95,  w: 100 },
 
-    // Open parkour run
-    { x: 6700, y: GROUND_Y - 120, w: 100 },
-    { x: 6900, y: GROUND_Y - 215, w: 85  },
-    { x: 7100, y: GROUND_Y - 130, w: 100 },
-    { x: 7300, y: GROUND_Y - 90,  w: 110 },
+    // ── FREE ZONE 2 — escadaria aberta e parkour sem paredes ──
+    { x: 7400, y: GROUND_Y - 85,  w: 95  },
+    { x: 7560, y: GROUND_Y - 170, w: 90  },
+    { x: 7720, y: GROUND_Y - 255, w: 90  },
+    { x: 7880, y: GROUND_Y - 170, w: 90  },
+    { x: 8040, y: GROUND_Y - 85,  w: 95  },
 
-    // ── WALL ZONE 2 platforms ──
-    { x: 7950, y: GROUND_Y - 110, w: 110 },
-    { x: 8130, y: GROUND_Y - 200, w: 90  },
-    { x: 8320, y: GROUND_Y - 115, w: 100 },
+    { x: 8300, y: GROUND_Y - 120, w: 100 },
+    { x: 8500, y: GROUND_Y - 215, w: 85  },
+    { x: 8700, y: GROUND_Y - 125, w: 100 },
 
-    { x: 8530, y: GROUND_Y - 130, w: 90  },
-    { x: 8710, y: GROUND_Y - 225, w: 85  },
-    { x: 8900, y: GROUND_Y - 130, w: 95  },
+    { x: 9050, y: GROUND_Y - 100, w: 110 },
+    { x: 9250, y: GROUND_Y - 195, w: 90  },
+    { x: 9450, y: GROUND_Y - 105, w: 100 },
 
-    { x: 9080, y: GROUND_Y - 100, w: 115 },
-    { x: 9280, y: GROUND_Y - 195, w: 85  },
+    { x: 9750, y: GROUND_Y - 115, w: 110 },
+    { x: 9960, y: GROUND_Y - 210, w: 90  },
+    { x: 10180, y: GROUND_Y - 120, w: 100},
 
-    { x: 9480, y: GROUND_Y - 120, w: 100 },
-    { x: 9660, y: GROUND_Y - 215, w: 85  },
-    { x: 9850, y: GROUND_Y - 110, w: 110 },
-    { x: 10050, y: GROUND_Y - 180, w: 90 },
-    { x: 10230, y: GROUND_Y - 95,  w: 120},
+    { x: 10500, y: GROUND_Y - 90, w: 110 },
+    { x: 10710, y: GROUND_Y - 175, w: 90 },
+    { x: 10920, y: GROUND_Y - 90, w: 110 },
+    { x: 11150, y: GROUND_Y - 160, w: 90 },
 
-    // ── FREE ZONE 3 platforms (NO walls nearby) ──
-    // Open high-speed platforming gaps
-    { x: 10550, y: GROUND_Y - 90,  w: 110 },
-    { x: 10750, y: GROUND_Y - 185, w: 90  },
-    { x: 10940, y: GROUND_Y - 95,  w: 110 },
-    { x: 11160, y: GROUND_Y - 145, w: 95  },
-    { x: 11350, y: GROUND_Y - 235, w: 85  },
-    { x: 11540, y: GROUND_Y - 140, w: 95  },
-    { x: 11740, y: GROUND_Y - 85,  w: 110 },
-    { x: 11930, y: GROUND_Y - 175, w: 90  },
+    // ── WALL ZONE 2 ──
+    { x: 11800, y: GROUND_Y - 110, w: 110 },
+    { x: 12020, y: GROUND_Y - 210, w: 90  },
+    { x: 12240, y: GROUND_Y - 115, w: 100 },
 
-    // ── WALL ZONE 3 platforms ──
-    { x: 12330, y: GROUND_Y - 115, w: 100 },
-    { x: 12520, y: GROUND_Y - 220, w: 85  },
-    { x: 12700, y: GROUND_Y - 130, w: 100 },
+    { x: 12500, y: GROUND_Y - 130, w: 100 },
+    { x: 12720, y: GROUND_Y - 230, w: 85  },
+    { x: 12940, y: GROUND_Y - 135, w: 95  },
 
-    { x: 12900, y: GROUND_Y - 100, w: 110 },
-    { x: 13090, y: GROUND_Y - 210, w: 90  },
-    { x: 13280, y: GROUND_Y - 115, w: 100 },
+    { x: 13180, y: GROUND_Y - 115, w: 110 },
+    { x: 13400, y: GROUND_Y - 225, w: 90  },
+    { x: 13620, y: GROUND_Y - 120, w: 100 },
 
-    { x: 13480, y: GROUND_Y - 140, w: 95  },
-    { x: 13680, y: GROUND_Y - 250, w: 85  },
-    { x: 13880, y: GROUND_Y - 135, w: 100 },
-    { x: 14080, y: GROUND_Y - 95,  w: 115 },
-    { x: 14280, y: GROUND_Y - 185, w: 90  },
+    { x: 13900, y: GROUND_Y - 140, w: 95  },
+    { x: 14120, y: GROUND_Y - 245, w: 85  },
+    { x: 14340, y: GROUND_Y - 145, w: 100 },
+
+    { x: 14620, y: GROUND_Y - 110, w: 110 },
+    { x: 14840, y: GROUND_Y - 215, w: 90  },
+    { x: 15060, y: GROUND_Y - 115, w: 105 },
+
+    // ── FREE ZONE 3 — parkour rápido, sem paredes ──
+    { x: 16200, y: GROUND_Y - 90,  w: 100 },
+    { x: 16400, y: GROUND_Y - 180, w: 90  },
+    { x: 16600, y: GROUND_Y - 270, w: 90  },
+    { x: 16800, y: GROUND_Y - 180, w: 90  },
+    { x: 17000, y: GROUND_Y - 90,  w: 100 },
+
+    { x: 17300, y: GROUND_Y - 115, w: 100 },
+    { x: 17520, y: GROUND_Y - 220, w: 85  },
+    { x: 17740, y: GROUND_Y - 120, w: 100 },
+
+    { x: 18050, y: GROUND_Y - 100, w: 110 },
+    { x: 18270, y: GROUND_Y - 200, w: 90  },
+    { x: 18490, y: GROUND_Y - 110, w: 100 },
+
+    { x: 18800, y: GROUND_Y - 120, w: 100 },
+    { x: 19020, y: GROUND_Y - 215, w: 85  },
+    { x: 19240, y: GROUND_Y - 125, w: 100 },
+
+    { x: 19550, y: GROUND_Y - 95,  w: 110 },
+    { x: 19770, y: GROUND_Y - 185, w: 90  },
+
+    // ── WALL ZONE 3 ──
+    { x: 20600, y: GROUND_Y - 130, w: 100 },
+    { x: 20820, y: GROUND_Y - 240, w: 90  },
+    { x: 21040, y: GROUND_Y - 140, w: 95  },
+
+    { x: 21300, y: GROUND_Y - 120, w: 100 },
+    { x: 21520, y: GROUND_Y - 230, w: 85  },
+    { x: 21740, y: GROUND_Y - 130, w: 100 },
+
+    { x: 22050, y: GROUND_Y - 145, w: 95  },
+    { x: 22270, y: GROUND_Y - 260, w: 85  },
+    { x: 22490, y: GROUND_Y - 150, w: 100 },
+
+    { x: 22800, y: GROUND_Y - 130, w: 100 },
+    { x: 23020, y: GROUND_Y - 245, w: 85  },
+    { x: 23240, y: GROUND_Y - 140, w: 95  },
+
+    { x: 23600, y: GROUND_Y - 120, w: 105 },
+    { x: 23830, y: GROUND_Y - 225, w: 90  },
+    { x: 24060, y: GROUND_Y - 130, w: 100 },
+    { x: 24290, y: GROUND_Y - 100, w: 115 },
   ];
 
   plats.forEach(({ x, y, w }) => {
     platforms.push({ x, y, w, h: 18, type: 'platform' });
   });
 
-  // ── CLIMBABLE WALLS — only inside WALL ZONES ──────────────────
-  // FREE zones have zero walls — that's the key alternation.
+  // ── CLIMBABLE WALLS — SOMENTE dentro das WALL ZONES ──────────
+  // Zonas livres têm ZERO paredes — essa é a alternância principal.
 
   const walls: Array<{ x: number; y: number; h: number }> = [
-    // WALL ZONE 1 — 3 walls introduced gradually
-    { x: 3880, y: GROUND_Y - 185, h: 185 },
-    { x: 4820, y: GROUND_Y - 210, h: 210 },
-    { x: 5330, y: GROUND_Y - 230, h: 230 },
+    // WALL ZONE 1 — 3 paredes espaçadas
+    { x: 4050, y: GROUND_Y - 195, h: 195 },
+    { x: 5500, y: GROUND_Y - 215, h: 215 },
+    { x: 6500, y: GROUND_Y - 235, h: 235 },
 
-    // WALL ZONE 2 — 4 walls, taller, closer together
-    { x: 8170, y: GROUND_Y - 250, h: 250 },
-    { x: 8760, y: GROUND_Y - 270, h: 270 },
-    { x: 9310, y: GROUND_Y - 255, h: 255 },
-    { x: 10080, y: GROUND_Y - 240, h: 240 },
+    // WALL ZONE 2 — 4 paredes maiores
+    { x: 12100, y: GROUND_Y - 260, h: 260 },
+    { x: 13300, y: GROUND_Y - 280, h: 280 },
+    { x: 14500, y: GROUND_Y - 265, h: 265 },
+    { x: 15200, y: GROUND_Y - 250, h: 250 },
 
-    // WALL ZONE 3 — 4 walls, tallest and tightest spacing
-    { x: 12560, y: GROUND_Y - 290, h: 290 },
-    { x: 13130, y: GROUND_Y - 310, h: 310 },
-    { x: 13720, y: GROUND_Y - 280, h: 280 },
-    { x: 14130, y: GROUND_Y - 300, h: 300 },
+    // WALL ZONE 3 — 4 paredes, as maiores do jogo
+    { x: 20900, y: GROUND_Y - 300, h: 300 },
+    { x: 22100, y: GROUND_Y - 320, h: 320 },
+    { x: 23100, y: GROUND_Y - 310, h: 310 },
+    { x: 24100, y: GROUND_Y - 290, h: 290 },
   ];
 
   walls.forEach(({ x, y, h }) => {
@@ -238,7 +296,7 @@ export function generateBuildings(): BuildingDef[] {
   const rand = rng(42);
 
   let bx = -200;
-  while (bx < 15000) {
+  while (bx < 26000) {
     const bw = 80 + Math.floor(rand() * 180);
     const bh = 120 + Math.floor(rand() * 260);
     const by = CANVAS_H - 80 - bh;
@@ -260,7 +318,7 @@ export function generateBuildings(): BuildingDef[] {
   }
 
   bx = -100;
-  while (bx < 15000) {
+  while (bx < 26000) {
     const bw = 60 + Math.floor(rand() * 140);
     const bh = 80 + Math.floor(rand() * 200);
     const by = CANVAS_H - 90 - bh;
