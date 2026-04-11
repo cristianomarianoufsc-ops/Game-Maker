@@ -4,6 +4,7 @@ import spriteUrl from '/horacio_transparent.png';
 import runSheetUrl from '/run_sheet_transparent.png';
 import idleUrl from '/idle_transparent.png';
 import rollSheetUrl from '/roll_sheet.png';
+import jumpSheetUrl from '/jump_sheet.png';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, PLAYER_W, PLAYER_H, DRONE_W, DRONE_H,
   PLAYER_MAX_HEALTH, SHOOT_COOLDOWN, CAMERA_LEAD_X, COLORS,
@@ -91,6 +92,7 @@ export default function Game() {
   const runSheetImgRef = useRef<HTMLImageElement | null>(null);
   const idleImgRef = useRef<HTMLImageElement | null>(null);
   const rollSheetImgRef = useRef<HTMLImageElement | null>(null);
+  const jumpSheetImgRef = useRef<HTMLImageElement | null>(null);
 
   // Responsive scale: fit canvas inside available viewport
   const [scale, setScale] = useState(getScale);
@@ -139,6 +141,10 @@ export default function Game() {
     const rollImg = new Image();
     rollImg.src = rollSheetUrl;
     rollSheetImgRef.current = rollImg;
+
+    const jumpImg = new Image();
+    jumpImg.src = jumpSheetUrl;
+    jumpSheetImgRef.current = jumpImg;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       const k = keysRef.current;
@@ -290,7 +296,7 @@ export default function Game() {
 
       drawPlatforms(ctx, gs.platforms, gs.camera.x);
       drawParticles(ctx, gs);
-      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current);
+      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current);
       drawDrone(ctx, gs);
       drawBullets(ctx, gs);
 

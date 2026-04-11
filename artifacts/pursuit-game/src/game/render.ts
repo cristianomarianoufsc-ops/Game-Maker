@@ -733,6 +733,15 @@ const SPRITE_NATURAL_FACING_LEFT: Partial<Record<keyof typeof SPRITE_REGIONS, bo
   jump: true, // sprite in image is facing left — flip when facingRight
 };
 
+// Jump animation sheet: 851×300px, 4 frames side by side
+const JUMP_SHEET = {
+  frameCount: 4,
+  frameW: Math.round(851 / 4),  // ~213px per frame
+  frameH: 300,
+  displayH: JUMP_DISPLAY_H,
+  get displayW() { return Math.round(this.displayH * (this.frameW / this.frameH)); },
+};
+
 // Roll spritesheet: 851×300, 4 frames side by side
 const ROLL_SHEET = {
   frameCount: 4,
@@ -749,6 +758,7 @@ export function drawPlayer(
   runSheetImg: HTMLImageElement | null,
   idleImg: HTMLImageElement | null,
   rollSheetImg: HTMLImageElement | null = null,
+  jumpSheetImg: HTMLImageElement | null = null,
 ): void {
   const p = gs.player;
   const px = p.x - gs.camera.x;
@@ -831,6 +841,8 @@ export function drawPlayer(
                       runSheetImg && runSheetImg.complete && runSheetImg.naturalWidth > 0;
     const isIdleAnim = p.state === 'idle' &&
                        idleImg && idleImg.complete && idleImg.naturalWidth > 0;
+    const isJumpAnim = (p.state === 'jump' || p.state === 'fall' || p.state === 'hurt' || p.state === 'dead') &&
+                       jumpSheetImg && jumpSheetImg.complete && jumpSheetImg.naturalWidth > 0;
 
     const FOOT_OFFSET = 28;
 
@@ -842,6 +854,8 @@ export function drawPlayer(
       dh = RUN_DISPLAY_H;
     } else if (isIdleAnim) {
       dh = SPRITE_DISPLAY_H;
+    } else if (isJumpAnim) {
+      dh = JUMP_SHEET.displayH;
     } else {
       dh = JUMP_DISPLAY_H;
     }
@@ -849,7 +863,9 @@ export function drawPlayer(
       ? RUN_SHEET.displayW
       : isIdleAnim
         ? IDLE_SPRITE.displayW
-        : (SPRITE_DISPLAY_W[key] ?? 32);
+        : isJumpAnim
+          ? JUMP_SHEET.displayW
+          : (SPRITE_DISPLAY_W[key] ?? 32);
 
     // ── Anchor: bottom-center aligned to collision box ────────────────────
     const anchorX = px + p.w / 2;
@@ -885,8 +901,9 @@ export function drawPlayer(
     }
 
     // ── Horizontal flip ───────────────────────────────────────────────────
-    // Run sheet: faces RIGHT naturally; idle sprite: faces RIGHT naturally; jump: faces LEFT
-    const naturallyFacingLeft = isRunAnim || isIdleAnim ? false : (SPRITE_NATURAL_FACING_LEFT[key] ?? false);
+    // Run sheet: faces RIGHT naturally; idle sprite: faces RIGHT naturally
+    // jump sheet: faces RIGHT naturally; old static jump region: faces LEFT
+    const naturallyFacingLeft = isRunAnim || isIdleAnim || isJumpAnim ? false : (SPRITE_NATURAL_FACING_LEFT[key] ?? false);
     const isStaticFacing = key === 'idle' && !isIdleAnim; // old frontal idle — don't flip
     const shouldFlip = !isStaticFacing && (naturallyFacingLeft ? p.facingRight : !p.facingRight);
 
@@ -898,13 +915,20 @@ export function drawPlayer(
 
     if (p.state === 'hurt') ctx.globalAlpha = 0.85;
 
-    // ── Draw: run sheet, idle sprite, or fallback static sprite ──────────
+    // ── Draw: run sheet, idle sprite, jump sheet, or fallback static sprite ──
     if (isRunAnim) {
       const frame = p.animFrame % RUN_SHEET.frameCount;
       const sx = frame * RUN_SHEET.frameW;
       ctx.drawImage(
         runSheetImg!,
         sx, 0, RUN_SHEET.frameW, RUN_SHEET.frameH,
+        destX, destY, dw, dh,
+      );
+    } else if (isJumpAnim) {
+      const frame = Math.floor(Date.now() / 120) % JUMP_SHEET.frameCount;
+      ctx.drawImage(
+        jumpSheetImg!,
+        frame * JUMP_SHEET.frameW, 0, JUMP_SHEET.frameW, JUMP_SHEET.frameH,
         destX, destY, dw, dh,
       );
     } else if (isIdleAnim) {
