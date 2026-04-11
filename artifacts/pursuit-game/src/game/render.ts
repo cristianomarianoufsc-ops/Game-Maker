@@ -460,7 +460,7 @@ export function drawAlleyDetails(ctx: CanvasRenderingContext2D, camX: number, ti
 
 export function drawStartingBackWall(ctx: CanvasRenderingContext2D, camX: number): void {
   const wallX = -160 - camX;
-  const wallY = 112;
+  const wallY = 235;
   const wallW = 2460;
   const wallH = GROUND_Y - wallY;
 
@@ -528,13 +528,6 @@ export function drawStartingBackWall(ctx: CanvasRenderingContext2D, camX: number
     if (x + 72 < -60 || x > CANVAS_W + 60) continue;
     ctx.fillStyle = 'rgba(8,7,7,0.62)';
     ctx.fillRect(x, wallY + 48, 72, 92);
-    ctx.fillStyle = 'rgba(190,35,24,0.18)';
-    ctx.fillRect(x + 7, wallY + 56, 58, 16);
-    ctx.fillStyle = 'rgba(210,60,42,0.72)';
-    ctx.font = 'bold 9px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('VIGIADO', x + 36, wallY + 68);
-    ctx.textAlign = 'left';
   }
 
   const gateX = wallX + 62;
