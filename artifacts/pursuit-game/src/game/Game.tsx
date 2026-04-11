@@ -89,10 +89,11 @@ function stripWhiteBackground(src: HTMLImageElement): HTMLImageElement {
     const maxC = Math.max(r, g, b);
     const minC = Math.min(r, g, b);
     const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
-    // Target pixels that are bright AND low-saturation (i.e. white/near-white, not colored pixels)
-    if (brightness > 140 && saturation < 0.18) {
-      // Smooth fade: fully opaque at brightness 140 → fully transparent at 220
-      const t = Math.min(1, (brightness - 140) / 80);
+    // Target pixels that are bright AND low-saturation (white/near-white background)
+    // Wide fade zone: starts at brightness 80 → fully transparent at 210
+    // Saturation guard raised to 0.28 so anti-aliased edge pixels are also caught
+    if (brightness > 80 && saturation < 0.28) {
+      const t = Math.min(1, (brightness - 80) / 130);
       px[i + 3] = Math.round((1 - t) * px[i + 3]);
     }
   }
