@@ -159,6 +159,7 @@ export function updatePlayer(
       const wallSide = p.wallSide ?? previousWallSide;
       // Sobe pela parede enquanto o timer durar
       p.wallSide = wallSide;
+      p.state = 'wallrun';
       p.vx = wallSide === 'right' ? 1.2 : wallSide === 'left' ? -1.2 : 0;
       p.vy = -WALLRUN_RISE_SPEED;
       // Partículas de faísca enquanto sobe
@@ -170,7 +171,8 @@ export function updatePlayer(
         );
       }
       // Salto da parede — Horácio se lança para o lado oposto
-      if (keys.space || keys.up) {
+      const canJumpOffWall = p.wallRunTimer < WALLRUN_DURATION - 160;
+      if (canJumpOffWall && (keys.space || keys.up)) {
         p.isWallRunning = false;
         p.coyoteTime = 0;
         p.vy = WALLRUN_JUMP_VY;
@@ -293,6 +295,7 @@ export function updatePlayer(
     p.coyoteTime = 0;
     p.vy = -WALLRUN_RISE_SPEED;
     p.wallRunTimer = WALLRUN_DURATION;
+    p.state = 'wallrun';
     for (let i = 0; i < 8; i++) {
       spawnParticle(
         p.x + (p.wallSide === 'right' ? p.w : 0),
@@ -302,9 +305,18 @@ export function updatePlayer(
     }
   }
 
-  // Se estiver em wall run mas perdeu contato com a parede, encerra
+  // Se estiver em wall run, mantém contato visual/físico com a parede
   if (p.isWallRunning && !p.touchingWall) {
-    p.isWallRunning = false;
+    const wallSide = p.wallSide ?? previousWallSide;
+    if (wallSide === 'right') {
+      p.x = p.wallX - p.w;
+      p.touchingWall = true;
+      p.wallSide = 'right';
+    } else if (wallSide === 'left') {
+      p.x = p.wallX;
+      p.touchingWall = true;
+      p.wallSide = 'left';
+    }
   }
 
   if (keys.down && p.onGround && !p.isRolling && !p.isClimbing && p.state !== 'hurt') {

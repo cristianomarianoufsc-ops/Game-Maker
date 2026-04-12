@@ -790,7 +790,10 @@ export function drawPlayer(
   // Blink when invincible
   if (p.invincible && Math.floor(gs.time / 80) % 2 === 0) return;
 
-  if (p.state === 'wallrun' && wallRunSheetImg && wallRunSheetImg.complete && wallRunSheetImg.naturalWidth > 0) {
+  const isWallRunVisual = p.isWallRunning || p.state === 'wallrun';
+  if (isWallRunVisual) {
+    if (!wallRunSheetImg || !wallRunSheetImg.complete || wallRunSheetImg.naturalWidth <= 0) return;
+
     const frameW = wallRunSheetImg.naturalWidth / WALL_RUN_SHEET.frameCount;
     const frameH = wallRunSheetImg.naturalHeight;
     const frame = p.animFrame % WALL_RUN_SHEET.frameCount;
