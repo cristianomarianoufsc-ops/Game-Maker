@@ -824,15 +824,13 @@ export function drawPlayer(
     const firstFrameWallOffset = frame === 0 ? WALL_CLIMB_SHEET.firstFrameOffsetX : 0;
     const wallSideNudge = p.isWallHanging ? 14 : 0;
     const destX = anchorX - dw / 2 + firstFrameWallOffset + wallSideNudge;
-    const destY = anchorY - dh;
+    const rawDestY = anchorY - dh;
+    // Frame 0: sprite rises with the player but top is clamped at wall top — appears whole, never exceeds ledge
+    const destY = (frame === 0 && !p.isWallHanging)
+      ? Math.max(p.wallTopY, rawDestY)
+      : rawDestY;
 
     ctx.save();
-    // For frame 0 (arms stretched up), clip below wall top so sprite never exceeds the ledge
-    if (frame === 0 && !p.isWallHanging) {
-      ctx.beginPath();
-      ctx.rect(-99999, p.wallTopY, 199999, 99999);
-      ctx.clip();
-    }
     if (!p.facingRight) {
       ctx.translate(anchorX, 0);
       ctx.scale(-1, 1);
