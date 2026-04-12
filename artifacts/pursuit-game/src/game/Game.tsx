@@ -8,6 +8,7 @@ import jumpSheetUrl from '/jump_sheet.png';
 import diveJumpSheetUrl from '/dive_jump_sheet.png';
 import wallRunSheetUrl from '@assets/Wall_Run_1776005817769.png';
 import mortalSheetUrl from '@assets/mortal_1776009939272.png';
+import subidaSheetUrl from '@assets/subida_1776012458574.png';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, PLAYER_W, PLAYER_H, DRONE_W, DRONE_H,
   PLAYER_MAX_HEALTH, SHOOT_COOLDOWN, CAMERA_LEAD_X, COLORS,
@@ -35,6 +36,7 @@ function makePlayer(): Player {
     onGround: false,
     touchingWall: false,
     wallX: 0,
+    wallTopY: GROUND_Y,
     wallSide: null,
     health: PLAYER_MAX_HEALTH,
     maxHealth: PLAYER_MAX_HEALTH,
@@ -60,6 +62,13 @@ function makePlayer(): Player {
     wallRunTimer: 0,
     isWallFlipping: false,
     wallFlipTimer: 0,
+    isWallClimbUp: false,
+    wallClimbTimer: 0,
+    wallClimbStartX: 0,
+    wallClimbStartY: 0,
+    wallClimbTargetX: 0,
+    wallClimbTargetY: 0,
+    wallClimbSide: null,
   };
 }
 
@@ -185,6 +194,7 @@ export default function Game() {
   const diveSheetImgRef = useRef<HTMLImageElement | null>(null);
   const wallRunSheetImgRef = useRef<HTMLImageElement | null>(null);
   const mortalSheetImgRef = useRef<HTMLImageElement | null>(null);
+  const subidaSheetImgRef = useRef<HTMLImageElement | null>(null);
 
   // Responsive scale: fit canvas inside available viewport
   const [scale, setScale] = useState(getScale);
@@ -258,6 +268,12 @@ export default function Game() {
       mortalSheetImgRef.current = stripBlackAndWhiteBackground(mortalImg);
     };
     mortalImg.src = mortalSheetUrl;
+
+    const subidaImg = new Image();
+    subidaImg.onload = () => {
+      subidaSheetImgRef.current = stripBlackAndWhiteBackground(subidaImg);
+    };
+    subidaImg.src = subidaSheetUrl;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       const k = keysRef.current;
@@ -422,7 +438,7 @@ export default function Game() {
 
       drawPlatforms(ctx, gs.platforms, gs.camera.x);
       drawParticles(ctx, gs);
-      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current);
+      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current);
       if (gs.gameMode !== 'wall-test') {
         drawDrone(ctx, gs);
         drawBullets(ctx, gs);

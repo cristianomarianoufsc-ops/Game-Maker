@@ -25,6 +25,7 @@ export type PlayerState =
   | 'climb'
   | 'wallrun'
   | 'wallflip'
+  | 'wallclimb'
   | 'hurt'
   | 'dead';
 
@@ -40,6 +41,7 @@ export interface Player {
   onGround: boolean;
   touchingWall: boolean;
   wallX: number;
+  wallTopY: number;
   wallSide: 'left' | 'right' | null;
   health: number;
   maxHealth: number;
@@ -65,6 +67,13 @@ export interface Player {
   wallRunTimer: number;
   isWallFlipping: boolean;
   wallFlipTimer: number;
+  isWallClimbUp: boolean;
+  wallClimbTimer: number;
+  wallClimbStartX: number;
+  wallClimbStartY: number;
+  wallClimbTargetX: number;
+  wallClimbTargetY: number;
+  wallClimbSide: 'left' | 'right' | null;
 }
 
 export interface Bullet {

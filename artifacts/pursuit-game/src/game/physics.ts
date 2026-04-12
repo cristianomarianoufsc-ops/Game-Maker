@@ -7,7 +7,7 @@ import {
   LANDING_ROLL_THRESHOLD, LANDING_ROLL_DURATION, HIT_STUN_DURATION,
   DIVEJUMP_SPEED, DIVEJUMP_JUMP_FORCE,
   WALLRUN_DURATION, WALLRUN_RISE_SPEED, WALLRUN_JUMP_VX, WALLRUN_JUMP_VY,
-  WALLFLIP_BACK_VX, WALLFLIP_DURATION, WALLFLIP_JUMP_VY,
+  WALLCLIMB_DURATION, WALLFLIP_BACK_VX, WALLFLIP_DURATION, WALLFLIP_JUMP_VY,
 } from './constants';
 
 function rectOverlap(ax: number, ay: number, aw: number, ah: number,
@@ -33,12 +33,14 @@ function resolvePlayerPlatform(p: Player, plat: Platform): boolean {
       p.touchingWall = true;
       p.wallSide = 'right';
       p.wallX = plat.x;
+      p.wallTopY = plat.y;
       if (p.vx > 0) p.vx = 0;
     } else if (overlapRight <= overlapLeft && p.vx <= 0) {
       p.x = plat.x + plat.w;
       p.touchingWall = true;
       p.wallSide = 'left';
       p.wallX = plat.x + plat.w;
+      p.wallTopY = plat.y;
       if (p.vx < 0) p.vx = 0;
     }
     return false;
@@ -73,10 +75,12 @@ export function updatePlayer(
   const prevOnGround = p.onGround;
   const previousWallSide = p.wallSide;
   const previousWallX = p.wallX;
+  const previousWallTopY = p.wallTopY;
   p.onGround = false;
   p.touchingWall = false;
   p.wallSide = null;
   p.wallX = previousWallX;
+  p.wallTopY = previousWallTopY;
   p.isCrouching = false;
 
   if (p.state === 'dead') return;
@@ -99,6 +103,7 @@ export function updatePlayer(
     }
     p.isDivejumping = false;
     p.isWallFlipping = false;
+    p.isWallClimbUp = false;
   }
 
   // Roll timer
@@ -176,7 +181,31 @@ export function updatePlayer(
       const pressingForwardIntoWall =
         (wallSide === 'right' && keys.right) ||
         (wallSide === 'left' && keys.left);
-      if (canJumpOffWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide) {
+      const neutralVerticalClimb = (keys.space || keys.up) && !keys.left && !keys.right;
+      if (canJumpOffWall && neutralVerticalClimb && wallSide) {
+        p.isWallRunning = false;
+        p.isWallClimbUp = true;
+        p.wallClimbTimer = WALLCLIMB_DURATION;
+        p.wallClimbStartX = p.x;
+        p.wallClimbStartY = p.y;
+        p.wallClimbTargetX = wallSide === 'right' ? p.wallX + 22 : p.wallX - p.w - 22;
+        p.wallClimbTargetY = p.wallTopY - PLAYER_H - 4;
+        p.wallClimbSide = wallSide;
+        p.coyoteTime = 0;
+        p.vx = 0;
+        p.vy = 0;
+        p.facingRight = wallSide === 'right';
+        p.state = 'wallclimb';
+        p.animFrame = 0;
+        p.animTimer = 0;
+        for (let i = 0; i < 12; i++) {
+          spawnParticle(
+            p.x + (wallSide === 'right' ? p.w : 0),
+            p.y + PLAYER_H * 0.35,
+            i % 2 === 0 ? '#d8d0c8' : '#ffcc44',
+          );
+        }
+      } else if (canJumpOffWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide) {
         p.isWallRunning = false;
         p.isWallFlipping = true;
         p.wallFlipTimer = WALLFLIP_DURATION;
@@ -210,6 +239,43 @@ export function updatePlayer(
       }
     }
 
+  } else if (p.isWallClimbUp) {
+    p.wallClimbTimer -= dt;
+    const t = Math.max(0, Math.min(1, 1 - p.wallClimbTimer / WALLCLIMB_DURATION));
+    const side = p.wallClimbSide;
+    const wallFaceX = side === 'right' ? p.wallX - p.w : side === 'left' ? p.wallX : p.x;
+    const hangY = p.wallTopY - PLAYER_H + 18;
+    const liftY = p.wallClimbStartY - 86;
+    const lerp = (a: number, b: number, n: number) => a + (b - a) * n;
+
+    if (t < 0.38) {
+      const k = t / 0.38;
+      p.x = lerp(p.wallClimbStartX, wallFaceX, k);
+      p.y = lerp(p.wallClimbStartY, liftY, k);
+    } else if (t < 0.7) {
+      const k = (t - 0.38) / 0.32;
+      p.x = wallFaceX;
+      p.y = lerp(liftY, hangY, k);
+    } else {
+      const k = (t - 0.7) / 0.3;
+      p.x = lerp(wallFaceX, p.wallClimbTargetX, k);
+      p.y = lerp(hangY, p.wallClimbTargetY, k);
+    }
+
+    p.vx = 0;
+    p.vy = 0;
+    p.state = 'wallclimb';
+
+    if (p.wallClimbTimer <= 0) {
+      p.wallClimbTimer = 0;
+      p.isWallClimbUp = false;
+      p.x = p.wallClimbTargetX;
+      p.y = p.wallClimbTargetY;
+      p.vx = side === 'right' ? 2.4 : side === 'left' ? -2.4 : 0;
+      p.vy = 0;
+      p.coyoteTime = 3;
+      p.wallClimbSide = null;
+    }
   } else if (p.isWallFlipping) {
     p.wallFlipTimer -= dt;
     p.state = 'wallflip';
@@ -290,15 +356,19 @@ export function updatePlayer(
   const incomingVx = p.vx;
 
   // Move
-  p.x += p.vx;
-  p.y += p.vy;
+  if (!p.isWallClimbUp) {
+    p.x += p.vx;
+    p.y += p.vy;
+  }
 
   // Don't let player go left of world start
   if (p.x < -100) { p.x = -100; p.vx = 0; }
 
   // Collision
-  for (const plat of platforms) {
-    resolvePlayerPlatform(p, plat);
+  if (!p.isWallClimbUp) {
+    for (const plat of platforms) {
+      resolvePlayerPlatform(p, plat);
+    }
   }
 
   // If climbing, check still touching a wall
@@ -315,6 +385,7 @@ export function updatePlayer(
     !p.isRolling &&
     !p.isDivejumping &&
     !p.isWallFlipping &&
+    !p.isWallClimbUp &&
     p.state !== 'hurt' &&
     Math.abs(incomingVx) > 3 &&
     ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
@@ -384,6 +455,8 @@ export function updatePlayer(
       p.state = 'climb';
     } else if (p.isWallRunning) {
       p.state = 'wallrun';
+    } else if (p.isWallClimbUp) {
+      p.state = 'wallclimb';
     } else if (p.isWallFlipping) {
       p.state = 'wallflip';
     } else if (p.isDivejumping) {

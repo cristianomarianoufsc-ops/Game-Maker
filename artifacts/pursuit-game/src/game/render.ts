@@ -5,7 +5,7 @@ import {
   PARALLAX_FAR, PARALLAX_MID, PARALLAX_NEAR,
   PLAYER_W, PLAYER_H, PLAYER_ROLL_H, DRONE_W, DRONE_H,
   DIVE_FRAME_W, DIVE_FRAME_H, DIVE_DISPLAY_H,
-  WALLFLIP_DURATION,
+  WALLCLIMB_DURATION, WALLFLIP_DURATION,
 } from './constants';
 
 // Sprite sheet regions in the 1024x1024 source image
@@ -722,6 +722,7 @@ function getSpriteKey(state: string): keyof typeof SPRITE_REGIONS {
     case 'climb':   return 'run';
     case 'wallrun': return 'run';  // usa run sprite girado lateralmente
     case 'wallflip': return 'jump';
+    case 'wallclimb': return 'jump';
     case 'jump':    return 'jump';
     case 'fall':    return 'jump';
     case 'roll':    return 'jump';
@@ -780,6 +781,12 @@ const WALL_FLIP_SHEET = {
   offsetY: 18,
 };
 
+const WALL_CLIMB_SHEET = {
+  frameCount: 4,
+  displayH: 156,
+  offsetY: 24,
+};
+
 export function drawPlayer(
   ctx: CanvasRenderingContext2D,
   gs: GameState,
@@ -791,6 +798,7 @@ export function drawPlayer(
   diveSheetImg: HTMLImageElement | null = null,
   wallRunSheetImg: HTMLImageElement | null = null,
   mortalSheetImg: HTMLImageElement | null = null,
+  subidaSheetImg: HTMLImageElement | null = null,
 ): void {
   const p = gs.player;
   const px = p.x - gs.camera.x;
@@ -799,6 +807,33 @@ export function drawPlayer(
 
   // Blink when invincible
   if (p.invincible && Math.floor(gs.time / 80) % 2 === 0) return;
+
+  if (p.state === 'wallclimb' && subidaSheetImg && subidaSheetImg.complete && subidaSheetImg.naturalWidth > 0) {
+    const frameW = subidaSheetImg.naturalWidth / WALL_CLIMB_SHEET.frameCount;
+    const frameH = subidaSheetImg.naturalHeight;
+    const progress = Math.max(0, Math.min(1, 1 - p.wallClimbTimer / WALLCLIMB_DURATION));
+    const frame = Math.min(WALL_CLIMB_SHEET.frameCount - 1, Math.floor(progress * WALL_CLIMB_SHEET.frameCount));
+    const dh = WALL_CLIMB_SHEET.displayH;
+    const dw = Math.round(dh * (frameW / frameH));
+    const anchorX = px + p.w / 2;
+    const anchorY = py + ph + WALL_CLIMB_SHEET.offsetY;
+    const destX = anchorX - dw / 2;
+    const destY = anchorY - dh;
+
+    ctx.save();
+    if (!p.facingRight) {
+      ctx.translate(anchorX, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-anchorX, 0);
+    }
+    ctx.drawImage(
+      subidaSheetImg,
+      frame * frameW, 0, frameW, frameH,
+      destX, destY, dw, dh,
+    );
+    ctx.restore();
+    return;
+  }
 
   if (p.state === 'wallflip' && mortalSheetImg && mortalSheetImg.complete && mortalSheetImg.naturalWidth > 0) {
     const frameW = mortalSheetImg.naturalWidth / WALL_FLIP_SHEET.frameCount;

@@ -18,6 +18,7 @@ export const WALLRUN_JUMP_VY    = -13;   // impulso vertical no salto da parede
 export const WALLFLIP_DURATION = 520;
 export const WALLFLIP_BACK_VX = 5.2;
 export const WALLFLIP_JUMP_VY = -10.8;
+export const WALLCLIMB_DURATION = 720;
 
 export const DIVEJUMP_SPEED = 14;
 export const DIVEJUMP_JUMP_FORCE = -9.5;
