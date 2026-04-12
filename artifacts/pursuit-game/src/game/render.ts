@@ -783,7 +783,8 @@ const WALL_FLIP_SHEET = {
 
 const WALL_CLIMB_SHEET = {
   frameCount: 4,
-  displayH: 210,
+  displayH: 185,
+  displayHHang: 210,
   firstFrameOffsetX: -24,
   offsetY: 24,
 };
@@ -815,12 +816,16 @@ export function drawPlayer(
     const progress = Math.max(0, Math.min(1, 1 - p.wallClimbTimer / WALLCLIMB_DURATION));
     const frame = Math.min(WALL_CLIMB_SHEET.frameCount - 1, Math.floor(progress * WALL_CLIMB_SHEET.frameCount));
     const frameScale = frame === 0 ? 1.25 : 1;
-    const dh = WALL_CLIMB_SHEET.displayH * frameScale;
+    const baseDh = p.isWallHanging ? WALL_CLIMB_SHEET.displayHHang : WALL_CLIMB_SHEET.displayH;
+    const dh = baseDh * frameScale;
     const dw = Math.round(dh * (frameW / frameH));
     const anchorX = px + p.w / 2;
     const anchorY = py + ph + WALL_CLIMB_SHEET.offsetY;
     const firstFrameWallOffset = frame === 0 ? WALL_CLIMB_SHEET.firstFrameOffsetX : 0;
-    const destX = anchorX - dw / 2 + firstFrameWallOffset;
+    const wallSideNudge = p.isWallHanging
+      ? (p.wallClimbSide === 'right' ? 14 : -14)
+      : 0;
+    const destX = anchorX - dw / 2 + firstFrameWallOffset + wallSideNudge;
     const destY = anchorY - dh;
 
     ctx.save();
