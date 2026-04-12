@@ -769,7 +769,7 @@ const DIVE_SHEET = {
 const WALL_RUN_SHEET = {
   frameCount: 4,
   displayH: 150,
-  offsetX: 16,
+  offsetX: -18,
 };
 
 export function drawPlayer(
