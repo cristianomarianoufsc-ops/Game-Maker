@@ -756,7 +756,7 @@ const ROLL_SHEET = {
   frameCount: 4,
   frameW: Math.round(851 / 4),  // ~213px per frame
   frameH: 300,
-  displayH: 180,                 // display height — compact/crouched
+  displayH: 155,                 // display height — compact/crouched
   get displayW() { return Math.round(this.displayH * (this.frameW / this.frameH)); },
 };
 
@@ -971,6 +971,7 @@ export function drawPlayer(
     const destX = anchorX - dw / 2;
     const destY = anchorY - dh;
     ctx.save();
+    ctx.filter = 'saturate(0.35) brightness(1.05)';
     if (!p.facingRight) {
       ctx.translate(anchorX, 0);
       ctx.scale(-1, 1);
@@ -1000,6 +1001,7 @@ export function drawPlayer(
     const destY = anchorY - dh + frameDropY;
 
     ctx.save();
+    ctx.filter = 'saturate(0.35) brightness(1.05)';
     // Flip for left-facing
     if (!p.facingRight) {
       ctx.translate(anchorX, 0);
