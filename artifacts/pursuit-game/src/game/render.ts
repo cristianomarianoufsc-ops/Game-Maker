@@ -772,7 +772,7 @@ const DIVE_SHEET = {
 const WALL_RUN_SHEET = {
   frameCount: 4,
   displayH: 175,
-  offsetX: -18,
+  offsetX: -32,
 };
 
 const WALL_FLIP_SHEET = {
@@ -922,7 +922,7 @@ export function drawPlayer(
     const dh = DIVE_SHEET.displayH;
     const dw = DIVE_SHEET.displayW;
     const anchorX = px + p.w / 2;
-    const anchorY = py + PLAYER_H / 2;
+    const anchorY = py + PLAYER_H / 2 - 30;
     const destX = anchorX - dw / 2;
     const destY = anchorY - dh / 2;
 
@@ -945,9 +945,10 @@ export function drawPlayer(
     ctx.lineWidth = 1.5;
     for (let i = 0; i < 5; i++) {
       const lx = px + (p.facingRight ? -8 - i * 10 : p.w + 8 + i * 10);
+      const trailY = py + PLAYER_H / 2 - 30 - 4 + i * 3;
       ctx.beginPath();
-      ctx.moveTo(lx, py + PLAYER_H / 2 - 4 + i * 3);
-      ctx.lineTo(lx + (p.facingRight ? 6 : -6), py + PLAYER_H / 2 - 4 + i * 3);
+      ctx.moveTo(lx, trailY);
+      ctx.lineTo(lx + (p.facingRight ? 6 : -6), trailY);
       ctx.stroke();
     }
     return;
