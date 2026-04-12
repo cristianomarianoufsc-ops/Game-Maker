@@ -783,7 +783,7 @@ const WALL_FLIP_SHEET = {
 
 const WALL_CLIMB_SHEET = {
   frameCount: 4,
-  displayH: 156,
+  displayH: 185,
   firstFrameOffsetX: -24,
   offsetY: 24,
 };

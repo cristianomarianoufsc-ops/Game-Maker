@@ -182,7 +182,7 @@ export function updatePlayer(
         (wallSide === 'right' && keys.right) ||
         (wallSide === 'left' && keys.left);
       const neutralVerticalClimb = (keys.space || keys.up) && !keys.left && !keys.right;
-      if (canJumpOffWall && neutralVerticalClimb && wallSide) {
+      if (canJumpOffWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide) {
         p.isWallRunning = false;
         p.isWallClimbUp = true;
         p.wallClimbTimer = WALLCLIMB_DURATION;
@@ -205,7 +205,7 @@ export function updatePlayer(
             i % 2 === 0 ? '#d8d0c8' : '#ffcc44',
           );
         }
-      } else if (canJumpOffWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide) {
+      } else if (canJumpOffWall && neutralVerticalClimb && wallSide) {
         p.isWallRunning = false;
         p.isWallFlipping = true;
         p.wallFlipTimer = WALLFLIP_DURATION;
