@@ -7,6 +7,7 @@ import {
   LANDING_ROLL_THRESHOLD, LANDING_ROLL_DURATION, HIT_STUN_DURATION,
   DIVEJUMP_SPEED, DIVEJUMP_JUMP_FORCE,
   WALLRUN_DURATION, WALLRUN_RISE_SPEED, WALLRUN_JUMP_VX, WALLRUN_JUMP_VY,
+  WALLFLIP_BACK_VX, WALLFLIP_DURATION, WALLFLIP_JUMP_VY,
 } from './constants';
 
 function rectOverlap(ax: number, ay: number, aw: number, ah: number,
@@ -97,6 +98,7 @@ export function updatePlayer(
       p.state = p.onGround ? 'idle' : 'fall';
     }
     p.isDivejumping = false;
+    p.isWallFlipping = false;
   }
 
   // Roll timer
@@ -170,14 +172,34 @@ export function updatePlayer(
           Math.random() < 0.5 ? '#ffcc44' : '#ff8822',
         );
       }
-      // Salto da parede — Horácio se lança para o lado oposto
       const canJumpOffWall = p.wallRunTimer < WALLRUN_DURATION - 160;
-      if (canJumpOffWall && (keys.space || keys.up)) {
+      const pressingForwardIntoWall =
+        (wallSide === 'right' && keys.right) ||
+        (wallSide === 'left' && keys.left);
+      if (canJumpOffWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide) {
+        p.isWallRunning = false;
+        p.isWallFlipping = true;
+        p.wallFlipTimer = WALLFLIP_DURATION;
+        p.coyoteTime = 0;
+        p.vy = WALLFLIP_JUMP_VY;
+        p.vx = wallSide === 'right' ? -WALLFLIP_BACK_VX : WALLFLIP_BACK_VX;
+        p.facingRight = wallSide === 'right';
+        p.state = 'wallflip';
+        p.animFrame = 0;
+        p.animTimer = 0;
+        for (let i = 0; i < 12; i++) {
+          spawnParticle(
+            p.x + (wallSide === 'right' ? p.w : 0),
+            p.y + PLAYER_H * 0.55,
+            i % 2 === 0 ? '#ffcc44' : '#ff8822',
+          );
+        }
+      } else if (canJumpOffWall && (keys.space || keys.up) && wallSide) {
         p.isWallRunning = false;
         p.coyoteTime = 0;
         p.vy = WALLRUN_JUMP_VY;
-        p.vx = p.wallSide === 'right' ? -WALLRUN_JUMP_VX : WALLRUN_JUMP_VX;
-        p.facingRight = p.wallSide !== 'right';
+        p.vx = wallSide === 'right' ? -WALLRUN_JUMP_VX : WALLRUN_JUMP_VX;
+        p.facingRight = wallSide !== 'right';
         for (let i = 0; i < 14; i++) {
           spawnParticle(
             p.x + p.w / 2,
@@ -188,6 +210,14 @@ export function updatePlayer(
       }
     }
 
+  } else if (p.isWallFlipping) {
+    p.wallFlipTimer -= dt;
+    p.state = 'wallflip';
+    p.vx *= 0.992;
+    if (p.wallFlipTimer <= 0) {
+      p.wallFlipTimer = 0;
+      p.isWallFlipping = false;
+    }
   } else if (p.state !== 'hurt') {
     // Horizontal movement
     if (p.isDivejumping) {
@@ -284,6 +314,7 @@ export function updatePlayer(
     p.touchingWall &&
     !p.isRolling &&
     !p.isDivejumping &&
+    !p.isWallFlipping &&
     p.state !== 'hurt' &&
     Math.abs(incomingVx) > 3 &&
     ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
@@ -353,6 +384,8 @@ export function updatePlayer(
       p.state = 'climb';
     } else if (p.isWallRunning) {
       p.state = 'wallrun';
+    } else if (p.isWallFlipping) {
+      p.state = 'wallflip';
     } else if (p.isDivejumping) {
       p.state = 'divejump';
     } else if (!p.onGround) {
@@ -387,8 +420,13 @@ export function updatePlayer(
     const landingGroundY = p.y + PLAYER_H;
     const droppedDown = landingGroundY > p.jumpOriginGroundY + 10;
 
-    if (p.isDivejumping && !p.isRolling && p.state !== 'hurt') {
-      // Dive jump always lands in a roll
+    if (p.isWallFlipping && p.state !== 'hurt') {
+      p.isWallFlipping = false;
+      p.wallFlipTimer = 0;
+      for (let i = 0; i < 6; i++) {
+        spawnParticle(p.x + p.w / 2, p.y + PLAYER_H, i % 2 === 0 ? '#606070' : '#404555');
+      }
+    } else if (p.isDivejumping && !p.isRolling && p.state !== 'hurt') {
       p.isDivejumping = false;
       p.isRolling = true;
       p.autoRoll = true;

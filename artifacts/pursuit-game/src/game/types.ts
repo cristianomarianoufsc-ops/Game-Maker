@@ -24,6 +24,7 @@ export type PlayerState =
   | 'divejump'
   | 'climb'
   | 'wallrun'
+  | 'wallflip'
   | 'hurt'
   | 'dead';
 
@@ -62,6 +63,8 @@ export interface Player {
   isDivejumping: boolean;
   isWallRunning: boolean;
   wallRunTimer: number;
+  isWallFlipping: boolean;
+  wallFlipTimer: number;
 }
 
 export interface Bullet {
