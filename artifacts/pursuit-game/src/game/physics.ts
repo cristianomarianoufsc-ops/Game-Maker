@@ -104,6 +104,7 @@ export function updatePlayer(
     p.isDivejumping = false;
     p.isWallFlipping = false;
     p.isWallClimbUp = false;
+    p.isWallHanging = false;
   }
 
   // Roll timer
@@ -240,41 +241,66 @@ export function updatePlayer(
     }
 
   } else if (p.isWallClimbUp) {
-    p.wallClimbTimer -= dt;
-    const t = Math.max(0, Math.min(1, 1 - p.wallClimbTimer / WALLCLIMB_DURATION));
     const side = p.wallClimbSide;
     const wallFaceX = side === 'right' ? p.wallX - p.w : side === 'left' ? p.wallX : p.x;
     const hangY = p.wallTopY - PLAYER_H + 18;
-    const liftY = p.wallClimbStartY - 86;
-    const lerp = (a: number, b: number, n: number) => a + (b - a) * n;
 
-    if (t < 0.38) {
-      const k = t / 0.38;
-      p.x = lerp(p.wallClimbStartX, wallFaceX, k);
-      p.y = lerp(p.wallClimbStartY, liftY, k);
-    } else if (t < 0.7) {
-      const k = (t - 0.38) / 0.32;
+    if (p.isWallHanging) {
+      // Hanging on ledge — wait for player to choose
       p.x = wallFaceX;
-      p.y = lerp(liftY, hangY, k);
-    } else {
-      const k = (t - 0.7) / 0.3;
-      p.x = lerp(wallFaceX, p.wallClimbTargetX, k);
-      p.y = lerp(hangY, p.wallClimbTargetY, k);
-    }
-
-    p.vx = 0;
-    p.vy = 0;
-    p.state = 'wallclimb';
-
-    if (p.wallClimbTimer <= 0) {
-      p.wallClimbTimer = 0;
-      p.isWallClimbUp = false;
-      p.x = p.wallClimbTargetX;
-      p.y = p.wallClimbTargetY;
-      p.vx = side === 'right' ? 2.4 : side === 'left' ? -2.4 : 0;
+      p.y = hangY;
+      p.vx = 0;
       p.vy = 0;
-      p.coyoteTime = 3;
-      p.wallClimbSide = null;
+      p.state = 'wallclimb';
+
+      // Allow new input only after jump is released
+      if (!keys.space && !keys.up) p.wallHangJumpConsumed = false;
+
+      if ((keys.space || keys.up) && !p.wallHangJumpConsumed) {
+        const pressingAway = (side === 'right' && keys.left) || (side === 'left' && keys.right);
+        p.isWallHanging = false;
+        p.isWallClimbUp = false;
+        p.wallClimbSide = null;
+
+        if (pressingAway) {
+          // Back + jump → drop off wall backward
+          p.vx = side === 'right' ? -WALLFLIP_BACK_VX : WALLFLIP_BACK_VX;
+          p.vy = WALLFLIP_JUMP_VY;
+        } else {
+          // Forward + jump (or just jump) → pull up onto wall top
+          p.x = p.wallClimbTargetX;
+          p.y = p.wallClimbTargetY;
+          p.vx = side === 'right' ? 2.4 : -2.4;
+          p.vy = 0;
+          p.coyoteTime = 3;
+        }
+      }
+    } else {
+      // Climb animation
+      p.wallClimbTimer -= dt;
+      const t = Math.max(0, Math.min(1, 1 - p.wallClimbTimer / WALLCLIMB_DURATION));
+      const liftY = p.wallClimbStartY - 86;
+      const lerp = (a: number, b: number, n: number) => a + (b - a) * n;
+
+      if (t < 0.38) {
+        const k = t / 0.38;
+        p.x = lerp(p.wallClimbStartX, wallFaceX, k);
+        p.y = lerp(p.wallClimbStartY, liftY, k);
+      } else if (t < 0.7) {
+        const k = (t - 0.38) / 0.32;
+        p.x = wallFaceX;
+        p.y = lerp(liftY, hangY, k);
+      } else {
+        // Reached hang point — pause and wait for input
+        p.x = wallFaceX;
+        p.y = hangY;
+        p.isWallHanging = true;
+        p.wallHangJumpConsumed = keys.space || keys.up;
+      }
+
+      p.vx = 0;
+      p.vy = 0;
+      p.state = 'wallclimb';
     }
   } else if (p.isWallFlipping) {
     p.wallFlipTimer -= dt;

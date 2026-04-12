@@ -69,6 +69,8 @@ function makePlayer(): Player {
     wallClimbTargetX: 0,
     wallClimbTargetY: 0,
     wallClimbSide: null,
+    isWallHanging: false,
+    wallHangJumpConsumed: false,
   };
 }
 

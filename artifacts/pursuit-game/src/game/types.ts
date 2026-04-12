@@ -74,6 +74,8 @@ export interface Player {
   wallClimbTargetX: number;
   wallClimbTargetY: number;
   wallClimbSide: 'left' | 'right' | null;
+  isWallHanging: boolean;
+  wallHangJumpConsumed: boolean;
 }
 
 export interface Bullet {
