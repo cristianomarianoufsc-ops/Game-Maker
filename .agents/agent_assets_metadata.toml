@@ -1,0 +1,13 @@
+uploads = []
+
+[[generated]]
+id = "ySzlRfPd02YKG1wF3p8wq"
+uri = "file://attached_assets/generated_images/horacio_top_wall_climb_preview.png"
+type = "image"
+title = "generated_image"
+
+[[outputs]]
+id = "fv-5YwWKK3Hh93bBECiuY"
+uri = "file://attached_assets/generated_images/horacio_top_wall_climb_preview.png"
+type = "image"
+title = "Prévia — Horácio segurando no topo do muro"
