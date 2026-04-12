@@ -243,7 +243,7 @@ export function updatePlayer(
   } else if (p.isWallClimbUp) {
     const side = p.wallClimbSide;
     const wallFaceX = side === 'right' ? p.wallX - p.w : side === 'left' ? p.wallX : p.x;
-    const hangY = p.wallTopY - PLAYER_H + 18;
+    const hangY = p.wallTopY + 18;
 
     if (p.isWallHanging) {
       // Hanging on ledge — wait for player to choose
