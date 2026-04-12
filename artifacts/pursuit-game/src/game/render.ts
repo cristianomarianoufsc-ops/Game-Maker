@@ -777,7 +777,7 @@ const WALL_RUN_SHEET = {
 
 const WALL_FLIP_SHEET = {
   frameCount: 5,
-  displayH: 132,
+  displayH: 180,
   offsetY: 18,
 };
 
