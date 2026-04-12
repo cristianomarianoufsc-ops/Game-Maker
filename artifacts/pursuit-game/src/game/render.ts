@@ -784,6 +784,7 @@ const WALL_FLIP_SHEET = {
 const WALL_CLIMB_SHEET = {
   frameCount: 4,
   displayH: 156,
+  firstFrameOffsetX: -24,
   offsetY: 24,
 };
 
@@ -818,13 +819,7 @@ export function drawPlayer(
     const dw = Math.round(dh * (frameW / frameH));
     const anchorX = px + p.w / 2;
     const anchorY = py + ph + WALL_CLIMB_SHEET.offsetY;
-    const firstFrameWallOffset = frame === 0
-      ? p.wallClimbSide === 'right'
-        ? -24
-        : p.wallClimbSide === 'left'
-          ? 34
-          : 0
-      : 0;
+    const firstFrameWallOffset = frame === 0 ? WALL_CLIMB_SHEET.firstFrameOffsetX : 0;
     const destX = anchorX - dw / 2 + firstFrameWallOffset;
     const destY = anchorY - dh;
 
