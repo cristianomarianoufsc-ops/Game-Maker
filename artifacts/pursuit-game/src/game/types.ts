@@ -114,6 +114,7 @@ export interface GameState {
   camera: Camera;
   platforms: Platform[];
   gamePhase: 'menu' | 'playing' | 'gameover' | 'victory';
+  gameMode: 'story' | 'wall-test';
   score: number;
   time: number;
   particles: Particle[];

@@ -10,7 +10,7 @@ import {
   CANVAS_W, CANVAS_H, GROUND_Y, PLAYER_W, PLAYER_H, DRONE_W, DRONE_H,
   PLAYER_MAX_HEALTH, SHOOT_COOLDOWN, CAMERA_LEAD_X, COLORS,
 } from './constants';
-import { generateLevel, generateBuildings } from './level';
+import { generateLevel, generateBuildings, generateWallTestLevel } from './level';
 import {
   updatePlayer, updateDrone, updateBullets, updateParticles, spawnParticleHelper,
 } from './physics';
@@ -119,6 +119,7 @@ export default function Game() {
   const gsRef = useRef<GameState | null>(null);
   const keysRef = useRef<Keys>({ left: false, right: false, up: false, down: false, space: false, shift: false, z: false, dive: false });
   const spaceJustPressed = useRef(false);
+  const testJustPressed = useRef(false);
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
   const buildingsRef = useRef(generateBuildings());
@@ -139,22 +140,23 @@ export default function Game() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const makeInitialState = useCallback((): GameState => ({
+  const makeInitialState = useCallback((gameMode: GameState['gameMode'] = 'story'): GameState => ({
     player: makePlayer(),
     drone: makeDrone(),
     bullets: [],
     camera: { x: 0, y: 0 },
-    platforms: platformsRef.current,
+    platforms: gameMode === 'wall-test' ? generateWallTestLevel() : platformsRef.current,
     gamePhase: 'menu',
+    gameMode,
     score: 0,
     time: 0,
     particles: [],
     screenShake: 0,
   }), []);
 
-  const resetGame = useCallback(() => {
+  const resetGame = useCallback((gameMode: GameState['gameMode'] = 'story') => {
     gsRef.current = {
-      ...makeInitialState(),
+      ...makeInitialState(gameMode),
       gamePhase: 'playing',
     };
   }, [makeInitialState]);
@@ -204,6 +206,9 @@ export default function Game() {
           break;
         case 'ShiftLeft': case 'ShiftRight': k.shift = down; break;
         case 'KeyZ': k.z = down; break;
+        case 'KeyT':
+          if (down) testJustPressed.current = true;
+          break;
       }
       // Prevent scroll on space/arrows
       if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code)) {
@@ -229,8 +234,12 @@ export default function Game() {
 
       // --- Update ---
       if (gs.gamePhase === 'menu') {
-        if (spaceJustPressed.current) {
-          resetGame();
+        if (testJustPressed.current) {
+          resetGame('wall-test');
+          testJustPressed.current = false;
+          spaceJustPressed.current = false;
+        } else if (spaceJustPressed.current) {
+          resetGame('story');
           spaceJustPressed.current = false;
         }
       } else if (gs.gamePhase === 'playing') {
@@ -247,13 +256,15 @@ export default function Game() {
         gs.camera.x += (targetCamX - gs.camera.x) * 0.1;
         if (gs.camera.x < 0) gs.camera.x = 0;
 
-        const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP);
-        if (shakeAmount > 0) gs.screenShake = shakeAmount;
+        if (gs.gameMode !== 'wall-test') {
+          const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP);
+          if (shakeAmount > 0) gs.screenShake = shakeAmount;
 
-        gs.bullets = updateBullets(gs.bullets, gs.player, gs.platforms, dt, () => {
-          gs.screenShake = 6;
-          for (let i = 0; i < 8; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
-        });
+          gs.bullets = updateBullets(gs.bullets, gs.player, gs.platforms, dt, () => {
+            gs.screenShake = 6;
+            for (let i = 0; i < 8; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
+          });
+        }
 
         gs.particles = updateParticles(gs.particles, dt);
 
@@ -265,8 +276,12 @@ export default function Game() {
 
         spaceJustPressed.current = false;
       } else if (gs.gamePhase === 'gameover') {
-        if (spaceJustPressed.current) {
-          resetGame();
+        if (testJustPressed.current) {
+          resetGame('wall-test');
+          testJustPressed.current = false;
+          spaceJustPressed.current = false;
+        } else if (spaceJustPressed.current) {
+          resetGame(gs.gameMode);
           spaceJustPressed.current = false;
         }
       }
@@ -342,8 +357,10 @@ export default function Game() {
       drawPlatforms(ctx, gs.platforms, gs.camera.x);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current);
-      drawDrone(ctx, gs);
-      drawBullets(ctx, gs);
+      if (gs.gameMode !== 'wall-test') {
+        drawDrone(ctx, gs);
+        drawBullets(ctx, gs);
+      }
 
       ctx.restore(); // end shake
 

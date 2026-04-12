@@ -937,10 +937,7 @@ export function drawPlayer(
     let scaleX  = 1;
     let scaleY  = 1;
 
-    if (p.state === 'wallrun') {
-      // Rotaciona 90° para mostrar Horácio correndo pela parede lateralmente
-      leanRad = p.wallSide === 'right' ? -Math.PI / 2 : Math.PI / 2;
-    } else if (p.state === 'jump') {
+    if (p.state === 'jump') {
       leanRad = (p.facingRight ? -1 : 1) * 0.08;
       scaleY = 1.04; scaleX = 0.97;
     } else if (p.state === 'fall') {
@@ -1309,8 +1306,16 @@ export function drawHUD(
   ctx.fillText(`${String(Math.floor(secs / 60)).padStart(2,'0')}:${String(secs % 60).padStart(2,'0')}`, CANVAS_W / 2, 29);
   ctx.textAlign = 'left';
 
+  if (gs.gameMode === 'wall-test') {
+    ctx.fillStyle = 'rgba(0,200,255,0.82)';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('ÁREA DE TESTE: PULE NA SUBIDA PARA CORRER NA PAREDE', CANVAS_W / 2, CANVAS_H - 20);
+    ctx.textAlign = 'left';
+  }
+
   // Drone warning (when close)
-  if (gs.drone && gs.player.x - gs.drone.x < 350) {
+  if (gs.gameMode !== 'wall-test' && gs.drone && gs.player.x - gs.drone.x < 350) {
     const alpha = 0.4 + Math.sin(Date.now() * 0.008) * 0.3;
     ctx.fillStyle = `rgba(255,40,40,${alpha})`;
     ctx.font = 'bold 11px monospace';
@@ -1328,7 +1333,7 @@ export function drawControls(ctx: CanvasRenderingContext2D): void {
   ctx.strokeRect(10, CANVAS_H - 70, 340, 60);
   ctx.fillStyle = COLORS.uiText;
   ctx.font = '10px monospace';
-  ctx.fillText('←→ CORRER  |  SPACE/↑ PULAR  |  ↑+PAREDE ESCALAR', 18, CANVAS_H - 52);
+  ctx.fillText('←→ CORRER  |  SPACE/↑ PULAR  |  PULO SUBINDO + PAREDE = WALL RUN', 18, CANVAS_H - 52);
   ctx.fillText('SHIFT/Z ROLAR  |  ↓+SPACE (correndo) MERGULHO', 18, CANVAS_H - 37);
   ctx.fillStyle = 'rgba(150,140,180,0.6)';
   ctx.fillText('[controles]', 18, CANVAS_H - 22);
@@ -1397,13 +1402,13 @@ export function drawMenuScreen(ctx: CanvasRenderingContext2D): void {
 
   ctx.fillStyle = 'rgba(160,155,180,0.7)';
   ctx.font = '11px monospace';
-  ctx.fillText('← → CORRER  |  ESPAÇO / ↑ PULAR  |  ↑ PAREDE ESCALAR', CANVAS_W / 2, CANVAS_H / 2 + 28);
+  ctx.fillText('← → CORRER  |  ESPAÇO / ↑ PULAR  |  PULE SUBINDO NA PAREDE', CANVAS_W / 2, CANVAS_H / 2 + 28);
   ctx.fillText('SHIFT/Z ROLAR  |  ↓+ESPAÇO (correndo)  MERGULHO', CANVAS_W / 2, CANVAS_H / 2 + 45);
 
   ctx.fillStyle = 'rgba(0,200,255,0.7)';
   ctx.font = 'bold 16px monospace';
   const blink = Math.floor(Date.now() / 500) % 2 === 0;
-  if (blink) ctx.fillText('[ PRESSIONE ESPAÇO PARA CORRER ]', CANVAS_W / 2, CANVAS_H / 2 + 88);
+  if (blink) ctx.fillText('[ ESPAÇO: HISTÓRIA  |  T: TESTE DE PAREDE ]', CANVAS_W / 2, CANVAS_H / 2 + 88);
 
   ctx.textAlign = 'left';
 }

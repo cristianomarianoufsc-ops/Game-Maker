@@ -267,6 +267,13 @@ export function generateLevel(): Platform[] {
   return platforms;
 }
 
+export function generateWallTestLevel(): Platform[] {
+  return [
+    { x: -400, y: GROUND_Y, w: 2600, h: GH, type: 'ground' },
+    { x: 760, y: GROUND_Y - 280, w: 20, h: 280, type: 'wall', climbable: true },
+  ];
+}
+
 export interface BuildingDef {
   x: number;
   y: number;
