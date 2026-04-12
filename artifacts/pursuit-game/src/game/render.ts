@@ -813,7 +813,8 @@ export function drawPlayer(
     const frameH = subidaSheetImg.naturalHeight;
     const progress = Math.max(0, Math.min(1, 1 - p.wallClimbTimer / WALLCLIMB_DURATION));
     const frame = Math.min(WALL_CLIMB_SHEET.frameCount - 1, Math.floor(progress * WALL_CLIMB_SHEET.frameCount));
-    const dh = WALL_CLIMB_SHEET.displayH;
+    const frameScale = frame === 0 ? 2 : 1;
+    const dh = WALL_CLIMB_SHEET.displayH * frameScale;
     const dw = Math.round(dh * (frameW / frameH));
     const anchorX = px + p.w / 2;
     const anchorY = py + ph + WALL_CLIMB_SHEET.offsetY;
