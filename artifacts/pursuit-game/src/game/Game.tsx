@@ -181,6 +181,9 @@ export default function Game() {
   const keysRef = useRef<Keys>({ left: false, right: false, up: false, down: false, space: false, shift: false, z: false, dive: false });
   const spaceJustPressed = useRef(false);
   const testJustPressed = useRef(false);
+  const lastJumpPressTime = useRef(0);
+  const lastDownPressTime = useRef(0);
+  const DIVE_COMBO_WINDOW = 150;
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
   const buildingsRef = useRef(generateBuildings());
@@ -280,11 +283,20 @@ export default function Game() {
       switch (e.code) {
         case 'ArrowLeft':  case 'KeyA': k.left  = down; break;
         case 'ArrowRight': case 'KeyD': k.right = down; break;
-        case 'ArrowUp':   case 'KeyW': k.up    = down; break;
-        case 'ArrowDown': case 'KeyS': k.down  = down; break;
+        case 'ArrowUp':   case 'KeyW':
+          k.up = down;
+          if (down) lastJumpPressTime.current = performance.now();
+          break;
+        case 'ArrowDown': case 'KeyS':
+          k.down = down;
+          if (down) lastDownPressTime.current = performance.now();
+          break;
         case 'Space':
           k.space = down;
-          if (down) spaceJustPressed.current = true;
+          if (down) {
+            spaceJustPressed.current = true;
+            lastJumpPressTime.current = performance.now();
+          }
           break;
         case 'ShiftLeft': case 'ShiftRight': k.shift = down; break;
         case 'KeyZ': k.z = down; break;
@@ -331,7 +343,13 @@ export default function Game() {
         const spawnP = (x: number, y: number, color: string) =>
           spawnParticleHelper(gs.particles, x, y, color);
 
-        updatePlayer(gs.player, keys, gs.platforms, dt, spawnP);
+        const now = performance.now();
+        const windowDive =
+          (keys.down && (now - lastJumpPressTime.current) < DIVE_COMBO_WINDOW) ||
+          ((keys.space || keys.up) && (now - lastDownPressTime.current) < DIVE_COMBO_WINDOW);
+        const effectiveKeys = windowDive ? { ...keys, dive: true } : keys;
+
+        updatePlayer(gs.player, effectiveKeys, gs.platforms, dt, spawnP);
 
         // Camera follows player
         const targetCamX = gs.player.x - CANVAS_W * CAMERA_LEAD_X;
