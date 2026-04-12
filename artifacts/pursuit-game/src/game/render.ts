@@ -822,13 +822,17 @@ export function drawPlayer(
     const anchorX = px + p.w / 2;
     const anchorY = py + ph + WALL_CLIMB_SHEET.offsetY;
     const firstFrameWallOffset = frame === 0 ? WALL_CLIMB_SHEET.firstFrameOffsetX : 0;
-    const wallSideNudge = p.isWallHanging
-      ? (p.wallClimbSide === 'right' ? 14 : -14)
-      : 0;
+    const wallSideNudge = p.isWallHanging ? 14 : 0;
     const destX = anchorX - dw / 2 + firstFrameWallOffset + wallSideNudge;
     const destY = anchorY - dh;
 
     ctx.save();
+    // For frame 0 (arms stretched up), clip below wall top so sprite never exceeds the ledge
+    if (frame === 0 && !p.isWallHanging) {
+      ctx.beginPath();
+      ctx.rect(-99999, p.wallTopY, 199999, 99999);
+      ctx.clip();
+    }
     if (!p.facingRight) {
       ctx.translate(anchorX, 0);
       ctx.scale(-1, 1);
