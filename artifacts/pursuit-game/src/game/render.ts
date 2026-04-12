@@ -805,7 +805,7 @@ export function drawPlayer(
     const destY = anchorY - dh;
 
     ctx.save();
-    const shouldFlip = p.wallSide === 'right';
+    const shouldFlip = p.wallSide === 'left';
     if (shouldFlip) {
       ctx.translate(anchorX, 0);
       ctx.scale(-1, 1);
