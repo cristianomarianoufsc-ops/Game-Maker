@@ -771,7 +771,7 @@ const DIVE_SHEET = {
 
 const WALL_RUN_SHEET = {
   frameCount: 4,
-  displayH: 150,
+  displayH: 175,
   offsetX: -18,
 };
 

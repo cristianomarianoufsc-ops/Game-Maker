@@ -183,7 +183,7 @@ export default function Game() {
   const testJustPressed = useRef(false);
   const lastJumpPressTime = useRef(0);
   const lastDownPressTime = useRef(0);
-  const DIVE_COMBO_WINDOW = 150;
+  const DIVE_COMBO_WINDOW = 220;
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
   const buildingsRef = useRef(generateBuildings());
