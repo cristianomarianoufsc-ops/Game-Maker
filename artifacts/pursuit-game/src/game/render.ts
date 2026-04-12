@@ -766,6 +766,11 @@ const DIVE_SHEET = {
   frameSrcX: [0, DIVE_FRAME_W, DIVE_FRAME_W * 2] as const,
 };
 
+const WALL_RUN_SHEET = {
+  frameCount: 4,
+  displayH: 150,
+};
+
 export function drawPlayer(
   ctx: CanvasRenderingContext2D,
   gs: GameState,
@@ -775,6 +780,7 @@ export function drawPlayer(
   rollSheetImg: HTMLImageElement | null = null,
   jumpSheetImg: HTMLImageElement | null = null,
   diveSheetImg: HTMLImageElement | null = null,
+  wallRunSheetImg: HTMLImageElement | null = null,
 ): void {
   const p = gs.player;
   const px = p.x - gs.camera.x;
@@ -783,6 +789,33 @@ export function drawPlayer(
 
   // Blink when invincible
   if (p.invincible && Math.floor(gs.time / 80) % 2 === 0) return;
+
+  if (p.state === 'wallrun' && wallRunSheetImg && wallRunSheetImg.complete && wallRunSheetImg.naturalWidth > 0) {
+    const frameW = wallRunSheetImg.naturalWidth / WALL_RUN_SHEET.frameCount;
+    const frameH = wallRunSheetImg.naturalHeight;
+    const frame = p.animFrame % WALL_RUN_SHEET.frameCount;
+    const dh = WALL_RUN_SHEET.displayH;
+    const dw = Math.round(dh * (frameW / frameH));
+    const anchorX = px + p.w / 2;
+    const anchorY = py + ph + 22;
+    const destX = anchorX - dw / 2;
+    const destY = anchorY - dh;
+
+    ctx.save();
+    const shouldFlip = p.wallSide === 'right';
+    if (shouldFlip) {
+      ctx.translate(anchorX, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-anchorX, 0);
+    }
+    ctx.drawImage(
+      wallRunSheetImg,
+      frame * frameW, 0, frameW, frameH,
+      destX, destY, dw, dh,
+    );
+    ctx.restore();
+    return;
+  }
 
   // Dive jump animation
   if (p.state === 'divejump' && diveSheetImg && diveSheetImg.complete && diveSheetImg.naturalWidth > 0) {

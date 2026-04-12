@@ -6,6 +6,7 @@ import idleUrl from '/idle_transparent.png';
 import rollSheetUrl from '/roll_sheet.png';
 import jumpSheetUrl from '/jump_sheet.png';
 import diveJumpSheetUrl from '/dive_jump_sheet.png';
+import wallRunSheetUrl from '@assets/Wall_Run_1776005817769.png';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, PLAYER_W, PLAYER_H, DRONE_W, DRONE_H,
   PLAYER_MAX_HEALTH, SHOOT_COOLDOWN, CAMERA_LEAD_X, COLORS,
@@ -108,6 +109,27 @@ function stripWhiteBackground(src: HTMLImageElement): HTMLImageElement {
   return out;
 }
 
+function stripBlackBackground(src: HTMLImageElement): HTMLImageElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = src.naturalWidth;
+  canvas.height = src.naturalHeight;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(src, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const px = imageData.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const r = px[i], g = px[i + 1], b = px[i + 2];
+    const brightness = r * 0.299 + g * 0.587 + b * 0.114;
+    if (brightness < 32) {
+      px[i + 3] = Math.round((brightness / 32) * px[i + 3]);
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+  const out = new Image();
+  out.src = canvas.toDataURL('image/png');
+  return out;
+}
+
 function getScale() {
   const scaleX = window.innerWidth / CANVAS_W;
   const scaleY = (window.innerHeight - CONTROLS_H) / CANVAS_H;
@@ -131,6 +153,7 @@ export default function Game() {
   const rollSheetImgRef = useRef<HTMLImageElement | null>(null);
   const jumpSheetImgRef = useRef<HTMLImageElement | null>(null);
   const diveSheetImgRef = useRef<HTMLImageElement | null>(null);
+  const wallRunSheetImgRef = useRef<HTMLImageElement | null>(null);
 
   // Responsive scale: fit canvas inside available viewport
   const [scale, setScale] = useState(getScale);
@@ -192,6 +215,12 @@ export default function Game() {
       diveSheetImgRef.current = stripWhiteBackground(diveImg);
     };
     diveImg.src = diveJumpSheetUrl;
+
+    const wallRunImg = new Image();
+    wallRunImg.onload = () => {
+      wallRunSheetImgRef.current = stripBlackBackground(wallRunImg);
+    };
+    wallRunImg.src = wallRunSheetUrl;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       const k = keysRef.current;
@@ -356,7 +385,7 @@ export default function Game() {
 
       drawPlatforms(ctx, gs.platforms, gs.camera.x);
       drawParticles(ctx, gs);
-      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current);
+      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current);
       if (gs.gameMode !== 'wall-test') {
         drawDrone(ctx, gs);
         drawBullets(ctx, gs);
