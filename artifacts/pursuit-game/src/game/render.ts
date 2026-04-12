@@ -820,9 +820,9 @@ export function drawPlayer(
     const anchorY = py + ph + WALL_CLIMB_SHEET.offsetY;
     const firstFrameWallOffset = frame === 0
       ? p.wallClimbSide === 'right'
-        ? -12
+        ? -24
         : p.wallClimbSide === 'left'
-          ? 12
+          ? 34
           : 0
       : 0;
     const destX = anchorX - dw / 2 + firstFrameWallOffset;
