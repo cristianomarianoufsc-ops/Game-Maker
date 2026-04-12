@@ -769,6 +769,7 @@ const DIVE_SHEET = {
 const WALL_RUN_SHEET = {
   frameCount: 4,
   displayH: 150,
+  offsetX: 16,
 };
 
 export function drawPlayer(
@@ -801,7 +802,7 @@ export function drawPlayer(
     const dw = Math.round(dh * (frameW / frameH));
     const anchorX = px + p.w / 2;
     const anchorY = py + ph + 22;
-    const destX = anchorX - dw / 2;
+    const destX = anchorX - dw / 2 + WALL_RUN_SHEET.offsetX;
     const destY = anchorY - dh;
 
     ctx.save();
