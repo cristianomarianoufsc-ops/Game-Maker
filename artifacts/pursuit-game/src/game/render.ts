@@ -782,7 +782,7 @@ const WALL_FLIP_SHEET = {
 };
 
 const WALL_CLIMB_SHEET = {
-  frameCount: 3,
+  frameCount: 4,
   displayH: 185,
   displayHHang: 210,
   firstFrameOffsetX: -38,
@@ -814,7 +814,7 @@ export function drawPlayer(
     const frameW = subidaSheetImg.naturalWidth / WALL_CLIMB_SHEET.frameCount;
     const frameH = subidaSheetImg.naturalHeight;
     const progress = Math.max(0, Math.min(1, 1 - p.wallClimbTimer / WALLCLIMB_DURATION));
-    const frame = Math.min(WALL_CLIMB_SHEET.frameCount - 1, Math.floor(progress * WALL_CLIMB_SHEET.frameCount));
+    const frame = Math.min(WALL_CLIMB_SHEET.frameCount - 2, Math.floor(progress * (WALL_CLIMB_SHEET.frameCount - 1)));
     const frameScale = frame === 0 ? 1.05 : 1;
     const baseDh = p.isWallHanging ? WALL_CLIMB_SHEET.displayHHang : WALL_CLIMB_SHEET.displayH;
     const dh = baseDh * frameScale;
