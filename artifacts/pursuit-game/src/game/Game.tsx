@@ -71,6 +71,7 @@ function makePlayer(): Player {
     wallClimbSide: null,
     isWallHanging: false,
     wallHangJumpConsumed: false,
+    jumpedFromWall: false,
   };
 }
 

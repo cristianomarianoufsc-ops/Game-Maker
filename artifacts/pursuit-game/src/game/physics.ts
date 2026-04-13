@@ -266,6 +266,7 @@ export function updatePlayer(
           // Back + jump → drop off wall backward
           p.vx = side === 'right' ? -WALLFLIP_BACK_VX : WALLFLIP_BACK_VX;
           p.vy = WALLFLIP_JUMP_VY;
+          p.jumpedFromWall = true;
         } else {
           // Forward + jump (or just jump) → pull up onto wall top
           p.x = p.wallClimbTargetX;
@@ -522,8 +523,25 @@ export function updatePlayer(
     if (p.isWallFlipping && p.state !== 'hurt') {
       p.isWallFlipping = false;
       p.wallFlipTimer = 0;
-      for (let i = 0; i < 6; i++) {
-        spawnParticle(p.x + p.w / 2, p.y + PLAYER_H, i % 2 === 0 ? '#606070' : '#404555');
+      // Auto-roll on landing from wall climb + jump
+      p.isRolling = true;
+      p.autoRoll = true;
+      p.rollTimer = LANDING_ROLL_DURATION;
+      p.landingRollFrame = 0;
+      p.state = 'roll';
+      for (let i = 0; i < 10; i++) {
+        spawnParticle(p.x + p.w / 2, p.y + PLAYER_ROLL_H, i % 2 === 0 ? '#606070' : '#404555');
+      }
+    } else if (p.jumpedFromWall && !p.isRolling && p.state !== 'hurt') {
+      // Back-jump from wall hang — always auto-roll on landing
+      p.jumpedFromWall = false;
+      p.isRolling = true;
+      p.autoRoll = true;
+      p.rollTimer = LANDING_ROLL_DURATION;
+      p.landingRollFrame = 0;
+      p.state = 'roll';
+      for (let i = 0; i < 10; i++) {
+        spawnParticle(p.x + p.w / 2, p.y + PLAYER_ROLL_H, i % 2 === 0 ? '#606070' : '#404555');
       }
     } else if (p.isDivejumping && !p.isRolling && p.state !== 'hurt') {
       p.isDivejumping = false;
@@ -554,6 +572,7 @@ export function updatePlayer(
       }
     } else {
       // Normal landing dust
+      p.jumpedFromWall = false;
       for (let i = 0; i < 5; i++) {
         spawnParticle(p.x + p.w / 2, p.y + (p.isRolling ? PLAYER_ROLL_H : PLAYER_H), '#606070');
       }
