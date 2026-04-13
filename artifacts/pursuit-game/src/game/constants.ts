@@ -22,6 +22,7 @@ export const WALLCLIMB_DURATION = 720;
 
 export const SIDEFLIP_DURATION = 640; // ms, ~8 frames at 80ms each
 export const SIDEFLIP_FRAME_COUNT = 8;
+export const SIDEFLIP_BOOST = -3.5; // small upward impulse on double-jump to compensate sprite fall delay
 
 export const DIVEJUMP_SPEED = 14;
 export const DIVEJUMP_JUMP_FORCE = -9.5;

@@ -82,6 +82,7 @@ export interface Player {
   doubleJumpReady: boolean;
   isSideFlipping: boolean;
   sideFlipTimer: number;
+  sideFlipImmune: boolean;
 }
 
 export interface Bullet {

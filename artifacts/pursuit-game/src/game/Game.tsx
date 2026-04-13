@@ -78,6 +78,7 @@ function makePlayer(): Player {
     doubleJumpReady: false,
     isSideFlipping: false,
     sideFlipTimer: 0,
+    sideFlipImmune: false,
   };
 }
 

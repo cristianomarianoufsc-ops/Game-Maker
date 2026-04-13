@@ -8,7 +8,7 @@ import {
   DIVEJUMP_SPEED, DIVEJUMP_JUMP_FORCE,
   WALLRUN_DURATION, WALLRUN_RISE_SPEED, WALLRUN_JUMP_VX, WALLRUN_JUMP_VY,
   WALLCLIMB_DURATION, WALLFLIP_BACK_VX, WALLFLIP_DURATION, WALLFLIP_JUMP_VY,
-  SIDEFLIP_DURATION,
+  SIDEFLIP_DURATION, SIDEFLIP_BOOST,
 } from './constants';
 
 function rectOverlap(ax: number, ay: number, aw: number, ah: number,
@@ -394,8 +394,10 @@ export function updatePlayer(
     ) {
       p.isSideFlipping = true;
       p.sideFlipTimer = SIDEFLIP_DURATION;
+      p.sideFlipImmune = true;
       p.jumpCount = 2;
       p.doubleJumpReady = false;
+      p.vy += SIDEFLIP_BOOST;
     }
 
     // Wall climb initiate
@@ -627,6 +629,7 @@ export function updatePlayer(
     p.jumpOriginGroundY = p.y + PLAYER_H;
     p.jumpCount = 0;
     p.doubleJumpReady = false;
+    p.sideFlipImmune = false;
     if (p.isSideFlipping) {
       p.isSideFlipping = false;
       p.sideFlipTimer = 0;
@@ -739,7 +742,7 @@ export function updateBullets(
     if (hitPlatform) continue;
 
     // Hit player (immune during side flip)
-    if (!player.invincible && !player.isSideFlipping && player.state !== 'dead') {
+    if (!player.invincible && !player.sideFlipImmune && player.state !== 'dead') {
       if (rectOverlap(b.x - 4, b.y - 4, 8, 8, player.x, player.y, player.w, ph)) {
         player.health--;
         player.invincible = true;
