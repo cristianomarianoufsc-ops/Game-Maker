@@ -24,6 +24,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Movimento recente: sideflip/segundo pulo atualizado para `@assets/SIDE_FLIP_1776053462942.png`, com animação em 5 quadros, sprite ampliado e trilha curta de partículas azuladas.
 - Movimento recente: mergulho ficou mais tolerante; pulo+baixo/baixo+pulo agora têm janela de 420ms, e um pulo inicial ainda pode virar mergulho se o baixo entrar logo depois.
 - Ajuste recente: mergulho não pode mais ser convertido depois que o pulo normal já saiu no ar; continua aceitando a janela enquanto há chão/coyote time. A câmera agora acompanha verticalmente quando Horácio sobe acima da tela.
+- Ajuste recente: drone agora usa velocidade fixa igual à perseguição base inicial (`DRONE_BASE_SPEED`), sem aceleração extra de catch-up quando Horácio abre distância.
 
 ## Key Commands
 

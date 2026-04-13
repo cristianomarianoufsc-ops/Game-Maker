@@ -656,8 +656,7 @@ export function updateDrone(
   const dy = targetY - drone.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
 
-  // Speed up aggressively if far, maintain close pursuit when near
-  const speed = Math.min(DRONE_BASE_SPEED + (dist > 150 ? (dist - 150) * 0.03 : 0), 12);
+  const speed = DRONE_BASE_SPEED;
 
   if (dist > 2) {
     drone.vx += (dx / dist) * speed * 0.25;
