@@ -821,24 +821,38 @@ export function drawPlayer(
     // Inset 1px on each side to avoid sub-pixel bleeding between adjacent frames
     const srcX = frame * frameW + 1;
     const srcW = frameW - 2;
-    const displayH = 155;
+    const displayH = 185;
     const displayW = Math.round(displayH * (srcW / frameH));
     const anchorX = px + p.w / 2;
     const anchorY = py + PLAYER_H / 2 - 8;
     const destX = anchorX - displayW / 2;
     const destY = anchorY - displayH / 2;
 
-    // Blue dodge afterimage trail
-    if (progress < 0.85) {
-      const trailAlpha = 0.22 * (1 - progress);
+    if (progress < 0.9) {
       ctx.save();
-      ctx.globalAlpha = trailAlpha;
-      ctx.filter = 'hue-rotate(200deg) brightness(1.4)';
-      ctx.drawImage(
-        sideFlipSheetImg,
-        srcX, 0, srcW, frameH,
-        destX + (p.facingRight ? -12 : 12), destY, displayW, displayH,
-      );
+      if (!p.facingRight) {
+        ctx.translate(anchorX, 0);
+        ctx.scale(-1, 1);
+        ctx.translate(-anchorX, 0);
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.filter = 'brightness(1.7) saturate(1.9) hue-rotate(190deg) blur(1px)';
+      for (let i = 0; i < 3; i++) {
+        const fade = 1 - progress;
+        const offset = (i + 1) * 13;
+        const scale = 1 + i * 0.035;
+        const rw = displayW * scale;
+        const rh = displayH * scale;
+        ctx.globalAlpha = fade * (0.18 - i * 0.045);
+        ctx.drawImage(
+          sideFlipSheetImg,
+          srcX, 0, srcW, frameH,
+          destX - offset - (rw - displayW) / 2,
+          destY - (rh - displayH) / 2,
+          rw,
+          rh,
+        );
+      }
       ctx.restore();
     }
 

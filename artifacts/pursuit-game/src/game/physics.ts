@@ -319,15 +319,6 @@ export function updatePlayer(
     p.sideFlipTimer -= dt;
     p.state = 'sideflip';
     p.vx *= 0.985;
-    if (Math.random() < 0.8) {
-      const trailX = p.x + p.w / 2 - (p.facingRight ? 18 : -18);
-      const trailY = p.y + PLAYER_H * (0.34 + Math.random() * 0.28);
-      spawnParticle(
-        trailX,
-        trailY,
-        Math.random() < 0.5 ? '#b8d8ff' : '#6f9dff',
-      );
-    }
     if (p.sideFlipTimer <= 0 || p.onGround) {
       p.isSideFlipping = false;
       p.sideFlipTimer = 0;
@@ -404,13 +395,6 @@ export function updatePlayer(
       p.sideFlipTimer = SIDEFLIP_DURATION;
       p.jumpCount = 2;
       p.doubleJumpReady = false;
-      for (let i = 0; i < 14; i++) {
-        spawnParticle(
-          p.x + p.w / 2,
-          p.y + PLAYER_H / 2,
-          i % 3 === 0 ? '#d8ecff' : i % 2 === 0 ? '#88aaff' : '#6688cc',
-        );
-      }
     }
 
     // Wall climb initiate
