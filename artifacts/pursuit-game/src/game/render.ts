@@ -801,6 +801,7 @@ export function drawPlayer(
   wallRunSheetImg: HTMLImageElement | null = null,
   mortalSheetImg: HTMLImageElement | null = null,
   subidaSheetImg: HTMLImageElement | null = null,
+  sideFlipSheetImg: HTMLImageElement | null = null,
 ): void {
   const p = gs.player;
   const px = p.x - gs.camera.x;
@@ -809,6 +810,47 @@ export function drawPlayer(
 
   // Blink when invincible
   if (p.invincible && Math.floor(gs.time / 80) % 2 === 0) return;
+
+  // Side flip animation
+  if (p.isSideFlipping && sideFlipSheetImg && sideFlipSheetImg.complete && sideFlipSheetImg.naturalWidth > 0) {
+    const FRAME_COUNT = 8;
+    const frameW = sideFlipSheetImg.naturalWidth / FRAME_COUNT;
+    const frameH = sideFlipSheetImg.naturalHeight;
+    const progress = Math.max(0, Math.min(1, 1 - p.sideFlipTimer / 640));
+    const frame = Math.min(FRAME_COUNT - 1, Math.floor(progress * FRAME_COUNT));
+    const displayH = 115;
+    const displayW = Math.round(displayH * (frameW / frameH));
+    const anchorX = px + p.w / 2;
+    const anchorY = py + PLAYER_H / 2 - 8;
+
+    // Blue dodge afterimage trail
+    if (progress < 0.85) {
+      const trailAlpha = 0.22 * (1 - progress);
+      ctx.save();
+      ctx.globalAlpha = trailAlpha;
+      ctx.filter = 'hue-rotate(200deg) brightness(1.4)';
+      ctx.drawImage(
+        sideFlipSheetImg,
+        frame * frameW, 0, frameW, frameH,
+        anchorX - displayW / 2 + (p.facingRight ? -12 : 12), anchorY - displayH / 2, displayW, displayH,
+      );
+      ctx.restore();
+    }
+
+    ctx.save();
+    if (!p.facingRight) {
+      ctx.translate(anchorX, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-anchorX, 0);
+    }
+    ctx.drawImage(
+      sideFlipSheetImg,
+      frame * frameW, 0, frameW, frameH,
+      anchorX - displayW / 2, anchorY - displayH / 2, displayW, displayH,
+    );
+    ctx.restore();
+    return;
+  }
 
   if (p.state === 'wallclimb' && subidaSheetImg && subidaSheetImg.complete && subidaSheetImg.naturalWidth > 0) {
     const frameW = subidaSheetImg.naturalWidth / WALL_CLIMB_SHEET.frameCount;

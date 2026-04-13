@@ -20,6 +20,9 @@ export const WALLFLIP_BACK_VX = 5.2;
 export const WALLFLIP_JUMP_VY = -10.8;
 export const WALLCLIMB_DURATION = 720;
 
+export const SIDEFLIP_DURATION = 640; // ms, ~8 frames at 80ms each
+export const SIDEFLIP_FRAME_COUNT = 8;
+
 export const DIVEJUMP_SPEED = 14;
 export const DIVEJUMP_JUMP_FORCE = -9.5;
 export const DIVE_FRAME_W = 284;

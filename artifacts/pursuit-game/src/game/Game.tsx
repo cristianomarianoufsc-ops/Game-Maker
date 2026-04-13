@@ -9,6 +9,7 @@ import diveJumpSheetUrl from '/dive_jump_sheet.png';
 import wallRunSheetUrl from '@assets/Wall_Run_1776005817769.png';
 import mortalSheetUrl from '@assets/mortal_1776009939272.png';
 import subidaSheetUrl from '@assets/subida_1776012458574.png';
+import sideFlipSheetUrl from '@assets/SIDE_FLIP_1776051182007.png';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, PLAYER_W, PLAYER_H, DRONE_W, DRONE_H,
   PLAYER_MAX_HEALTH, SHOOT_COOLDOWN, CAMERA_LEAD_X, COLORS,
@@ -73,6 +74,10 @@ function makePlayer(): Player {
     isWallHanging: false,
     wallHangJumpConsumed: false,
     jumpedFromWall: false,
+    jumpCount: 0,
+    doubleJumpReady: false,
+    isSideFlipping: false,
+    sideFlipTimer: 0,
   };
 }
 
@@ -212,6 +217,7 @@ export default function Game() {
   const wallRunSheetImgRef = useRef<HTMLImageElement | null>(null);
   const mortalSheetImgRef = useRef<HTMLImageElement | null>(null);
   const subidaSheetImgRef = useRef<HTMLImageElement | null>(null);
+  const sideFlipSheetImgRef = useRef<HTMLImageElement | null>(null);
 
   // Responsive scale: fit canvas inside available viewport
   const [scale, setScale] = useState(getScale);
@@ -291,6 +297,12 @@ export default function Game() {
       subidaSheetImgRef.current = stripBlackAndWhiteBackground(subidaImg);
     };
     subidaImg.src = subidaSheetUrl;
+
+    const sideFlipImg = new Image();
+    sideFlipImg.onload = () => {
+      sideFlipSheetImgRef.current = stripBlackBackground(sideFlipImg);
+    };
+    sideFlipImg.src = sideFlipSheetUrl;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       const k = keysRef.current;
@@ -619,7 +631,7 @@ export default function Game() {
 
       drawPlatforms(ctx, gs.platforms, gs.camera.x);
       drawParticles(ctx, gs);
-      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current);
+      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
       if (gs.gameMode !== 'wall-test') {
         drawDrone(ctx, gs);
         drawBullets(ctx, gs);

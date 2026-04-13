@@ -26,6 +26,7 @@ export type PlayerState =
   | 'wallrun'
   | 'wallflip'
   | 'wallclimb'
+  | 'sideflip'
   | 'hurt'
   | 'dead';
 
@@ -77,6 +78,10 @@ export interface Player {
   isWallHanging: boolean;
   wallHangJumpConsumed: boolean;
   jumpedFromWall: boolean;
+  jumpCount: number;
+  doubleJumpReady: boolean;
+  isSideFlipping: boolean;
+  sideFlipTimer: number;
 }
 
 export interface Bullet {

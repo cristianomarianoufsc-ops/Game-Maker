@@ -8,6 +8,7 @@ import {
   DIVEJUMP_SPEED, DIVEJUMP_JUMP_FORCE,
   WALLRUN_DURATION, WALLRUN_RISE_SPEED, WALLRUN_JUMP_VX, WALLRUN_JUMP_VY,
   WALLCLIMB_DURATION, WALLFLIP_BACK_VX, WALLFLIP_DURATION, WALLFLIP_JUMP_VY,
+  SIDEFLIP_DURATION,
 } from './constants';
 
 function rectOverlap(ax: number, ay: number, aw: number, ah: number,
@@ -314,6 +315,14 @@ export function updatePlayer(
       p.wallFlipTimer = 0;
       p.isWallFlipping = false;
     }
+  } else if (p.isSideFlipping) {
+    p.sideFlipTimer -= dt;
+    p.state = 'sideflip';
+    p.vx *= 0.985;
+    if (p.sideFlipTimer <= 0 || p.onGround) {
+      p.isSideFlipping = false;
+      p.sideFlipTimer = 0;
+    }
   } else if (p.state !== 'hurt') {
     // Horizontal movement
     if (p.isDivejumping) {
@@ -358,7 +367,42 @@ export function updatePlayer(
       p.vy = JUMP_FORCE;
       p.onGround = false;
       p.coyoteTime = 0;
+      p.jumpCount = 1;
+      p.doubleJumpReady = false;
       spawnParticle(p.x + p.w / 2, p.y + ph, '#555060');
+    }
+
+    // Track key release after first jump (enables double jump)
+    if (!keys.space && !keys.up && !p.onGround && p.jumpCount === 1) {
+      p.doubleJumpReady = true;
+    }
+
+    // Double jump → side flip
+    if (
+      p.doubleJumpReady &&
+      (keys.space || keys.up) &&
+      !p.onGround &&
+      p.jumpCount === 1 &&
+      !p.isSideFlipping &&
+      !p.isWallRunning &&
+      !p.isWallFlipping &&
+      !p.isWallClimbUp &&
+      !p.isDivejumping &&
+      p.state !== 'hurt' &&
+      p.state !== 'dead'
+    ) {
+      p.isSideFlipping = true;
+      p.sideFlipTimer = SIDEFLIP_DURATION;
+      p.jumpCount = 2;
+      p.doubleJumpReady = false;
+      if (p.vy > -4) p.vy = JUMP_FORCE * 0.35;
+      for (let i = 0; i < 14; i++) {
+        spawnParticle(
+          p.x + p.w / 2,
+          p.y + PLAYER_H / 2,
+          i % 2 === 0 ? '#88aaff' : '#6688cc',
+        );
+      }
     }
 
     // Wall climb initiate
@@ -489,6 +533,8 @@ export function updatePlayer(
       p.state = 'wallclimb';
     } else if (p.isWallFlipping) {
       p.state = 'wallflip';
+    } else if (p.isSideFlipping) {
+      p.state = 'sideflip';
     } else if (p.isDivejumping) {
       p.state = 'divejump';
     } else if (!p.onGround) {
@@ -586,6 +632,12 @@ export function updatePlayer(
   // This way it always holds the last surface the player stood on before going airborne.
   if (p.onGround) {
     p.jumpOriginGroundY = p.y + PLAYER_H;
+    p.jumpCount = 0;
+    p.doubleJumpReady = false;
+    if (p.isSideFlipping) {
+      p.isSideFlipping = false;
+      p.sideFlipTimer = 0;
+    }
   }
 
   // Reset fall tracker when on ground (and not mid-roll-that-was-just-triggered)
@@ -694,8 +746,8 @@ export function updateBullets(
     }
     if (hitPlatform) continue;
 
-    // Hit player
-    if (!player.invincible && player.state !== 'dead') {
+    // Hit player (immune during side flip)
+    if (!player.invincible && !player.isSideFlipping && player.state !== 'dead') {
       if (rectOverlap(b.x - 4, b.y - 4, 8, 8, player.x, player.y, player.w, ph)) {
         player.health--;
         player.invincible = true;
