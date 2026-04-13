@@ -878,8 +878,7 @@ export function drawPlayer(
   if (p.state === 'wallclimb' && subidaSheetImg && subidaSheetImg.complete && subidaSheetImg.naturalWidth > 0) {
     const frameW = subidaSheetImg.naturalWidth / WALL_CLIMB_SHEET.frameCount;
     const frameH = subidaSheetImg.naturalHeight;
-    const progress = Math.max(0, Math.min(1, 1 - p.wallClimbTimer / WALLCLIMB_DURATION));
-    const frame = Math.min(WALL_CLIMB_SHEET.frameCount - 2, Math.floor(progress * (WALL_CLIMB_SHEET.frameCount - 1)));
+    const frame = p.isWallHanging ? WALL_CLIMB_SHEET.frameCount - 2 : 0;
     const frameScale = frame === 0 ? 1.05 : frame === 1 ? 0.90 : 1;
     const baseDh = p.isWallHanging ? WALL_CLIMB_SHEET.displayHHang : WALL_CLIMB_SHEET.displayH;
     const dh = baseDh * frameScale;

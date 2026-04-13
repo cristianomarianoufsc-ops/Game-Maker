@@ -291,12 +291,8 @@ export function updatePlayer(
         const k = t / 0.38;
         p.x = lerp(p.wallClimbStartX, wallFaceX, k);
         p.y = lerp(p.wallClimbStartY, liftY, k);
-      } else if (t < 0.7) {
-        const k = (t - 0.38) / 0.32;
-        p.x = wallFaceX;
-        p.y = lerp(liftY, hangY, k);
       } else {
-        // Reached hang point — pause and wait for input
+        // Skip intermediate frames — go directly to hang
         p.x = wallFaceX;
         p.y = hangY;
         p.isWallHanging = true;
