@@ -821,7 +821,7 @@ export function drawPlayer(
     // Inset 1px on each side to avoid sub-pixel bleeding between adjacent frames
     const srcX = frame * frameW + 1;
     const srcW = frameW - 2;
-    const displayH = 115;
+    const displayH = 155;
     const displayW = Math.round(displayH * (srcW / frameH));
     const anchorX = px + p.w / 2;
     const anchorY = py + PLAYER_H / 2 - 8;
