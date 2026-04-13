@@ -358,8 +358,8 @@ export default function Game() {
       const wy = cy;
       editorMouseWorldRef.current = { x: wx, y: wy };
       editorHoveredIdxRef.current = platformsRef.current.findIndex(p => {
-        const h = p.type === 'ground' ? 90 : p.h;
-        return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + h;
+        if (p.type === 'ground') return false;
+        return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h;
       });
     };
 
@@ -376,8 +376,8 @@ export default function Game() {
       const wx = cx + editorCamXRef.current;
       const wy = cy;
       const idx = platformsRef.current.findIndex(p => {
-        const h = p.type === 'ground' ? 90 : p.h;
-        return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + h;
+        if (p.type === 'ground') return false;
+        return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h;
       });
       if (idx >= 0) {
         platformsRef.current = platformsRef.current.filter((_, i) => i !== idx);
@@ -430,6 +430,7 @@ export default function Game() {
           if (keys.left)  editorCamXRef.current = Math.max(0, editorCamXRef.current - EDITOR_PAN_SPEED);
           if (keys.right) editorCamXRef.current = editorCamXRef.current + EDITOR_PAN_SPEED;
         }
+        gs.camera.x = editorCamXRef.current;
         spaceJustPressed.current = false;
         testJustPressed.current = false;
         editorJustPressed.current = false;
