@@ -164,7 +164,6 @@ export function generateLevel(): Platform[] {
     { x: 6420, y: GROUND_Y - 95,  w: 100 },
 
     // ── FREE ZONE 2 — escadaria aberta e parkour sem paredes ──
-    { x: 7400, y: GROUND_Y - 85,  w: 95  },
     { x: 7560, y: GROUND_Y - 170, w: 90  },
     { x: 7720, y: GROUND_Y - 255, w: 90  },
     { x: 7880, y: GROUND_Y - 170, w: 90  },
