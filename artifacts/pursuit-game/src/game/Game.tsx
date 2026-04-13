@@ -321,6 +321,10 @@ export default function Game() {
   const pauseSelection = useRef(0); // 0 = continuar, 1 = menu inicial
   const pauseDownJustPressed = useRef(false);
   const pauseUpJustPressed = useRef(false);
+  const editorMode = useRef(false);
+  const selectedPlatformIdx = useRef<number | null>(null);
+  const deleteJustPressed = useRef(false);
+  const scaleRef = useRef(1);
   const lastJumpPressTime = useRef(0);
   const lastDownPressTime = useRef(0);
   const DIVE_COMBO_WINDOW = 420;
@@ -397,6 +401,9 @@ export default function Game() {
 
   // Responsive scale: fit canvas inside available viewport
   const [scale, setScale] = useState(getScale);
+  useEffect(() => {
+    scaleRef.current = scale;
+  }, [scale]);
   useEffect(() => {
     const onResize = () => setScale(getScale());
     window.addEventListener('resize', onResize);
@@ -625,6 +632,15 @@ export default function Game() {
           break;
         case 'Escape':
           if (down) escJustPressed.current = true;
+          break;
+        case 'KeyE':
+          if (down) {
+            editorMode.current = !editorMode.current;
+            selectedPlatformIdx.current = null;
+          }
+          break;
+        case 'Delete': case 'Backspace':
+          if (down) deleteJustPressed.current = true;
           break;
       }
       // Prevent scroll on space/arrows
