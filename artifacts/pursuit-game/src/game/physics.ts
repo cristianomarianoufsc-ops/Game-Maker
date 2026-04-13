@@ -292,34 +292,19 @@ export function updatePlayer(
         p.x = lerp(p.wallClimbStartX, wallFaceX, k);
         p.y = lerp(p.wallClimbStartY, liftY, k);
       } else {
-        // Skip intermediate frames — check if still holding forward + jump
+        // Skip intermediate frames — go to hang
+        p.x = wallFaceX;
+        p.y = hangY;
+        p.isWallHanging = true;
+        // If still holding forward+jump, don't consume the key so the hang
+        // logic fires on the very next frame (shows hang frame for 1 tick then auto-jumps)
         const stillPressingForward = side === 'right' ? keys.right : (side === 'left' ? keys.left : false);
-        if ((keys.space || keys.up) && stillPressingForward) {
-          // Auto pull-up: was still holding forward+jump throughout the climb
-          p.isWallHanging = false;
-          p.isWallClimbUp = false;
-          p.wallClimbSide = null;
-          p.x = p.wallClimbTargetX;
-          p.y = p.wallClimbTargetY;
-          p.vx = side === 'right' ? 2.4 : -2.4;
-          p.vy = 0;
-          p.coyoteTime = 3;
-          p.jumpOriginGroundY = p.wallTopY;
-          p.jumpedFromWall = true;
-        } else {
-          // Released button during climb — go to hang and wait
-          p.x = wallFaceX;
-          p.y = hangY;
-          p.isWallHanging = true;
-          p.wallHangJumpConsumed = keys.space || keys.up;
-        }
+        p.wallHangJumpConsumed = (keys.space || keys.up) && !stillPressingForward;
       }
 
-      if (p.isWallClimbUp) {
-        p.vx = 0;
-        p.vy = 0;
-        p.state = 'wallclimb';
-      }
+      p.vx = 0;
+      p.vy = 0;
+      p.state = 'wallclimb';
     }
   } else if (p.isWallFlipping) {
     p.wallFlipTimer -= dt;
