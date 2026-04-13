@@ -352,7 +352,9 @@ export function updatePlayer(
 
     // Dive jump: running + down + space/jump simultaneously
     const diveTriggered = (keys.dive || (keys.down && (keys.space || keys.up)));
-    if (diveTriggered && !p.touchingWall && (p.coyoteTime > 0) && !p.isRolling && !p.isDivejumping && Math.abs(p.vx) > 3) {
+    const canDiveFromGround = p.coyoteTime > 0;
+    const canDiveFromBufferedJump = keys.dive && p.jumpCount === 1 && !p.onGround && p.vy < 0;
+    if (diveTriggered && !p.touchingWall && (canDiveFromGround || canDiveFromBufferedJump) && !p.isRolling && !p.isDivejumping && Math.abs(p.vx) > 3) {
       p.isDivejumping = true;
       p.vy = DIVEJUMP_JUMP_FORCE;
       p.vx = p.facingRight ? DIVEJUMP_SPEED : -DIVEJUMP_SPEED;

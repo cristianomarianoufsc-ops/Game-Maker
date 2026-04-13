@@ -225,7 +225,7 @@ export default function Game() {
   const pauseUpJustPressed = useRef(false);
   const lastJumpPressTime = useRef(0);
   const lastDownPressTime = useRef(0);
-  const DIVE_COMBO_WINDOW = 220;
+  const DIVE_COMBO_WINDOW = 420;
   const editorJustPressed = useRef(false);
   const editorCamXRef = useRef(0);
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
