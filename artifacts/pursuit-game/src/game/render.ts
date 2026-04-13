@@ -1608,3 +1608,51 @@ export function drawGameOverScreen(ctx: CanvasRenderingContext2D, score: number,
 
   ctx.textAlign = 'left';
 }
+
+export function drawPauseScreen(ctx: CanvasRenderingContext2D): void {
+  ctx.fillStyle = 'rgba(0,0,0,0.62)';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  const cx = CANVAS_W / 2;
+  const cy = CANVAS_H / 2;
+
+  // Panel
+  ctx.fillStyle = 'rgba(18,15,30,0.97)';
+  ctx.fillRect(cx - 200, cy - 110, 400, 220);
+  ctx.strokeStyle = 'rgba(100,90,140,0.8)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - 200, cy - 110, 400, 220);
+
+  // Top accent
+  ctx.fillStyle = 'rgba(255,200,60,0.7)';
+  ctx.fillRect(cx - 200, cy - 110, 400, 3);
+
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = 'rgba(255,200,60,0.9)';
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText('⏸  PAUSADO', cx, cy - 68);
+
+  ctx.strokeStyle = 'rgba(80,75,110,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 150, cy - 48);
+  ctx.lineTo(cx + 150, cy - 48);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(200,195,230,0.85)';
+  ctx.font = '13px monospace';
+  ctx.fillText('O jogo está pausado.', cx, cy - 22);
+
+  const blink = Math.floor(Date.now() / 520) % 2 === 0;
+
+  ctx.fillStyle = blink ? 'rgba(0,200,255,0.95)' : 'rgba(0,200,255,0.4)';
+  ctx.font = 'bold 14px monospace';
+  ctx.fillText('[ ENTER — VOLTAR AO MENU ]', cx, cy + 20);
+
+  ctx.fillStyle = 'rgba(160,155,200,0.7)';
+  ctx.font = '12px monospace';
+  ctx.fillText('ESC — CONTINUAR', cx, cy + 52);
+
+  ctx.textAlign = 'left';
+}

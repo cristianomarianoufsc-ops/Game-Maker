@@ -20,7 +20,7 @@ import {
 import {
   drawSky, drawBuildings, drawAlleyDetails, drawGround, drawPlatforms,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
-  drawHUD, drawControls, drawMenuScreen, drawGameOverScreen,
+  drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
 } from './render';
 
 function makePlayer(): Player {
@@ -184,6 +184,8 @@ export default function Game() {
   const keysRef = useRef<Keys>({ left: false, right: false, up: false, down: false, space: false, shift: false, z: false, dive: false });
   const spaceJustPressed = useRef(false);
   const testJustPressed = useRef(false);
+  const enterJustPressed = useRef(false);
+  const escJustPressed = useRef(false);
   const lastJumpPressTime = useRef(0);
   const lastDownPressTime = useRef(0);
   const DIVE_COMBO_WINDOW = 220;
@@ -306,6 +308,12 @@ export default function Game() {
         case 'KeyT':
           if (down) testJustPressed.current = true;
           break;
+        case 'Enter':
+          if (down) enterJustPressed.current = true;
+          break;
+        case 'Escape':
+          if (down) escJustPressed.current = true;
+          break;
       }
       // Prevent scroll on space/arrows
       if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code)) {
@@ -339,7 +347,21 @@ export default function Game() {
           resetGame('story');
           spaceJustPressed.current = false;
         }
+      } else if (gs.gamePhase === 'paused') {
+        if (enterJustPressed.current) {
+          enterJustPressed.current = false;
+          escJustPressed.current = false;
+          gs.gamePhase = 'menu';
+        } else if (escJustPressed.current) {
+          escJustPressed.current = false;
+          enterJustPressed.current = false;
+          gs.gamePhase = 'playing';
+        }
       } else if (gs.gamePhase === 'playing') {
+        if (enterJustPressed.current) {
+          enterJustPressed.current = false;
+          gs.gamePhase = 'paused';
+        }
         gs.time += dt;
         showControls.current = gs.time < 8000;
 
@@ -471,6 +493,7 @@ export default function Game() {
       if (showControls.current) drawControls(ctx);
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
+      if (gs.gamePhase === 'paused') drawPauseScreen(ctx);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);
 
       animRef.current = requestAnimationFrame(loop);
