@@ -151,7 +151,7 @@ function stripBlackBackground(src: HTMLImageElement): HTMLImageElement {
   return out;
 }
 
-// Remove apenas preto puro (threshold baixo) — preserva roupas escuras
+// Remove fundo escuro e dessaturado (cinza-escuro/preto) preservando cores saturadas (roupas azuis etc.)
 function stripPureBlackBackground(src: HTMLImageElement): HTMLImageElement {
   const canvas = document.createElement('canvas');
   canvas.width = src.naturalWidth;
@@ -163,8 +163,13 @@ function stripPureBlackBackground(src: HTMLImageElement): HTMLImageElement {
   for (let i = 0; i < px.length; i += 4) {
     const r = px[i], g = px[i + 1], b = px[i + 2];
     const brightness = r * 0.299 + g * 0.587 + b * 0.114;
-    // Só remove pixels realmente pretos ou quase pretos (threshold 14)
-    if (brightness < 14) {
+    const maxC = Math.max(r, g, b);
+    const minC = Math.min(r, g, b);
+    // Saturação: quão longe de cinza puro (0 = cinza, 1 = cor pura)
+    const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
+    // Remove pixel se for escuro (brilho < 36) E pouco saturado (< 0.40)
+    // Preserva pixels saturados (roupas azuis, pele, detalhes coloridos)
+    if (brightness < 36 && saturation < 0.40) {
       px[i + 3] = 0;
     }
   }
@@ -323,7 +328,26 @@ export default function Game() {
 
     const sideFlipImg = new Image();
     sideFlipImg.onload = () => {
-      sideFlipSheetImgRef.current = stripPureBlackBackground(sideFlipImg);
+      // Testa se o PNG já tem transparência nativa antes de aplicar stripping
+      const testCanvas = document.createElement('canvas');
+      testCanvas.width = 1;
+      testCanvas.height = 1;
+      const testCtx = testCanvas.getContext('2d')!;
+      // Pegar pixel no canto — se for preto e alpha=0 o PNG já tem transparência
+      testCtx.drawImage(sideFlipImg, 0, 0, 1, 1);
+      const pixel = testCtx.getImageData(0, 0, 1, 1).data;
+      const hasNativeAlpha = pixel[3] < 128;
+      if (hasNativeAlpha) {
+        sideFlipSheetImgRef.current = sideFlipImg;
+      } else {
+        const stripped = stripPureBlackBackground(sideFlipImg);
+        // Espera a decodificação do data URL antes de atribuir
+        if (stripped.complete && stripped.naturalWidth > 0) {
+          sideFlipSheetImgRef.current = stripped;
+        } else {
+          stripped.onload = () => { sideFlipSheetImgRef.current = stripped; };
+        }
+      }
     };
     sideFlipImg.src = sideFlipSheetUrl;
 
