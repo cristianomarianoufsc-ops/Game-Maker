@@ -151,6 +151,29 @@ function stripBlackBackground(src: HTMLImageElement): HTMLImageElement {
   return out;
 }
 
+// Remove apenas preto puro (threshold baixo) — preserva roupas escuras
+function stripPureBlackBackground(src: HTMLImageElement): HTMLImageElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = src.naturalWidth;
+  canvas.height = src.naturalHeight;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(src, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const px = imageData.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const r = px[i], g = px[i + 1], b = px[i + 2];
+    const brightness = r * 0.299 + g * 0.587 + b * 0.114;
+    // Só remove pixels realmente pretos ou quase pretos (threshold 14)
+    if (brightness < 14) {
+      px[i + 3] = 0;
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+  const out = new Image();
+  out.src = canvas.toDataURL('image/png');
+  return out;
+}
+
 function stripBlackAndWhiteBackground(src: HTMLImageElement): HTMLImageElement {
   const canvas = document.createElement('canvas');
   canvas.width = src.naturalWidth;
@@ -300,7 +323,7 @@ export default function Game() {
 
     const sideFlipImg = new Image();
     sideFlipImg.onload = () => {
-      sideFlipSheetImgRef.current = stripBlackBackground(sideFlipImg);
+      sideFlipSheetImgRef.current = stripPureBlackBackground(sideFlipImg);
     };
     sideFlipImg.src = sideFlipSheetUrl;
 
