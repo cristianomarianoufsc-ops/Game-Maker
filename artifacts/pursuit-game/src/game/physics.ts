@@ -187,9 +187,9 @@ export function updatePlayer(
       if (canJumpOffWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide) {
         p.isWallRunning = false;
         p.isWallClimbUp = true;
-        p.isWallHanging = true;
-        p.wallHangJumpConsumed = true;
-        p.wallClimbTimer = 0;
+        p.wallClimbTimer = WALLCLIMB_DURATION;
+        p.wallClimbStartX = p.x;
+        p.wallClimbStartY = p.y;
         p.wallClimbTargetX = wallSide === 'right' ? p.wallX + 22 : p.wallX - p.w - 22;
         p.wallClimbTargetY = p.wallTopY - PLAYER_H - 4;
         p.wallClimbSide = wallSide;
@@ -198,6 +198,8 @@ export function updatePlayer(
         p.vy = 0;
         p.facingRight = wallSide === 'right';
         p.state = 'wallclimb';
+        p.animFrame = 0;
+        p.animTimer = 0;
         for (let i = 0; i < 12; i++) {
           spawnParticle(
             p.x + (wallSide === 'right' ? p.w : 0),
