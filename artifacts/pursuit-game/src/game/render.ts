@@ -756,7 +756,7 @@ const ROLL_SHEET = {
   frameCount: 4,
   frameW: Math.round(851 / 4),  // ~213px per frame
   frameH: 300,
-  displayH: 155,                 // display height — compact/crouched
+  displayH: 175,                 // display height — compact/crouched
   get displayW() { return Math.round(this.displayH * (this.frameW / this.frameH)); },
 };
 
