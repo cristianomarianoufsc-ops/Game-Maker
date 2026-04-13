@@ -1542,8 +1542,104 @@ export function drawMenuScreen(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = 'rgba(0,200,255,0.7)';
   ctx.font = 'bold 16px monospace';
   const blink = Math.floor(Date.now() / 500) % 2 === 0;
-  if (blink) ctx.fillText('[ ESPAÇO: HISTÓRIA  |  T: TESTE DE PAREDE ]', CANVAS_W / 2, CANVAS_H / 2 + 88);
+  if (blink) ctx.fillText('[ ESPAÇO: HISTÓRIA  |  T: TESTE DE PAREDE ]', CANVAS_W / 2, CANVAS_H / 2 + 75);
 
+  ctx.fillStyle = 'rgba(255,200,60,0.65)';
+  ctx.font = '12px monospace';
+  ctx.fillText('[ E: EDITOR DE FASE ]', CANVAS_W / 2, CANVAS_H / 2 + 103);
+
+  ctx.textAlign = 'left';
+}
+
+export function drawEditorUI(
+  ctx: CanvasRenderingContext2D,
+  platforms: import('./types').Platform[],
+  camX: number,
+  hoveredIdx: number,
+  mouseWorld: { x: number; y: number },
+): void {
+  const typeColor: Record<string, string> = {
+    ground: 'rgba(80,200,80,0.25)',
+    platform: 'rgba(80,140,255,0.30)',
+    wall: 'rgba(255,180,60,0.30)',
+    obstacle: 'rgba(255,80,80,0.30)',
+  };
+  const typeStroke: Record<string, string> = {
+    ground: 'rgba(80,255,80,0.75)',
+    platform: 'rgba(100,160,255,0.9)',
+    wall: 'rgba(255,200,60,0.9)',
+    obstacle: 'rgba(255,100,80,0.9)',
+  };
+
+  ctx.save();
+  ctx.translate(-camX, 0);
+
+  for (let i = 0; i < platforms.length; i++) {
+    const p = platforms[i];
+    const screenLeft = p.x - camX;
+    if (screenLeft > CANVAS_W + 20 || screenLeft + p.w < -20) continue;
+
+    const isHovered = i === hoveredIdx;
+
+    if (isHovered) {
+      ctx.fillStyle = 'rgba(255,40,40,0.45)';
+      ctx.strokeStyle = 'rgba(255,60,60,1)';
+      ctx.lineWidth = 2.5;
+    } else {
+      ctx.fillStyle = typeColor[p.type] ?? 'rgba(255,255,255,0.15)';
+      ctx.strokeStyle = typeStroke[p.type] ?? 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = 1;
+    }
+
+    const drawH = p.type === 'ground' ? 90 : p.h;
+    ctx.fillRect(p.x, p.y, p.w, drawH);
+    ctx.strokeRect(p.x, p.y, p.w, drawH);
+
+    if (isHovered) {
+      ctx.fillStyle = 'rgba(255,60,60,0.95)';
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'center';
+      const label = `[CLIQUE PARA DELETAR — ${p.type.toUpperCase()}]`;
+      ctx.fillText(label, p.x + p.w / 2, p.y - 6);
+      ctx.textAlign = 'left';
+    }
+  }
+  ctx.restore();
+
+  ctx.fillStyle = 'rgba(0,0,0,0.62)';
+  ctx.fillRect(0, 0, CANVAS_W, 40);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(255,200,60,0.95)';
+  ctx.font = 'bold 13px monospace';
+  ctx.fillText('EDITOR DE FASE', 12, 16);
+
+  ctx.fillStyle = 'rgba(180,175,210,0.75)';
+  ctx.font = '10px monospace';
+  ctx.fillText('← → MOVER  |  CLIQUE: DELETAR OBJETO  |  ESC: VOLTAR AO MENU', 12, 32);
+
+  const wx = Math.round(mouseWorld.x);
+  const wy = Math.round(mouseWorld.y);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(120,200,120,0.7)';
+  ctx.font = '10px monospace';
+  ctx.fillText(`pos: ${wx}, ${wy}  |  cam: ${Math.round(camX)}`, CANVAS_W - 10, 16);
+
+  const counts: Record<string, number> = {};
+  for (const p of platforms) counts[p.type] = (counts[p.type] ?? 0) + 1;
+  const countStr = Object.entries(counts).map(([t, n]) => `${t}:${n}`).join('  ');
+  ctx.fillStyle = 'rgba(160,155,200,0.6)';
+  ctx.font = '10px monospace';
+  ctx.fillText(countStr, CANVAS_W - 10, 32);
+
+  ctx.textAlign = 'left';
+
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(0, CANVAS_H - 30, CANVAS_W, 30);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,80,80,0.8)';
+  ctx.font = '10px monospace';
+  ctx.fillText('ATENÇÃO: deleções são permanentes para esta sessão. As alterações ficam ativas ao iniciar o jogo.', CANVAS_W / 2, CANVAS_H - 12);
   ctx.textAlign = 'left';
 }
 

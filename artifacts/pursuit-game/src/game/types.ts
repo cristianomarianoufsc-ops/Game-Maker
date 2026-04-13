@@ -128,7 +128,7 @@ export interface GameState {
   bullets: Bullet[];
   camera: Camera;
   platforms: Platform[];
-  gamePhase: 'menu' | 'playing' | 'paused' | 'gameover' | 'victory';
+  gamePhase: 'menu' | 'playing' | 'paused' | 'gameover' | 'victory' | 'editor';
   gameMode: 'story' | 'wall-test';
   score: number;
   time: number;

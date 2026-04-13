@@ -21,6 +21,7 @@ import {
   drawSky, drawBuildings, drawAlleyDetails, drawGround, drawPlatforms,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
+  drawEditorUI,
 } from './render';
 
 function makePlayer(): Player {
@@ -192,6 +193,11 @@ export default function Game() {
   const lastJumpPressTime = useRef(0);
   const lastDownPressTime = useRef(0);
   const DIVE_COMBO_WINDOW = 220;
+  const editorJustPressed = useRef(false);
+  const editorCamXRef = useRef(0);
+  const editorMouseWorldRef = useRef({ x: 0, y: 0 });
+  const editorHoveredIdxRef = useRef(-1);
+  const EDITOR_PAN_SPEED = 6;
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
   const buildingsRef = useRef(generateBuildings());
@@ -317,6 +323,9 @@ export default function Game() {
         case 'KeyT':
           if (down) testJustPressed.current = true;
           break;
+        case 'KeyE':
+          if (down) editorJustPressed.current = true;
+          break;
         case 'Enter':
           if (down) enterJustPressed.current = true;
           break;
@@ -335,6 +344,54 @@ export default function Game() {
     window.addEventListener('keydown', kd);
     window.addEventListener('keyup', ku);
 
+    const onCanvasMouseMove = (e: MouseEvent) => {
+      const gs = gsRef.current;
+      if (!gs || gs.gamePhase !== 'editor') return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = CANVAS_W / rect.width;
+      const scaleY = CANVAS_H / rect.height;
+      const cx = (e.clientX - rect.left) * scaleX;
+      const cy = (e.clientY - rect.top) * scaleY;
+      const wx = cx + editorCamXRef.current;
+      const wy = cy;
+      editorMouseWorldRef.current = { x: wx, y: wy };
+      editorHoveredIdxRef.current = platformsRef.current.findIndex(p => {
+        const h = p.type === 'ground' ? 90 : p.h;
+        return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + h;
+      });
+    };
+
+    const onCanvasClick = (e: MouseEvent) => {
+      const gs = gsRef.current;
+      if (!gs || gs.gamePhase !== 'editor') return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = CANVAS_W / rect.width;
+      const scaleY = CANVAS_H / rect.height;
+      const cx = (e.clientX - rect.left) * scaleX;
+      const cy = (e.clientY - rect.top) * scaleY;
+      const wx = cx + editorCamXRef.current;
+      const wy = cy;
+      const idx = platformsRef.current.findIndex(p => {
+        const h = p.type === 'ground' ? 90 : p.h;
+        return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + h;
+      });
+      if (idx >= 0) {
+        platformsRef.current = platformsRef.current.filter((_, i) => i !== idx);
+        if (gsRef.current) gsRef.current.platforms = platformsRef.current;
+        editorHoveredIdxRef.current = -1;
+      }
+    };
+
+    const cvs = canvasRef.current;
+    if (cvs) {
+      cvs.addEventListener('mousemove', onCanvasMouseMove);
+      cvs.addEventListener('click', onCanvasClick);
+    }
+
     const loop = (timestamp: number) => {
       const dt = Math.min(timestamp - lastTime.current, 50);
       lastTime.current = timestamp;
@@ -348,7 +405,14 @@ export default function Game() {
 
       // --- Update ---
       if (gs.gamePhase === 'menu') {
-        if (testJustPressed.current) {
+        if (editorJustPressed.current) {
+          editorJustPressed.current = false;
+          spaceJustPressed.current = false;
+          testJustPressed.current = false;
+          editorCamXRef.current = 0;
+          editorHoveredIdxRef.current = -1;
+          gs.gamePhase = 'editor';
+        } else if (testJustPressed.current) {
           resetGame('wall-test');
           testJustPressed.current = false;
           spaceJustPressed.current = false;
@@ -356,6 +420,19 @@ export default function Game() {
           resetGame('story');
           spaceJustPressed.current = false;
         }
+      } else if (gs.gamePhase === 'editor') {
+        if (escJustPressed.current) {
+          escJustPressed.current = false;
+          spaceJustPressed.current = false;
+          gs.gamePhase = 'menu';
+        } else {
+          const keys = keysRef.current;
+          if (keys.left)  editorCamXRef.current = Math.max(0, editorCamXRef.current - EDITOR_PAN_SPEED);
+          if (keys.right) editorCamXRef.current = editorCamXRef.current + EDITOR_PAN_SPEED;
+        }
+        spaceJustPressed.current = false;
+        testJustPressed.current = false;
+        editorJustPressed.current = false;
       } else if (gs.gamePhase === 'paused') {
         if (pauseDownJustPressed.current) {
           pauseSelection.current = 1;
@@ -521,6 +598,9 @@ export default function Game() {
       if (showControls.current) drawControls(ctx);
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
+      if (gs.gamePhase === 'editor') {
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorMouseWorldRef.current);
+      }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);
 
@@ -532,6 +612,10 @@ export default function Game() {
     return () => {
       window.removeEventListener('keydown', kd);
       window.removeEventListener('keyup', ku);
+      if (cvs) {
+        cvs.removeEventListener('mousemove', onCanvasMouseMove);
+        cvs.removeEventListener('click', onCanvasClick);
+      }
       cancelAnimationFrame(animRef.current);
     };
   }, [makeInitialState, resetGame]);
