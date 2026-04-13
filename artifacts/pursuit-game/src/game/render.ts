@@ -1642,7 +1642,7 @@ export function drawPauseScreen(ctx: CanvasRenderingContext2D, selection: number
 
   ctx.fillStyle = 'rgba(180,175,210,0.6)';
   ctx.font = '11px monospace';
-  ctx.fillText('↑ ↓ NAVEGAR  |  ENTER CONFIRMAR  |  ESC CONTINUAR', cx, cy - 26);
+  ctx.fillText('↑ ↓ NAVEGAR  |  ENTER / ESPAÇO CONFIRMAR  |  ESC CONTINUAR', cx, cy - 26);
 
   // Option 0 — Continuar
   const opt0Selected = selection === 0;

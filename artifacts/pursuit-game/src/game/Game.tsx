@@ -369,9 +369,11 @@ export default function Game() {
           // ESC despausa diretamente
           escJustPressed.current = false;
           enterJustPressed.current = false;
+          spaceJustPressed.current = false;
           gs.gamePhase = 'playing';
-        } else if (enterJustPressed.current) {
+        } else if (enterJustPressed.current || spaceJustPressed.current) {
           enterJustPressed.current = false;
+          spaceJustPressed.current = false;
           if (pauseSelection.current === 0) {
             gs.gamePhase = 'playing';
           } else {
@@ -384,6 +386,8 @@ export default function Game() {
           pauseSelection.current = 0;
           pauseDownJustPressed.current = false;
           pauseUpJustPressed.current = false;
+          spaceJustPressed.current = false;
+          enterJustPressed.current = false;
           gs.gamePhase = 'paused';
         }
         gs.time += dt;
