@@ -7,7 +7,7 @@ import {
   LANDING_ROLL_THRESHOLD, LANDING_ROLL_DURATION, HIT_STUN_DURATION,
   DIVEJUMP_SPEED, DIVEJUMP_JUMP_FORCE,
   WALLRUN_DURATION, WALLRUN_RISE_SPEED, WALLRUN_JUMP_VX, WALLRUN_JUMP_VY,
-  WALLCLIMB_DURATION, WALLFLIP_BACK_VX, WALLFLIP_DURATION, WALLFLIP_JUMP_VY,
+  WALLCLIMB_DURATION, WALLFLIP_BACK_VX, WALLFLIP_JUMP_VY,
   SIDEFLIP_DURATION, SIDEFLIP_BOOST,
 } from './constants';
 
@@ -209,15 +209,10 @@ export function updatePlayer(
         }
       } else if (canJumpOffWall && neutralVerticalClimb && wallSide) {
         p.isWallRunning = false;
-        p.isWallFlipping = true;
-        p.wallFlipTimer = WALLFLIP_DURATION;
         p.coyoteTime = 0;
         p.vy = WALLFLIP_JUMP_VY;
         p.vx = wallSide === 'right' ? -WALLFLIP_BACK_VX : WALLFLIP_BACK_VX;
         p.facingRight = wallSide === 'right';
-        p.state = 'wallflip';
-        p.animFrame = 0;
-        p.animTimer = 0;
         for (let i = 0; i < 12; i++) {
           spawnParticle(
             p.x + (wallSide === 'right' ? p.w : 0),
@@ -306,14 +301,6 @@ export function updatePlayer(
       p.vx = 0;
       p.vy = 0;
       p.state = 'wallclimb';
-    }
-  } else if (p.isWallFlipping) {
-    p.wallFlipTimer -= dt;
-    p.state = 'wallflip';
-    p.vx *= 0.992;
-    if (p.wallFlipTimer <= 0) {
-      p.wallFlipTimer = 0;
-      p.isWallFlipping = false;
     }
   } else if (p.isSideFlipping) {
     p.sideFlipTimer -= dt;
