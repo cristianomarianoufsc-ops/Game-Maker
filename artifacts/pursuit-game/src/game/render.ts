@@ -1616,7 +1616,7 @@ export function drawEditorUI(
 
   ctx.fillStyle = 'rgba(180,175,210,0.75)';
   ctx.font = '10px monospace';
-  ctx.fillText('← → MOVER  |  CLIQUE: DELETAR OBJETO  |  ESC: VOLTAR AO MENU', 12, 32);
+  ctx.fillText('← → MOVER  |  SCROLL MEIO: ARRASTAR  |  CLIQUE: DELETAR  |  ESC: MENU', 12, 32);
 
   const wx = Math.round(mouseWorld.x);
   const wy = Math.round(mouseWorld.y);

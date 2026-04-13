@@ -386,11 +386,43 @@ export default function Game() {
       }
     };
 
+    let middleDragging = false;
+    let middleLastX = 0;
+
+    const onCanvasMouseDown = (e: MouseEvent) => {
+      if (e.button !== 1) return;
+      e.preventDefault();
+      const gs = gsRef.current;
+      if (!gs || gs.gamePhase !== 'editor') return;
+      middleDragging = true;
+      middleLastX = e.clientX;
+    };
+
+    const onCanvasMiddleMove = (e: MouseEvent) => {
+      if (!middleDragging) return;
+      const gs = gsRef.current;
+      if (!gs || gs.gamePhase !== 'editor') { middleDragging = false; return; }
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = CANVAS_W / rect.width;
+      const delta = (e.clientX - middleLastX) * scaleX;
+      middleLastX = e.clientX;
+      editorCamXRef.current = Math.max(0, editorCamXRef.current - delta);
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      if (e.button === 1) middleDragging = false;
+    };
+
     const cvs = canvasRef.current;
     if (cvs) {
       cvs.addEventListener('mousemove', onCanvasMouseMove);
+      cvs.addEventListener('mousemove', onCanvasMiddleMove);
+      cvs.addEventListener('mousedown', onCanvasMouseDown);
       cvs.addEventListener('click', onCanvasClick);
     }
+    window.addEventListener('mouseup', onMouseUp);
 
     const loop = (timestamp: number) => {
       const dt = Math.min(timestamp - lastTime.current, 50);
@@ -613,8 +645,11 @@ export default function Game() {
     return () => {
       window.removeEventListener('keydown', kd);
       window.removeEventListener('keyup', ku);
+      window.removeEventListener('mouseup', onMouseUp);
       if (cvs) {
         cvs.removeEventListener('mousemove', onCanvasMouseMove);
+        cvs.removeEventListener('mousemove', onCanvasMiddleMove);
+        cvs.removeEventListener('mousedown', onCanvasMouseDown);
         cvs.removeEventListener('click', onCanvasClick);
       }
       cancelAnimationFrame(animRef.current);
