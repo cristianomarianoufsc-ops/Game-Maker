@@ -813,7 +813,7 @@ export function drawPlayer(
 
   // Side flip animation
   if (p.isSideFlipping && sideFlipSheetImg && sideFlipSheetImg.complete && sideFlipSheetImg.naturalWidth > 0) {
-    const FRAME_COUNT = 8;
+    const FRAME_COUNT = 5;
     const frameW = Math.floor(sideFlipSheetImg.naturalWidth / FRAME_COUNT);
     const frameH = sideFlipSheetImg.naturalHeight;
     const progress = Math.max(0, Math.min(1, 1 - p.sideFlipTimer / 640));

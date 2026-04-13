@@ -9,7 +9,7 @@ import diveJumpSheetUrl from '/dive_jump_sheet.png';
 import wallRunSheetUrl from '@assets/Wall_Run_1776005817769.png';
 import mortalSheetUrl from '@assets/mortal_1776009939272.png';
 import subidaSheetUrl from '@assets/subida_1776012458574.png';
-import sideFlipSheetUrl from '@assets/SIDE_FLIP_1776051182007.png';
+import sideFlipSheetUrl from '@assets/SIDE_FLIP_1776053462942.png';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, PLAYER_W, PLAYER_H, DRONE_W, DRONE_H,
   PLAYER_MAX_HEALTH, SHOOT_COOLDOWN, CAMERA_LEAD_X, COLORS,
