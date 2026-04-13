@@ -1704,7 +1704,7 @@ export function drawEditorUI(
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(255,80,80,0.8)';
   ctx.font = '10px monospace';
-  ctx.fillText('ATENÇÃO: deleções são permanentes para esta sessão. As alterações ficam ativas ao iniciar o jogo.', CANVAS_W / 2, CANVAS_H - 12);
+  ctx.fillText('ATENÇÃO: deleções ficam salvas neste navegador e continuam após recarregar o jogo.', CANVAS_W / 2, CANVAS_H - 12);
   ctx.textAlign = 'left';
 }
 

@@ -97,6 +97,29 @@ function makeDrone(): Drone {
 }
 
 const CONTROLS_H = 68; // px reserved below canvas for mobile buttons
+const EDITOR_DELETED_PLATFORMS_STORAGE_KEY = 'pursuit-deleted-platforms-v1';
+
+function getPlatformKey(platform: Platform): string {
+  return `${platform.type}:${platform.x}:${platform.y}:${platform.w}:${platform.h}`;
+}
+
+function loadDeletedPlatformKeys(): Set<string> {
+  try {
+    const raw = window.localStorage.getItem(EDITOR_DELETED_PLATFORMS_STORAGE_KEY);
+    const keys = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(keys) ? keys.filter((key): key is string => typeof key === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDeletedPlatformKeys(keys: Set<string>): void {
+  window.localStorage.setItem(EDITOR_DELETED_PLATFORMS_STORAGE_KEY, JSON.stringify([...keys]));
+}
+
+function applyDeletedPlatformKeys(platforms: Platform[], keys: Set<string>): Platform[] {
+  return platforms.filter((platform) => platform.type === 'ground' || !keys.has(getPlatformKey(platform)));
+}
 
 // Remove white/near-white background from a sprite sheet exported without transparency.
 // Uses perceptual brightness so anti-aliased edges fade out smoothly instead of leaving a white fringe.
@@ -234,6 +257,7 @@ export default function Game() {
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
   const buildingsRef = useRef(generateBuildings());
+  const deletedPlatformKeysRef = useRef<Set<string>>(new Set());
   const platformsRef = useRef(generateLevel());
   const showControls = useRef(true);
   const spriteImgRef = useRef<HTMLImageElement | null>(null);
@@ -277,6 +301,8 @@ export default function Game() {
   }, [makeInitialState]);
 
   useEffect(() => {
+    deletedPlatformKeysRef.current = loadDeletedPlatformKeys();
+    platformsRef.current = applyDeletedPlatformKeys(generateLevel(), deletedPlatformKeysRef.current);
     gsRef.current = makeInitialState();
 
     // Load sprite images
@@ -439,6 +465,9 @@ export default function Game() {
         return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h;
       });
       if (idx >= 0) {
+        const removedPlatform = platformsRef.current[idx];
+        deletedPlatformKeysRef.current.add(getPlatformKey(removedPlatform));
+        saveDeletedPlatformKeys(deletedPlatformKeysRef.current);
         platformsRef.current = platformsRef.current.filter((_, i) => i !== idx);
         if (gsRef.current) gsRef.current.platforms = platformsRef.current;
         editorHoveredIdxRef.current = -1;
