@@ -395,7 +395,6 @@ export function updatePlayer(
       p.sideFlipTimer = SIDEFLIP_DURATION;
       p.jumpCount = 2;
       p.doubleJumpReady = false;
-      if (p.vy > -4) p.vy = JUMP_FORCE * 0.35;
       for (let i = 0; i < 14; i++) {
         spawnParticle(
           p.x + p.w / 2,

@@ -814,14 +814,19 @@ export function drawPlayer(
   // Side flip animation
   if (p.isSideFlipping && sideFlipSheetImg && sideFlipSheetImg.complete && sideFlipSheetImg.naturalWidth > 0) {
     const FRAME_COUNT = 8;
-    const frameW = sideFlipSheetImg.naturalWidth / FRAME_COUNT;
+    const frameW = Math.floor(sideFlipSheetImg.naturalWidth / FRAME_COUNT);
     const frameH = sideFlipSheetImg.naturalHeight;
     const progress = Math.max(0, Math.min(1, 1 - p.sideFlipTimer / 640));
     const frame = Math.min(FRAME_COUNT - 1, Math.floor(progress * FRAME_COUNT));
+    // Inset 1px on each side to avoid sub-pixel bleeding between adjacent frames
+    const srcX = frame * frameW + 1;
+    const srcW = frameW - 2;
     const displayH = 115;
-    const displayW = Math.round(displayH * (frameW / frameH));
+    const displayW = Math.round(displayH * (srcW / frameH));
     const anchorX = px + p.w / 2;
     const anchorY = py + PLAYER_H / 2 - 8;
+    const destX = anchorX - displayW / 2;
+    const destY = anchorY - displayH / 2;
 
     // Blue dodge afterimage trail
     if (progress < 0.85) {
@@ -831,8 +836,8 @@ export function drawPlayer(
       ctx.filter = 'hue-rotate(200deg) brightness(1.4)';
       ctx.drawImage(
         sideFlipSheetImg,
-        frame * frameW, 0, frameW, frameH,
-        anchorX - displayW / 2 + (p.facingRight ? -12 : 12), anchorY - displayH / 2, displayW, displayH,
+        srcX, 0, srcW, frameH,
+        destX + (p.facingRight ? -12 : 12), destY, displayW, displayH,
       );
       ctx.restore();
     }
@@ -843,10 +848,14 @@ export function drawPlayer(
       ctx.scale(-1, 1);
       ctx.translate(-anchorX, 0);
     }
+    // Clip to destination rect before drawing to prevent any bleed
+    ctx.beginPath();
+    ctx.rect(destX, destY, displayW, displayH);
+    ctx.clip();
     ctx.drawImage(
       sideFlipSheetImg,
-      frame * frameW, 0, frameW, frameH,
-      anchorX - displayW / 2, anchorY - displayH / 2, displayW, displayH,
+      srcX, 0, srcW, frameH,
+      destX, destY, displayW, displayH,
     );
     ctx.restore();
     return;
