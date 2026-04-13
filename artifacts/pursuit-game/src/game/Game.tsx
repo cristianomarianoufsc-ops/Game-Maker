@@ -577,6 +577,9 @@ export default function Game() {
         const targetCamX = gs.player.x - CANVAS_W * CAMERA_LEAD_X;
         gs.camera.x += (targetCamX - gs.camera.x) * 0.1;
         if (gs.camera.x < 0) gs.camera.x = 0;
+        const targetCamY = Math.min(0, gs.player.y - CANVAS_H * 0.38);
+        gs.camera.y += (targetCamY - gs.camera.y) * 0.12;
+        if (Math.abs(gs.camera.y) < 0.5) gs.camera.y = 0;
 
         if (gs.gameMode !== 'wall-test') {
           const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP);
@@ -618,6 +621,8 @@ export default function Game() {
       }
 
       drawSky(ctx);
+      ctx.save();
+      ctx.translate(0, -gs.camera.y);
       drawBuildings(ctx, buildingsRef.current, gs.camera.x);
       drawAlleyDetails(ctx, gs.camera.x, gs.time);
       drawStartingBackWall(ctx, gs.camera.x);
@@ -683,6 +688,7 @@ export default function Game() {
         drawDrone(ctx, gs);
         drawBullets(ctx, gs);
       }
+      ctx.restore();
 
       ctx.restore(); // end shake
 
