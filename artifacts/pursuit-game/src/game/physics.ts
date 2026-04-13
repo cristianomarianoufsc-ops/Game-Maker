@@ -553,7 +553,7 @@ export function updatePlayer(
       for (let i = 0; i < 14; i++) {
         spawnParticle(p.x + p.w / 2, p.y + PLAYER_ROLL_H, i % 2 === 0 ? '#808090' : '#555060');
       }
-    } else if (fallVy >= LANDING_ROLL_THRESHOLD && droppedDown && Math.abs(p.vx) >= 3 && !p.isRolling && p.state !== 'hurt') {
+    } else if (droppedDown && Math.abs(p.vx) >= 3 && !p.isRolling && p.state !== 'hurt') {
       // Fell to a lower surface with horizontal momentum — full auto-roll
       p.isRolling = true;
       p.autoRoll = true;
