@@ -1609,7 +1609,7 @@ export function drawGameOverScreen(ctx: CanvasRenderingContext2D, score: number,
   ctx.textAlign = 'left';
 }
 
-export function drawPauseScreen(ctx: CanvasRenderingContext2D): void {
+export function drawPauseScreen(ctx: CanvasRenderingContext2D, selection: number): void {
   ctx.fillStyle = 'rgba(0,0,0,0.62)';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
@@ -1618,10 +1618,10 @@ export function drawPauseScreen(ctx: CanvasRenderingContext2D): void {
 
   // Panel
   ctx.fillStyle = 'rgba(18,15,30,0.97)';
-  ctx.fillRect(cx - 200, cy - 110, 400, 220);
+  ctx.fillRect(cx - 200, cy - 110, 400, 230);
   ctx.strokeStyle = 'rgba(100,90,140,0.8)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(cx - 200, cy - 110, 400, 220);
+  ctx.strokeRect(cx - 200, cy - 110, 400, 230);
 
   // Top accent
   ctx.fillStyle = 'rgba(255,200,60,0.7)';
@@ -1640,19 +1640,32 @@ export function drawPauseScreen(ctx: CanvasRenderingContext2D): void {
   ctx.lineTo(cx + 150, cy - 48);
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(200,195,230,0.85)';
-  ctx.font = '13px monospace';
-  ctx.fillText('O jogo está pausado.', cx, cy - 22);
+  ctx.fillStyle = 'rgba(180,175,210,0.6)';
+  ctx.font = '11px monospace';
+  ctx.fillText('↑ ↓ NAVEGAR  |  ENTER CONFIRMAR  |  ESC CONTINUAR', cx, cy - 26);
 
-  const blink = Math.floor(Date.now() / 520) % 2 === 0;
+  // Option 0 — Continuar
+  const opt0Selected = selection === 0;
+  ctx.fillStyle = opt0Selected ? 'rgba(18,12,36,0.95)' : 'transparent';
+  if (opt0Selected) ctx.fillRect(cx - 160, cy - 8, 320, 38);
+  ctx.strokeStyle = opt0Selected ? 'rgba(0,200,255,0.7)' : 'transparent';
+  ctx.lineWidth = 1;
+  if (opt0Selected) ctx.strokeRect(cx - 160, cy - 8, 320, 38);
 
-  ctx.fillStyle = blink ? 'rgba(0,200,255,0.95)' : 'rgba(0,200,255,0.4)';
-  ctx.font = 'bold 14px monospace';
-  ctx.fillText('[ ENTER — VOLTAR AO MENU ]', cx, cy + 20);
+  ctx.fillStyle = opt0Selected ? 'rgba(0,220,255,1)' : 'rgba(160,155,200,0.65)';
+  ctx.font = opt0Selected ? 'bold 16px monospace' : '15px monospace';
+  ctx.fillText(opt0Selected ? '▶  CONTINUAR' : '   CONTINUAR', cx, cy + 20);
 
-  ctx.fillStyle = 'rgba(160,155,200,0.7)';
-  ctx.font = '12px monospace';
-  ctx.fillText('ESC — CONTINUAR', cx, cy + 52);
+  // Option 1 — Menu inicial
+  const opt1Selected = selection === 1;
+  ctx.fillStyle = opt1Selected ? 'rgba(18,12,36,0.95)' : 'transparent';
+  if (opt1Selected) ctx.fillRect(cx - 160, cy + 44, 320, 38);
+  ctx.strokeStyle = opt1Selected ? 'rgba(255,100,100,0.7)' : 'transparent';
+  if (opt1Selected) ctx.strokeRect(cx - 160, cy + 44, 320, 38);
+
+  ctx.fillStyle = opt1Selected ? 'rgba(255,130,130,1)' : 'rgba(160,155,200,0.65)';
+  ctx.font = opt1Selected ? 'bold 16px monospace' : '15px monospace';
+  ctx.fillText(opt1Selected ? '▶  MENU INICIAL' : '   MENU INICIAL', cx, cy + 72);
 
   ctx.textAlign = 'left';
 }

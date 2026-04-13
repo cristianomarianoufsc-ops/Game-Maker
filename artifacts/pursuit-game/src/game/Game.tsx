@@ -186,6 +186,9 @@ export default function Game() {
   const testJustPressed = useRef(false);
   const enterJustPressed = useRef(false);
   const escJustPressed = useRef(false);
+  const pauseSelection = useRef(0); // 0 = continuar, 1 = menu inicial
+  const pauseDownJustPressed = useRef(false);
+  const pauseUpJustPressed = useRef(false);
   const lastJumpPressTime = useRef(0);
   const lastDownPressTime = useRef(0);
   const DIVE_COMBO_WINDOW = 220;
@@ -290,11 +293,17 @@ export default function Game() {
         case 'ArrowRight': case 'KeyD': k.right = down; break;
         case 'ArrowUp':   case 'KeyW':
           k.up = down;
-          if (down) lastJumpPressTime.current = performance.now();
+          if (down) {
+            lastJumpPressTime.current = performance.now();
+            pauseUpJustPressed.current = true;
+          }
           break;
         case 'ArrowDown': case 'KeyS':
           k.down = down;
-          if (down) lastDownPressTime.current = performance.now();
+          if (down) {
+            lastDownPressTime.current = performance.now();
+            pauseDownJustPressed.current = true;
+          }
           break;
         case 'Space':
           k.space = down;
@@ -348,18 +357,33 @@ export default function Game() {
           spaceJustPressed.current = false;
         }
       } else if (gs.gamePhase === 'paused') {
-        if (enterJustPressed.current) {
-          enterJustPressed.current = false;
-          escJustPressed.current = false;
-          gs.gamePhase = 'menu';
-        } else if (escJustPressed.current) {
+        if (pauseDownJustPressed.current) {
+          pauseSelection.current = 1;
+          pauseDownJustPressed.current = false;
+        }
+        if (pauseUpJustPressed.current) {
+          pauseSelection.current = 0;
+          pauseUpJustPressed.current = false;
+        }
+        if (escJustPressed.current) {
+          // ESC despausa diretamente
           escJustPressed.current = false;
           enterJustPressed.current = false;
           gs.gamePhase = 'playing';
+        } else if (enterJustPressed.current) {
+          enterJustPressed.current = false;
+          if (pauseSelection.current === 0) {
+            gs.gamePhase = 'playing';
+          } else {
+            gs.gamePhase = 'menu';
+          }
         }
       } else if (gs.gamePhase === 'playing') {
-        if (enterJustPressed.current) {
-          enterJustPressed.current = false;
+        if (escJustPressed.current) {
+          escJustPressed.current = false;
+          pauseSelection.current = 0;
+          pauseDownJustPressed.current = false;
+          pauseUpJustPressed.current = false;
           gs.gamePhase = 'paused';
         }
         gs.time += dt;
@@ -493,7 +517,7 @@ export default function Game() {
       if (showControls.current) drawControls(ctx);
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
-      if (gs.gamePhase === 'paused') drawPauseScreen(ctx);
+      if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);
 
       animRef.current = requestAnimationFrame(loop);
