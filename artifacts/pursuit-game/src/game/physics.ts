@@ -274,6 +274,9 @@ export function updatePlayer(
           p.vx = side === 'right' ? 2.4 : -2.4;
           p.vy = 0;
           p.coyoteTime = 3;
+          // Mark that player came from elevated wall so landing detection can roll correctly
+          p.jumpOriginGroundY = p.wallTopY;
+          p.jumpedFromWall = true;
         }
       }
     } else {
