@@ -186,20 +186,14 @@ export function updatePlayer(
       const neutralVerticalClimb = (keys.space || keys.up) && !keys.left && !keys.right;
       if (canJumpOffWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide) {
         p.isWallRunning = false;
-        p.isWallClimbUp = true;
-        p.wallClimbTimer = WALLCLIMB_DURATION;
-        p.wallClimbStartX = p.x;
-        p.wallClimbStartY = p.y;
-        p.wallClimbTargetX = wallSide === 'right' ? p.wallX + 22 : p.wallX - p.w - 22;
-        p.wallClimbTargetY = p.wallTopY - PLAYER_H - 4;
-        p.wallClimbSide = wallSide;
-        p.coyoteTime = 0;
-        p.vx = 0;
+        p.x = wallSide === 'right' ? p.wallX + 22 : p.wallX - p.w - 22;
+        p.y = p.wallTopY - PLAYER_H - 4;
+        p.vx = wallSide === 'right' ? 2.4 : -2.4;
         p.vy = 0;
+        p.coyoteTime = 3;
+        p.jumpOriginGroundY = p.wallTopY;
+        p.jumpedFromWall = true;
         p.facingRight = wallSide === 'right';
-        p.state = 'wallclimb';
-        p.animFrame = 0;
-        p.animTimer = 0;
         for (let i = 0; i < 12; i++) {
           spawnParticle(
             p.x + (wallSide === 'right' ? p.w : 0),
