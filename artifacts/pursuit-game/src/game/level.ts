@@ -153,7 +153,6 @@ export function generateLevel(): Platform[] {
     { x: 6200, y: GROUND_Y - 55, w: 110 },
 
     // Free Zone 2
-    { x: 7900,  y: GROUND_Y - 55, w: 115 },
     { x: 9100,  y: GROUND_Y - 55, w: 115 },
     { x: 10400, y: GROUND_Y - 55, w: 115 },
 
