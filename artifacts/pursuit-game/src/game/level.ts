@@ -107,7 +107,6 @@ export function generateLevel(): Platform[] {
 
     // Free zone 2 — só lixeiras, sem paredes
     { x: 7500 },
-    { x: 8300 },
     { x: 9000 },
     { x: 9800 },
     { x: 10500 },
@@ -194,10 +193,8 @@ export function generateLevel(): Platform[] {
     { x: 6420, y: GROUND_Y - 95,  w: 100 },
 
     // ── FREE ZONE 2 — escadaria aberta e parkour sem paredes ──
-    { x: 7560, y: GROUND_Y - 170, w: 90  },
-    { x: 7720, y: GROUND_Y - 255, w: 90  },
-    { x: 7880, y: GROUND_Y - 170, w: 90  },
-    { x: 8040, y: GROUND_Y - 85,  w: 95  },
+    { x: 7560, y: GROUND_Y - 120, w: 90  },
+    { x: 7880, y: GROUND_Y - 120, w: 90  },
 
     { x: 8300, y: GROUND_Y - 120, w: 100 },
     { x: 8500, y: GROUND_Y - 215, w: 85  },
