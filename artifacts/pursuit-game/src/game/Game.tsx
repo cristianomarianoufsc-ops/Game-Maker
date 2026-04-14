@@ -255,6 +255,7 @@ export default function Game() {
   const DIVE_COMBO_WINDOW = 420;
   const editorJustPressed = useRef(false);
   const editorSpawnJustPressed = useRef(false);
+  const editorTestModeRef = useRef(false);
   const editorCamXRef = useRef(0);
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
   const editorHoveredIdxRef = useRef(-1);
@@ -563,22 +564,23 @@ export default function Game() {
         if (escJustPressed.current) {
           escJustPressed.current = false;
           spaceJustPressed.current = false;
+          editorTestModeRef.current = false;
           gs.gamePhase = 'menu';
         } else if (editorSpawnJustPressed.current) {
           editorSpawnJustPressed.current = false;
           // Spawna Horácio na posição atual da câmera do editor
           const spawnX = editorCamXRef.current + CANVAS_W * CAMERA_LEAD_X;
           const newState = makeInitialState('story');
+          // Usa gameMode wall-test para desabilitar o drone durante o teste
+          newState.gameMode = 'wall-test';
           newState.gamePhase = 'playing';
           newState.player.x = spawnX;
           newState.player.y = GROUND_Y - PLAYER_H;
           newState.player.vx = 0;
           newState.player.vy = 0;
           newState.camera.x = editorCamXRef.current;
-          // Drone inicia atrás, fora da tela, para dar tempo de testar
-          newState.drone.x = spawnX - 900;
-          newState.drone.y = GROUND_Y - 200;
           gsRef.current = newState;
+          editorTestModeRef.current = true;
         } else {
           const keys = keysRef.current;
           if (keys.left)  editorCamXRef.current = Math.max(0, editorCamXRef.current - EDITOR_PAN_SPEED);
@@ -614,7 +616,13 @@ export default function Game() {
           }
         }
       } else if (gs.gamePhase === 'playing') {
-        if (escJustPressed.current) {
+        if (editorSpawnJustPressed.current && editorTestModeRef.current) {
+          // R pressionado durante teste do editor: volta pro editor na mesma posição
+          editorSpawnJustPressed.current = false;
+          spaceJustPressed.current = false;
+          gs.gamePhase = 'editor';
+          gs.camera.x = editorCamXRef.current;
+        } else if (escJustPressed.current) {
           escJustPressed.current = false;
           pauseSelection.current = 0;
           pauseDownJustPressed.current = false;
@@ -660,10 +668,12 @@ export default function Game() {
         if (gs.screenShake > 0) gs.screenShake = Math.max(0, gs.screenShake - 0.4);
 
         if (gs.player.state === 'dead') {
+          editorTestModeRef.current = false;
           gs.gamePhase = 'gameover';
         }
 
         spaceJustPressed.current = false;
+        editorSpawnJustPressed.current = false;
       } else if (gs.gamePhase === 'gameover') {
         if (testJustPressed.current) {
           resetGame('wall-test');
@@ -759,6 +769,16 @@ export default function Game() {
 
       drawHUD(ctx, gs);
       if (showControls.current) drawControls(ctx);
+
+      // Barra de modo teste do editor
+      if (gs.gamePhase === 'playing' && editorTestModeRef.current) {
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, CANVAS_H - 16, CANVAS_W, 16);
+        ctx.fillStyle = 'rgba(80,230,140,0.9)';
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('◆ MODO TESTE DO EDITOR  |  R: VOLTAR AO EDITOR ◆', CANVAS_W / 2, CANVAS_H - 4);
+      }
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
