@@ -279,8 +279,8 @@ export function generateLevel(): Platform[] {
   ];
 
   plats.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, y, w }) => {
-    // Sacadas (GY-110): slab h=65 → fundo em y=365 → bloqueia em pé (top=360) e libera rolando (top=384).
-    const h = y === GROUND_Y - 110 ? 65 : 18;
+    // Sacadas (GY-110): slab h=62 → fundo em y=362 → bloqueia em pé (top=360) e libera rolando (top=384).
+    const h = y === GROUND_Y - 110 ? 62 : 18;
     platforms.push({ x, y, w, h, type: 'platform' });
   });
 
