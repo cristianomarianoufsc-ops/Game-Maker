@@ -2181,6 +2181,7 @@ export function drawEditorUI(
   platforms: import('./types').Platform[],
   camX: number,
   hoveredIdx: number,
+  selectedIdx: number,
   mouseWorld: { x: number; y: number },
   copiedMsg: { text: string; until: number } | null,
   checkpointIdx: number,
@@ -2207,12 +2208,17 @@ export function drawEditorUI(
     const screenLeft = p.x - camX;
     if (screenLeft > CANVAS_W + 20 || screenLeft + p.w < -20) continue;
 
-    const isHovered = i === hoveredIdx;
+    const isSelected = i === selectedIdx;
+    const isHovered = i === hoveredIdx && !isSelected;
 
-    if (isHovered) {
-      ctx.fillStyle = 'rgba(255,40,40,0.45)';
-      ctx.strokeStyle = 'rgba(255,60,60,1)';
-      ctx.lineWidth = 2.5;
+    if (isSelected) {
+      ctx.fillStyle = 'rgba(0,200,255,0.18)';
+      ctx.strokeStyle = 'rgba(0,220,255,1)';
+      ctx.lineWidth = 2;
+    } else if (isHovered) {
+      ctx.fillStyle = 'rgba(255,40,40,0.35)';
+      ctx.strokeStyle = 'rgba(255,80,60,0.9)';
+      ctx.lineWidth = 1.5;
     } else {
       ctx.fillStyle = typeColor[p.type] ?? 'rgba(255,255,255,0.15)';
       ctx.strokeStyle = typeStroke[p.type] ?? 'rgba(255,255,255,0.5)';
@@ -2223,13 +2229,39 @@ export function drawEditorUI(
     ctx.fillRect(p.x, p.y, p.w, drawH);
     ctx.strokeRect(p.x, p.y, p.w, drawH);
 
-    if (isHovered) {
-      ctx.fillStyle = 'rgba(255,60,60,0.95)';
+    if (isSelected) {
+      // Coord label above
+      const gy = Math.round(p.y - 410);
+      ctx.fillStyle = 'rgba(0,220,255,0.95)';
       ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'center';
-      const gy = Math.round(p.y - 410); // offset from GROUND_Y
-      const label = `x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type.toUpperCase()}]  — CLIQUE PARA COPIAR`;
-      ctx.fillText(label, p.x + p.w / 2, p.y - 6);
+      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}  [${p.type}]`, p.x + p.w / 2, p.y - 8);
+      ctx.textAlign = 'left';
+
+      const HANDLE_SIZE = 8;
+      // Right-middle handle (resize width)
+      const rhx = p.x + p.w;
+      const rhy = p.y + drawH / 2;
+      ctx.fillStyle = 'rgba(0,220,255,1)';
+      ctx.fillRect(rhx - HANDLE_SIZE / 2, rhy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(rhx - HANDLE_SIZE / 2, rhy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+
+      // Top-middle handle (resize height)
+      const thx = p.x + p.w / 2;
+      const thy = p.y;
+      ctx.fillStyle = 'rgba(255,200,0,1)';
+      ctx.fillRect(thx - HANDLE_SIZE / 2, thy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(thx - HANDLE_SIZE / 2, thy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+    } else if (isHovered) {
+      ctx.fillStyle = 'rgba(255,80,60,0.9)';
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'center';
+      const gy = Math.round(p.y - 410);
+      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type}]  — clique para selecionar`, p.x + p.w / 2, p.y - 6);
       ctx.textAlign = 'left';
     }
   }

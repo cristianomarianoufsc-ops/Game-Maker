@@ -262,6 +262,15 @@ export default function Game() {
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
+  const editorSelectedIdxRef = useRef(-1);
+  type EditorDrag = {
+    mode: 'move' | 'resize-right' | 'resize-top';
+    startWX: number; startWY: number;
+    origX: number; origY: number; origW: number; origH: number;
+    origText: string;
+    hasMoved: boolean;
+  };
+  const editorDragRef = useRef<EditorDrag | null>(null);
   const EDITOR_PAN_SPEED = 12;
   const EDITOR_CHECKPOINTS = [
     { label: 'CP1', x: 6500 },
@@ -474,61 +483,130 @@ export default function Game() {
     window.addEventListener('keydown', kd);
     window.addEventListener('keyup', ku);
 
-    const onCanvasMouseMove = (e: MouseEvent) => {
-      const gs = gsRef.current;
-      if (!gs || gs.gamePhase !== 'editor') return;
+    const EDITOR_GROUND_Y = 410;
+    const HANDLE_R = 8; // px hit radius for handles
+
+    const platCoordText = (p: { x: number; y: number; w: number; h: number; type: string }) => {
+      const gy = Math.round(p.y - EDITOR_GROUND_Y);
+      return `x:${Math.round(p.x)}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${Math.round(p.w)}  h:${Math.round(p.h)}  [${p.type}]`;
+    };
+
+    const copyPlatText = (text: string, msg: string) => {
+      navigator.clipboard.writeText(text).catch(() => {});
+      editorCopiedMsgRef.current = { text: msg, until: Date.now() + 3000 };
+    };
+
+    const getEditorWorldCoords = (e: MouseEvent) => {
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      if (!canvas) return null;
       const rect = canvas.getBoundingClientRect();
       const scaleX = CANVAS_W / rect.width;
       const scaleY = CANVAS_H / rect.height;
       const cx = (e.clientX - rect.left) * scaleX;
       const cy = (e.clientY - rect.top) * scaleY;
-      const wx = cx + editorCamXRef.current;
-      const wy = cy;
+      return { wx: cx + editorCamXRef.current, wy: cy };
+    };
+
+    const hitHandle = (wx: number, wy: number, hx: number, hy: number) =>
+      Math.abs(wx - hx) <= HANDLE_R && Math.abs(wy - hy) <= HANDLE_R;
+
+    const onCanvasMouseMove = (e: MouseEvent) => {
+      const gs = gsRef.current;
+      if (!gs || gs.gamePhase !== 'editor') return;
+      const coords = getEditorWorldCoords(e);
+      if (!coords) return;
+      const { wx, wy } = coords;
       editorMouseWorldRef.current = { x: wx, y: wy };
+
+      const drag = editorDragRef.current;
+      if (drag) {
+        const dx = wx - drag.startWX;
+        const dy = wy - drag.startWY;
+        if (Math.abs(dx) > 1 || Math.abs(dy) > 1) drag.hasMoved = true;
+        const p = platformsRef.current[editorSelectedIdxRef.current];
+        if (p) {
+          if (drag.mode === 'move') {
+            p.x = Math.round(drag.origX + dx);
+            p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - p.h));
+            p.y = Math.max(60, p.y);
+          } else if (drag.mode === 'resize-right') {
+            p.w = Math.round(Math.max(10, drag.origW + dx));
+          } else if (drag.mode === 'resize-top') {
+            const newH = Math.round(Math.max(10, drag.origH - dy));
+            p.y = Math.round(drag.origY + drag.origH - newH);
+            p.h = newH;
+          }
+        }
+        return;
+      }
+
+      // Middle-button pan
       editorHoveredIdxRef.current = platformsRef.current.findIndex(p => {
         if (p.type === 'ground') return false;
         return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h;
       });
     };
 
-    const onCanvasClick = (e: MouseEvent) => {
-      const gs = gsRef.current;
-      if (!gs || gs.gamePhase !== 'editor') return;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = CANVAS_W / rect.width;
-      const scaleY = CANVAS_H / rect.height;
-      const cx = (e.clientX - rect.left) * scaleX;
-      const cy = (e.clientY - rect.top) * scaleY;
-      const wx = cx + editorCamXRef.current;
-      const wy = cy;
-      const idx = platformsRef.current.findIndex(p => {
-        if (p.type === 'ground') return false;
-        return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h;
-      });
-      if (idx >= 0) {
-        const p = platformsRef.current[idx];
-        const GROUND_Y = 410;
-        const gy = Math.round(p.y - GROUND_Y);
-        const text = `x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type}]`;
-        navigator.clipboard.writeText(text).catch(() => {});
-        editorCopiedMsgRef.current = { text: `✓ COPIADO: ${text}`, until: Date.now() + 2500 };
-      }
-    };
-
     let middleDragging = false;
     let middleLastX = 0;
 
     const onCanvasMouseDown = (e: MouseEvent) => {
-      if (e.button !== 1) return;
-      e.preventDefault();
       const gs = gsRef.current;
       if (!gs || gs.gamePhase !== 'editor') return;
-      middleDragging = true;
-      middleLastX = e.clientX;
+
+      if (e.button === 1) {
+        e.preventDefault();
+        middleDragging = true;
+        middleLastX = e.clientX;
+        return;
+      }
+
+      if (e.button !== 0) return;
+      const coords = getEditorWorldCoords(e);
+      if (!coords) return;
+      const { wx, wy } = coords;
+
+      const selIdx = editorSelectedIdxRef.current;
+      const platforms = platformsRef.current;
+
+      // Check handle hits on currently selected object first
+      if (selIdx >= 0 && selIdx < platforms.length) {
+        const p = platforms[selIdx];
+        const rightHX = p.x + p.w;
+        const rightHY = p.y + p.h / 2;
+        const topHX = p.x + p.w / 2;
+        const topHY = p.y;
+        const origText = platCoordText(p);
+        if (hitHandle(wx, wy, rightHX, rightHY)) {
+          editorDragRef.current = { mode: 'resize-right', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText, hasMoved: false };
+          return;
+        }
+        if (hitHandle(wx, wy, topHX, topHY)) {
+          editorDragRef.current = { mode: 'resize-top', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText, hasMoved: false };
+          return;
+        }
+        // Hit body of selected → start move drag
+        if (wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h) {
+          editorDragRef.current = { mode: 'move', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText, hasMoved: false };
+          return;
+        }
+      }
+
+      // Hit a different platform → select it, copy its coords
+      const idx = platforms.findIndex(p => {
+        if (p.type === 'ground') return false;
+        return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h;
+      });
+      if (idx >= 0) {
+        editorSelectedIdxRef.current = idx;
+        const p = platforms[idx];
+        const text = platCoordText(p);
+        copyPlatText(text, `✓ SELECIONADO: ${text}`);
+        // Also start a potential move drag right away
+        editorDragRef.current = { mode: 'move', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText: text, hasMoved: false };
+      } else {
+        editorSelectedIdxRef.current = -1;
+      }
     };
 
     const onCanvasMiddleMove = (e: MouseEvent) => {
@@ -545,7 +623,19 @@ export default function Game() {
     };
 
     const onMouseUp = (e: MouseEvent) => {
-      if (e.button === 1) middleDragging = false;
+      if (e.button === 1) { middleDragging = false; return; }
+      if (e.button !== 0) return;
+      const drag = editorDragRef.current;
+      if (!drag) return;
+      editorDragRef.current = null;
+      if (drag.hasMoved) {
+        const p = platformsRef.current[editorSelectedIdxRef.current];
+        if (p) {
+          const newText = platCoordText(p);
+          const clipText = `ANTIGO: ${drag.origText}\nNOVO:   ${newText}`;
+          copyPlatText(clipText, `✓ ATUALIZADO — cole aqui e diga "atualizar"`);
+        }
+      }
     };
 
     const cvs = canvasRef.current;
@@ -553,7 +643,6 @@ export default function Game() {
       cvs.addEventListener('mousemove', onCanvasMouseMove);
       cvs.addEventListener('mousemove', onCanvasMiddleMove);
       cvs.addEventListener('mousedown', onCanvasMouseDown);
-      cvs.addEventListener('click', onCanvasClick);
     }
     window.addEventListener('mouseup', onMouseUp);
 
@@ -823,7 +912,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);
@@ -841,7 +930,6 @@ export default function Game() {
         cvs.removeEventListener('mousemove', onCanvasMouseMove);
         cvs.removeEventListener('mousemove', onCanvasMiddleMove);
         cvs.removeEventListener('mousedown', onCanvasMouseDown);
-        cvs.removeEventListener('click', onCanvasClick);
       }
       cancelAnimationFrame(animRef.current);
     };
