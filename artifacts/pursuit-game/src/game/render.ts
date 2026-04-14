@@ -691,22 +691,77 @@ function bakeBuilding(g: Group2, brickImg: HTMLImageElement | null): OffscreenCa
   const anchorY = Math.max(...g.plats.map(p => p.y));
   const wy      = Math.max(6, anchorY - WIN_H - 6);
   const n = g.plats.length;
+
+  // Deterministic pseudo-random seeded by world position
+  const seed = (g.x1 * 2654435761) >>> 0;
+  const rng = (salt: number) => (((seed ^ (salt * 2246822519)) >>> 0) / 0xffffffff);
+
   for (let i = 0; i < n; i++) {
     const fraction = n === 1 ? 0.5 : (i + 1) / (n + 1);
     const wx = Math.round(sw * fraction - WIN_W / 2);
-    bc.fillStyle = '#6a5848';
-    bc.fillRect(wx - 4, wy - 5, WIN_W + 8, 6);
-    bc.fillStyle = '#3a2010';
-    bc.fillRect(wx, wy, WIN_W, WIN_H);
     const pw = Math.floor((WIN_W - 3) / 2);
     const ph = Math.floor((WIN_H - 3) / 2);
-    bc.fillStyle = '#1c2c3c';
+
+    // Decide this window's state from its unique seed
+    const r0 = rng(i * 7 + 1);
+    const r1 = rng(i * 7 + 2);
+    const r2 = rng(i * 7 + 3);
+    const isLit      = r0 > 0.35;          // ~65% lit
+    const hasCurtain = r1 > 0.55;          // ~45% have a curtain
+    const curtainSide = r2 > 0.5;          // left or right
+
+    // Stone lintel
+    bc.fillStyle = '#6a5848';
+    bc.fillRect(wx - 4, wy - 5, WIN_W + 8, 6);
+
+    // Window frame
+    bc.fillStyle = '#3a2010';
+    bc.fillRect(wx, wy, WIN_W, WIN_H);
+
+    // Glass panes — warmer tint if lit, cold dark if unlit
+    const glassColor = isLit ? '#1e2830' : '#141c24';
+    bc.fillStyle = glassColor;
     bc.fillRect(wx + 1,      wy + 1,      pw, ph);
     bc.fillRect(wx + pw + 2, wy + 1,      pw, ph);
     bc.fillRect(wx + 1,      wy + ph + 2, pw, ph);
     bc.fillRect(wx + pw + 2, wy + ph + 2, pw, ph);
-    bc.fillStyle = 'rgba(255,140,40,0.12)';
-    bc.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
+
+    if (isLit) {
+      // Warm interior light — gradient from centre outward
+      const glowGrad = bc.createLinearGradient(wx + 1, wy + 1, wx + 1, wy + WIN_H - 1);
+      glowGrad.addColorStop(0, 'rgba(255,190,80,0.30)');
+      glowGrad.addColorStop(0.5, 'rgba(255,150,40,0.22)');
+      glowGrad.addColorStop(1, 'rgba(200,90,10,0.10)');
+      bc.fillStyle = glowGrad;
+      bc.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
+
+      // Outer glow halo on the building wall
+      const haloGrad = bc.createRadialGradient(
+        wx + WIN_W / 2, wy + WIN_H / 2, 2,
+        wx + WIN_W / 2, wy + WIN_H / 2, WIN_W
+      );
+      haloGrad.addColorStop(0, 'rgba(255,160,40,0.10)');
+      haloGrad.addColorStop(1, 'rgba(255,120,20,0)');
+      bc.fillStyle = haloGrad;
+      bc.fillRect(wx - WIN_W / 2, wy - WIN_H / 2, WIN_W * 2, WIN_H * 2);
+
+      if (hasCurtain) {
+        // Partial curtain drawn on one side
+        const curtW = Math.round(pw * 0.55);
+        const cx    = curtainSide ? wx + 1 : wx + WIN_W - 1 - curtW;
+        bc.fillStyle = 'rgba(160,90,40,0.65)';
+        bc.fillRect(cx, wy + 1, curtW, WIN_H - 2);
+        // Curtain fold highlight
+        bc.fillStyle = 'rgba(200,130,60,0.25)';
+        bc.fillRect(curtainSide ? cx : cx + curtW - 2, wy + 1, 2, WIN_H - 2);
+      }
+    } else {
+      // Unlit: faint moonlight reflection on glass
+      bc.fillStyle = 'rgba(140,160,200,0.06)';
+      bc.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
+    }
+
+    // Window sill / ledge
     bc.fillStyle = '#6a5c50';
     bc.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 4);
     bc.fillStyle = '#7e6e60';
