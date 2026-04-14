@@ -63,6 +63,7 @@ export interface Player {
   landingCrouch: boolean;
   landingCrouchTimer: number;
   isCrouching: boolean;
+  forcedCrouch: boolean;
   isDivejumping: boolean;
   isWallRunning: boolean;
   wallRunTimer: number;

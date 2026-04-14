@@ -17,7 +17,7 @@ function rectOverlap(ax: number, ay: number, aw: number, ah: number,
 }
 
 function resolvePlayerPlatform(p: Player, plat: Platform): boolean {
-  const ph = p.isRolling ? PLAYER_ROLL_H : PLAYER_H;
+  const ph = (p.isRolling || p.forcedCrouch) ? PLAYER_ROLL_H : PLAYER_H;
   if (!rectOverlap(p.x, p.y, p.w, ph, plat.x, plat.y, plat.w, plat.h)) return false;
 
   const overlapLeft = p.x + p.w - plat.x;
@@ -116,6 +116,37 @@ export function updatePlayer(
       p.autoRoll = false;
       p.landingRollFrame = 0;
       p.state = p.onGround ? 'idle' : 'fall';
+      // Se ainda está no chão e tem plataforma bloqueando ao levantar, entra em forcedCrouch
+      if (p.onGround) {
+        const expandH = PLAYER_H - PLAYER_ROLL_H;
+        const blockedAbove = platforms.some(plat =>
+          plat.type !== 'ground' &&
+          rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, plat.x, plat.y, plat.w, plat.h)
+        );
+        if (blockedAbove) {
+          p.forcedCrouch = true;
+          p.vx = 0;
+          p.state = 'idle';
+        }
+      }
+    }
+  }
+
+  // ForcedCrouch: verifica a cada frame se ainda há bloqueio acima
+  if (p.forcedCrouch) {
+    if (!p.onGround) {
+      p.forcedCrouch = false;
+    } else {
+      const expandH = PLAYER_H - PLAYER_ROLL_H;
+      const stillBlocked = platforms.some(plat =>
+        plat.type !== 'ground' &&
+        rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, plat.x, plat.y, plat.w, plat.h)
+      );
+      if (!stillBlocked) {
+        p.forcedCrouch = false;
+      } else {
+        p.vx = 0;
+      }
     }
   }
 
@@ -133,7 +164,7 @@ export function updatePlayer(
     if (p.vy > p.peakFallVy) p.peakFallVy = p.vy;
   }
 
-  const ph = p.isRolling ? PLAYER_ROLL_H : PLAYER_H;
+  const ph = (p.isRolling || p.forcedCrouch) ? PLAYER_ROLL_H : PLAYER_H;
 
   // --- Climbing ---
   if (p.isClimbing) {
@@ -405,8 +436,9 @@ export function updatePlayer(
       p.vy = -CLIMB_SPEED;
     }
 
-    // Roll
-    if ((keys.shift || keys.z) && p.onGround && !p.isRolling && (keys.left || keys.right || Math.abs(p.vx) > 1)) {
+    // Roll — também sai do forcedCrouch ao pressionar shift+direção
+    if ((keys.shift || keys.z) && p.onGround && !p.isRolling && (keys.left || keys.right || Math.abs(p.vx) > 1 || p.forcedCrouch)) {
+      p.forcedCrouch = false;
       p.isRolling = true;
       p.rollTimer = ROLL_DURATION;
       p.state = 'roll';

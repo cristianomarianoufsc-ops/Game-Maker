@@ -62,6 +62,7 @@ function makePlayer(): Player {
     landingCrouch: false,
     landingCrouchTimer: 0,
     isCrouching: false,
+    forcedCrouch: false,
     isDivejumping: false,
     isWallRunning: false,
     wallRunTimer: 0,

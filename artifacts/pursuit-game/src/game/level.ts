@@ -177,110 +177,110 @@ export function generateLevel(): Platform[] {
     ...rollUnderBalconies,
 
     // ── WALL ZONE 1 ──
-    { x: 3500, y: GROUND_Y - 110, w: 115 },
+    { x: 3500, y: GROUND_Y - 125, w: 115 },
     { x: 3700, y: GROUND_Y - 165, w: 95  },
-    { x: 3920, y: GROUND_Y - 110, w: 115 },
+    { x: 3920, y: GROUND_Y - 125, w: 115 },
 
-    { x: 4350, y: GROUND_Y - 110, w: 115 },
-    { x: 4800, y: GROUND_Y - 110, w: 115 },
+    { x: 4350, y: GROUND_Y - 125, w: 115 },
+    { x: 4800, y: GROUND_Y - 125, w: 115 },
 
-    { x: 5200, y: GROUND_Y - 110, w: 115 },
-    { x: 5640, y: GROUND_Y - 110, w: 115 },
+    { x: 5200, y: GROUND_Y - 125, w: 115 },
+    { x: 5640, y: GROUND_Y - 125, w: 115 },
 
-    { x: 5980, y: GROUND_Y - 110, w: 115 },
+    { x: 5980, y: GROUND_Y - 125, w: 115 },
     { x: 6200, y: GROUND_Y - 185, w: 85  },
-    { x: 6420, y: GROUND_Y - 110, w: 115 },
+    { x: 6420, y: GROUND_Y - 125, w: 115 },
 
     // ── FREE ZONE 2 — escadaria aberta e parkour sem paredes ──
-    { x: 7560, y: GROUND_Y - 110, w: 115 },
-    { x: 7880, y: GROUND_Y - 110, w: 115 },
+    { x: 7560, y: GROUND_Y - 125, w: 115 },
+    { x: 7880, y: GROUND_Y - 125, w: 115 },
 
-    { x: 8300, y: GROUND_Y - 110, w: 115 },
+    { x: 8300, y: GROUND_Y - 125, w: 115 },
     { x: 8500, y: GROUND_Y - 215, w: 85  },
-    { x: 8700, y: GROUND_Y - 110, w: 115 },
+    { x: 8700, y: GROUND_Y - 125, w: 115 },
 
-    { x: 9050, y: GROUND_Y - 110, w: 115 },
+    { x: 9050, y: GROUND_Y - 125, w: 115 },
     { x: 9250, y: GROUND_Y - 195, w: 90  },
-    { x: 9450, y: GROUND_Y - 110, w: 115 },
+    { x: 9450, y: GROUND_Y - 125, w: 115 },
 
-    { x: 9750, y: GROUND_Y - 110, w: 115 },
+    { x: 9750, y: GROUND_Y - 125, w: 115 },
     { x: 9960, y: GROUND_Y - 210, w: 90  },
-    { x: 10180, y: GROUND_Y - 110, w: 115 },
+    { x: 10180, y: GROUND_Y - 125, w: 115 },
 
-    { x: 10500, y: GROUND_Y - 110, w: 115 },
+    { x: 10500, y: GROUND_Y - 125, w: 115 },
     { x: 10710, y: GROUND_Y - 175, w: 90  },
-    { x: 10920, y: GROUND_Y - 110, w: 115 },
+    { x: 10920, y: GROUND_Y - 125, w: 115 },
     { x: 11150, y: GROUND_Y - 160, w: 90  },
 
     // ── WALL ZONE 2 ──
-    { x: 11800, y: GROUND_Y - 110, w: 115 },
+    { x: 11800, y: GROUND_Y - 125, w: 115 },
     { x: 12020, y: GROUND_Y - 210, w: 90  },
-    { x: 12240, y: GROUND_Y - 110, w: 115 },
+    { x: 12240, y: GROUND_Y - 125, w: 115 },
 
-    { x: 12500, y: GROUND_Y - 110, w: 115 },
+    { x: 12500, y: GROUND_Y - 125, w: 115 },
     { x: 12720, y: GROUND_Y - 230, w: 85  },
-    { x: 12940, y: GROUND_Y - 110, w: 115 },
+    { x: 12940, y: GROUND_Y - 125, w: 115 },
 
-    { x: 13180, y: GROUND_Y - 110, w: 115 },
+    { x: 13180, y: GROUND_Y - 125, w: 115 },
     { x: 13400, y: GROUND_Y - 225, w: 90  },
-    { x: 13620, y: GROUND_Y - 110, w: 115 },
+    { x: 13620, y: GROUND_Y - 125, w: 115 },
 
-    { x: 13900, y: GROUND_Y - 110, w: 115 },
+    { x: 13900, y: GROUND_Y - 125, w: 115 },
     { x: 14120, y: GROUND_Y - 245, w: 85  },
-    { x: 14340, y: GROUND_Y - 110, w: 115 },
+    { x: 14340, y: GROUND_Y - 125, w: 115 },
 
-    { x: 14620, y: GROUND_Y - 110, w: 115 },
+    { x: 14620, y: GROUND_Y - 125, w: 115 },
     { x: 14840, y: GROUND_Y - 215, w: 90  },
-    { x: 15060, y: GROUND_Y - 110, w: 115 },
+    { x: 15060, y: GROUND_Y - 125, w: 115 },
 
     // ── FREE ZONE 3 — parkour rápido, sem paredes ──
-    { x: 16200, y: GROUND_Y - 110, w: 115 },
+    { x: 16200, y: GROUND_Y - 125, w: 115 },
     { x: 16400, y: GROUND_Y - 180, w: 90  },
     { x: 16600, y: GROUND_Y - 270, w: 90  },
     { x: 16800, y: GROUND_Y - 180, w: 90  },
-    { x: 17000, y: GROUND_Y - 110, w: 115 },
+    { x: 17000, y: GROUND_Y - 125, w: 115 },
 
-    { x: 17300, y: GROUND_Y - 110, w: 115 },
+    { x: 17300, y: GROUND_Y - 125, w: 115 },
     { x: 17520, y: GROUND_Y - 220, w: 85  },
-    { x: 17740, y: GROUND_Y - 110, w: 115 },
+    { x: 17740, y: GROUND_Y - 125, w: 115 },
 
-    { x: 18050, y: GROUND_Y - 110, w: 115 },
+    { x: 18050, y: GROUND_Y - 125, w: 115 },
     { x: 18270, y: GROUND_Y - 200, w: 90  },
-    { x: 18490, y: GROUND_Y - 110, w: 115 },
+    { x: 18490, y: GROUND_Y - 125, w: 115 },
 
-    { x: 18800, y: GROUND_Y - 110, w: 115 },
+    { x: 18800, y: GROUND_Y - 125, w: 115 },
     { x: 19020, y: GROUND_Y - 215, w: 85  },
-    { x: 19240, y: GROUND_Y - 110, w: 115 },
+    { x: 19240, y: GROUND_Y - 125, w: 115 },
 
-    { x: 19550, y: GROUND_Y - 110, w: 115 },
+    { x: 19550, y: GROUND_Y - 125, w: 115 },
     { x: 19770, y: GROUND_Y - 185, w: 90  },
 
     // ── WALL ZONE 3 ──
-    { x: 20600, y: GROUND_Y - 110, w: 115 },
+    { x: 20600, y: GROUND_Y - 125, w: 115 },
     { x: 20820, y: GROUND_Y - 240, w: 90  },
-    { x: 21040, y: GROUND_Y - 110, w: 115 },
+    { x: 21040, y: GROUND_Y - 125, w: 115 },
 
-    { x: 21300, y: GROUND_Y - 110, w: 115 },
+    { x: 21300, y: GROUND_Y - 125, w: 115 },
     { x: 21520, y: GROUND_Y - 230, w: 85  },
-    { x: 21740, y: GROUND_Y - 110, w: 115 },
+    { x: 21740, y: GROUND_Y - 125, w: 115 },
 
-    { x: 22050, y: GROUND_Y - 110, w: 115 },
+    { x: 22050, y: GROUND_Y - 125, w: 115 },
     { x: 22270, y: GROUND_Y - 260, w: 85  },
-    { x: 22490, y: GROUND_Y - 110, w: 115 },
+    { x: 22490, y: GROUND_Y - 125, w: 115 },
 
-    { x: 22800, y: GROUND_Y - 110, w: 115 },
+    { x: 22800, y: GROUND_Y - 125, w: 115 },
     { x: 23020, y: GROUND_Y - 245, w: 85  },
-    { x: 23240, y: GROUND_Y - 110, w: 115 },
+    { x: 23240, y: GROUND_Y - 125, w: 115 },
 
-    { x: 23600, y: GROUND_Y - 110, w: 115 },
+    { x: 23600, y: GROUND_Y - 125, w: 115 },
     { x: 23830, y: GROUND_Y - 225, w: 90  },
-    { x: 24060, y: GROUND_Y - 110, w: 115 },
-    { x: 24290, y: GROUND_Y - 110, w: 115 },
+    { x: 24060, y: GROUND_Y - 125, w: 115 },
+    { x: 24290, y: GROUND_Y - 125, w: 115 },
   ];
 
   plats.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, y, w }) => {
-    // Sacadas (GY-110): slab h=62 → fundo em y=362 → bloqueia em pé (top=360) e libera rolando (top=384).
-    const h = y === GROUND_Y - 110 ? 62 : 18;
+    // Sacadas (GY-125): slab h=62 → fundo em GY-63 → bloqueia em pé (PLAYER_H=50) e libera rolando (PLAYER_ROLL_H=26).
+    const h = y === GROUND_Y - 125 ? 62 : 18;
     platforms.push({ x, y, w, h, type: 'platform' });
   });
 
