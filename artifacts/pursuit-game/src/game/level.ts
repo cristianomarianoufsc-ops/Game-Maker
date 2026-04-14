@@ -181,7 +181,6 @@ export function generateLevel(): Platform[] {
 
     // Wall Zone 2
     { x: 11850, y: GROUND_Y - 55, w: 110 },
-    { x: 13200, y: GROUND_Y - 55, w: 110 },
     { x: 14700, y: GROUND_Y - 55, w: 110 },
 
     // Free Zone 3
