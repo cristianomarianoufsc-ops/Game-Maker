@@ -263,6 +263,11 @@ export default function Game() {
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
   const EDITOR_PAN_SPEED = 12;
+  const EDITOR_CHECKPOINTS = [
+    { label: 'CP1', x: 6500 },
+    { label: 'CP2', x: 12100 },
+  ];
+  const editorCheckpointIdxRef = useRef(-1);
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
   const buildingsRef = useRef(generateBuildings());
@@ -436,6 +441,20 @@ export default function Game() {
           break;
         case 'KeyE':
           if (down) editorJustPressed.current = true;
+          break;
+        case 'Period':
+          if (down && gsRef.current?.gamePhase === 'editor') {
+            const next = Math.min(editorCheckpointIdxRef.current + 1, EDITOR_CHECKPOINTS.length - 1);
+            editorCheckpointIdxRef.current = next;
+            editorCamXRef.current = Math.max(0, EDITOR_CHECKPOINTS[next].x - CANVAS_W / 2);
+          }
+          break;
+        case 'Comma':
+          if (down && gsRef.current?.gamePhase === 'editor') {
+            const prev = Math.max(editorCheckpointIdxRef.current - 1, 0);
+            editorCheckpointIdxRef.current = prev;
+            editorCamXRef.current = Math.max(0, EDITOR_CHECKPOINTS[prev].x - CANVAS_W / 2);
+          }
           break;
         case 'Enter':
           if (down) enterJustPressed.current = true;
@@ -804,7 +823,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);

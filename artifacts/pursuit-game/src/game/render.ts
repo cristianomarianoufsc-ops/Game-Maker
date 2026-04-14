@@ -2183,6 +2183,8 @@ export function drawEditorUI(
   hoveredIdx: number,
   mouseWorld: { x: number; y: number },
   copiedMsg: { text: string; until: number } | null,
+  checkpointIdx: number,
+  checkpoints: { label: string; x: number }[],
 ): void {
   const typeColor: Record<string, string> = {
     ground: 'rgba(80,200,80,0.25)',
@@ -2234,7 +2236,7 @@ export function drawEditorUI(
   ctx.restore();
 
   ctx.fillStyle = 'rgba(0,0,0,0.62)';
-  ctx.fillRect(0, 0, CANVAS_W, 40);
+  ctx.fillRect(0, 0, CANVAS_W, 56);
 
   ctx.textAlign = 'left';
   ctx.fillStyle = 'rgba(255,200,60,0.95)';
@@ -2243,7 +2245,44 @@ export function drawEditorUI(
 
   ctx.fillStyle = 'rgba(180,175,210,0.75)';
   ctx.font = '10px monospace';
-  ctx.fillText('← → MOVER  |  SCROLL MEIO: ARRASTAR  |  CLIQUE: DELETAR  |  ESC: MENU', 12, 32);
+  ctx.fillText('← → MOVER  |  SCROLL: ARRASTAR  |  CLIQUE: DELETAR  |  ESC: MENU  |  , / . : CHECKPOINT', 12, 32);
+
+  // Checkpoint markers in world space
+  ctx.save();
+  for (let ci = 0; ci < checkpoints.length; ci++) {
+    const cp = checkpoints[ci];
+    const sx = cp.x - camX;
+    if (sx < -40 || sx > CANVAS_W + 40) continue;
+    const isActive = ci === checkpointIdx;
+    ctx.strokeStyle = isActive ? 'rgba(80,230,255,0.95)' : 'rgba(80,180,255,0.45)';
+    ctx.lineWidth = isActive ? 2 : 1;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(sx, 44);
+    ctx.lineTo(sx, CANVAS_H);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = isActive ? 'rgba(0,200,255,0.95)' : 'rgba(80,160,255,0.75)';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(cp.label, sx, 58);
+    ctx.textAlign = 'left';
+  }
+  ctx.restore();
+
+  // Current checkpoint info row
+  if (checkpointIdx >= 0 && checkpointIdx < checkpoints.length) {
+    const cp = checkpoints[checkpointIdx];
+    ctx.fillStyle = 'rgba(0,200,255,0.9)';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('\u25b6 ' + cp.label + '  x:' + cp.x, 12, 49);
+  } else {
+    ctx.fillStyle = 'rgba(130,130,160,0.6)';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('sem checkpoint ativo', 12, 49);
+  }
 
   // Destaque visual para o botão de spawn
   const spawnLabel = ' CTRL: TESTAR AQUI ';
