@@ -301,7 +301,8 @@ export function generateLevel(): Platform[] {
 export function generateWallTestLevel(): Platform[] {
   return [
     { x: -400, y: GROUND_Y, w: 2600, h: GH, type: 'ground' },
-    { x: 760, y: GROUND_Y - 280, w: 20, h: 280, type: 'wall', climbable: true },
+    { x: 760,  y: GROUND_Y - 280, w: 20,  h: 280, type: 'wall',     climbable: true },
+    { x: 920,  y: GROUND_Y - 150, w: 160, h: 18,  type: 'platform', climbable: false },
   ];
 }
 

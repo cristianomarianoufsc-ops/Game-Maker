@@ -660,6 +660,12 @@ export function drawStreetBuildings(
     if (brickTextureImg && brickTextureImg.complete && brickTextureImg.naturalWidth > 0) {
       const pattern = ctx.createPattern(brickTextureImg, 'repeat');
       if (pattern) {
+        // Scale image so its height matches the building height exactly,
+        // then anchor the pattern to world coordinates so it doesn't scroll
+        // with the camera (tx = -camX keeps the pattern world-fixed).
+        const imgH = brickTextureImg.naturalHeight;
+        const scale = bH / imgH;
+        pattern.setTransform(new DOMMatrix([scale, 0, 0, scale, -camX, 0]));
         ctx.save();
         ctx.fillStyle = pattern;
         ctx.fillRect(sx, bY, sw, bH);
