@@ -617,8 +617,7 @@ export function drawGround(ctx: CanvasRenderingContext2D, camX: number): void {
 }
 
 // ── Large street buildings — drawn before platforms ────────────────
-// Groups nearby platforms into buildings that span full screen height.
-// The platforms themselves are just the balcony slabs on these facades.
+// Each building has 1–2 balconies. Each window corresponds to one balcony.
 export function drawStreetBuildings(
   ctx: CanvasRenderingContext2D,
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
@@ -630,18 +629,20 @@ export function drawStreetBuildings(
 
   if (elevPlatforms.length === 0) return;
 
-  // Group by proximity — gap > 280 px starts a new building
-  type Group = { x1: number; x2: number };
+  // Group by proximity (gap < 280 px) AND max 2 platforms per building
+  type PlatType = (typeof elevPlatforms)[number];
+  type Group = { x1: number; x2: number; plats: PlatType[] };
   const groups: Group[] = [];
   let cur: Group | null = null;
+
   for (const p of elevPlatforms) {
-    if (!cur) {
-      cur = { x1: p.x - 55, x2: p.x + p.w + 55 };
-    } else if (p.x - cur.x2 < 280) {
-      cur.x2 = Math.max(cur.x2, p.x + p.w + 55);
+    const fits = cur && (p.x - cur.x2 < 280) && (cur.plats.length < 2);
+    if (!fits) {
+      if (cur) groups.push(cur);
+      cur = { x1: p.x - 120, x2: p.x + p.w + 120, plats: [p] };
     } else {
-      groups.push(cur);
-      cur = { x1: p.x - 55, x2: p.x + p.w + 55 };
+      cur!.x2 = Math.max(cur!.x2, p.x + p.w + 120);
+      cur!.plats.push(p);
     }
   }
   if (cur) groups.push(cur);
@@ -649,19 +650,19 @@ export function drawStreetBuildings(
   for (const g of groups) {
     const sx = g.x1 - camX;
     const sw = g.x2 - g.x1;
-    if (sx + sw < -60 || sx > CANVAS_W + 60) continue;
+    if (sx + sw < -80 || sx > CANVAS_W + 80) continue;
 
-    const bY = 0;       // building top: top of screen
-    const bH = GROUND_Y; // building height: to ground
+    const bY = 0;
+    const bH = GROUND_Y;
 
     // ── Brick base ──
     ctx.fillStyle = '#3e1a0a';
     ctx.fillRect(sx, bY, sw, bH);
 
-    // ── Individual bricks (lighter on dark mortar background) ──
-    const BR = 7;  // brick row height (without mortar)
-    const BC = 13; // brick col width  (without mortar)
-    const MR = 1;  // mortar thickness
+    // ── Brick pattern (lighter bricks on dark mortar) ──
+    const BR = 7;   // brick height
+    const BC = 13;  // brick width
+    const MR = 1;   // mortar
     ctx.fillStyle = '#52220e';
     for (let row = 0, ry = bY; ry < bY + bH; row++, ry += BR + MR) {
       const off = (row % 2) * Math.floor((BC + MR) / 2);
@@ -672,48 +673,53 @@ export function drawStreetBuildings(
       }
     }
 
-    // ── Windows — regular grid across the facade ──
-    const WIN_W = 24;
-    const WIN_H = 20;
-    const COL_STEP = 55; // center-to-center spacing
-    const ROW_STEP = 55;
-    const numCols = Math.max(1, Math.floor((sw - 20) / COL_STEP));
-    const colPad  = (sw - numCols * COL_STEP) / 2;
+    // ── One large window per balcony platform ──
+    for (const p of g.plats) {
+      const psx    = p.x - camX;          // platform screen x
+      const WIN_W  = p.w + 10;            // window ≈ platform width
+      const WIN_H  = 44;                  // window height
+      const wx     = psx - 5;             // aligned with slab left
+      const wy     = Math.max(bY + 6, p.y - WIN_H - 6); // just above slab
 
-    for (let c = 0; c < numCols; c++) {
-      const wx = Math.round(sx + colPad + c * COL_STEP);
-      for (let wy2 = bY + 18; wy2 + WIN_H < bY + bH - 8; wy2 += ROW_STEP) {
-        // Stone lintel above window
-        ctx.fillStyle = '#6a5848';
-        ctx.fillRect(wx - 3, wy2 - 4, WIN_W + 6, 5);
-        // Window frame (dark wood)
-        ctx.fillStyle = '#3a2010';
-        ctx.fillRect(wx, wy2, WIN_W, WIN_H);
-        // 4 glass panes
-        const pw = Math.floor((WIN_W - 3) / 2);
-        const ph = Math.floor((WIN_H - 3) / 2);
-        ctx.fillStyle = '#1c2c3c';
-        ctx.fillRect(wx + 1,      wy2 + 1,      pw, ph);
-        ctx.fillRect(wx + pw + 2, wy2 + 1,      pw, ph);
-        ctx.fillRect(wx + 1,      wy2 + ph + 2, pw, ph);
-        ctx.fillRect(wx + pw + 2, wy2 + ph + 2, pw, ph);
-        // Warm interior glow
-        ctx.fillStyle = 'rgba(255,140,40,0.10)';
-        ctx.fillRect(wx + 1, wy2 + 1, WIN_W - 2, WIN_H - 2);
-      }
+      // Stone lintel (horizontal band above window)
+      ctx.fillStyle = '#6a5848';
+      ctx.fillRect(wx - 4, wy - 5, WIN_W + 8, 6);
+
+      // Window frame (dark wood)
+      ctx.fillStyle = '#3a2010';
+      ctx.fillRect(wx, wy, WIN_W, WIN_H);
+
+      // 4 glass panes
+      const pw = Math.floor((WIN_W - 3) / 2);
+      const ph = Math.floor((WIN_H - 3) / 2);
+      ctx.fillStyle = '#1c2c3c';
+      ctx.fillRect(wx + 1,      wy + 1,      pw, ph);
+      ctx.fillRect(wx + pw + 2, wy + 1,      pw, ph);
+      ctx.fillRect(wx + 1,      wy + ph + 2, pw, ph);
+      ctx.fillRect(wx + pw + 2, wy + ph + 2, pw, ph);
+
+      // Warm interior glow
+      ctx.fillStyle = 'rgba(255,140,40,0.12)';
+      ctx.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
+
+      // Window sill / ledge (matches slab style)
+      ctx.fillStyle = '#6a5c50';
+      ctx.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 4);
+      ctx.fillStyle = '#7e6e60';
+      ctx.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 2);
     }
 
     // ── Edge shading ──
     ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    ctx.fillRect(sx, bY, 3, bH);                  // left highlight
+    ctx.fillRect(sx, bY, 3, bH);
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.fillRect(sx + sw - 5, bY, 5, bH);         // right shadow
-    // Soft top shadow
-    const topGrad = ctx.createLinearGradient(0, bY, 0, bY + 20);
-    topGrad.addColorStop(0, 'rgba(0,0,0,0.5)');
+    ctx.fillRect(sx + sw - 5, bY, 5, bH);
+    // Top fade
+    const topGrad = ctx.createLinearGradient(0, bY, 0, bY + 18);
+    topGrad.addColorStop(0, 'rgba(0,0,0,0.55)');
     topGrad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = topGrad;
-    ctx.fillRect(sx, bY, sw, 20);
+    ctx.fillRect(sx, bY, sw, 18);
   }
 }
 
