@@ -625,9 +625,10 @@ export default function Game() {
         }
       } else if (gs.gamePhase === 'playing') {
         if (editorSpawnJustPressed.current && editorTestModeRef.current) {
-          // R pressionado durante teste do editor: volta pro editor na mesma posição
+          // Ctrl pressionado durante teste do editor: volta pro editor onde o jogador está
           editorSpawnJustPressed.current = false;
           spaceJustPressed.current = false;
+          editorCamXRef.current = gs.camera.x;
           gs.gamePhase = 'editor';
           gs.camera.x = editorCamXRef.current;
         } else if (escJustPressed.current) {
