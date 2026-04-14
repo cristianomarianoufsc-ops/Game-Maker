@@ -305,6 +305,10 @@ export default function Game() {
   }), []);
 
   const resetGame = useCallback((gameMode: GameState['gameMode'] = 'story') => {
+    // Ao iniciar modo história, garante que o modo editor não interfere
+    if (gameMode === 'story') {
+      editorTestModeRef.current = false;
+    }
     gsRef.current = {
       ...makeInitialState(gameMode),
       gamePhase: 'playing',
@@ -615,6 +619,7 @@ export default function Game() {
           if (pauseSelection.current === 0) {
             gs.gamePhase = 'playing';
           } else {
+            editorTestModeRef.current = false;
             gs.gamePhase = 'menu';
           }
         }
