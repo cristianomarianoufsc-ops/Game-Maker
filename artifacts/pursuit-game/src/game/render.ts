@@ -645,11 +645,13 @@ function buildGroups(platforms: PlatType2[]): Group2[] {
   return groups;
 }
 
-// Brick row colours (alternating, pixel-art style)
+// Brick colours (alternating rows, pixel-art style)
 const BRICK_ROWS = ['#5c2e18', '#4e2412', '#5c2e18', '#522a14'] as const;
-const BRICK_H = 8;
-const MORTAR_H = 1;
-const BRICK_STEP = BRICK_H + MORTAR_H;
+const BRICK_W  = 16; // individual brick width
+const BRICK_H  = 8;  // individual brick height
+const MORTAR   = 1;  // mortar gap (dark base shows through)
+const BRICK_STEP_X = BRICK_W + MORTAR;
+const BRICK_STEP_Y = BRICK_H + MORTAR;
 
 // ── Large street buildings — drawn directly every frame (no OffscreenCanvas)
 export function drawStreetBuildings(
@@ -674,10 +676,17 @@ export function drawStreetBuildings(
     ctx.fillStyle = '#1e0c06';
     ctx.fillRect(sx, 0, sw, bH);
 
-    // ── 2. Brick rows — horizontal stripes, super fast ──
-    for (let row = 0, ry = 0; ry < bH; row++, ry += BRICK_STEP) {
-      ctx.fillStyle = BRICK_ROWS[row % BRICK_ROWS.length];
-      ctx.fillRect(sx, ry, sw, Math.min(BRICK_H, bH - ry));
+    // ── 2. Individual bricks — staggered rows, mortar (dark base) shows through ──
+    for (let row = 0, ry = 0; ry < bH; row++, ry += BRICK_STEP_Y) {
+      const brickColor = BRICK_ROWS[row % BRICK_ROWS.length];
+      ctx.fillStyle = brickColor;
+      const rowH   = Math.min(BRICK_H, bH - ry);
+      const offset = (row % 2) * Math.round(BRICK_STEP_X / 2);
+      for (let bx = sx - offset; bx < sx + sw; bx += BRICK_STEP_X) {
+        const bx0 = Math.max(bx, sx);
+        const bw  = Math.min(bx + BRICK_W, sx + sw) - bx0;
+        if (bw > 0) ctx.fillRect(bx0, ry, bw, rowH);
+      }
     }
 
     // ── 3. Subtle vertical corner lines (pixel-art depth) ──
