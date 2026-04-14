@@ -145,7 +145,44 @@ export function generateLevel(): Platform[] {
 
   // ── ELEVATED PLATFORMS ─────────────────────────────────────────
 
+  // ── ROLL-UNDER BALCONIES — low enough to need roll, jumpable on top ──
+  // y = GROUND_Y - 55 → bottom at GROUND_Y - 37 → clearance 37px
+  // Player standing h=50 > 37 → blocked;  roll h=26 < 37 → passes
+  const rollUnderBalconies: Array<{ x: number; y: number; w: number }> = [
+    // Free Zone 1 — first encounter with the mechanic
+    { x: 900,  y: GROUND_Y - 55, w: 115 },
+    { x: 1600, y: GROUND_Y - 55, w: 115 },
+    { x: 2400, y: GROUND_Y - 55, w: 115 },
+
+    // Wall Zone 1
+    { x: 3800, y: GROUND_Y - 55, w: 110 },
+    { x: 5050, y: GROUND_Y - 55, w: 110 },
+    { x: 6200, y: GROUND_Y - 55, w: 110 },
+
+    // Free Zone 2
+    { x: 7900,  y: GROUND_Y - 55, w: 115 },
+    { x: 9100,  y: GROUND_Y - 55, w: 115 },
+    { x: 10400, y: GROUND_Y - 55, w: 115 },
+
+    // Wall Zone 2
+    { x: 11850, y: GROUND_Y - 55, w: 110 },
+    { x: 13200, y: GROUND_Y - 55, w: 110 },
+    { x: 14700, y: GROUND_Y - 55, w: 110 },
+
+    // Free Zone 3
+    { x: 16600, y: GROUND_Y - 55, w: 115 },
+    { x: 17900, y: GROUND_Y - 55, w: 115 },
+    { x: 19200, y: GROUND_Y - 55, w: 115 },
+
+    // Wall Zone 3
+    { x: 20750, y: GROUND_Y - 55, w: 110 },
+    { x: 22150, y: GROUND_Y - 55, w: 110 },
+    { x: 23700, y: GROUND_Y - 55, w: 110 },
+  ];
+
   const plats: Array<{ x: number; y: number; w: number }> = [
+    ...rollUnderBalconies,
+
     // ── WALL ZONE 1 ──
     { x: 3500, y: GROUND_Y - 90,  w: 110 },
     { x: 3700, y: GROUND_Y - 165, w: 95  },

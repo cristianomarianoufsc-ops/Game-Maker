@@ -698,18 +698,68 @@ export function drawPlatforms(
       ctx.fillStyle = COLORS.wallMoss;
       ctx.fillRect(sx, plat.y, plat.w, plat.h);
     } else {
-      // Horizontal platform
+      // Balcony platform — concrete slab jutting from a building facade
+      const sX = sx - 5; // slab protrudes 5px to the left
+      const sW = plat.w + 5;
+
+      // Building facade strip below slab
+      const toGround = GROUND_Y - (plat.y + plat.h);
+      const stripH = Math.min(toGround, 40);
+      const stripX = sx + 6;
+      const stripW = plat.w - 12;
+
+      if (stripH > 0 && stripW > 0) {
+        // Building wall body
+        ctx.fillStyle = '#1c1a18';
+        ctx.fillRect(stripX, plat.y + plat.h, stripW, stripH);
+        // Edge lines
+        ctx.fillStyle = '#242220';
+        ctx.fillRect(stripX, plat.y + plat.h, 2, stripH);
+        ctx.fillRect(stripX + stripW - 2, plat.y + plat.h, 2, stripH);
+        // Subtle horizontal mortar lines
+        ctx.strokeStyle = 'rgba(10,8,8,0.5)';
+        ctx.lineWidth = 1;
+        for (let my = plat.y + plat.h + 8; my < plat.y + plat.h + stripH - 2; my += 8) {
+          ctx.beginPath();
+          ctx.moveTo(stripX + 2, my);
+          ctx.lineTo(stripX + stripW - 2, my);
+          ctx.stroke();
+        }
+        // Window (if enough room)
+        if (stripH >= 18 && stripW >= 20) {
+          const wW = Math.min(20, stripW - 8);
+          const wH = Math.min(13, stripH - 6);
+          const wX = Math.round(stripX + (stripW - wW) / 2);
+          const wY = Math.round(plat.y + plat.h + (stripH - wH) / 2);
+          ctx.fillStyle = '#0a0808';
+          ctx.fillRect(wX, wY, wW, wH);
+          ctx.fillStyle = 'rgba(255,150,50,0.14)';
+          ctx.fillRect(wX + 1, wY + 1, wW - 2, wH - 2);
+          // Window frame divider
+          ctx.strokeStyle = 'rgba(20,14,14,0.9)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(wX + Math.floor(wW / 2), wY);
+          ctx.lineTo(wX + Math.floor(wW / 2), wY + wH);
+          ctx.stroke();
+        }
+      }
+
+      // Slab underside
       ctx.fillStyle = COLORS.platformSide;
-      ctx.fillRect(sx, plat.y + 4, plat.w, plat.h - 4);
-      // Top edge
+      ctx.fillRect(sX, plat.y + 4, sW, plat.h - 4);
+      // Slab top surface
       ctx.fillStyle = COLORS.platformTop;
-      ctx.fillRect(sx, plat.y, plat.w, 6);
+      ctx.fillRect(sX, plat.y, sW, 5);
+      // Slab top highlight edge
       ctx.fillStyle = COLORS.platformEdge;
-      ctx.fillRect(sx, plat.y, plat.w, 2);
-      // Side edges
+      ctx.fillRect(sX, plat.y, sW, 2);
+      // Slab front cap (left protrusion edge)
       ctx.fillStyle = COLORS.platformSide;
-      ctx.fillRect(sx - 2, plat.y + 2, 3, plat.h - 2);
-      ctx.fillRect(sx + plat.w - 1, plat.y + 2, 3, plat.h - 2);
+      ctx.fillRect(sX - 2, plat.y + 2, 3, plat.h - 2);
+      // Overhang shadow beneath front lip
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(sX, plat.y + plat.h, 7, 3);
     }
   }
 }
