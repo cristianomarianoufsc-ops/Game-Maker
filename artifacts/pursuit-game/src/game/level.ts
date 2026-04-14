@@ -279,7 +279,10 @@ export function generateLevel(): Platform[] {
   ];
 
   plats.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, y, w }) => {
-    platforms.push({ x, y, w, h: 18, type: 'platform' });
+    // Sacadas baixas (GY-110): colisão estendida para forçar o roll.
+    // Fundo em y=375 → bloqueia em pé (top=360) mas libera rolando (top=384).
+    const h = y === GROUND_Y - 110 ? 75 : 18;
+    platforms.push({ x, y, w, h, type: 'platform' });
   });
 
   // ── CLIMBABLE WALLS — SOMENTE dentro das WALL ZONES ──────────
