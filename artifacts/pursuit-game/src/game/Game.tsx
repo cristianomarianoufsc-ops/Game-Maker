@@ -180,6 +180,25 @@ function stripBlackBackground(src: HTMLImageElement): HTMLImageElement {
 }
 
 // Remove fundo escuro e dessaturado (cinza-escuro/preto) preservando cores saturadas (roupas azuis etc.)
+function stripPureBlackExact(src: HTMLImageElement): HTMLImageElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = src.naturalWidth;
+  canvas.height = src.naturalHeight;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(src, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const px = imageData.data;
+  for (let i = 0; i < px.length; i += 4) {
+    if (px[i] < 10 && px[i + 1] < 10 && px[i + 2] < 10) {
+      px[i + 3] = 0;
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+  const out = new Image();
+  out.src = canvas.toDataURL('image/png');
+  return out;
+}
+
 function stripPureBlackBackground(src: HTMLImageElement): HTMLImageElement {
   const canvas = document.createElement('canvas');
   canvas.width = src.naturalWidth;
@@ -295,6 +314,7 @@ export default function Game() {
   const sideFlipSheetImgRef = useRef<HTMLImageElement | null>(null);
   const brickTextureImgRef = useRef<HTMLImageElement | null>(null);
   const balconyImgRef = useRef<HTMLImageElement | null>(null);
+  const carroImgRef = useRef<HTMLImageElement | null>(null);
 
   // Responsive scale: fit canvas inside available viewport
   const [scale, setScale] = useState(getScale);
@@ -413,6 +433,17 @@ export default function Game() {
     const balconyImg = new Image();
     balconyImg.src = balconyUrl;
     balconyImgRef.current = balconyImg;
+
+    const carroImg = new Image();
+    carroImg.onload = () => {
+      const stripped = stripPureBlackExact(carroImg);
+      if (stripped.complete && stripped.naturalWidth > 0) {
+        carroImgRef.current = stripped;
+      } else {
+        stripped.onload = () => { carroImgRef.current = stripped; };
+      }
+    };
+    carroImg.src = '/carro.png';
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       const k = keysRef.current;
@@ -915,7 +946,7 @@ export default function Game() {
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);
-      drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current);
+      drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
       if (gs.gameMode !== 'wall-test') {

@@ -767,7 +767,8 @@ export function drawPlatforms(
   ctx: CanvasRenderingContext2D,
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
   camX: number,
-  balconyImg?: HTMLImageElement | null
+  balconyImg?: HTMLImageElement | null,
+  carroImg?: HTMLImageElement | null
 ): void {
   for (const plat of platforms) {
     if (plat.type === 'ground') continue; // drawn separately
@@ -831,7 +832,25 @@ export function drawPlatforms(
       const w = plat.w;
       const h = plat.h;
 
-      // ── Proportional pixel-art helpers ──
+      // ── Se a imagem do carro já carregou, usa ela diretamente ──
+      if (carroImg && carroImg.naturalWidth > 0) {
+        // A imagem é 1080×1080; o carro ocupa aprox. 5%-95% em x e 33%-72% em y
+        const SRC_W = carroImg.naturalWidth;
+        const SRC_H = carroImg.naturalHeight;
+        const sx0 = SRC_W * 0.04;
+        const sy0 = SRC_H * 0.32;
+        const sw0 = SRC_W * 0.92;
+        const sh0 = SRC_H * 0.42;
+        // Sombra no chão
+        ctx.fillStyle = 'rgba(0,0,0,0.38)';
+        ctx.fillRect(x + w * 0.05, y + h * 0.96, w * 0.90, h * 0.04);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(carroImg, sx0, sy0, sw0, sh0, x, y, w, h);
+        ctx.imageSmoothingEnabled = true;
+        continue;
+      }
+
+      // ── Fallback proporcional (enquanto imagem carrega) ──
       const px = Math.max(1, Math.round(w / 56));
       const fx = (t: number) => Math.round(x + t * w);
       const fy = (t: number) => Math.round(y + t * h);
