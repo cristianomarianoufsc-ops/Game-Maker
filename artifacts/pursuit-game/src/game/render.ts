@@ -831,10 +831,8 @@ export function drawPlatforms(
       const w = plat.w;
       const h = plat.h;
 
-      // Pixel unit — snaps art to a grid relative to car size
-      const px = Math.max(1, Math.round(w / 52));
-
-      // Proportional helpers (snap to pixels)
+      // ── Proportional pixel-art helpers ──
+      const px = Math.max(1, Math.round(w / 56));
       const fx = (t: number) => Math.round(x + t * w);
       const fy = (t: number) => Math.round(y + t * h);
       const fw = (t: number) => Math.max(px, Math.round(t * w));
@@ -845,170 +843,211 @@ export function drawPlatforms(
       };
 
       // ── GROUND SHADOW ──
-      ctx.fillStyle = 'rgba(0,0,0,0.30)';
-      ctx.fillRect(fx(0.05), fy(0.94), fw(0.90), fh(0.07));
+      ctx.fillStyle = 'rgba(0,0,0,0.38)';
+      ctx.fillRect(fx(0.04), fy(0.96), fw(0.92), fh(0.05));
 
       // ── UNDERCARRIAGE ──
-      pr(0.04, 0.80, 0.92, 0.18, '#0e0c07');
-      pr(0.06, 0.82, 0.88, 0.10, '#14100a');
+      pr(0.03, 0.80, 0.94, 0.20, '#0b0908');
+      pr(0.05, 0.82, 0.90, 0.12, '#131008');
 
-      // ── MAIN BODY (lower panel — below roof) ──
-      pr(0.01, 0.40, 0.98, 0.42, '#4a3e2c');   // body base
-      pr(0.01, 0.40, 0.98, px / h, '#6a5a3a'); // top edge highlight
-      pr(0.01, 0.78, 0.98, px / h, '#1a1408'); // bottom edge shadow
+      // ── BODY LOWER PANEL (belt-line down, full width) ──
+      pr(0.00, 0.36, 1.00, 0.46, '#5e5848');   // base olive-gray
+      pr(0.00, 0.36, 1.00, px/h, '#7a7060');   // top highlight strip
+      pr(0.00, 0.80, 1.00, px/h, '#18150e');   // bottom shadow strip
 
-      // ── HOOD (front 26%, slightly lower than roof line) ──
-      pr(0.01, 0.46, 0.26, 0.36, '#44382a');   // hood
-      pr(0.01, 0.46, 0.26, px / h, '#58503a'); // hood top edge
-      pr(0.01, 0.70, 0.24, 0.10, '#2e2618');   // hood lower shadow
+      // ── HOOD (front 22%) — slightly lower top than door line ──
+      pr(0.00, 0.42, 0.22, 0.40, '#58524a');
+      pr(0.00, 0.42, 0.22, px/h, '#706a5e');   // hood top edge
+      pr(0.00, 0.72, 0.21, 0.08, '#282420');   // hood front nose slope
 
-      // ── TRUNK (rear 18%) ──
-      pr(0.80, 0.44, 0.19, 0.36, '#483c28');
-      pr(0.80, 0.44, 0.19, px / h, '#5a4e36');
+      // ── TRUNK (rear 20%) ──
+      pr(0.79, 0.42, 0.21, 0.40, '#565048');
+      pr(0.79, 0.42, 0.21, px/h, '#6e6860');
 
-      // ── ROOF CABIN ──
-      pr(0.16, 0.02, 0.66, 0.40, '#2c2418');   // roof body
-      pr(0.16, 0.02, 0.66, px / h, '#403828'); // roof top edge highlight
-      pr(0.16, 0.38, 0.66, px / h, '#1a1408'); // roof bottom edge
+      // ── TRUNK SPOILER LIP ──
+      pr(0.79, 0.36, 0.14, 0.04, '#403c36');
+      pr(0.79, 0.36, 0.14, px/h, '#605a52');
+
+      // ── ROOF CABIN (x: 17%–83%, y: 0%–38%) ──
+      pr(0.17, 0.01, 0.66, 0.37, '#2a2620');   // roof fill
+      pr(0.17, 0.01, 0.66, px/h, '#3e3a32');   // top edge
+      pr(0.17, 0.36, 0.66, px/h, '#18150e');   // bottom edge
 
       // ── PILLARS ──
-      pr(0.16, 0.04, 0.05, 0.38, '#201a10');   // A-pillar (front)
-      pr(0.79, 0.04, 0.04, 0.38, '#201a10');   // C-pillar (rear)
-      pr(0.44, 0.05, 0.03, 0.34, '#181410');   // B-pillar (centre)
+      pr(0.17, 0.03, 0.05, 0.34, '#1c1912');   // A-pillar
+      pr(0.78, 0.03, 0.04, 0.34, '#1c1912');   // C-pillar
+      pr(0.49, 0.03, 0.04, 0.34, '#161410');   // B-pillar (wide)
 
-      // ── WINDSHIELD ──
-      pr(0.21, 0.05, 0.23, 0.33, '#1a222c');   // windshield dark
-      pr(0.21, 0.05, 0.23, px / h, '#2a3038'); // top frame
-      // crack
-      ctx.strokeStyle = 'rgba(200,220,230,0.15)';
+      // ── WINDSHIELD — near-black, broken ──
+      pr(0.22, 0.03, 0.27, 0.33, '#060a0c');
+      // crack lines
+      ctx.strokeStyle = 'rgba(180,210,220,0.22)';
       ctx.lineWidth = px;
       ctx.beginPath();
-      ctx.moveTo(fx(0.26), fy(0.08)); ctx.lineTo(fx(0.31), fy(0.22)); ctx.lineTo(fx(0.29), fy(0.34));
+      ctx.moveTo(fx(0.29), fy(0.04)); ctx.lineTo(fx(0.34), fy(0.18)); ctx.lineTo(fx(0.31), fy(0.34));
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(fx(0.34), fy(0.18)); ctx.lineTo(fx(0.40), fy(0.25));
       ctx.stroke();
 
       // ── FRONT DOOR WINDOW ──
-      pr(0.47, 0.05, 0.14, 0.33, '#18202a');
-      pr(0.47, 0.05, px / w, 0.33, '#1e2830'); // left frame
-      pr(0.61 - px / w, 0.05, px / w, 0.33, '#1e2830'); // right frame
+      pr(0.53, 0.03, 0.15, 0.33, '#070b0e');
+      pr(0.53, 0.03, px/w, 0.33, '#14181c');
+      pr(0.68-px/w, 0.03, px/w, 0.33, '#14181c');
 
       // ── REAR DOOR WINDOW ──
-      pr(0.62, 0.05, 0.12, 0.33, '#141c24');
-      pr(0.74 - px / w, 0.05, px / w, 0.33, '#1c2430');
+      pr(0.69, 0.03, 0.12, 0.33, '#060a0d');
+      pr(0.81-px/w, 0.03, px/w, 0.33, '#12161a');
 
-      // ── REAR WINDOW ──
-      pr(0.75, 0.06, 0.07, 0.32, '#121820');
+      // ── REAR QUARTER WINDOW ── (small, between C-pillar and rear)
+      // (folded into C-pillar area, implicit in roof shape)
 
-      // ── DOOR PANEL SEAMS ──
-      ctx.fillStyle = '#1a1408';
-      ctx.fillRect(fx(0.21), fy(0.40), fw(0.58), px); // belt line seam
-      ctx.fillRect(fx(0.47), fy(0.40), px, fh(0.40)); // front door split
-      ctx.fillRect(fx(0.62), fy(0.40), px, fh(0.40)); // rear door split
-      // horizontal door crease
-      ctx.fillStyle = '#2a2010';
-      ctx.fillRect(fx(0.22), fy(0.58), fw(0.57), px);
+      // ── BELT LINE SEAM ──
+      ctx.fillStyle = '#18140c';
+      ctx.fillRect(fx(0.17), fy(0.36), fw(0.61), px*2);
+      // Vertical door seams
+      ctx.fillRect(fx(0.53), fy(0.36), px, fh(0.44));
+      ctx.fillRect(fx(0.69), fy(0.36), px, fh(0.44));
+      // Horizontal door crease (character line)
+      ctx.fillStyle = '#24201a';
+      ctx.fillRect(fx(0.17), fy(0.57), fw(0.61), px);
+
+      // ── HEADLIGHT HOUSING (front) ──
+      pr(0.00, 0.36, 0.15, 0.44, '#1c2228');   // overall front fascia
+      // Upper lamp (rectangular)
+      pr(0.01, 0.38, 0.10, 0.10, '#202830');
+      pr(0.02, 0.39, 0.07, 0.08, '#5878a0');   // lens
+      pr(0.02, 0.39, 0.03, 0.04, '#80a8c0');   // lens highlight
+      pr(0.09, 0.39, 0.02, 0.08, '#405c80');   // inner lamp
+      // Lower lamp (rectangular)
+      pr(0.01, 0.49, 0.10, 0.09, '#1a2028');
+      pr(0.02, 0.50, 0.07, 0.07, '#485870');
+      pr(0.02, 0.50, 0.03, 0.03, '#607890');
+      // Amber indicator below
+      pr(0.01, 0.59, 0.06, 0.03, '#904008');
+      pr(0.01, 0.59, 0.03, 0.03, '#b05010');
 
       // ── FRONT GRILLE ──
-      pr(0.01, 0.63, 0.13, 0.15, '#141210');
-      for (let gi = 0; gi < 3; gi++) {
-        ctx.fillStyle = '#0a0806';
-        ctx.fillRect(fx(0.02), fy(0.65 + gi * 0.04), fw(0.11), Math.max(px, fh(0.022)));
+      pr(0.00, 0.62, 0.15, 0.16, '#10100e');
+      for (let gi = 0; gi < 4; gi++) {
+        ctx.fillStyle = '#080806';
+        ctx.fillRect(fx(0.01), fy(0.635 + gi * 0.033), fw(0.12), Math.max(px, fh(0.018)));
       }
 
-      // ── HEADLIGHTS ──
-      pr(0.01, 0.46, 0.12, 0.16, '#28303a'); // housing
-      pr(0.02, 0.48, 0.05, 0.07, '#6080a0'); // main lamp
-      pr(0.02, 0.48, 0.02, 0.03, '#90b0c0'); // lamp highlight
-      pr(0.07, 0.48, 0.04, 0.07, '#405878'); // secondary lamp
-      pr(0.01, 0.61, 0.05, 0.02, '#804010'); // indicator amber
+      // ── FRONT BUMPER ──
+      pr(0.00, 0.76, 0.18, 0.05, '#1c1a16');
+      pr(0.00, 0.76, 0.18, px/h, '#2e2c26');
 
-      // ── REAR TAIL LIGHTS ──
-      pr(0.87, 0.58, 0.11, 0.05, '#7a1408');
-      pr(0.87, 0.63, 0.11, 0.03, '#501008');
-      pr(0.87, 0.58, px / w, 0.08, '#a82010'); // inner bright strip
+      // ── TAIL LIGHTS (rear) ──
+      pr(0.87, 0.36, 0.13, 0.16, '#600606');   // upper unit
+      pr(0.88, 0.37, 0.11, 0.07, '#880a08');
+      pr(0.88, 0.37, px/w, 0.13, '#b01010');   // bright inner strip
+      pr(0.87, 0.53, 0.13, 0.08, '#450404');   // lower unit
+      pr(0.87, 0.53, px/w, 0.08, '#780808');
 
-      // ── BUMPERS ──
-      pr(0.01, 0.77, 0.15, 0.04, '#1e1c18');
-      pr(0.01, 0.77, 0.15, px / h, '#2e2c28');
-      pr(0.84, 0.77, 0.15, 0.04, '#1e1c18');
-      pr(0.84, 0.77, 0.15, px / h, '#2e2c28');
+      // ── REAR BUMPER ──
+      pr(0.82, 0.76, 0.18, 0.05, '#1c1a16');
+      pr(0.82, 0.76, 0.18, px/h, '#2e2c26');
 
-      // ── RUST PATCHES ──
-      const rustCols = ['#7a2e08', '#8b380a', '#6a2606', '#923a0e', '#5c2008', '#a04010'];
-      const patches: [number, number, number, number][] = [
-        [0.08, 0.42, 0.09, 0.07], [0.28, 0.44, 0.11, 0.09],
-        [0.50, 0.40, 0.09, 0.06], [0.62, 0.50, 0.08, 0.08],
-        [0.72, 0.42, 0.10, 0.09], [0.20, 0.60, 0.07, 0.07],
-        [0.38, 0.62, 0.09, 0.07], [0.80, 0.52, 0.06, 0.07],
-        [0.18, 0.10, 0.05, 0.05], [0.68, 0.06, 0.08, 0.05],
-        [0.83, 0.44, 0.05, 0.11], [0.05, 0.66, 0.08, 0.07],
-        [0.52, 0.64, 0.09, 0.08], [0.33, 0.46, 0.04, 0.05],
-        [0.15, 0.42, 0.03, 0.08], [0.74, 0.58, 0.05, 0.06],
-        [0.44, 0.52, 0.06, 0.05], [0.90, 0.44, 0.04, 0.06],
+      // ── DOOR HANDLE hints ──
+      ctx.fillStyle = '#2a2820';
+      ctx.fillRect(fx(0.60), fy(0.52), fw(0.05), fh(0.02));
+      ctx.fillRect(fx(0.73), fy(0.52), fw(0.04), fh(0.02));
+
+      // ── RUST PATCHES — primary orange, very prominent ──
+      // Layer 1: dark rust base
+      const rD: [number,number,number,number][] = [
+        [0.01,0.42,0.15,0.10], [0.04,0.54,0.09,0.10], [0.08,0.64,0.08,0.08],
+        [0.23,0.38,0.12,0.08], [0.30,0.50,0.09,0.12], [0.42,0.42,0.10,0.08],
+        [0.55,0.38,0.08,0.08], [0.63,0.48,0.10,0.10], [0.72,0.54,0.09,0.09],
+        [0.80,0.44,0.08,0.10], [0.86,0.64,0.07,0.09],
+        [0.18,0.10,0.08,0.06], [0.35,0.06,0.06,0.05], [0.60,0.06,0.09,0.06], [0.76,0.08,0.06,0.05],
       ];
-      for (let ri = 0; ri < patches.length; ri++) {
-        const [rtx, rty, rtw, rth] = patches[ri];
-        ctx.fillStyle = rustCols[ri % rustCols.length];
+      for (const [rtx,rty,rtw,rth] of rD) {
+        ctx.fillStyle = '#6a2808';
         ctx.fillRect(fx(rtx), fy(rty), fw(rtw), fh(rth));
-        ctx.fillStyle = rustCols[(ri + 2) % rustCols.length];
-        ctx.fillRect(fx(rtx + rtw * 0.3), fy(rty - 0.01), fw(rtw * 0.55), fh(rth * 0.5));
-        ctx.fillRect(fx(rtx - 0.005), fy(rty + rth * 0.45), fw(rtw * 0.40), fh(rth * 0.45));
+      }
+      // Layer 2: bright orange rust over dark base
+      const rB: [number,number,number,number][] = [
+        [0.02,0.43,0.11,0.07], [0.05,0.56,0.07,0.07], [0.09,0.65,0.06,0.06],
+        [0.24,0.39,0.09,0.06], [0.31,0.51,0.07,0.09], [0.43,0.43,0.07,0.06],
+        [0.56,0.39,0.06,0.06], [0.64,0.49,0.07,0.07], [0.73,0.55,0.07,0.07],
+        [0.81,0.45,0.06,0.08], [0.87,0.65,0.05,0.07],
+        [0.19,0.11,0.06,0.04], [0.36,0.07,0.04,0.03], [0.61,0.07,0.07,0.04], [0.77,0.09,0.04,0.04],
+        [0.47,0.54,0.06,0.07], [0.16,0.46,0.05,0.08],
+      ];
+      for (const [rtx,rty,rtw,rth] of rB) {
+        ctx.fillStyle = '#c85010';
+        ctx.fillRect(fx(rtx), fy(rty), fw(rtw), fh(rth));
+        // lighter spot inside each patch
+        ctx.fillStyle = '#e06820';
+        ctx.fillRect(fx(rtx+rtw*0.2), fy(rty+rth*0.2), fw(rtw*0.5), fh(rth*0.45));
+      }
+      // Layer 3: tiny rust pixel accents
+      const rA: [number,number,number,number][] = [
+        [0.13,0.48,0.04,0.04],[0.38,0.60,0.04,0.04],[0.52,0.46,0.04,0.03],
+        [0.68,0.42,0.03,0.04],[0.78,0.60,0.04,0.04],[0.85,0.40,0.03,0.05],
+        [0.25,0.60,0.04,0.05],[0.45,0.64,0.04,0.04],[0.58,0.56,0.03,0.05],
+      ];
+      for (const [rtx,rty,rtw,rth] of rA) {
+        ctx.fillStyle = '#a83c0c';
+        ctx.fillRect(fx(rtx), fy(rty), fw(rtw), fh(rth));
       }
 
       // ── WHEELS ──
-      const wr = Math.round(h * 0.21);
-      const wcy = Math.round(y + h * 0.80);
-      for (const wcx of [fx(0.17), fx(0.81)]) {
-        // Shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        ctx.beginPath(); ctx.ellipse(wcx, wcy + wr * 0.9, wr * 0.85, wr * 0.18, 0, 0, Math.PI * 2); ctx.fill();
-        // Tyre
-        ctx.fillStyle = '#141008';
-        ctx.beginPath(); ctx.arc(wcx, wcy, wr, 0, Math.PI * 2); ctx.fill();
-        // Tyre tread ring
-        ctx.strokeStyle = '#0c0a06';
-        ctx.lineWidth = px * 2;
-        ctx.beginPath(); ctx.arc(wcx, wcy, wr - px * 2, 0, Math.PI * 2); ctx.stroke();
-        // Rusty rim
-        ctx.fillStyle = '#583408';
-        ctx.beginPath(); ctx.arc(wcx, wcy, wr * 0.62, 0, Math.PI * 2); ctx.fill();
-        // Rim shadow ring
-        ctx.fillStyle = '#3a2206';
-        ctx.beginPath(); ctx.arc(wcx, wcy, wr * 0.46, 0, Math.PI * 2); ctx.fill();
-        // Rim spokes
-        ctx.strokeStyle = '#4a2e08';
-        ctx.lineWidth = px * 1.5;
-        for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
-          ctx.beginPath();
-          ctx.moveTo(wcx + Math.cos(a) * wr * 0.18, wcy + Math.sin(a) * wr * 0.18);
-          ctx.lineTo(wcx + Math.cos(a) * wr * 0.56, wcy + Math.sin(a) * wr * 0.56);
-          ctx.stroke();
+      const wr  = Math.round(h * 0.205);
+      const wcy = Math.round(y + h * 0.795);
+      for (const wcx of [fx(0.17), fx(0.82)]) {
+        // ground shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.beginPath(); ctx.ellipse(wcx, wcy+wr*0.92, wr*0.88, wr*0.16, 0, 0, Math.PI*2); ctx.fill();
+        // tyre
+        ctx.fillStyle = '#0e0b08';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr, 0, Math.PI*2); ctx.fill();
+        // tyre inner groove
+        ctx.strokeStyle = '#080605';
+        ctx.lineWidth = px*2;
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr-px*2.5, 0, Math.PI*2); ctx.stroke();
+        // rusty steel rim (flat circle — no spokes, matches reference)
+        ctx.fillStyle = '#7a3e0a';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr*0.64, 0, Math.PI*2); ctx.fill();
+        // rim shading rings
+        ctx.fillStyle = '#5a2c06';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr*0.50, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#6e3608';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr*0.42, 0, Math.PI*2); ctx.fill();
+        // bolt holes (5 bolts like the reference)
+        for (let bi = 0; bi < 5; bi++) {
+          const ba = (bi / 5) * Math.PI * 2 - Math.PI / 2;
+          const bx = wcx + Math.cos(ba) * wr * 0.28;
+          const by = wcy + Math.sin(ba) * wr * 0.28;
+          ctx.fillStyle = '#1a1008';
+          ctx.beginPath(); ctx.arc(bx, by, Math.max(1, wr*0.07), 0, Math.PI*2); ctx.fill();
         }
-        // Hub centre
-        ctx.fillStyle = '#4a3010';
-        ctx.beginPath(); ctx.arc(wcx, wcy, wr * 0.16, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#5a3c14';
-        ctx.beginPath(); ctx.arc(wcx, wcy, wr * 0.08, 0, Math.PI * 2); ctx.fill();
-        // Rim highlight
-        ctx.fillStyle = 'rgba(110,70,20,0.35)';
-        ctx.beginPath();
-        ctx.arc(wcx - wr * 0.22, wcy - wr * 0.22, wr * 0.24, 0, Math.PI * 2);
-        ctx.fill();
+        // hub centre
+        ctx.fillStyle = '#4a2808';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr*0.14, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#6a3c0a';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr*0.07, 0, Math.PI*2); ctx.fill();
+        // rim highlight (light catches upper-left)
+        ctx.fillStyle = 'rgba(160,100,30,0.28)';
+        ctx.beginPath(); ctx.arc(wcx-wr*0.18, wcy-wr*0.18, wr*0.22, 0, Math.PI*2); ctx.fill();
       }
 
-      // ── WHEEL ARCHES (paint dark arc over body to form arch cut-out) ──
-      for (const wcx of [fx(0.17), fx(0.81)]) {
-        ctx.fillStyle = '#0e0c07';
+      // ── WHEEL ARCHES (dark arc cut into body) ──
+      for (const wcx of [fx(0.17), fx(0.82)]) {
+        ctx.fillStyle = '#0c0a07';
         ctx.beginPath();
-        ctx.arc(wcx, wcy, wr + px * 2, Math.PI, 0);
-        ctx.lineTo(wcx + wr + px * 2, fy(0.40));
-        ctx.lineTo(wcx - wr - px * 2, fy(0.40));
+        ctx.arc(wcx, wcy, wr+px*2, Math.PI, 0);
+        ctx.lineTo(wcx+wr+px*2, fy(0.36));
+        ctx.lineTo(wcx-wr-px*2, fy(0.36));
         ctx.closePath();
         ctx.fill();
       }
 
-      // ── BODY PANEL SHADE (darken lower half slightly) ──
-      ctx.fillStyle = 'rgba(0,0,0,0.12)';
-      ctx.fillRect(fx(0.15), fy(0.58), fw(0.70), fh(0.22));
+      // ── LOWER BODY SHADE ──
+      ctx.fillStyle = 'rgba(0,0,0,0.14)';
+      ctx.fillRect(fx(0.17), fy(0.60), fw(0.64), fh(0.20));
 
       continue;
     }
