@@ -616,144 +616,155 @@ export function drawGround(ctx: CanvasRenderingContext2D, camX: number): void {
   ctx.restore();
 }
 
-// ── Brick pattern cache — created once, reused every frame ──────────
-let _brickPatternSrc: HTMLImageElement | null = null;
-let _brickPattern: CanvasPattern | null = null;
-const _brickMatrix = new DOMMatrix(); // reused every frame, no allocation
+// ── Building bake cache ─────────────────────────────────────────────
+// Each building is pre-rendered once to an OffscreenCanvas.
+// Every frame we just blit that cached bitmap at the correct screen X.
+type BakedBuilding = { canvas: OffscreenCanvas; x1: number; sw: number };
+const _bakedBuildings = new Map<string, BakedBuilding>();
+let _bakedTextureSrc: HTMLImageElement | null = null;
+
+// Cached platform groups (re-computed only when platform list changes)
+let _cachedPlatKey = '';
+type PlatType2 = { x: number; y: number; w: number; h: number; type: string };
+type Group2 = { x1: number; x2: number; sw: number; plats: PlatType2[] };
+let _cachedGroups: Group2[] = [];
+
+function buildGroups(platforms: PlatType2[]): Group2[] {
+  const elev = platforms
+    .filter(p => p.type === 'platform')
+    .sort((a, b) => a.x - b.x);
+  const groups: Group2[] = [];
+  let cur: Group2 | null = null;
+  for (const p of elev) {
+    const fits = cur && (p.x - cur.x2 < 280) && (cur.plats.length < 2);
+    if (!fits) {
+      if (cur) groups.push(cur);
+      const x1 = p.x - 120;
+      const x2 = p.x + p.w + 120;
+      cur = { x1, x2, sw: x2 - x1, plats: [p] };
+    } else {
+      cur!.x2 = Math.max(cur!.x2, p.x + p.w + 120);
+      cur!.sw  = cur!.x2 - cur!.x1;
+      cur!.plats.push(p);
+    }
+  }
+  if (cur) groups.push(cur);
+  return groups;
+}
+
+function bakeBuilding(g: Group2, brickImg: HTMLImageElement | null): OffscreenCanvas {
+  const sw = g.sw;
+  const bH = GROUND_Y;
+  const oc  = new OffscreenCanvas(sw, bH);
+  const bc  = oc.getContext('2d')!;
+
+  // ── Brick fill ──
+  if (brickImg && brickImg.complete && brickImg.naturalWidth > 0) {
+    const pat = bc.createPattern(brickImg, 'repeat');
+    if (pat) {
+      const scale = bH / brickImg.naturalHeight;
+      // Anchor pattern to world position g.x1 so bricks stay phase-consistent
+      const m = new DOMMatrix();
+      m.a = scale; m.d = scale; m.e = -g.x1; m.f = 0; m.b = 0; m.c = 0;
+      pat.setTransform(m);
+      bc.fillStyle = pat;
+      bc.fillRect(0, 0, sw, bH);
+    }
+  } else {
+    bc.fillStyle = '#3e1a0a';
+    bc.fillRect(0, 0, sw, bH);
+    const BR = 7, BC2 = 13, MR = 1;
+    bc.fillStyle = '#52220e';
+    for (let row = 0, ry = 0; ry < bH; row++, ry += BR + MR) {
+      const off = (row % 2) * Math.floor((BC2 + MR) / 2);
+      for (let bx = -off; bx < sw; bx += BC2 + MR) {
+        const bx0 = Math.max(bx, 0);
+        const bw  = Math.min(bx + BC2, sw) - bx0;
+        if (bw > 0) bc.fillRect(bx0, ry, bw, Math.min(BR, bH - ry));
+      }
+    }
+  }
+
+  // ── Windows ──
+  const WIN_W  = Math.round(g.plats.reduce((s, p) => s + p.w, 0) / g.plats.length) + 10;
+  const WIN_H  = 44;
+  const anchorY = Math.max(...g.plats.map(p => p.y));
+  const wy      = Math.max(6, anchorY - WIN_H - 6);
+  const n = g.plats.length;
+  for (let i = 0; i < n; i++) {
+    const fraction = n === 1 ? 0.5 : (i + 1) / (n + 1);
+    const wx = Math.round(sw * fraction - WIN_W / 2);
+    bc.fillStyle = '#6a5848';
+    bc.fillRect(wx - 4, wy - 5, WIN_W + 8, 6);
+    bc.fillStyle = '#3a2010';
+    bc.fillRect(wx, wy, WIN_W, WIN_H);
+    const pw = Math.floor((WIN_W - 3) / 2);
+    const ph = Math.floor((WIN_H - 3) / 2);
+    bc.fillStyle = '#1c2c3c';
+    bc.fillRect(wx + 1,      wy + 1,      pw, ph);
+    bc.fillRect(wx + pw + 2, wy + 1,      pw, ph);
+    bc.fillRect(wx + 1,      wy + ph + 2, pw, ph);
+    bc.fillRect(wx + pw + 2, wy + ph + 2, pw, ph);
+    bc.fillStyle = 'rgba(255,140,40,0.12)';
+    bc.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
+    bc.fillStyle = '#6a5c50';
+    bc.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 4);
+    bc.fillStyle = '#7e6e60';
+    bc.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 2);
+  }
+
+  // ── Edge & top shading ──
+  bc.fillStyle = 'rgba(255,255,255,0.05)';
+  bc.fillRect(0, 0, 3, bH);
+  bc.fillStyle = 'rgba(0,0,0,0.45)';
+  bc.fillRect(sw - 5, 0, 5, bH);
+  const topGrad = bc.createLinearGradient(0, 0, 0, 18);
+  topGrad.addColorStop(0, 'rgba(0,0,0,0.55)');
+  topGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  bc.fillStyle = topGrad;
+  bc.fillRect(0, 0, sw, 18);
+
+  return oc;
+}
 
 // ── Large street buildings — drawn before platforms ────────────────
-// Each building has 1–2 balconies. Each window corresponds to one balcony.
 export function drawStreetBuildings(
   ctx: CanvasRenderingContext2D,
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
   camX: number,
   brickTextureImg?: HTMLImageElement | null
 ): void {
-  const elevPlatforms = platforms
-    .filter(p => p.type === 'platform')
-    .sort((a, b) => a.x - b.x);
-
-  if (elevPlatforms.length === 0) return;
-
-  // Group by proximity (gap < 280 px) AND max 2 platforms per building
-  type PlatType = (typeof elevPlatforms)[number];
-  type Group = { x1: number; x2: number; plats: PlatType[] };
-  const groups: Group[] = [];
-  let cur: Group | null = null;
-
-  for (const p of elevPlatforms) {
-    const fits = cur && (p.x - cur.x2 < 280) && (cur.plats.length < 2);
-    if (!fits) {
-      if (cur) groups.push(cur);
-      cur = { x1: p.x - 120, x2: p.x + p.w + 120, plats: [p] };
-    } else {
-      cur!.x2 = Math.max(cur!.x2, p.x + p.w + 120);
-      cur!.plats.push(p);
-    }
+  // Re-compute groups only when the platform list changes
+  const platKey = platforms.length + ':' + (platforms[0]?.x ?? 0);
+  if (platKey !== _cachedPlatKey) {
+    _cachedGroups  = buildGroups(platforms as PlatType2[]);
+    _cachedPlatKey = platKey;
+    _bakedBuildings.clear();
   }
-  if (cur) groups.push(cur);
 
-  for (const g of groups) {
+  // Invalidate baked bitmaps if the texture image changed
+  const texReady = !!(brickTextureImg?.complete && brickTextureImg.naturalWidth > 0);
+  if (_bakedTextureSrc !== (texReady ? brickTextureImg : null)) {
+    _bakedBuildings.clear();
+    _bakedTextureSrc = texReady ? brickTextureImg! : null;
+  }
+
+  for (const g of _cachedGroups) {
     const sx = g.x1 - camX;
-    const sw = g.x2 - g.x1;
-    if (sx + sw < -80 || sx > CANVAS_W + 80) continue;
+    if (sx + g.sw < -80 || sx > CANVAS_W + 80) continue;
 
-    const bY = 0;
-    const bH = GROUND_Y;
-
-    // ── Brick base ──
-    if (brickTextureImg && brickTextureImg.complete && brickTextureImg.naturalWidth > 0) {
-      // Create pattern only once (or when image changes); reuse every frame
-      if (_brickPatternSrc !== brickTextureImg || !_brickPattern) {
-        _brickPattern = ctx.createPattern(brickTextureImg, 'repeat');
-        _brickPatternSrc = brickTextureImg;
-      }
-      if (_brickPattern) {
-        const imgH = brickTextureImg.naturalHeight;
-        const scale = bH / imgH;
-        // Mutate cached matrix instead of allocating a new one each frame
-        _brickMatrix.a = scale; _brickMatrix.d = scale;
-        _brickMatrix.e = -camX; _brickMatrix.f = 0;
-        _brickMatrix.b = 0;     _brickMatrix.c = 0;
-        _brickPattern.setTransform(_brickMatrix);
-        ctx.save();
-        ctx.fillStyle = _brickPattern;
-        ctx.fillRect(sx, bY, sw, bH);
-        ctx.restore();
-      }
-    } else {
-      ctx.fillStyle = '#3e1a0a';
-      ctx.fillRect(sx, bY, sw, bH);
-
-      // ── Brick pattern (lighter bricks on dark mortar) ──
-      const BR = 7;
-      const BC = 13;
-      const MR = 1;
-      ctx.fillStyle = '#52220e';
-      for (let row = 0, ry = bY; ry < bY + bH; row++, ry += BR + MR) {
-        const off = (row % 2) * Math.floor((BC + MR) / 2);
-        for (let bx = sx - off; bx < sx + sw; bx += BC + MR) {
-          const bx0 = Math.max(bx, sx);
-          const bw  = Math.min(bx + BC, sx + sw) - bx0;
-          if (bw > 0) ctx.fillRect(bx0, ry, bw, Math.min(BR, bY + bH - ry));
-        }
-      }
+    // Bake once, reuse forever
+    const key = `${g.x1}`;
+    if (!_bakedBuildings.has(key)) {
+      _bakedBuildings.set(key, {
+        canvas: bakeBuilding(g, brickTextureImg ?? null),
+        x1: g.x1,
+        sw: g.sw,
+      });
     }
 
-    // ── Windows: symmetric horizontal placement, same Y for all ──
-    // Y anchored to the lowest (nearest-ground) platform so windows
-    // sit at the same floor level regardless of individual platform heights.
-    const WIN_W = Math.round(g.plats.reduce((s, p) => s + p.w, 0) / g.plats.length) + 10;
-    const WIN_H = 44;
-    // Use the lowest (max y) platform as the row anchor
-    const anchorY = Math.max(...g.plats.map(p => p.y));
-    const wy = Math.max(bY + 6, anchorY - WIN_H - 6);
-
-    // Distribute windows symmetrically: 1 window → center; 2 → 1/3 and 2/3
-    const n = g.plats.length;
-    for (let i = 0; i < n; i++) {
-      const fraction = n === 1 ? 0.5 : (i + 1) / (n + 1);
-      const wx = Math.round(sx + sw * fraction - WIN_W / 2);
-
-      // Stone lintel
-      ctx.fillStyle = '#6a5848';
-      ctx.fillRect(wx - 4, wy - 5, WIN_W + 8, 6);
-
-      // Window frame (dark wood)
-      ctx.fillStyle = '#3a2010';
-      ctx.fillRect(wx, wy, WIN_W, WIN_H);
-
-      // 4 glass panes
-      const pw = Math.floor((WIN_W - 3) / 2);
-      const ph = Math.floor((WIN_H - 3) / 2);
-      ctx.fillStyle = '#1c2c3c';
-      ctx.fillRect(wx + 1,      wy + 1,      pw, ph);
-      ctx.fillRect(wx + pw + 2, wy + 1,      pw, ph);
-      ctx.fillRect(wx + 1,      wy + ph + 2, pw, ph);
-      ctx.fillRect(wx + pw + 2, wy + ph + 2, pw, ph);
-
-      // Warm interior glow
-      ctx.fillStyle = 'rgba(255,140,40,0.12)';
-      ctx.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
-
-      // Window sill / ledge
-      ctx.fillStyle = '#6a5c50';
-      ctx.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 4);
-      ctx.fillStyle = '#7e6e60';
-      ctx.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 2);
-    }
-
-    // ── Edge shading ──
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    ctx.fillRect(sx, bY, 3, bH);
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.fillRect(sx + sw - 5, bY, 5, bH);
-    // Top fade
-    const topGrad = ctx.createLinearGradient(0, bY, 0, bY + 18);
-    topGrad.addColorStop(0, 'rgba(0,0,0,0.55)');
-    topGrad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = topGrad;
-    ctx.fillRect(sx, bY, sw, 18);
+    const b = _bakedBuildings.get(key)!;
+    ctx.drawImage(b.canvas, sx, 0);
   }
 }
 
