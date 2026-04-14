@@ -795,7 +795,131 @@ export function drawPlatforms(
       // use a thin ledge. True balconies get the full 2D pixel-art treatment.
       const isRollUnder = plat.y > GROUND_Y - 70;
 
-      if (!isRollUnder) {
+      if (!isRollUnder && plat.h <= 20) {
+        // ── Ar-condicionado externo 2D pixel-art ─────────────────────
+        const acX = sx;
+        const acY = plat.y;
+        const acW = plat.w;
+        const acH = 52;
+        const t   = Date.now();
+
+        // Corpo principal (bege/creme)
+        ctx.fillStyle = '#bdb89a';
+        ctx.fillRect(acX, acY, acW, acH);
+
+        // Superfície superior (levemente mais clara — onde Horácio pousa)
+        ctx.fillStyle = '#d4ceb0';
+        ctx.fillRect(acX, acY, acW, 3);
+
+        // Sombra inferior
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(acX, acY + acH, acW, 3);
+
+        // Borda/caixa externa
+        ctx.strokeStyle = '#4a4438';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(acX + 0.5, acY + 0.5, acW - 1, acH - 1);
+
+        // Painel esquerdo — grade de ventilação
+        const grillW = Math.floor(acW * 0.26);
+        ctx.fillStyle = '#2e2a22';
+        ctx.fillRect(acX + 2, acY + 4, grillW, acH - 16);
+        for (let gy2 = acY + 6; gy2 < acY + acH - 14; gy2 += 4) {
+          ctx.fillStyle = '#1a1814';
+          ctx.fillRect(acX + 3, gy2, grillW - 2, 2);
+          ctx.fillStyle = '#4a4438';
+          ctx.fillRect(acX + 3, gy2 - 1, grillW - 2, 1);
+        }
+
+        // Área do ventilador
+        const fanAreaX = acX + grillW + 4;
+        const fanAreaW = acW - grillW - 18;
+        const fanAreaH = acH - 18;
+        const fanCX = fanAreaX + fanAreaW / 2;
+        const fanCY = acY + 5 + fanAreaH / 2;
+        const fanR  = Math.min(fanAreaW, fanAreaH) / 2 - 1;
+
+        // Aro/fundo do ventilador
+        ctx.fillStyle = '#1e1c18';
+        ctx.beginPath();
+        ctx.arc(fanCX, fanCY, fanR + 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pás do ventilador (girando)
+        const fanAngle = (t / 100) % (Math.PI * 2);
+        const numBlades = 7;
+        ctx.save();
+        ctx.translate(fanCX, fanCY);
+        ctx.rotate(fanAngle);
+        for (let i = 0; i < numBlades; i++) {
+          const a = (Math.PI * 2 / numBlades) * i;
+          ctx.fillStyle = i % 2 === 0 ? '#38342c' : '#2e2a24';
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, fanR - 1, a, a + (Math.PI * 2 / numBlades) * 0.75);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+
+        // Cruz de proteção do ventilador (X guard)
+        const gd = fanR * 0.85;
+        ctx.strokeStyle = '#1a1814';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(fanCX - gd, fanCY - gd); ctx.lineTo(fanCX + gd, fanCY + gd); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(fanCX + gd, fanCY - gd); ctx.lineTo(fanCX - gd, fanCY + gd); ctx.stroke();
+        ctx.beginPath(); ctx.arc(fanCX, fanCY, fanR + 1, 0, Math.PI * 2); ctx.stroke();
+
+        // Hub central
+        ctx.fillStyle = '#6a6258';
+        ctx.beginPath(); ctx.arc(fanCX, fanCY, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#9a9080';
+        ctx.beginPath(); ctx.arc(fanCX, fanCY, 1.5, 0, Math.PI * 2); ctx.fill();
+
+        // Saída de ar (grilles horizontais embaixo)
+        const outY = acY + acH - 12;
+        ctx.fillStyle = '#1e1c18';
+        ctx.fillRect(acX + 2, outY, acW - 4, 10);
+        for (let gy2 = outY + 2; gy2 < outY + 10; gy2 += 3) {
+          ctx.fillStyle = '#4a4438';
+          ctx.fillRect(acX + 4, gy2, acW - 8, 1);
+        }
+
+        // Painel de controle (canto direito)
+        const panX = acX + acW - 14;
+        const panY = acY + fanAreaH + 6;
+        ctx.fillStyle = '#2a2820';
+        ctx.fillRect(panX, panY, 12, 10);
+        // LEDs
+        const blink = Math.floor(t / 800) % 2 === 0;
+        ctx.fillStyle = blink ? '#dd2222' : '#881111';
+        ctx.fillRect(panX + 2, panY + 2, 3, 2);
+        ctx.fillStyle = '#22aa22';
+        ctx.fillRect(panX + 7, panY + 2, 3, 2);
+        // Botões
+        ctx.fillStyle = '#6a6050';
+        ctx.fillRect(panX + 2, panY + 6, 3, 2);
+        ctx.fillRect(panX + 7, panY + 6, 3, 2);
+
+        // Etiqueta da marca
+        const labelX = fanAreaX;
+        const labelW = Math.floor(fanAreaW * 0.55);
+        ctx.fillStyle = '#1a1814';
+        ctx.fillRect(labelX, panY, labelW, 10);
+        ctx.fillStyle = '#c8c090';
+        ctx.font = 'bold 5px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('ARCO', labelX + labelW / 2, panY + 7);
+        ctx.textAlign = 'left';
+
+        // Pés de fixação
+        ctx.fillStyle = '#3a3428';
+        ctx.fillRect(acX + 4, acY + acH - 1, 7, 4);
+        ctx.fillRect(acX + acW - 11, acY + acH - 1, 7, 4);
+
+        continue;
+
+      } else if (!isRollUnder) {
         // ── 2D pixel-art balcony: janela acima + laje abaixo ────────
         const WIN_H  = 72;
         const SLAB_H = plat.h;
