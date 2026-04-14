@@ -56,7 +56,7 @@ function resolvePlayerPlatform(p: Player, plat: Platform): boolean {
   } else if (minOverlap === overlapBottom && p.vy < 0) {
     p.y = plat.y + plat.h;
     p.vy = 1;
-  } else if (minOverlap === overlapLeft) {
+  } else if (overlapLeft <= overlapRight) {
     p.x = plat.x - p.w;
     if (p.vx > 0) p.vx = 0;
   } else {
