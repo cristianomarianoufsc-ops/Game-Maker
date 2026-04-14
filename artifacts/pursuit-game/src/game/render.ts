@@ -859,35 +859,14 @@ export function drawPlatforms(
       const isRollUnder = plat.y > GROUND_Y - 70;
 
       if (!isRollUnder) {
-        // ── 2D pixel-art balcony ─────────────────────────────────────────
+        // ── Janela acima da plataforma (sem laje abaixo) ─────────────
         const WIN_H  = 72;
-        const SLAB_H = plat.h;
         const bx     = slabX - 4;
         const bw     = slabW + 8;
+        const wy     = plat.y - WIN_H;
+        const fw     = bw;
 
-        // ── Concrete slab (below plat.y) ──────────────────────────────
-        ctx.fillStyle = '#a09280';
-        ctx.fillRect(bx, plat.y, bw, 3);
-        ctx.fillStyle = '#7a7060';
-        ctx.fillRect(bx, plat.y + 3, bw, SLAB_H - 8);
-        ctx.fillStyle = '#5e5648';
-        ctx.fillRect(bx + 4, plat.y + 10, bw - 8, SLAB_H - 20);
-        ctx.fillStyle = '#8c8270';
-        ctx.fillRect(bx + 4, plat.y + 10, bw - 8, 2);
-        ctx.fillStyle = '#5a5040';
-        ctx.fillRect(bx, plat.y + SLAB_H - 5, bw, 5);
-        ctx.fillStyle = '#3e3830';
-        ctx.fillRect(bx, plat.y + SLAB_H, bw, 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.fillRect(bx + 3, plat.y + SLAB_H + 2, bw - 3, 3);
-        ctx.fillStyle = '#5a5040';
-        ctx.fillRect(bx,          plat.y, 4, SLAB_H);
-        ctx.fillRect(bx + bw - 4, plat.y, 4, SLAB_H);
-
-        // ── Window frame above plat.y ─────────────────────────────────
-        const wy  = plat.y - WIN_H;
-        const fw  = bw;
-
+        // Stone/plaster surround + lintel
         ctx.fillStyle = '#6e6050';
         ctx.fillRect(bx, wy - 4, fw, WIN_H + 4);
         ctx.fillStyle = '#7a6e5c';
@@ -895,37 +874,35 @@ export function drawPlatforms(
         ctx.fillStyle = '#8a7e6c';
         ctx.fillRect(bx - 2, wy - 8, fw + 4, 2);
 
+        // Outer wooden frame
         ctx.fillStyle = '#2e1608';
         ctx.fillRect(bx, wy, fw, WIN_H);
 
+        // Two-panel window
         const panelW = Math.floor((fw - 5) / 2);
         const leftX  = bx + 2;
         const rightX = bx + fw - 2 - panelW;
-        const paneW = Math.floor((panelW - 3) / 2);
-        const paneH = Math.floor((WIN_H - 7) / 2);
+        const paneW  = Math.floor((panelW - 3) / 2);
+        const paneH  = Math.floor((WIN_H - 7) / 2);
 
         for (let panel = 0; panel < 2; panel++) {
           const px2 = panel === 0 ? leftX : rightX;
           ctx.fillStyle = '#3e2010';
           ctx.fillRect(px2, wy + 2, panelW, WIN_H - 4);
           ctx.fillStyle = '#182030';
-          ctx.fillRect(px2 + 1,        wy + 3,          paneW, paneH);
-          ctx.fillRect(px2 + paneW + 2, wy + 3,          paneW, paneH);
-          ctx.fillRect(px2 + 1,        wy + paneH + 4,  paneW, paneH);
-          ctx.fillRect(px2 + paneW + 2, wy + paneH + 4,  paneW, paneH);
+          ctx.fillRect(px2 + 1,         wy + 3,         paneW, paneH);
+          ctx.fillRect(px2 + paneW + 2,  wy + 3,         paneW, paneH);
+          ctx.fillRect(px2 + 1,         wy + paneH + 4,  paneW, paneH);
+          ctx.fillRect(px2 + paneW + 2,  wy + paneH + 4,  paneW, paneH);
           ctx.fillStyle = 'rgba(255,160,50,0.22)';
           ctx.fillRect(px2 + 1, wy + 3, panelW - 2, WIN_H - 6);
           ctx.fillStyle = 'rgba(255,255,255,0.12)';
           ctx.fillRect(px2 + 2, wy + 4, 3, 3);
         }
 
+        // Centre divider mullion
         ctx.fillStyle = '#2e1608';
         ctx.fillRect(bx + fw / 2 - 1, wy, 3, WIN_H);
-
-        ctx.fillStyle = '#7a7060';
-        ctx.fillRect(bx, plat.y - 4, bw, 4);
-        ctx.fillStyle = '#a09280';
-        ctx.fillRect(bx, plat.y - 4, bw, 1);
 
       } else {
         // ── Thin procedural ledge (roll-under obstacle) ──────────────
