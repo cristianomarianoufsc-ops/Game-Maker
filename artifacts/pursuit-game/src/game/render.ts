@@ -831,79 +831,184 @@ export function drawPlatforms(
       const w = plat.w;
       const h = plat.h;
 
-      // Undercarriage
-      ctx.fillStyle = '#111';
-      ctx.fillRect(x + 5, y + h - 14, w - 10, 14);
+      // Pixel unit — snaps art to a grid relative to car size
+      const px = Math.max(1, Math.round(w / 52));
 
-      // Body
-      ctx.fillStyle = '#3a1a1a';
-      ctx.fillRect(x + 8, y + 22, w - 16, h - 34);
+      // Proportional helpers (snap to pixels)
+      const fx = (t: number) => Math.round(x + t * w);
+      const fy = (t: number) => Math.round(y + t * h);
+      const fw = (t: number) => Math.max(px, Math.round(t * w));
+      const fh = (t: number) => Math.max(px, Math.round(t * h));
+      const pr = (tx: number, ty: number, tw: number, th: number, col: string) => {
+        ctx.fillStyle = col;
+        ctx.fillRect(fx(tx), fy(ty), fw(tw), fh(th));
+      };
 
-      // Body highlight left
-      ctx.fillStyle = '#521f1f';
-      ctx.fillRect(x + 8, y + 22, 5, h - 34);
+      // ── GROUND SHADOW ──
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      ctx.fillRect(fx(0.05), fy(0.94), fw(0.90), fh(0.07));
 
-      // Body shadow right
-      ctx.fillStyle = '#1e0d0d';
-      ctx.fillRect(x + w - 13, y + 22, 5, h - 34);
+      // ── UNDERCARRIAGE ──
+      pr(0.04, 0.80, 0.92, 0.18, '#0e0c07');
+      pr(0.06, 0.82, 0.88, 0.10, '#14100a');
 
-      // Crushed roof
-      ctx.fillStyle = '#2a1111';
-      ctx.fillRect(x + 22, y, w - 44, 26);
-      ctx.fillStyle = '#3a1818';
-      ctx.fillRect(x + 22, y, w - 44, 4);
+      // ── MAIN BODY (lower panel — below roof) ──
+      pr(0.01, 0.40, 0.98, 0.42, '#4a3e2c');   // body base
+      pr(0.01, 0.40, 0.98, px / h, '#6a5a3a'); // top edge highlight
+      pr(0.01, 0.78, 0.98, px / h, '#1a1408'); // bottom edge shadow
 
-      // Windshield (front)
-      ctx.fillStyle = 'rgba(140,210,230,0.12)';
-      ctx.fillRect(x + 20, y + 3, 30, 18);
-      ctx.strokeStyle = 'rgba(180,230,240,0.18)';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x + 22, y + 3); ctx.lineTo(x + 48, y + 20); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x + 48, y + 3); ctx.lineTo(x + 22, y + 20); ctx.stroke();
+      // ── HOOD (front 26%, slightly lower than roof line) ──
+      pr(0.01, 0.46, 0.26, 0.36, '#44382a');   // hood
+      pr(0.01, 0.46, 0.26, px / h, '#58503a'); // hood top edge
+      pr(0.01, 0.70, 0.24, 0.10, '#2e2618');   // hood lower shadow
 
-      // Rear window
-      ctx.fillStyle = 'rgba(120,190,210,0.10)';
-      ctx.fillRect(x + w - 52, y + 3, 28, 18);
+      // ── TRUNK (rear 18%) ──
+      pr(0.80, 0.44, 0.19, 0.36, '#483c28');
+      pr(0.80, 0.44, 0.19, px / h, '#5a4e36');
 
-      // Side windows
-      ctx.fillStyle = 'rgba(100,180,200,0.09)';
-      ctx.fillRect(x + 52, y + 5, 22, 13);
-      ctx.fillRect(x + w - 74, y + 5, 20, 13);
+      // ── ROOF CABIN ──
+      pr(0.16, 0.02, 0.66, 0.40, '#2c2418');   // roof body
+      pr(0.16, 0.02, 0.66, px / h, '#403828'); // roof top edge highlight
+      pr(0.16, 0.38, 0.66, px / h, '#1a1408'); // roof bottom edge
 
-      // Rust streaks
-      ctx.fillStyle = 'rgba(160,55,15,0.45)';
-      ctx.fillRect(x + 18, y + 22, 3, h - 34);
-      ctx.fillRect(x + w - 32, y + 18, 2, h - 30);
-      ctx.fillRect(x + 65, y + 24, 2, h - 36);
+      // ── PILLARS ──
+      pr(0.16, 0.04, 0.05, 0.38, '#201a10');   // A-pillar (front)
+      pr(0.79, 0.04, 0.04, 0.38, '#201a10');   // C-pillar (rear)
+      pr(0.44, 0.05, 0.03, 0.34, '#181410');   // B-pillar (centre)
 
-      // Wheels
-      ctx.fillStyle = '#0d0d0d';
-      ctx.beginPath(); ctx.arc(x + 28, y + h - 7, 13, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x + w - 28, y + h - 7, 13, 0, Math.PI * 2); ctx.fill();
-      // Rims
-      ctx.fillStyle = '#3a3a3a';
-      ctx.beginPath(); ctx.arc(x + 28, y + h - 7, 6, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x + w - 28, y + h - 7, 6, 0, Math.PI * 2); ctx.fill();
-      // Rim spokes
-      ctx.strokeStyle = '#555';
-      ctx.lineWidth = 1;
-      for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
-        for (const cx2 of [x + 28, x + w - 28]) {
-          ctx.beginPath();
-          ctx.moveTo(cx2 + Math.cos(a) * 2, y + h - 7 + Math.sin(a) * 2);
-          ctx.lineTo(cx2 + Math.cos(a) * 6, y + h - 7 + Math.sin(a) * 6);
-          ctx.stroke();
-        }
+      // ── WINDSHIELD ──
+      pr(0.21, 0.05, 0.23, 0.33, '#1a222c');   // windshield dark
+      pr(0.21, 0.05, 0.23, px / h, '#2a3038'); // top frame
+      // crack
+      ctx.strokeStyle = 'rgba(200,220,230,0.15)';
+      ctx.lineWidth = px;
+      ctx.beginPath();
+      ctx.moveTo(fx(0.26), fy(0.08)); ctx.lineTo(fx(0.31), fy(0.22)); ctx.lineTo(fx(0.29), fy(0.34));
+      ctx.stroke();
+
+      // ── FRONT DOOR WINDOW ──
+      pr(0.47, 0.05, 0.14, 0.33, '#18202a');
+      pr(0.47, 0.05, px / w, 0.33, '#1e2830'); // left frame
+      pr(0.61 - px / w, 0.05, px / w, 0.33, '#1e2830'); // right frame
+
+      // ── REAR DOOR WINDOW ──
+      pr(0.62, 0.05, 0.12, 0.33, '#141c24');
+      pr(0.74 - px / w, 0.05, px / w, 0.33, '#1c2430');
+
+      // ── REAR WINDOW ──
+      pr(0.75, 0.06, 0.07, 0.32, '#121820');
+
+      // ── DOOR PANEL SEAMS ──
+      ctx.fillStyle = '#1a1408';
+      ctx.fillRect(fx(0.21), fy(0.40), fw(0.58), px); // belt line seam
+      ctx.fillRect(fx(0.47), fy(0.40), px, fh(0.40)); // front door split
+      ctx.fillRect(fx(0.62), fy(0.40), px, fh(0.40)); // rear door split
+      // horizontal door crease
+      ctx.fillStyle = '#2a2010';
+      ctx.fillRect(fx(0.22), fy(0.58), fw(0.57), px);
+
+      // ── FRONT GRILLE ──
+      pr(0.01, 0.63, 0.13, 0.15, '#141210');
+      for (let gi = 0; gi < 3; gi++) {
+        ctx.fillStyle = '#0a0806';
+        ctx.fillRect(fx(0.02), fy(0.65 + gi * 0.04), fw(0.11), Math.max(px, fh(0.022)));
       }
 
-      // Hood dent crease
-      ctx.strokeStyle = 'rgba(10,0,0,0.55)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x + 8, y + 24);
-      ctx.lineTo(x + 22, y + 36);
-      ctx.lineTo(x + 20, y + h - 15);
-      ctx.stroke();
+      // ── HEADLIGHTS ──
+      pr(0.01, 0.46, 0.12, 0.16, '#28303a'); // housing
+      pr(0.02, 0.48, 0.05, 0.07, '#6080a0'); // main lamp
+      pr(0.02, 0.48, 0.02, 0.03, '#90b0c0'); // lamp highlight
+      pr(0.07, 0.48, 0.04, 0.07, '#405878'); // secondary lamp
+      pr(0.01, 0.61, 0.05, 0.02, '#804010'); // indicator amber
+
+      // ── REAR TAIL LIGHTS ──
+      pr(0.87, 0.58, 0.11, 0.05, '#7a1408');
+      pr(0.87, 0.63, 0.11, 0.03, '#501008');
+      pr(0.87, 0.58, px / w, 0.08, '#a82010'); // inner bright strip
+
+      // ── BUMPERS ──
+      pr(0.01, 0.77, 0.15, 0.04, '#1e1c18');
+      pr(0.01, 0.77, 0.15, px / h, '#2e2c28');
+      pr(0.84, 0.77, 0.15, 0.04, '#1e1c18');
+      pr(0.84, 0.77, 0.15, px / h, '#2e2c28');
+
+      // ── RUST PATCHES ──
+      const rustCols = ['#7a2e08', '#8b380a', '#6a2606', '#923a0e', '#5c2008', '#a04010'];
+      const patches: [number, number, number, number][] = [
+        [0.08, 0.42, 0.09, 0.07], [0.28, 0.44, 0.11, 0.09],
+        [0.50, 0.40, 0.09, 0.06], [0.62, 0.50, 0.08, 0.08],
+        [0.72, 0.42, 0.10, 0.09], [0.20, 0.60, 0.07, 0.07],
+        [0.38, 0.62, 0.09, 0.07], [0.80, 0.52, 0.06, 0.07],
+        [0.18, 0.10, 0.05, 0.05], [0.68, 0.06, 0.08, 0.05],
+        [0.83, 0.44, 0.05, 0.11], [0.05, 0.66, 0.08, 0.07],
+        [0.52, 0.64, 0.09, 0.08], [0.33, 0.46, 0.04, 0.05],
+        [0.15, 0.42, 0.03, 0.08], [0.74, 0.58, 0.05, 0.06],
+        [0.44, 0.52, 0.06, 0.05], [0.90, 0.44, 0.04, 0.06],
+      ];
+      for (let ri = 0; ri < patches.length; ri++) {
+        const [rtx, rty, rtw, rth] = patches[ri];
+        ctx.fillStyle = rustCols[ri % rustCols.length];
+        ctx.fillRect(fx(rtx), fy(rty), fw(rtw), fh(rth));
+        ctx.fillStyle = rustCols[(ri + 2) % rustCols.length];
+        ctx.fillRect(fx(rtx + rtw * 0.3), fy(rty - 0.01), fw(rtw * 0.55), fh(rth * 0.5));
+        ctx.fillRect(fx(rtx - 0.005), fy(rty + rth * 0.45), fw(rtw * 0.40), fh(rth * 0.45));
+      }
+
+      // ── WHEELS ──
+      const wr = Math.round(h * 0.21);
+      const wcy = Math.round(y + h * 0.80);
+      for (const wcx of [fx(0.17), fx(0.81)]) {
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath(); ctx.ellipse(wcx, wcy + wr * 0.9, wr * 0.85, wr * 0.18, 0, 0, Math.PI * 2); ctx.fill();
+        // Tyre
+        ctx.fillStyle = '#141008';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr, 0, Math.PI * 2); ctx.fill();
+        // Tyre tread ring
+        ctx.strokeStyle = '#0c0a06';
+        ctx.lineWidth = px * 2;
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr - px * 2, 0, Math.PI * 2); ctx.stroke();
+        // Rusty rim
+        ctx.fillStyle = '#583408';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr * 0.62, 0, Math.PI * 2); ctx.fill();
+        // Rim shadow ring
+        ctx.fillStyle = '#3a2206';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr * 0.46, 0, Math.PI * 2); ctx.fill();
+        // Rim spokes
+        ctx.strokeStyle = '#4a2e08';
+        ctx.lineWidth = px * 1.5;
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
+          ctx.beginPath();
+          ctx.moveTo(wcx + Math.cos(a) * wr * 0.18, wcy + Math.sin(a) * wr * 0.18);
+          ctx.lineTo(wcx + Math.cos(a) * wr * 0.56, wcy + Math.sin(a) * wr * 0.56);
+          ctx.stroke();
+        }
+        // Hub centre
+        ctx.fillStyle = '#4a3010';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr * 0.16, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#5a3c14';
+        ctx.beginPath(); ctx.arc(wcx, wcy, wr * 0.08, 0, Math.PI * 2); ctx.fill();
+        // Rim highlight
+        ctx.fillStyle = 'rgba(110,70,20,0.35)';
+        ctx.beginPath();
+        ctx.arc(wcx - wr * 0.22, wcy - wr * 0.22, wr * 0.24, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // ── WHEEL ARCHES (paint dark arc over body to form arch cut-out) ──
+      for (const wcx of [fx(0.17), fx(0.81)]) {
+        ctx.fillStyle = '#0e0c07';
+        ctx.beginPath();
+        ctx.arc(wcx, wcy, wr + px * 2, Math.PI, 0);
+        ctx.lineTo(wcx + wr + px * 2, fy(0.40));
+        ctx.lineTo(wcx - wr - px * 2, fy(0.40));
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // ── BODY PANEL SHADE (darken lower half slightly) ──
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.fillRect(fx(0.15), fy(0.58), fw(0.70), fh(0.22));
 
       continue;
     }
