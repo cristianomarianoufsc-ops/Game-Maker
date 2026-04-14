@@ -131,9 +131,18 @@ export function generateLevel(): Platform[] {
   // Carcaças de carro, pneus e caixas espalhados pelo cenário.
   // Todos removíveis pelo modo editor.
 
-  const junkyardItems: Array<{ x: number; type: 'car' | 'tire' | 'box'; w: number; h: number }> = [
+  const junkyardItems: Array<{
+    x: number;
+    type: 'car' | 'tire' | 'box';
+    w: number;
+    h: number;
+    collisionW?: number;
+    collisionH?: number;
+    collisionOffsetX?: number;
+    collisionOffsetY?: number;
+  }> = [
     // Ferro velho (x:12100-14500) — só carros e pneus
-    { x: 12505, type: 'car',  w: 445, h: 168 },
+    { x: 12505, type: 'car',  w: 445, h: 168, collisionW: 445, collisionH: 71, collisionOffsetX: 0, collisionOffsetY: 43 },
     { x: 13050, type: 'tire', w: 45,  h: 95 },
     { x: 13304, type: 'car',  w: 337, h: 115 },
     { x: 13650, type: 'car',  w: 150, h: 65 },
@@ -164,20 +173,22 @@ export function generateLevel(): Platform[] {
     { x: 24700, type: 'tire', w: 45,  h: 95 },
   ];
 
-  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h }) => {
+  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY }) => {
     if (type === 'car') {
-      const collisionW = Math.round(w * 0.82);
-      const collisionH = Math.round(h * 0.68);
-      const collisionOffsetX = Math.round((w - collisionW) / 2);
+      const collisionW = customCollisionW ?? Math.round(w * 0.82);
+      const collisionH = customCollisionH ?? Math.round(h * 0.68);
+      const collisionOffsetX = customCollisionOffsetX ?? Math.round((w - collisionW) / 2);
+      const collisionOffsetY = customCollisionOffsetY ?? 0;
       platforms.push({
         x,
-        y: GROUND_Y - collisionH,
+        y: GROUND_Y - collisionOffsetY - collisionH,
         w,
         h,
         type,
         collisionW,
         collisionH,
         collisionOffsetX,
+        collisionOffsetY,
       });
       return;
     }
