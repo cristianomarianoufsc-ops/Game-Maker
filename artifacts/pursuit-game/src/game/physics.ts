@@ -440,10 +440,11 @@ export function updatePlayer(
     // Roll — também sai do forcedCrouch ao pressionar shift+direção
     if ((keys.shift || keys.z) && p.onGround && !p.isRolling && (keys.left || keys.right || Math.abs(p.vx) > 1 || p.forcedCrouch)) {
       p.forcedCrouch = false;
+      p.y += PLAYER_H - PLAYER_ROLL_H; // ajusta y para manter os pés no chão imediatamente
       p.isRolling = true;
       p.rollTimer = ROLL_DURATION;
       p.state = 'roll';
-      spawnParticle(p.x + p.w / 2, p.y + ph, '#444055');
+      spawnParticle(p.x + p.w / 2, p.y + PLAYER_ROLL_H, '#444055');
     }
   }
 
@@ -524,6 +525,7 @@ export function updatePlayer(
 
   if (keys.down && p.onGround && !p.isRolling && !p.isClimbing && p.state !== 'hurt') {
     if ((keys.left || keys.right || Math.abs(p.vx) > 3) && Math.abs(p.vx) > 1) {
+      p.y += PLAYER_H - PLAYER_ROLL_H; // ajusta y para manter os pés no chão imediatamente
       p.isRolling = true;
       p.autoRoll = true;
       p.rollTimer = LANDING_ROLL_DURATION;
