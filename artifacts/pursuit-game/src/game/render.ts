@@ -840,26 +840,25 @@ export function drawPlatforms(
       ctx.fillStyle = COLORS.wallMoss;
       ctx.fillRect(sx, plat.y, plat.w, plat.h);
     } else {
-      // ── Balcony sprite ──
-      // The image has: window (top ~60%) + concrete slab (bottom ~40%).
-      // plat.y is the WALK SURFACE (top of concrete). The sprite is drawn so
-      // the concrete top aligns exactly with plat.y, and the window extends
-      // above as a purely visual element (no collision).
       const slabX = sx - 5;
       const slabW = plat.w + 10;
 
-      const WIN_FRAC  = 0.60; // fraction of image height that is window
-      const SLAB_GAME = 85;   // concrete slab visual height in game px
-      const WIN_GAME  = Math.round(SLAB_GAME * (WIN_FRAC / (1 - WIN_FRAC))); // ~128 px
-      const Y_SHIFT   = 12;   // shift whole sprite down to sit lower on screen
+      // Roll-under platforms (y > GROUND_Y - 70) are low overhead obstacles —
+      // use a thin procedural ledge. True balconies use the sprite.
+      const isRollUnder = plat.y > GROUND_Y - 70;
 
-      if (balconyImg && balconyImg.complete && balconyImg.naturalWidth > 0) {
-        // Preserve natural aspect ratio — compute width from height
-        const totalH = WIN_GAME + SLAB_GAME;
-        const aspect = balconyImg.naturalWidth / balconyImg.naturalHeight;
-        const displayW = Math.round(totalH * aspect);
-        // Center horizontally over the platform
-        const centerX = sx + plat.w / 2;
+      if (!isRollUnder && balconyImg && balconyImg.complete && balconyImg.naturalWidth > 0) {
+        // ── Balcony sprite ──
+        // Window (top ~60% of image) sits above plat.y as pure visual.
+        // Concrete slab (bottom ~40%) starts at plat.y.
+        const WIN_FRAC  = 0.60;
+        const SLAB_GAME = 85;
+        const WIN_GAME  = Math.round(SLAB_GAME * (WIN_FRAC / (1 - WIN_FRAC))); // ~128 px
+        const Y_SHIFT   = 12;
+        const totalH    = WIN_GAME + SLAB_GAME;
+        const aspect    = balconyImg.naturalWidth / balconyImg.naturalHeight;
+        const displayW  = Math.round(totalH * aspect);
+        const centerX   = sx + plat.w / 2;
         ctx.drawImage(
           balconyImg,
           centerX - displayW / 2,
@@ -868,13 +867,17 @@ export function drawPlatforms(
           totalH
         );
       } else {
-        // Fallback: procedural slab
+        // ── Procedural slab (roll-under / fallback) ──
         ctx.fillStyle = '#4e4438';
         ctx.fillRect(slabX, plat.y + 4, slabW, plat.h - 4);
         ctx.fillStyle = '#6a5c50';
         ctx.fillRect(slabX, plat.y, slabW, 5);
         ctx.fillStyle = '#7e6e60';
         ctx.fillRect(slabX, plat.y, slabW, 2);
+        ctx.fillStyle = '#4e4438';
+        ctx.fillRect(slabX - 2, plat.y + 2, 3, plat.h - 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fillRect(slabX, plat.y + plat.h, 8, 3);
         // Railing
         const railTop = plat.y - 10;
         ctx.fillStyle = '#121018';
