@@ -859,8 +859,54 @@ export function drawPlatforms(
       const isRollUnder = plat.y > GROUND_Y - 70;
 
       if (!isRollUnder) {
-        // Plataforma elevada — a parede de tijolos do drawStreetBuildings já cobre
-        // toda a área visualmente; não desenhamos nenhuma decoração extra aqui.
+        // ── Apenas a janela acima da plataforma — sem a laje marrom abaixo ──
+        const WIN_H  = 72;
+        const bx     = slabX - 4;
+        const bw     = slabW + 8;
+
+        const wy  = plat.y - WIN_H;
+        const fw  = bw;
+
+        // Stone/plaster surround behind frame
+        ctx.fillStyle = '#6e6050';
+        ctx.fillRect(bx, wy - 4, fw, WIN_H + 4);
+        // Stone lintel above window
+        ctx.fillStyle = '#7a6e5c';
+        ctx.fillRect(bx - 2, wy - 8, fw + 4, 6);
+        ctx.fillStyle = '#8a7e6c';
+        ctx.fillRect(bx - 2, wy - 8, fw + 4, 2);
+
+        // Outer wooden frame (dark brown)
+        ctx.fillStyle = '#2e1608';
+        ctx.fillRect(bx, wy, fw, WIN_H);
+
+        // Two-panel window (left panel + right panel)
+        const panelW = Math.floor((fw - 5) / 2);
+        const leftX  = bx + 2;
+        const rightX = bx + fw - 2 - panelW;
+
+        const paneW = Math.floor((panelW - 3) / 2);
+        const paneH = Math.floor((WIN_H - 7) / 2);
+
+        for (let panel = 0; panel < 2; panel++) {
+          const px2 = panel === 0 ? leftX : rightX;
+          ctx.fillStyle = '#3e2010';
+          ctx.fillRect(px2, wy + 2, panelW, WIN_H - 4);
+          ctx.fillStyle = '#182030';
+          ctx.fillRect(px2 + 1,        wy + 3,          paneW, paneH);
+          ctx.fillRect(px2 + paneW + 2, wy + 3,          paneW, paneH);
+          ctx.fillRect(px2 + 1,        wy + paneH + 4,  paneW, paneH);
+          ctx.fillRect(px2 + paneW + 2, wy + paneH + 4,  paneW, paneH);
+          ctx.fillStyle = 'rgba(255,160,50,0.22)';
+          ctx.fillRect(px2 + 1, wy + 3, panelW - 2, WIN_H - 6);
+          ctx.fillStyle = 'rgba(255,255,255,0.12)';
+          ctx.fillRect(px2 + 2, wy + 4, 3, 3);
+        }
+
+        // Centre divider mullion
+        ctx.fillStyle = '#2e1608';
+        ctx.fillRect(bx + fw / 2 - 1, wy, 3, WIN_H);
+
       } else {
         // ── Thin procedural ledge (roll-under obstacle) ──────────────
         ctx.fillStyle = '#4e4438';
