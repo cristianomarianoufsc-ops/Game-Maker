@@ -767,6 +767,210 @@ export function drawPlatforms(
       continue;
     }
 
+    if (plat.type === 'car') {
+      const x = sx;
+      const y = plat.y;
+      const w = plat.w;
+      const h = plat.h;
+
+      // Undercarriage
+      ctx.fillStyle = '#111';
+      ctx.fillRect(x + 5, y + h - 14, w - 10, 14);
+
+      // Body
+      ctx.fillStyle = '#3a1a1a';
+      ctx.fillRect(x + 8, y + 22, w - 16, h - 34);
+
+      // Body highlight left
+      ctx.fillStyle = '#521f1f';
+      ctx.fillRect(x + 8, y + 22, 5, h - 34);
+
+      // Body shadow right
+      ctx.fillStyle = '#1e0d0d';
+      ctx.fillRect(x + w - 13, y + 22, 5, h - 34);
+
+      // Crushed roof
+      ctx.fillStyle = '#2a1111';
+      ctx.fillRect(x + 22, y, w - 44, 26);
+      ctx.fillStyle = '#3a1818';
+      ctx.fillRect(x + 22, y, w - 44, 4);
+
+      // Windshield (front)
+      ctx.fillStyle = 'rgba(140,210,230,0.12)';
+      ctx.fillRect(x + 20, y + 3, 30, 18);
+      ctx.strokeStyle = 'rgba(180,230,240,0.18)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x + 22, y + 3); ctx.lineTo(x + 48, y + 20); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + 48, y + 3); ctx.lineTo(x + 22, y + 20); ctx.stroke();
+
+      // Rear window
+      ctx.fillStyle = 'rgba(120,190,210,0.10)';
+      ctx.fillRect(x + w - 52, y + 3, 28, 18);
+
+      // Side windows
+      ctx.fillStyle = 'rgba(100,180,200,0.09)';
+      ctx.fillRect(x + 52, y + 5, 22, 13);
+      ctx.fillRect(x + w - 74, y + 5, 20, 13);
+
+      // Rust streaks
+      ctx.fillStyle = 'rgba(160,55,15,0.45)';
+      ctx.fillRect(x + 18, y + 22, 3, h - 34);
+      ctx.fillRect(x + w - 32, y + 18, 2, h - 30);
+      ctx.fillRect(x + 65, y + 24, 2, h - 36);
+
+      // Wheels
+      ctx.fillStyle = '#0d0d0d';
+      ctx.beginPath(); ctx.arc(x + 28, y + h - 7, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + w - 28, y + h - 7, 13, 0, Math.PI * 2); ctx.fill();
+      // Rims
+      ctx.fillStyle = '#3a3a3a';
+      ctx.beginPath(); ctx.arc(x + 28, y + h - 7, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + w - 28, y + h - 7, 6, 0, Math.PI * 2); ctx.fill();
+      // Rim spokes
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 1;
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
+        for (const cx2 of [x + 28, x + w - 28]) {
+          ctx.beginPath();
+          ctx.moveTo(cx2 + Math.cos(a) * 2, y + h - 7 + Math.sin(a) * 2);
+          ctx.lineTo(cx2 + Math.cos(a) * 6, y + h - 7 + Math.sin(a) * 6);
+          ctx.stroke();
+        }
+      }
+
+      // Hood dent crease
+      ctx.strokeStyle = 'rgba(10,0,0,0.55)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + 8, y + 24);
+      ctx.lineTo(x + 22, y + 36);
+      ctx.lineTo(x + 20, y + h - 15);
+      ctx.stroke();
+
+      continue;
+    }
+
+    if (plat.type === 'tire') {
+      const x = sx;
+      const y = plat.y;
+      const w = plat.w;
+      const h = plat.h;
+      const cx2 = x + w / 2;
+      const numTires = 3;
+      const tireH = h / numTires;
+
+      for (let i = 0; i < numTires; i++) {
+        const ty = y + i * tireH;
+        const th = tireH - 2;
+        const rw = (w - 4) / 2;
+        const rh = th / 2;
+        const tcy = ty + th / 2;
+
+        // Outer rubber
+        ctx.fillStyle = '#181818';
+        ctx.beginPath();
+        ctx.ellipse(cx2, tcy, rw, rh, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tread groove ring
+        ctx.strokeStyle = '#2a2a2a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(cx2, tcy, rw - 3, rh - 2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner rim
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.ellipse(cx2, tcy, rw / 2, rh / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rim hole
+        ctx.fillStyle = '#111';
+        ctx.beginPath();
+        ctx.ellipse(cx2, tcy, rw / 4, rh / 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Highlight sheen
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.beginPath();
+        ctx.ellipse(cx2 - rw * 0.3, tcy - rh * 0.3, rw * 0.22, rh * 0.18, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      continue;
+    }
+
+    if (plat.type === 'box') {
+      const x = sx;
+      const y = plat.y;
+      const w = plat.w;
+      const h = plat.h;
+      const crateH = 55;
+      const numCrates = Math.round(h / crateH);
+
+      for (let i = 0; i < numCrates; i++) {
+        const inset = i * 3;
+        const cw = w - inset * 2;
+        const cx2 = x + inset;
+        const cy = y + (numCrates - 1 - i) * crateH;
+
+        // Body
+        ctx.fillStyle = '#5c3d1a';
+        ctx.fillRect(cx2, cy, cw, crateH - 2);
+
+        // Top plank edge
+        ctx.fillStyle = '#7a5228';
+        ctx.fillRect(cx2, cy, cw, 5);
+
+        // Bottom shadow
+        ctx.fillStyle = '#3a2510';
+        ctx.fillRect(cx2, cy + crateH - 7, cw, 5);
+
+        // Left highlight
+        ctx.fillStyle = '#6e4820';
+        ctx.fillRect(cx2, cy, 4, crateH - 2);
+
+        // Right shadow
+        ctx.fillStyle = '#2e1a08';
+        ctx.fillRect(cx2 + cw - 4, cy, 4, crateH - 2);
+
+        // Plank lines (horizontal wood grain)
+        ctx.strokeStyle = 'rgba(40,20,5,0.4)';
+        ctx.lineWidth = 1;
+        for (let py = cy + 14; py < cy + crateH - 8; py += 14) {
+          ctx.beginPath();
+          ctx.moveTo(cx2 + 4, py);
+          ctx.lineTo(cx2 + cw - 4, py);
+          ctx.stroke();
+        }
+
+        // Cross brace (X)
+        ctx.strokeStyle = '#3d2410';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx2 + 4, cy + 4);
+        ctx.lineTo(cx2 + cw - 4, cy + crateH - 9);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx2 + cw - 4, cy + 4);
+        ctx.lineTo(cx2 + 4, cy + crateH - 9);
+        ctx.stroke();
+
+        // Corner bolts
+        ctx.fillStyle = '#9a8070';
+        const bolts: [number, number][] = [
+          [cx2 + 3, cy + 3], [cx2 + cw - 7, cy + 3],
+          [cx2 + 3, cy + crateH - 9], [cx2 + cw - 7, cy + crateH - 9],
+        ];
+        for (const [bx, by] of bolts) {
+          ctx.fillRect(bx, by, 4, 4);
+        }
+      }
+
+      continue;
+    }
+
     if (plat.type === 'wall') {
       // Vertical climbable wall
       ctx.fillStyle = COLORS.platformSide;

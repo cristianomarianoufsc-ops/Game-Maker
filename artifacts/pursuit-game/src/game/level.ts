@@ -130,6 +130,47 @@ export function generateLevel(): Platform[] {
     platforms.push({ x, y: GROUND_Y - CAN_H, w: CAN_W, h: CAN_H, type: 'obstacle' });
   });
 
+  // ── FERRO VELHO (a partir de x:12100) ──────────────────────────
+  // Carcaças de carro, pneus e caixas espalhados pelo cenário.
+  // Todos removíveis pelo modo editor.
+
+  const junkyardItems: Array<{ x: number; type: 'car' | 'tire' | 'box'; w: number; h: number }> = [
+    // Wall Zone 2
+    { x: 12500, type: 'car',  w: 150, h: 65 },
+    { x: 12800, type: 'box',  w: 65,  h: 55 },
+    { x: 13650, type: 'car',  w: 150, h: 65 },
+    { x: 14000, type: 'tire', w: 45,  h: 95 },
+    { x: 15600, type: 'car',  w: 150, h: 65 },
+    { x: 15850, type: 'tire', w: 45,  h: 95 },
+
+    // Free Zone 3
+    { x: 16250, type: 'car',  w: 150, h: 65 },
+    { x: 16520, type: 'box',  w: 65,  h: 55 },
+    { x: 16620, type: 'box',  w: 65,  h: 55 },
+    { x: 17100, type: 'tire', w: 45,  h: 95 },
+    { x: 17400, type: 'car',  w: 150, h: 65 },
+    { x: 17700, type: 'box',  w: 65,  h: 55 },
+    { x: 18100, type: 'tire', w: 45,  h: 95 },
+    { x: 18600, type: 'car',  w: 150, h: 65 },
+    { x: 19100, type: 'box',  w: 65,  h: 110 },
+    { x: 19700, type: 'tire', w: 45,  h: 95 },
+
+    // Wall Zone 3
+    { x: 20200, type: 'car',  w: 150, h: 65 },
+    { x: 20400, type: 'tire', w: 45,  h: 95 },
+    { x: 21200, type: 'car',  w: 150, h: 65 },
+    { x: 21600, type: 'box',  w: 65,  h: 55 },
+    { x: 22400, type: 'car',  w: 150, h: 65 },
+    { x: 22600, type: 'tire', w: 45,  h: 95 },
+    { x: 23400, type: 'car',  w: 150, h: 65 },
+    { x: 24350, type: 'box',  w: 65,  h: 110 },
+    { x: 24700, type: 'tire', w: 45,  h: 95 },
+  ];
+
+  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h }) => {
+    platforms.push({ x, y: GROUND_Y - h, w, h, type });
+  });
+
   // ── ELEVATED PLATFORMS ─────────────────────────────────────────
 
   // ── ROLL-UNDER BALCONIES — low enough to need roll, jumpable on top ──

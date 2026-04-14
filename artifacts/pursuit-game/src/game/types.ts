@@ -11,7 +11,7 @@ export interface Rect {
 }
 
 export interface Platform extends Rect {
-  type: 'ground' | 'platform' | 'wall' | 'obstacle';
+  type: 'ground' | 'platform' | 'wall' | 'obstacle' | 'car' | 'tire' | 'box';
   climbable?: boolean;
   collisionH?: number;
 }
