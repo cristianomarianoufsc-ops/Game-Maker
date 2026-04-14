@@ -1716,10 +1716,10 @@ export function drawHUD(
 
   // Panel background
   ctx.fillStyle = COLORS.uiPanel;
-  ctx.fillRect(10, 10, 180, 50);
+  ctx.fillRect(10, 10, 240, 50);
   ctx.strokeStyle = 'rgba(80,75,110,0.8)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(10, 10, 180, 50);
+  ctx.strokeRect(10, 10, 240, 50);
 
   // Health
   ctx.fillStyle = COLORS.uiText;
@@ -1734,10 +1734,10 @@ export function drawHUD(
     ctx.strokeRect(40 + i * 22, 16, 16, 14);
   }
 
-  // Score
+  // Score + world X (for level editing reference)
   ctx.fillStyle = COLORS.uiTextBright;
   ctx.font = 'bold 13px monospace';
-  ctx.fillText(`DIST: ${score}m`, 20, 52);
+  ctx.fillText(`DIST: ${score}m  X:${Math.floor(p.x)}`, 20, 52);
 
   // Distance progress bar
   ctx.fillStyle = 'rgba(40,35,60,0.8)';
