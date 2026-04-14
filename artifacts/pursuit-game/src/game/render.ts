@@ -673,15 +673,22 @@ export function drawStreetBuildings(
       }
     }
 
-    // ── One large window per balcony platform ──
-    for (const p of g.plats) {
-      const psx    = p.x - camX;          // platform screen x
-      const WIN_W  = p.w + 10;            // window ≈ platform width
-      const WIN_H  = 44;                  // window height
-      const wx     = psx - 5;             // aligned with slab left
-      const wy     = Math.max(bY + 6, p.y - WIN_H - 6); // just above slab
+    // ── Windows: symmetric horizontal placement, same Y for all ──
+    // Y anchored to the lowest (nearest-ground) platform so windows
+    // sit at the same floor level regardless of individual platform heights.
+    const WIN_W = Math.round(g.plats.reduce((s, p) => s + p.w, 0) / g.plats.length) + 10;
+    const WIN_H = 44;
+    // Use the lowest (max y) platform as the row anchor
+    const anchorY = Math.max(...g.plats.map(p => p.y));
+    const wy = Math.max(bY + 6, anchorY - WIN_H - 6);
 
-      // Stone lintel (horizontal band above window)
+    // Distribute windows symmetrically: 1 window → center; 2 → 1/3 and 2/3
+    const n = g.plats.length;
+    for (let i = 0; i < n; i++) {
+      const fraction = n === 1 ? 0.5 : (i + 1) / (n + 1);
+      const wx = Math.round(sx + sw * fraction - WIN_W / 2);
+
+      // Stone lintel
       ctx.fillStyle = '#6a5848';
       ctx.fillRect(wx - 4, wy - 5, WIN_W + 8, 6);
 
@@ -702,7 +709,7 @@ export function drawStreetBuildings(
       ctx.fillStyle = 'rgba(255,140,40,0.12)';
       ctx.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
 
-      // Window sill / ledge (matches slab style)
+      // Window sill / ledge
       ctx.fillStyle = '#6a5c50';
       ctx.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 4);
       ctx.fillStyle = '#7e6e60';
