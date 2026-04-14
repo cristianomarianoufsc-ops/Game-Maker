@@ -106,29 +106,19 @@ export function generateLevel(): Platform[] {
 
     // Free zone 2 — só lixeiras, sem paredes
     { x: 9000 },
-    { x: 9800 },
-    { x: 10500 },
     { x: 11200 },
 
     // Wall zone 2
     { x: 11900 },
-    { x: 12600 },
     { x: 13200 },
-    { x: 13900 },
     { x: 14400 },
     { x: 15100 },
 
     // Free zone 3 — só lixeiras, sem paredes
-    { x: 16300 },
-    { x: 17100 },
-    { x: 17800 },
-    { x: 18600 },
-    { x: 19300 },
     { x: 20000 },
 
     // Wall zone 3
     { x: 20700 },
-    { x: 21350 },
     { x: 22000 },
     { x: 22600 },
     { x: 23200 },
@@ -151,16 +141,12 @@ export function generateLevel(): Platform[] {
     { x: 5050, y: GROUND_Y - 55, w: 110 },
     { x: 6200, y: GROUND_Y - 55, w: 110 },
 
-    // Free Zone 2
-    { x: 10400, y: GROUND_Y - 55, w: 115 },
-
     // Wall Zone 2
     { x: 11850, y: GROUND_Y - 55, w: 110 },
     { x: 13200, y: GROUND_Y - 55, w: 110 },
     { x: 14700, y: GROUND_Y - 55, w: 110 },
 
     // Free Zone 3
-    { x: 16600, y: GROUND_Y - 55, w: 115 },
     { x: 17900, y: GROUND_Y - 55, w: 115 },
     { x: 19200, y: GROUND_Y - 55, w: 115 },
 
