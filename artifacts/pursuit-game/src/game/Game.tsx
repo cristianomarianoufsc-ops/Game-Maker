@@ -257,6 +257,7 @@ export default function Game() {
   const editorSpawnJustPressed = useRef(false);
   const editorTestModeRef = useRef(false);
   const editorCamXRef = useRef(0);
+  const editorLastSpawnXRef = useRef(0);
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
@@ -570,6 +571,7 @@ export default function Game() {
           editorSpawnJustPressed.current = false;
           // Spawna Horácio na posição atual da câmera do editor
           const spawnX = editorCamXRef.current + CANVAS_W * CAMERA_LEAD_X;
+          editorLastSpawnXRef.current = spawnX;
           const newState = makeInitialState('story');
           // Usa gameMode wall-test para desabilitar o drone durante o teste
           newState.gameMode = 'wall-test';
@@ -668,8 +670,20 @@ export default function Game() {
         if (gs.screenShake > 0) gs.screenShake = Math.max(0, gs.screenShake - 0.4);
 
         if (gs.player.state === 'dead') {
-          editorTestModeRef.current = false;
-          gs.gamePhase = 'gameover';
+          if (editorTestModeRef.current) {
+            // Respawna no último ponto do editor sem sair do modo teste
+            const newState = makeInitialState('story');
+            newState.gameMode = 'wall-test';
+            newState.gamePhase = 'playing';
+            newState.player.x = editorLastSpawnXRef.current;
+            newState.player.y = GROUND_Y - PLAYER_H;
+            newState.player.vx = 0;
+            newState.player.vy = 0;
+            newState.camera.x = Math.max(0, editorLastSpawnXRef.current - CANVAS_W * CAMERA_LEAD_X);
+            gsRef.current = newState;
+          } else {
+            gs.gamePhase = 'gameover';
+          }
         }
 
         spaceJustPressed.current = false;
