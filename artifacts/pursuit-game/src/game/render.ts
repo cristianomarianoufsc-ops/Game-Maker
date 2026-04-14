@@ -621,7 +621,8 @@ export function drawGround(ctx: CanvasRenderingContext2D, camX: number): void {
 export function drawStreetBuildings(
   ctx: CanvasRenderingContext2D,
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
-  camX: number
+  camX: number,
+  brickTextureImg?: HTMLImageElement | null
 ): void {
   const elevPlatforms = platforms
     .filter(p => p.type === 'platform')
@@ -656,20 +657,30 @@ export function drawStreetBuildings(
     const bH = GROUND_Y;
 
     // ── Brick base ──
-    ctx.fillStyle = '#3e1a0a';
-    ctx.fillRect(sx, bY, sw, bH);
+    if (brickTextureImg && brickTextureImg.complete && brickTextureImg.naturalWidth > 0) {
+      const pattern = ctx.createPattern(brickTextureImg, 'repeat');
+      if (pattern) {
+        ctx.save();
+        ctx.fillStyle = pattern;
+        ctx.fillRect(sx, bY, sw, bH);
+        ctx.restore();
+      }
+    } else {
+      ctx.fillStyle = '#3e1a0a';
+      ctx.fillRect(sx, bY, sw, bH);
 
-    // ── Brick pattern (lighter bricks on dark mortar) ──
-    const BR = 7;   // brick height
-    const BC = 13;  // brick width
-    const MR = 1;   // mortar
-    ctx.fillStyle = '#52220e';
-    for (let row = 0, ry = bY; ry < bY + bH; row++, ry += BR + MR) {
-      const off = (row % 2) * Math.floor((BC + MR) / 2);
-      for (let bx = sx - off; bx < sx + sw; bx += BC + MR) {
-        const bx0 = Math.max(bx, sx);
-        const bw  = Math.min(bx + BC, sx + sw) - bx0;
-        if (bw > 0) ctx.fillRect(bx0, ry, bw, Math.min(BR, bY + bH - ry));
+      // ── Brick pattern (lighter bricks on dark mortar) ──
+      const BR = 7;
+      const BC = 13;
+      const MR = 1;
+      ctx.fillStyle = '#52220e';
+      for (let row = 0, ry = bY; ry < bY + bH; row++, ry += BR + MR) {
+        const off = (row % 2) * Math.floor((BC + MR) / 2);
+        for (let bx = sx - off; bx < sx + sw; bx += BC + MR) {
+          const bx0 = Math.max(bx, sx);
+          const bw  = Math.min(bx + BC, sx + sw) - bx0;
+          if (bw > 0) ctx.fillRect(bx0, ry, bw, Math.min(BR, bY + bH - ry));
+        }
       }
     }
 
