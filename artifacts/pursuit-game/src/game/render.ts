@@ -750,7 +750,8 @@ export function drawStreetBuildings(
 export function drawPlatforms(
   ctx: CanvasRenderingContext2D,
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
-  camX: number
+  camX: number,
+  balconyImg?: HTMLImageElement | null
 ): void {
   for (const plat of platforms) {
     if (plat.type === 'ground') continue; // drawn separately
@@ -829,34 +830,42 @@ export function drawPlatforms(
       ctx.fillStyle = COLORS.wallMoss;
       ctx.fillRect(sx, plat.y, plat.w, plat.h);
     } else {
-      // ── Balcony slab (building drawn separately by drawStreetBuildings) ──
-      const slabX = sx - 5;  // protrudes 5 px from building face
-      const slabW = plat.w + 5;
+      // ── Balcony sprite ──
+      // The image has: window (top ~60%) + concrete slab (bottom ~40%).
+      // plat.y is the WALK SURFACE (top of concrete). The sprite is drawn so
+      // the concrete top aligns exactly with plat.y, and the window extends
+      // above as a purely visual element (no collision).
+      const slabX = sx - 5;
+      const slabW = plat.w + 10;
 
-      // Concrete slab underside
-      ctx.fillStyle = '#4e4438';
-      ctx.fillRect(slabX, plat.y + 4, slabW, plat.h - 4);
-      // Slab top surface
-      ctx.fillStyle = '#6a5c50';
-      ctx.fillRect(slabX, plat.y, slabW, 5);
-      // Top highlight edge
-      ctx.fillStyle = '#7e6e60';
-      ctx.fillRect(slabX, plat.y, slabW, 2);
-      // Left protruding cap
-      ctx.fillStyle = '#4e4438';
-      ctx.fillRect(slabX - 2, plat.y + 2, 3, plat.h - 2);
-      // Overhang shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.fillRect(slabX, plat.y + plat.h, 8, 3);
+      const WIN_FRAC  = 0.60; // fraction of image height that is window
+      const SLAB_GAME = 55;   // concrete slab visual height in game px
+      const WIN_GAME  = Math.round(SLAB_GAME * (WIN_FRAC / (1 - WIN_FRAC))); // ~83 px
 
-      // ── Iron railing on top of slab ──
-      const railH   = 10;
-      const railTop = plat.y - railH;
-      ctx.fillStyle = '#121018';
-      ctx.fillRect(slabX, railTop, slabW, 2);       // top bar
-      ctx.fillRect(slabX, plat.y - 2, slabW, 2);   // bottom bar
-      for (let px2 = slabX + 3; px2 < slabX + slabW - 2; px2 += 7) {
-        ctx.fillRect(px2, railTop, 1, railH);        // vertical post
+      if (balconyImg && balconyImg.complete && balconyImg.naturalWidth > 0) {
+        ctx.drawImage(
+          balconyImg,
+          slabX,
+          plat.y - WIN_GAME,
+          slabW,
+          WIN_GAME + SLAB_GAME
+        );
+      } else {
+        // Fallback: procedural slab
+        ctx.fillStyle = '#4e4438';
+        ctx.fillRect(slabX, plat.y + 4, slabW, plat.h - 4);
+        ctx.fillStyle = '#6a5c50';
+        ctx.fillRect(slabX, plat.y, slabW, 5);
+        ctx.fillStyle = '#7e6e60';
+        ctx.fillRect(slabX, plat.y, slabW, 2);
+        // Railing
+        const railTop = plat.y - 10;
+        ctx.fillStyle = '#121018';
+        ctx.fillRect(slabX, railTop, slabW, 2);
+        ctx.fillRect(slabX, plat.y - 2, slabW, 2);
+        for (let px2 = slabX + 3; px2 < slabX + slabW - 2; px2 += 7) {
+          ctx.fillRect(px2, railTop, 1, 10);
+        }
       }
     }
   }
