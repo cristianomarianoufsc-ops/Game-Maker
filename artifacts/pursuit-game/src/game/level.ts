@@ -137,7 +137,6 @@ export function generateLevel(): Platform[] {
     { x: 13050, type: 'tire', w: 45,  h: 95 },
     { x: 13650, type: 'car',  w: 150, h: 65 },
     { x: 14000, type: 'tire', w: 45,  h: 95 },
-    { x: 15600, type: 'car',  w: 150, h: 65 },
     { x: 15850, type: 'tire', w: 45,  h: 95 },
 
     // Free Zone 3
