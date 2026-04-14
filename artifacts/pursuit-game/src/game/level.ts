@@ -133,7 +133,7 @@ export function generateLevel(): Platform[] {
 
   const junkyardItems: Array<{ x: number; type: 'car' | 'tire' | 'box'; w: number; h: number }> = [
     // Ferro velho (x:12100-14500) — só carros e pneus
-    { x: 12500, type: 'car',  w: 150, h: 65 },
+    { x: 12500, type: 'car',  w: 313, h: 107 },
     { x: 13050, type: 'tire', w: 45,  h: 95 },
     { x: 13650, type: 'car',  w: 150, h: 65 },
     { x: 14000, type: 'tire', w: 45,  h: 95 },
