@@ -839,14 +839,15 @@ export function drawPlatforms(
       const slabW = plat.w + 10;
 
       const WIN_FRAC  = 0.60; // fraction of image height that is window
-      const SLAB_GAME = 55;   // concrete slab visual height in game px
-      const WIN_GAME  = Math.round(SLAB_GAME * (WIN_FRAC / (1 - WIN_FRAC))); // ~83 px
+      const SLAB_GAME = 85;   // concrete slab visual height in game px
+      const WIN_GAME  = Math.round(SLAB_GAME * (WIN_FRAC / (1 - WIN_FRAC))); // ~128 px
+      const Y_SHIFT   = 12;   // shift whole sprite down to sit lower on screen
 
       if (balconyImg && balconyImg.complete && balconyImg.naturalWidth > 0) {
         ctx.drawImage(
           balconyImg,
           slabX,
-          plat.y - WIN_GAME,
+          plat.y - WIN_GAME + Y_SHIFT,
           slabW,
           WIN_GAME + SLAB_GAME
         );
