@@ -724,7 +724,7 @@ export default function Game() {
       }
       ctx.restore();
 
-      drawStreetBuildings(ctx, gs.platforms, gs.camera.x, brickTextureImgRef.current);
+      drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);

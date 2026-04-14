@@ -616,14 +616,7 @@ export function drawGround(ctx: CanvasRenderingContext2D, camX: number): void {
   ctx.restore();
 }
 
-// ── Building bake cache ─────────────────────────────────────────────
-// Each building is pre-rendered once to an OffscreenCanvas.
-// Every frame we just blit that cached bitmap at the correct screen X.
-type BakedBuilding = { canvas: OffscreenCanvas; x1: number; sw: number };
-const _bakedBuildings = new Map<string, BakedBuilding>();
-let _bakedTextureSrc: HTMLImageElement | null = null;
-
-// Cached platform groups (re-computed only when platform list changes)
+// ── Cached platform groups — recomputed once per level change ───────
 let _cachedPlatKey = '';
 type PlatType2 = { x: number; y: number; w: number; h: number; type: string };
 type Group2 = { x1: number; x2: number; sw: number; plats: PlatType2[] };
@@ -652,174 +645,117 @@ function buildGroups(platforms: PlatType2[]): Group2[] {
   return groups;
 }
 
-function bakeBuilding(g: Group2, brickImg: HTMLImageElement | null): OffscreenCanvas {
-  const sw = g.sw;
-  const bH = GROUND_Y;
-  const oc  = new OffscreenCanvas(sw, bH);
-  const bc  = oc.getContext('2d')!;
+// Brick row colours (alternating, pixel-art style)
+const BRICK_ROWS = ['#5c2e18', '#4e2412', '#5c2e18', '#522a14'] as const;
+const BRICK_H = 8;
+const MORTAR_H = 1;
+const BRICK_STEP = BRICK_H + MORTAR_H;
 
-  // ── Brick fill ──
-  if (brickImg && brickImg.complete && brickImg.naturalWidth > 0) {
-    const pat = bc.createPattern(brickImg, 'repeat');
-    if (pat) {
-      const scale = bH / brickImg.naturalHeight;
-      // Anchor pattern to world position g.x1 so bricks stay phase-consistent
-      const m = new DOMMatrix();
-      m.a = scale; m.d = scale; m.e = -g.x1; m.f = 0; m.b = 0; m.c = 0;
-      pat.setTransform(m);
-      bc.fillStyle = pat;
-      bc.fillRect(0, 0, sw, bH);
-    }
-  } else {
-    bc.fillStyle = '#3e1a0a';
-    bc.fillRect(0, 0, sw, bH);
-    const BR = 7, BC2 = 13, MR = 1;
-    bc.fillStyle = '#52220e';
-    for (let row = 0, ry = 0; ry < bH; row++, ry += BR + MR) {
-      const off = (row % 2) * Math.floor((BC2 + MR) / 2);
-      for (let bx = -off; bx < sw; bx += BC2 + MR) {
-        const bx0 = Math.max(bx, 0);
-        const bw  = Math.min(bx + BC2, sw) - bx0;
-        if (bw > 0) bc.fillRect(bx0, ry, bw, Math.min(BR, bH - ry));
-      }
-    }
-  }
-
-  // ── Windows ──
-  const WIN_W  = Math.round(g.plats.reduce((s, p) => s + p.w, 0) / g.plats.length) + 10;
-  const WIN_H  = 44;
-  const anchorY = Math.max(...g.plats.map(p => p.y));
-  const wy      = Math.max(6, anchorY - WIN_H - 6);
-  const n = g.plats.length;
-
-  // Deterministic pseudo-random seeded by world position
-  const seed = (g.x1 * 2654435761) >>> 0;
-  const rng = (salt: number) => (((seed ^ (salt * 2246822519)) >>> 0) / 0xffffffff);
-
-  for (let i = 0; i < n; i++) {
-    const fraction = n === 1 ? 0.5 : (i + 1) / (n + 1);
-    const wx = Math.round(sw * fraction - WIN_W / 2);
-    const pw = Math.floor((WIN_W - 3) / 2);
-    const ph = Math.floor((WIN_H - 3) / 2);
-
-    // Decide this window's state from its unique seed
-    const r0 = rng(i * 7 + 1);
-    const r1 = rng(i * 7 + 2);
-    const r2 = rng(i * 7 + 3);
-    const isLit      = r0 > 0.35;          // ~65% lit
-    const hasCurtain = r1 > 0.55;          // ~45% have a curtain
-    const curtainSide = r2 > 0.5;          // left or right
-
-    // Stone lintel
-    bc.fillStyle = '#6a5848';
-    bc.fillRect(wx - 4, wy - 5, WIN_W + 8, 6);
-
-    // Window frame
-    bc.fillStyle = '#3a2010';
-    bc.fillRect(wx, wy, WIN_W, WIN_H);
-
-    // Glass panes — warmer tint if lit, cold dark if unlit
-    const glassColor = isLit ? '#1e2830' : '#141c24';
-    bc.fillStyle = glassColor;
-    bc.fillRect(wx + 1,      wy + 1,      pw, ph);
-    bc.fillRect(wx + pw + 2, wy + 1,      pw, ph);
-    bc.fillRect(wx + 1,      wy + ph + 2, pw, ph);
-    bc.fillRect(wx + pw + 2, wy + ph + 2, pw, ph);
-
-    if (isLit) {
-      // Warm interior light — gradient from centre outward
-      const glowGrad = bc.createLinearGradient(wx + 1, wy + 1, wx + 1, wy + WIN_H - 1);
-      glowGrad.addColorStop(0, 'rgba(255,190,80,0.30)');
-      glowGrad.addColorStop(0.5, 'rgba(255,150,40,0.22)');
-      glowGrad.addColorStop(1, 'rgba(200,90,10,0.10)');
-      bc.fillStyle = glowGrad;
-      bc.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
-
-      // Outer glow halo on the building wall
-      const haloGrad = bc.createRadialGradient(
-        wx + WIN_W / 2, wy + WIN_H / 2, 2,
-        wx + WIN_W / 2, wy + WIN_H / 2, WIN_W
-      );
-      haloGrad.addColorStop(0, 'rgba(255,160,40,0.10)');
-      haloGrad.addColorStop(1, 'rgba(255,120,20,0)');
-      bc.fillStyle = haloGrad;
-      bc.fillRect(wx - WIN_W / 2, wy - WIN_H / 2, WIN_W * 2, WIN_H * 2);
-
-      if (hasCurtain) {
-        // Partial curtain drawn on one side
-        const curtW = Math.round(pw * 0.55);
-        const cx    = curtainSide ? wx + 1 : wx + WIN_W - 1 - curtW;
-        bc.fillStyle = 'rgba(160,90,40,0.65)';
-        bc.fillRect(cx, wy + 1, curtW, WIN_H - 2);
-        // Curtain fold highlight
-        bc.fillStyle = 'rgba(200,130,60,0.25)';
-        bc.fillRect(curtainSide ? cx : cx + curtW - 2, wy + 1, 2, WIN_H - 2);
-      }
-    } else {
-      // Unlit: faint moonlight reflection on glass
-      bc.fillStyle = 'rgba(140,160,200,0.06)';
-      bc.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
-    }
-
-    // Window sill / ledge
-    bc.fillStyle = '#6a5c50';
-    bc.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 4);
-    bc.fillStyle = '#7e6e60';
-    bc.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 2);
-  }
-
-  // ── Edge & top shading ──
-  bc.fillStyle = 'rgba(255,255,255,0.05)';
-  bc.fillRect(0, 0, 3, bH);
-  bc.fillStyle = 'rgba(0,0,0,0.45)';
-  bc.fillRect(sw - 5, 0, 5, bH);
-  const topGrad = bc.createLinearGradient(0, 0, 0, 18);
-  topGrad.addColorStop(0, 'rgba(0,0,0,0.55)');
-  topGrad.addColorStop(1, 'rgba(0,0,0,0)');
-  bc.fillStyle = topGrad;
-  bc.fillRect(0, 0, sw, 18);
-
-  return oc;
-}
-
-// ── Large street buildings — drawn before platforms ────────────────
+// ── Large street buildings — drawn directly every frame (no OffscreenCanvas)
 export function drawStreetBuildings(
   ctx: CanvasRenderingContext2D,
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
-  camX: number,
-  brickTextureImg?: HTMLImageElement | null
+  camX: number
 ): void {
-  // Re-compute groups only when the platform list changes
   const platKey = platforms.length + ':' + (platforms[0]?.x ?? 0);
   if (platKey !== _cachedPlatKey) {
     _cachedGroups  = buildGroups(platforms as PlatType2[]);
     _cachedPlatKey = platKey;
-    _bakedBuildings.clear();
   }
 
-  // Invalidate baked bitmaps if the texture image changed
-  const texReady = !!(brickTextureImg?.complete && brickTextureImg.naturalWidth > 0);
-  if (_bakedTextureSrc !== (texReady ? brickTextureImg : null)) {
-    _bakedBuildings.clear();
-    _bakedTextureSrc = texReady ? brickTextureImg! : null;
-  }
+  const bH = GROUND_Y;
 
   for (const g of _cachedGroups) {
     const sx = g.x1 - camX;
-    if (sx + g.sw < -80 || sx > CANVAS_W + 80) continue;
+    const sw = g.sw;
+    if (sx + sw < -80 || sx > CANVAS_W + 80) continue;
 
-    // Bake once, reuse forever
-    const key = `${g.x1}`;
-    if (!_bakedBuildings.has(key)) {
-      _bakedBuildings.set(key, {
-        canvas: bakeBuilding(g, brickTextureImg ?? null),
-        x1: g.x1,
-        sw: g.sw,
-      });
+    // ── 1. Mortar base (darkest colour fills the whole column) ──
+    ctx.fillStyle = '#1e0c06';
+    ctx.fillRect(sx, 0, sw, bH);
+
+    // ── 2. Brick rows — horizontal stripes, super fast ──
+    for (let row = 0, ry = 0; ry < bH; row++, ry += BRICK_STEP) {
+      ctx.fillStyle = BRICK_ROWS[row % BRICK_ROWS.length];
+      ctx.fillRect(sx, ry, sw, Math.min(BRICK_H, bH - ry));
     }
 
-    const b = _bakedBuildings.get(key)!;
-    ctx.drawImage(b.canvas, sx, 0);
+    // ── 3. Subtle vertical corner lines (pixel-art depth) ──
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillRect(sx, 0, 2, bH);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(sx + sw - 3, 0, 3, bH);
+
+    // ── 4. Top shadow fade ──
+    ctx.fillStyle = 'rgba(0,0,0,0.50)';
+    ctx.fillRect(sx, 0, sw, 6);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(sx, 6, sw, 8);
+
+    // ── 5. Windows ──
+    const WIN_W   = Math.round(g.plats.reduce((s, p) => s + p.w, 0) / g.plats.length) + 10;
+    const WIN_H   = 44;
+    const anchorY = Math.max(...g.plats.map(p => p.y));
+    const wy      = Math.max(6, anchorY - WIN_H - 6);
+    const n       = g.plats.length;
+
+    // Deterministic seed per building
+    const seed = (g.x1 * 2654435761) >>> 0;
+    const rng  = (salt: number) => (((seed ^ (salt * 2246822519)) >>> 0) / 0xffffffff);
+
+    for (let i = 0; i < n; i++) {
+      const fraction = n === 1 ? 0.5 : (i + 1) / (n + 1);
+      const wx = Math.round(sx + sw * fraction - WIN_W / 2);
+      const pw = Math.floor((WIN_W - 3) / 2);
+      const ph = Math.floor((WIN_H - 3) / 2);
+
+      const isLit      = rng(i * 7 + 1) > 0.35;
+      const hasCurtain = rng(i * 7 + 2) > 0.55;
+      const curtainLeft = rng(i * 7 + 3) > 0.5;
+
+      // Stone lintel
+      ctx.fillStyle = '#6a5040';
+      ctx.fillRect(wx - 4, wy - 5, WIN_W + 8, 5);
+
+      // Frame
+      ctx.fillStyle = '#2e1a0e';
+      ctx.fillRect(wx, wy, WIN_W, WIN_H);
+
+      // Glass panes
+      ctx.fillStyle = isLit ? '#1c2830' : '#121820';
+      ctx.fillRect(wx + 1,      wy + 1,      pw, ph);
+      ctx.fillRect(wx + pw + 2, wy + 1,      pw, ph);
+      ctx.fillRect(wx + 1,      wy + ph + 2, pw, ph);
+      ctx.fillRect(wx + pw + 2, wy + ph + 2, pw, ph);
+
+      if (isLit) {
+        // Warm glow overlay (simple flat rect, no gradient — cheap)
+        ctx.fillStyle = 'rgba(255,160,50,0.28)';
+        ctx.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
+        // Bottom brighter strip (lamp effect)
+        ctx.fillStyle = 'rgba(255,200,80,0.18)';
+        ctx.fillRect(wx + 1, wy + ph + 2, WIN_W - 2, ph);
+
+        if (hasCurtain) {
+          const curtW = Math.round(pw * 0.55);
+          const cx    = curtainLeft ? wx + 1 : wx + WIN_W - 1 - curtW;
+          ctx.fillStyle = 'rgba(140,70,30,0.70)';
+          ctx.fillRect(cx, wy + 1, curtW, WIN_H - 2);
+          ctx.fillStyle = 'rgba(180,100,50,0.30)';
+          ctx.fillRect(curtainLeft ? cx + curtW - 2 : cx, wy + 1, 2, WIN_H - 2);
+        }
+      } else {
+        // Moonlight glint on cold glass
+        ctx.fillStyle = 'rgba(120,150,200,0.07)';
+        ctx.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
+      }
+
+      // Window sill
+      ctx.fillStyle = '#584840';
+      ctx.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 4);
+      ctx.fillStyle = '#6e5e54';
+      ctx.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 2);
+    }
   }
 }
 
