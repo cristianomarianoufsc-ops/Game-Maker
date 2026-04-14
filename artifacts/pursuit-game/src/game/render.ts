@@ -616,6 +616,11 @@ export function drawGround(ctx: CanvasRenderingContext2D, camX: number): void {
   ctx.restore();
 }
 
+// ── Brick pattern cache — created once, reused every frame ──────────
+let _brickPatternSrc: HTMLImageElement | null = null;
+let _brickPattern: CanvasPattern | null = null;
+const _brickMatrix = new DOMMatrix(); // reused every frame, no allocation
+
 // ── Large street buildings — drawn before platforms ────────────────
 // Each building has 1–2 balconies. Each window corresponds to one balcony.
 export function drawStreetBuildings(
@@ -658,16 +663,21 @@ export function drawStreetBuildings(
 
     // ── Brick base ──
     if (brickTextureImg && brickTextureImg.complete && brickTextureImg.naturalWidth > 0) {
-      const pattern = ctx.createPattern(brickTextureImg, 'repeat');
-      if (pattern) {
-        // Scale image so its height matches the building height exactly,
-        // then anchor the pattern to world coordinates so it doesn't scroll
-        // with the camera (tx = -camX keeps the pattern world-fixed).
+      // Create pattern only once (or when image changes); reuse every frame
+      if (_brickPatternSrc !== brickTextureImg || !_brickPattern) {
+        _brickPattern = ctx.createPattern(brickTextureImg, 'repeat');
+        _brickPatternSrc = brickTextureImg;
+      }
+      if (_brickPattern) {
         const imgH = brickTextureImg.naturalHeight;
         const scale = bH / imgH;
-        pattern.setTransform(new DOMMatrix([scale, 0, 0, scale, -camX, 0]));
+        // Mutate cached matrix instead of allocating a new one each frame
+        _brickMatrix.a = scale; _brickMatrix.d = scale;
+        _brickMatrix.e = -camX; _brickMatrix.f = 0;
+        _brickMatrix.b = 0;     _brickMatrix.c = 0;
+        _brickPattern.setTransform(_brickMatrix);
         ctx.save();
-        ctx.fillStyle = pattern;
+        ctx.fillStyle = _brickPattern;
         ctx.fillRect(sx, bY, sw, bH);
         ctx.restore();
       }
