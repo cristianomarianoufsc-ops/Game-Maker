@@ -1859,6 +1859,18 @@ export function drawEditorUI(
   ctx.font = '10px monospace';
   ctx.fillText('← → MOVER  |  SCROLL MEIO: ARRASTAR  |  CLIQUE: DELETAR  |  ESC: MENU', 12, 32);
 
+  // Destaque visual para o botão de spawn
+  const spawnLabel = ' R: TESTAR AQUI ';
+  const labelW = ctx.measureText(spawnLabel).width + 4;
+  ctx.fillStyle = 'rgba(60,210,120,0.22)';
+  ctx.fillRect(CANVAS_W - 10 - labelW - 2, 38, labelW + 4, 14);
+  ctx.strokeStyle = 'rgba(60,210,120,0.7)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(CANVAS_W - 10 - labelW - 2, 38, labelW + 4, 14);
+  ctx.fillStyle = 'rgba(80,230,140,0.95)';
+  ctx.textAlign = 'right';
+  ctx.fillText(spawnLabel, CANVAS_W - 10, 49);
+
   const wx = Math.round(mouseWorld.x);
   const wy = Math.round(mouseWorld.y);
   ctx.textAlign = 'right';

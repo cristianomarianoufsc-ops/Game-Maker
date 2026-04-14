@@ -254,6 +254,7 @@ export default function Game() {
   const lastDownPressTime = useRef(0);
   const DIVE_COMBO_WINDOW = 420;
   const editorJustPressed = useRef(false);
+  const editorSpawnJustPressed = useRef(false);
   const editorCamXRef = useRef(0);
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
   const editorHoveredIdxRef = useRef(-1);
@@ -423,6 +424,9 @@ export default function Game() {
         case 'KeyT':
           if (down) testJustPressed.current = true;
           break;
+        case 'KeyR':
+          if (down) editorSpawnJustPressed.current = true;
+          break;
         case 'KeyE':
           if (down) editorJustPressed.current = true;
           break;
@@ -560,6 +564,21 @@ export default function Game() {
           escJustPressed.current = false;
           spaceJustPressed.current = false;
           gs.gamePhase = 'menu';
+        } else if (editorSpawnJustPressed.current) {
+          editorSpawnJustPressed.current = false;
+          // Spawna Horácio na posição atual da câmera do editor
+          const spawnX = editorCamXRef.current + CANVAS_W * CAMERA_LEAD_X;
+          const newState = makeInitialState('story');
+          newState.gamePhase = 'playing';
+          newState.player.x = spawnX;
+          newState.player.y = GROUND_Y - PLAYER_H;
+          newState.player.vx = 0;
+          newState.player.vy = 0;
+          newState.camera.x = editorCamXRef.current;
+          // Drone inicia atrás, fora da tela, para dar tempo de testar
+          newState.drone.x = spawnX - 900;
+          newState.drone.y = GROUND_Y - 200;
+          gsRef.current = newState;
         } else {
           const keys = keysRef.current;
           if (keys.left)  editorCamXRef.current = Math.max(0, editorCamXRef.current - EDITOR_PAN_SPEED);
@@ -569,6 +588,7 @@ export default function Game() {
         spaceJustPressed.current = false;
         testJustPressed.current = false;
         editorJustPressed.current = false;
+        editorSpawnJustPressed.current = false;
       } else if (gs.gamePhase === 'paused') {
         if (pauseDownJustPressed.current) {
           pauseSelection.current = 1;
