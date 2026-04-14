@@ -1860,7 +1860,7 @@ export function drawEditorUI(
   ctx.fillText('← → MOVER  |  SCROLL MEIO: ARRASTAR  |  CLIQUE: DELETAR  |  ESC: MENU', 12, 32);
 
   // Destaque visual para o botão de spawn
-  const spawnLabel = ' R: TESTAR AQUI ';
+  const spawnLabel = ' CTRL: TESTAR AQUI ';
   const labelW = ctx.measureText(spawnLabel).width + 4;
   ctx.fillStyle = 'rgba(60,210,120,0.22)';
   ctx.fillRect(CANVAS_W - 10 - labelW - 2, 38, labelW + 4, 14);

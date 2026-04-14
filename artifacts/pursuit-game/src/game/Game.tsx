@@ -425,7 +425,7 @@ export default function Game() {
         case 'KeyT':
           if (down) testJustPressed.current = true;
           break;
-        case 'KeyR':
+        case 'ControlLeft': case 'ControlRight':
           if (down) editorSpawnJustPressed.current = true;
           break;
         case 'KeyE':
@@ -439,7 +439,7 @@ export default function Game() {
           break;
       }
       // Prevent scroll on space/arrows
-      if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code)) {
+      if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','ControlLeft','ControlRight'].includes(e.code)) {
         e.preventDefault();
       }
     };
@@ -777,7 +777,7 @@ export default function Game() {
         ctx.fillStyle = 'rgba(80,230,140,0.9)';
         ctx.font = 'bold 10px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('◆ MODO TESTE DO EDITOR  |  R: VOLTAR AO EDITOR ◆', CANVAS_W / 2, CANVAS_H - 4);
+        ctx.fillText('◆ MODO TESTE DO EDITOR  |  CTRL: VOLTAR AO EDITOR ◆', CANVAS_W / 2, CANVAS_H - 4);
       }
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
