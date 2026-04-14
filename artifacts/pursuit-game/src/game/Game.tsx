@@ -260,7 +260,7 @@ export default function Game() {
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
-  const EDITOR_PAN_SPEED = 6;
+  const EDITOR_PAN_SPEED = 12;
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
   const buildingsRef = useRef(generateBuildings());
