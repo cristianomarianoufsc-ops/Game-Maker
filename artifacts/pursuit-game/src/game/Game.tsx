@@ -27,7 +27,14 @@ import {
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
   drawEditorUI,
 } from './render';
-import { getPlatformCollisionRect, getPlatformGroundClampOffset } from './collision';
+import {
+  clampPlatformCollisionOverrides,
+  ensurePlatformCollisionOverrides,
+  getPlatformCollisionRect,
+  getPlatformCollisionSummary,
+  getPlatformGroundClampOffset,
+  hasCustomPlatformCollision,
+} from './collision';
 
 function makePlayer(): Player {
   return {
@@ -110,6 +117,10 @@ function getPlatformKey(platform: Platform): string {
 }
 
 function isEditorPointInsidePlatform(wx: number, wy: number, platform: Platform): boolean {
+  return wx >= platform.x && wx <= platform.x + platform.w && wy >= platform.y && wy <= platform.y + platform.h;
+}
+
+function isEditorPointInsideCollision(wx: number, wy: number, platform: Platform): boolean {
   const hit = getPlatformCollisionRect(platform);
   return wx >= hit.x && wx <= hit.x + hit.w && wy >= hit.y && wy <= hit.y + hit.h;
 }
@@ -288,10 +299,17 @@ export default function Game() {
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
   const editorSelectedIdxRef = useRef(-1);
+  const editorCollisionModeRef = useRef(false);
   type EditorDrag = {
     mode: 'move' | 'resize-right' | 'resize-top' | 'resize-corner';
+    editingCollision: boolean;
     startWX: number; startWY: number;
     origX: number; origY: number; origW: number; origH: number;
+    origCollisionOffsetX: number;
+    origCollisionOffsetY: number;
+    origCollisionW: number;
+    origCollisionH: number;
+    hadCustomCollision: boolean;
     origText: string;
     hasMoved: boolean;
   };
@@ -523,9 +541,9 @@ export default function Game() {
     const EDITOR_GROUND_Y = 410;
     const HANDLE_R = 8; // px hit radius for handles
 
-    const platCoordText = (p: { x: number; y: number; w: number; h: number; type: string }) => {
+    const platCoordText = (p: Platform) => {
       const gy = Math.round(p.y - EDITOR_GROUND_Y);
-      return `x:${Math.round(p.x)}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${Math.round(p.w)}  h:${Math.round(p.h)}  [${p.type}]`;
+      return `x:${Math.round(p.x)}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${Math.round(p.w)}  h:${Math.round(p.h)}  [${p.type}]${getPlatformCollisionSummary(p)}`;
     };
 
     const copyPlatText = (text: string, msg: string) => {
@@ -547,6 +565,27 @@ export default function Game() {
     const hitHandle = (wx: number, wy: number, hx: number, hy: number) =>
       Math.abs(wx - hx) <= HANDLE_R && Math.abs(wy - hy) <= HANDLE_R;
 
+    const makeEditorDrag = (p: Platform, mode: EditorDrag['mode'], wx: number, wy: number, origText: string): EditorDrag => {
+      const hit = getPlatformCollisionRect(p);
+      return {
+        mode,
+        editingCollision: editorCollisionModeRef.current,
+        startWX: wx,
+        startWY: wy,
+        origX: p.x,
+        origY: p.y,
+        origW: p.w,
+        origH: p.h,
+        origCollisionOffsetX: hit.x - p.x,
+        origCollisionOffsetY: hit.y - p.y,
+        origCollisionW: hit.w,
+        origCollisionH: hit.h,
+        hadCustomCollision: hasCustomPlatformCollision(p),
+        origText,
+        hasMoved: false,
+      };
+    };
+
     const onCanvasMouseMove = (e: MouseEvent) => {
       const gs = gsRef.current;
       if (!gs || gs.gamePhase !== 'editor') return;
@@ -562,16 +601,48 @@ export default function Game() {
         if (Math.abs(dx) > 1 || Math.abs(dy) > 1) drag.hasMoved = true;
         const p = platformsRef.current[editorSelectedIdxRef.current];
         if (p) {
-          if (drag.mode === 'move') {
+          if (drag.editingCollision) {
+            ensurePlatformCollisionOverrides(p);
+            if (drag.mode === 'move') {
+              p.collisionOffsetX = Math.round(Math.max(0, Math.min(drag.origCollisionOffsetX + dx, p.w - drag.origCollisionW)));
+              p.collisionOffsetY = Math.round(Math.max(0, Math.min(drag.origCollisionOffsetY + dy, p.h - drag.origCollisionH)));
+            } else if (drag.mode === 'resize-right') {
+              p.collisionW = Math.round(Math.max(6, Math.min(drag.origCollisionW + dx, p.w - drag.origCollisionOffsetX)));
+            } else if (drag.mode === 'resize-top') {
+              const maxH = drag.origCollisionOffsetY + drag.origCollisionH;
+              const newH = Math.round(Math.max(6, Math.min(drag.origCollisionH - dy, maxH)));
+              p.collisionOffsetY = Math.round(drag.origCollisionOffsetY + drag.origCollisionH - newH);
+              p.collisionH = newH;
+            } else if (drag.mode === 'resize-corner') {
+              const scale = Math.max(0.05, (drag.origCollisionW + dx) / drag.origCollisionW);
+              p.collisionW = Math.round(Math.max(6, Math.min(drag.origCollisionW * scale, p.w - drag.origCollisionOffsetX)));
+              p.collisionH = Math.round(Math.max(6, Math.min(drag.origCollisionH * scale, p.h - drag.origCollisionOffsetY)));
+            }
+            clampPlatformCollisionOverrides(p);
+          } else if (drag.mode === 'move') {
             p.x = Math.round(drag.origX + dx);
             p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
             p.y = Math.max(60, p.y);
           } else if (drag.mode === 'resize-right') {
             p.w = Math.round(Math.max(10, drag.origW + dx));
+            if (drag.hadCustomCollision) {
+              p.collisionOffsetX = Math.round(drag.origCollisionOffsetX * (p.w / drag.origW));
+              p.collisionOffsetY = Math.round(drag.origCollisionOffsetY);
+              p.collisionW = Math.round(drag.origCollisionW * (p.w / drag.origW));
+              p.collisionH = Math.round(drag.origCollisionH);
+              clampPlatformCollisionOverrides(p);
+            }
           } else if (drag.mode === 'resize-top') {
             const newH = Math.round(Math.max(10, drag.origH - dy));
             p.y = Math.round(drag.origY + drag.origH - newH);
             p.h = newH;
+            if (drag.hadCustomCollision) {
+              p.collisionOffsetX = Math.round(drag.origCollisionOffsetX);
+              p.collisionOffsetY = Math.round(drag.origCollisionOffsetY * (p.h / drag.origH));
+              p.collisionW = Math.round(drag.origCollisionW);
+              p.collisionH = Math.round(drag.origCollisionH * (p.h / drag.origH));
+              clampPlatformCollisionOverrides(p);
+            }
           } else if (drag.mode === 'resize-corner') {
             const scale = Math.max(0.05, (drag.origW + dx) / drag.origW);
             const newW = Math.round(Math.max(10, drag.origW * scale));
@@ -579,6 +650,13 @@ export default function Game() {
             p.w = newW;
             p.h = newH;
             p.y = Math.round(drag.origY + drag.origH - newH);
+            if (drag.hadCustomCollision) {
+              p.collisionOffsetX = Math.round(drag.origCollisionOffsetX * (p.w / drag.origW));
+              p.collisionOffsetY = Math.round(drag.origCollisionOffsetY * (p.h / drag.origH));
+              p.collisionW = Math.round(drag.origCollisionW * (p.w / drag.origW));
+              p.collisionH = Math.round(drag.origCollisionH * (p.h / drag.origH));
+              clampPlatformCollisionOverrides(p);
+            }
           }
         }
         return;
@@ -617,19 +695,26 @@ export default function Game() {
       if (selIdx >= 0 && selIdx < platforms.length) {
         const p = platforms[selIdx];
         const hit = getPlatformCollisionRect(p);
-        const rightHX = hit.x + hit.w;
-        const rightHY = hit.y + hit.h / 2;
-        const topHX = hit.x + hit.w / 2;
-        const topHY = hit.y;
-        const cornerHX = hit.x + hit.w;
-        const cornerHY = hit.y;
+        const editRect = editorCollisionModeRef.current
+          ? hit
+          : { x: p.x, y: p.y, w: p.w, h: p.h };
+        const rightHX = editRect.x + editRect.w;
+        const rightHY = editRect.y + editRect.h / 2;
+        const topHX = editRect.x + editRect.w / 2;
+        const topHY = editRect.y;
+        const cornerHX = editRect.x + editRect.w;
+        const cornerHY = editRect.y;
         const origText = platCoordText(p);
 
         // Duplicate button hit (world-space, right side of object)
-        const dupBtnX = hit.x + hit.w + 14;
-        const dupBtnY = hit.y + hit.h / 2 - 11;
+        const dupBtnX = editRect.x + editRect.w + 14;
+        const dupBtnY = editRect.y + editRect.h / 2 - 24;
         const dupBtnW = 62;
         const dupBtnH = 22;
+        const collisionBtnX = dupBtnX;
+        const collisionBtnY = dupBtnY + 26;
+        const collisionBtnW = 82;
+        const collisionBtnH = 22;
         if (wx >= dupBtnX && wx <= dupBtnX + dupBtnW && wy >= dupBtnY && wy <= dupBtnY + dupBtnH) {
           const copy = { ...p, x: p.x + p.w + 20 };
           platforms.push(copy);
@@ -639,22 +724,36 @@ export default function Game() {
           copyPlatText(text, `✓ DUPLICADO: ${text}`);
           return;
         }
+        if (wx >= collisionBtnX && wx <= collisionBtnX + collisionBtnW && wy >= collisionBtnY && wy <= collisionBtnY + collisionBtnH) {
+          editorCollisionModeRef.current = !editorCollisionModeRef.current;
+          if (editorCollisionModeRef.current) {
+            ensurePlatformCollisionOverrides(p);
+            copyPlatText(platCoordText(p), '✓ MODO HITBOX — arraste a caixa ou use as alças');
+          } else {
+            copyPlatText(platCoordText(p), '✓ MODO OBJETO — alças voltaram ao sprite');
+          }
+          return;
+        }
 
         if (hitHandle(wx, wy, cornerHX, cornerHY)) {
-          editorDragRef.current = { mode: 'resize-corner', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText, hasMoved: false };
+          if (editorCollisionModeRef.current) ensurePlatformCollisionOverrides(p);
+          editorDragRef.current = makeEditorDrag(p, 'resize-corner', wx, wy, origText);
           return;
         }
         if (hitHandle(wx, wy, rightHX, rightHY)) {
-          editorDragRef.current = { mode: 'resize-right', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText, hasMoved: false };
+          if (editorCollisionModeRef.current) ensurePlatformCollisionOverrides(p);
+          editorDragRef.current = makeEditorDrag(p, 'resize-right', wx, wy, origText);
           return;
         }
         if (hitHandle(wx, wy, topHX, topHY)) {
-          editorDragRef.current = { mode: 'resize-top', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText, hasMoved: false };
+          if (editorCollisionModeRef.current) ensurePlatformCollisionOverrides(p);
+          editorDragRef.current = makeEditorDrag(p, 'resize-top', wx, wy, origText);
           return;
         }
         // Hit body of selected → start move drag
-        if (isEditorPointInsidePlatform(wx, wy, p)) {
-          editorDragRef.current = { mode: 'move', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText, hasMoved: false };
+        if (editorCollisionModeRef.current ? isEditorPointInsideCollision(wx, wy, p) : isEditorPointInsidePlatform(wx, wy, p)) {
+          if (editorCollisionModeRef.current) ensurePlatformCollisionOverrides(p);
+          editorDragRef.current = makeEditorDrag(p, 'move', wx, wy, origText);
           return;
         }
       }
@@ -666,13 +765,15 @@ export default function Game() {
       });
       if (idx >= 0) {
         editorSelectedIdxRef.current = idx;
+        editorCollisionModeRef.current = false;
         const p = platforms[idx];
         const text = platCoordText(p);
         copyPlatText(text, `✓ SELECIONADO: ${text}`);
         // Also start a potential move drag right away
-        editorDragRef.current = { mode: 'move', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText: text, hasMoved: false };
+        editorDragRef.current = makeEditorDrag(p, 'move', wx, wy, text);
       } else {
         editorSelectedIdxRef.current = -1;
+        editorCollisionModeRef.current = false;
       }
     };
 
@@ -979,7 +1080,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS, editorCollisionModeRef.current);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);

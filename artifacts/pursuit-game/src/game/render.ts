@@ -2350,6 +2350,7 @@ export function drawEditorUI(
   copiedMsg: { text: string; until: number } | null,
   checkpointIdx: number,
   checkpoints: { label: string; x: number }[],
+  collisionMode = false,
 ): void {
   const typeColor: Record<string, string> = {
     ground: 'rgba(80,200,80,0.25)',
@@ -2382,8 +2383,8 @@ export function drawEditorUI(
     const isHovered = i === hoveredIdx && !isSelected;
 
     if (isSelected) {
-      ctx.fillStyle = 'rgba(0,200,255,0.18)';
-      ctx.strokeStyle = 'rgba(0,220,255,1)';
+      ctx.fillStyle = collisionMode ? 'rgba(255,180,0,0.16)' : 'rgba(0,200,255,0.18)';
+      ctx.strokeStyle = collisionMode ? 'rgba(255,210,60,1)' : 'rgba(0,220,255,1)';
       ctx.lineWidth = 2;
     } else if (isHovered) {
       ctx.fillStyle = 'rgba(255,40,40,0.35)';
@@ -2396,12 +2397,35 @@ export function drawEditorUI(
     }
 
     const hit = getPlatformCollisionRect(p);
-    const drawX = p.type === 'ground' ? p.x : hit.x;
-    const drawY = p.type === 'ground' ? p.y : hit.y;
-    const drawW = p.type === 'ground' ? p.w : hit.w;
-    const drawH = p.type === 'ground' ? 90 : hit.h;
+    const visualH = p.type === 'ground' ? 90 : p.h;
+    const drawX = isSelected && collisionMode ? hit.x : p.x;
+    const drawY = isSelected && collisionMode ? hit.y : p.y;
+    const drawW = isSelected && collisionMode ? hit.w : p.w;
+    const drawH = isSelected && collisionMode ? hit.h : visualH;
     ctx.fillRect(drawX, drawY, drawW, drawH);
     ctx.strokeRect(drawX, drawY, drawW, drawH);
+
+    if (p.type !== 'ground') {
+      const hitDiffers = Math.round(hit.x) !== Math.round(p.x) || Math.round(hit.y) !== Math.round(p.y) || Math.round(hit.w) !== Math.round(p.w) || Math.round(hit.h) !== Math.round(p.h);
+      if (hitDiffers || isSelected) {
+        ctx.save();
+        ctx.setLineDash(collisionMode && isSelected ? [] : [5, 3]);
+        ctx.strokeStyle = collisionMode && isSelected ? 'rgba(255,230,80,1)' : 'rgba(255,210,60,0.75)';
+        ctx.lineWidth = collisionMode && isSelected ? 2 : 1.25;
+        ctx.strokeRect(hit.x, hit.y, hit.w, hit.h);
+        ctx.fillStyle = collisionMode && isSelected ? 'rgba(255,190,40,0.14)' : 'rgba(255,210,60,0.05)';
+        ctx.fillRect(hit.x, hit.y, hit.w, hit.h);
+        ctx.restore();
+      }
+      if (isSelected && collisionMode) {
+        ctx.save();
+        ctx.setLineDash([4, 3]);
+        ctx.strokeStyle = 'rgba(0,220,255,0.55)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+        ctx.restore();
+      }
+    }
 
     if (isSelected) {
       // Coord label above
@@ -2409,7 +2433,8 @@ export function drawEditorUI(
       ctx.fillStyle = 'rgba(0,220,255,0.95)';
       ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}  [${p.type}]`, drawX + drawW / 2, drawY - 8);
+      const modeLabel = collisionMode ? '  HITBOX' : '';
+      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}  [${p.type}]${modeLabel}`, drawX + drawW / 2, drawY - 8);
       ctx.textAlign = 'left';
 
       const HANDLE_SIZE = 8;
@@ -2451,7 +2476,7 @@ export function drawEditorUI(
 
       // Duplicate button (right side, vertically centred)
       const dupBtnX = drawX + drawW + 14;
-      const dupBtnY = drawY + drawH / 2 - 11;
+      const dupBtnY = drawY + drawH / 2 - 24;
       const dupBtnW = 62;
       const dupBtnH = 22;
       ctx.fillStyle = 'rgba(30,30,60,0.88)';
@@ -2465,6 +2490,23 @@ export function drawEditorUI(
       ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'center';
       ctx.fillText('⧉ DUP', dupBtnX + dupBtnW / 2, dupBtnY + 15);
+      ctx.textAlign = 'left';
+
+      const hitBtnX = dupBtnX;
+      const hitBtnY = dupBtnY + 26;
+      const hitBtnW = 82;
+      const hitBtnH = 22;
+      ctx.fillStyle = collisionMode ? 'rgba(80,60,20,0.94)' : 'rgba(40,30,20,0.88)';
+      ctx.strokeStyle = collisionMode ? 'rgba(255,220,80,0.95)' : 'rgba(255,190,80,0.75)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(hitBtnX, hitBtnY, hitBtnW, hitBtnH, 4);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = collisionMode ? 'rgba(255,235,120,1)' : 'rgba(255,200,120,0.95)';
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(collisionMode ? '✓ HITBOX' : '▣ HITBOX', hitBtnX + hitBtnW / 2, hitBtnY + 15);
       ctx.textAlign = 'left';
     } else if (isHovered) {
       ctx.fillStyle = 'rgba(255,80,60,0.9)';
