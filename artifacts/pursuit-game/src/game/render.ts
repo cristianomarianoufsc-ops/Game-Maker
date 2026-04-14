@@ -844,12 +844,18 @@ export function drawPlatforms(
       const Y_SHIFT   = 12;   // shift whole sprite down to sit lower on screen
 
       if (balconyImg && balconyImg.complete && balconyImg.naturalWidth > 0) {
+        // Preserve natural aspect ratio — compute width from height
+        const totalH = WIN_GAME + SLAB_GAME;
+        const aspect = balconyImg.naturalWidth / balconyImg.naturalHeight;
+        const displayW = Math.round(totalH * aspect);
+        // Center horizontally over the platform
+        const centerX = sx + plat.w / 2;
         ctx.drawImage(
           balconyImg,
-          slabX,
+          centerX - displayW / 2,
           plat.y - WIN_GAME + Y_SHIFT,
-          slabW,
-          WIN_GAME + SLAB_GAME
+          displayW,
+          totalH
         );
       } else {
         // Fallback: procedural slab
