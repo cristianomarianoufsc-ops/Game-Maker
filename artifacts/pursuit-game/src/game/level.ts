@@ -237,20 +237,7 @@ export function generateLevel(): Platform[] {
     // ── WALL ZONE 2 ──
     { x: 11800, y: GROUND_Y - 125, w: 115 },
     { x: 12020, y: GROUND_Y - 210, w: 90  },
-    { x: 12240, y: GROUND_Y - 125, w: 115 },
-
-    { x: 12500, y: GROUND_Y - 125, w: 115 },
-    { x: 12720, y: GROUND_Y - 230, w: 85  },
-    { x: 12940, y: GROUND_Y - 125, w: 115 },
-
-    { x: 13180, y: GROUND_Y - 125, w: 115 },
-    { x: 13400, y: GROUND_Y - 225, w: 90  },
-    { x: 13620, y: GROUND_Y - 125, w: 115 },
-
-    { x: 13900, y: GROUND_Y - 125, w: 115 },
-    { x: 14120, y: GROUND_Y - 245, w: 85  },
-    { x: 14340, y: GROUND_Y - 125, w: 115 },
-
+    // x:12100-14500 = ferro velho: sem sacadas, sem ACs, sem tijolos
     { x: 14620, y: GROUND_Y - 125, w: 115 },
     { x: 14840, y: GROUND_Y - 215, w: 90  },
     { x: 15060, y: GROUND_Y - 125, w: 115 },

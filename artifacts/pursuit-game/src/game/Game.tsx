@@ -720,7 +720,6 @@ export default function Game() {
       ctx.translate(0, -gs.camera.y);
       drawBuildings(ctx, buildingsRef.current, gs.camera.x);
       drawAlleyDetails(ctx, gs.camera.x, gs.time);
-      drawJunkyardBackdrop(ctx, gs.camera.x);
       drawStartingBackWall(ctx, gs.camera.x);
       drawGround(ctx, gs.camera.x);
 
@@ -778,6 +777,7 @@ export default function Game() {
       ctx.restore();
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
+      drawJunkyardBackdrop(ctx, gs.camera.x);
       drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
