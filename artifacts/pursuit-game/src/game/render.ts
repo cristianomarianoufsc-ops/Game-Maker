@@ -1923,7 +1923,8 @@ export function drawEditorUI(
       ctx.fillStyle = 'rgba(255,60,60,0.95)';
       ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'center';
-      const label = `[CLIQUE PARA DELETAR — ${p.type.toUpperCase()}]`;
+      const gy = Math.round(p.y - 410); // offset from GROUND_Y
+      const label = `x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type.toUpperCase()}]  — CLIQUE PARA DELETAR`;
       ctx.fillText(label, p.x + p.w / 2, p.y - 6);
       ctx.textAlign = 'left';
     }
