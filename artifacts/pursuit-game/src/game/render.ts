@@ -616,6 +616,107 @@ export function drawGround(ctx: CanvasRenderingContext2D, camX: number): void {
   ctx.restore();
 }
 
+// ── Large street buildings — drawn before platforms ────────────────
+// Groups nearby platforms into buildings that span full screen height.
+// The platforms themselves are just the balcony slabs on these facades.
+export function drawStreetBuildings(
+  ctx: CanvasRenderingContext2D,
+  platforms: ReturnType<typeof import('./level')['generateLevel']>,
+  camX: number
+): void {
+  const elevPlatforms = platforms
+    .filter(p => p.type === 'platform')
+    .sort((a, b) => a.x - b.x);
+
+  if (elevPlatforms.length === 0) return;
+
+  // Group by proximity — gap > 280 px starts a new building
+  type Group = { x1: number; x2: number };
+  const groups: Group[] = [];
+  let cur: Group | null = null;
+  for (const p of elevPlatforms) {
+    if (!cur) {
+      cur = { x1: p.x - 55, x2: p.x + p.w + 55 };
+    } else if (p.x - cur.x2 < 280) {
+      cur.x2 = Math.max(cur.x2, p.x + p.w + 55);
+    } else {
+      groups.push(cur);
+      cur = { x1: p.x - 55, x2: p.x + p.w + 55 };
+    }
+  }
+  if (cur) groups.push(cur);
+
+  for (const g of groups) {
+    const sx = g.x1 - camX;
+    const sw = g.x2 - g.x1;
+    if (sx + sw < -60 || sx > CANVAS_W + 60) continue;
+
+    const bY = 0;       // building top: top of screen
+    const bH = GROUND_Y; // building height: to ground
+
+    // ── Brick base ──
+    ctx.fillStyle = '#3e1a0a';
+    ctx.fillRect(sx, bY, sw, bH);
+
+    // ── Individual bricks (lighter on dark mortar background) ──
+    const BR = 7;  // brick row height (without mortar)
+    const BC = 13; // brick col width  (without mortar)
+    const MR = 1;  // mortar thickness
+    ctx.fillStyle = '#52220e';
+    for (let row = 0, ry = bY; ry < bY + bH; row++, ry += BR + MR) {
+      const off = (row % 2) * Math.floor((BC + MR) / 2);
+      for (let bx = sx - off; bx < sx + sw; bx += BC + MR) {
+        const bx0 = Math.max(bx, sx);
+        const bw  = Math.min(bx + BC, sx + sw) - bx0;
+        if (bw > 0) ctx.fillRect(bx0, ry, bw, Math.min(BR, bY + bH - ry));
+      }
+    }
+
+    // ── Windows — regular grid across the facade ──
+    const WIN_W = 24;
+    const WIN_H = 20;
+    const COL_STEP = 55; // center-to-center spacing
+    const ROW_STEP = 55;
+    const numCols = Math.max(1, Math.floor((sw - 20) / COL_STEP));
+    const colPad  = (sw - numCols * COL_STEP) / 2;
+
+    for (let c = 0; c < numCols; c++) {
+      const wx = Math.round(sx + colPad + c * COL_STEP);
+      for (let wy2 = bY + 18; wy2 + WIN_H < bY + bH - 8; wy2 += ROW_STEP) {
+        // Stone lintel above window
+        ctx.fillStyle = '#6a5848';
+        ctx.fillRect(wx - 3, wy2 - 4, WIN_W + 6, 5);
+        // Window frame (dark wood)
+        ctx.fillStyle = '#3a2010';
+        ctx.fillRect(wx, wy2, WIN_W, WIN_H);
+        // 4 glass panes
+        const pw = Math.floor((WIN_W - 3) / 2);
+        const ph = Math.floor((WIN_H - 3) / 2);
+        ctx.fillStyle = '#1c2c3c';
+        ctx.fillRect(wx + 1,      wy2 + 1,      pw, ph);
+        ctx.fillRect(wx + pw + 2, wy2 + 1,      pw, ph);
+        ctx.fillRect(wx + 1,      wy2 + ph + 2, pw, ph);
+        ctx.fillRect(wx + pw + 2, wy2 + ph + 2, pw, ph);
+        // Warm interior glow
+        ctx.fillStyle = 'rgba(255,140,40,0.10)';
+        ctx.fillRect(wx + 1, wy2 + 1, WIN_W - 2, WIN_H - 2);
+      }
+    }
+
+    // ── Edge shading ──
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillRect(sx, bY, 3, bH);                  // left highlight
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(sx + sw - 5, bY, 5, bH);         // right shadow
+    // Soft top shadow
+    const topGrad = ctx.createLinearGradient(0, bY, 0, bY + 20);
+    topGrad.addColorStop(0, 'rgba(0,0,0,0.5)');
+    topGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = topGrad;
+    ctx.fillRect(sx, bY, sw, 20);
+  }
+}
+
 export function drawPlatforms(
   ctx: CanvasRenderingContext2D,
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
@@ -698,92 +799,34 @@ export function drawPlatforms(
       ctx.fillStyle = COLORS.wallMoss;
       ctx.fillRect(sx, plat.y, plat.w, plat.h);
     } else {
-      // ── Brick-building balcony ──────────────────────────────────────
-      // Reference: pixel-art brick building with concrete balconies,
-      // 4-pane windows, iron railings. Adapted to the game's dark palette.
-      const slabX = sx - 5;           // slab protrudes 5 px to the left
+      // ── Balcony slab (building drawn separately by drawStreetBuildings) ──
+      const slabX = sx - 5;  // protrudes 5 px from building face
       const slabW = plat.w + 5;
-      const bldX  = sx;
-      const bldW  = plat.w;
-      const bldTop = plat.y + plat.h; // building top = slab bottom
-      const bldBot = GROUND_Y;
-      const bldH  = bldBot - bldTop;
 
-      if (bldH > 0 && bldW > 0) {
-        // ── Brick base fill ──
-        ctx.fillStyle = '#4a1e0e';
-        ctx.fillRect(bldX, bldTop, bldW, bldH);
-
-        // ── Brick pattern ──
-        const BRICK_ROW = 7;
-        const BRICK_COL = 14;
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'rgba(20,8,4,0.7)';
-        // Horizontal mortar
-        for (let row = bldTop + BRICK_ROW; row < bldBot; row += BRICK_ROW) {
-          ctx.beginPath(); ctx.moveTo(bldX, row); ctx.lineTo(bldX + bldW, row); ctx.stroke();
-        }
-        // Vertical mortar (alternating offset per row)
-        let rowIdx = 0;
-        for (let rowY = bldTop; rowY < bldBot; rowY += BRICK_ROW, rowIdx++) {
-          const offset = (rowIdx % 2) * (BRICK_COL / 2);
-          for (let bx = bldX + offset; bx < bldX + bldW; bx += BRICK_COL) {
-            ctx.beginPath(); ctx.moveTo(bx, rowY); ctx.lineTo(bx, Math.min(rowY + BRICK_ROW, bldBot)); ctx.stroke();
-          }
-        }
-
-        // ── Windows (one per floor, centered) ──
-        const FLOOR_H  = 28;
-        const winW = Math.min(22, bldW - 10);
-        const winH = 16;
-        const winX = Math.round(bldX + (bldW - winW) / 2);
-        for (let fy = bldTop + 5; fy + winH < bldBot - 4; fy += FLOOR_H) {
-          // Stone lintel above window
-          ctx.fillStyle = '#6a5848';
-          ctx.fillRect(winX - 2, fy - 3, winW + 4, 4);
-          // Window frame (dark wood)
-          ctx.fillStyle = '#3a2010';
-          ctx.fillRect(winX, fy, winW, winH);
-          // 4 glass panes
-          const pw = Math.floor((winW - 3) / 2);
-          const ph = Math.floor((winH - 3) / 2);
-          ctx.fillStyle = '#1a2834';
-          ctx.fillRect(winX + 1,      fy + 1,      pw, ph);
-          ctx.fillRect(winX + pw + 2, fy + 1,      pw, ph);
-          ctx.fillRect(winX + 1,      fy + ph + 2, pw, ph);
-          ctx.fillRect(winX + pw + 2, fy + ph + 2, pw, ph);
-          // Subtle warm glow on glass
-          ctx.fillStyle = 'rgba(255,140,40,0.08)';
-          ctx.fillRect(winX + 1, fy + 1, winW - 2, winH - 2);
-        }
-
-        // ── Edge shading ──
-        ctx.fillStyle = 'rgba(255,255,255,0.03)';
-        ctx.fillRect(bldX, bldTop, 2, bldH);           // left highlight
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.fillRect(bldX + bldW - 3, bldTop, 3, bldH); // right shadow
-      }
-
-      // ── Concrete balcony slab ──
-      ctx.fillStyle = '#4e4438';  // dark stone underside
+      // Concrete slab underside
+      ctx.fillStyle = '#4e4438';
       ctx.fillRect(slabX, plat.y + 4, slabW, plat.h - 4);
-      ctx.fillStyle = '#6a5c50';  // top surface
+      // Slab top surface
+      ctx.fillStyle = '#6a5c50';
       ctx.fillRect(slabX, plat.y, slabW, 5);
-      ctx.fillStyle = '#7e6e60';  // highlight edge
+      // Top highlight edge
+      ctx.fillStyle = '#7e6e60';
       ctx.fillRect(slabX, plat.y, slabW, 2);
-      ctx.fillStyle = '#4e4438';  // left cap
+      // Left protruding cap
+      ctx.fillStyle = '#4e4438';
       ctx.fillRect(slabX - 2, plat.y + 2, 3, plat.h - 2);
+      // Overhang shadow
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.fillRect(slabX, plat.y + plat.h, 8, 3);  // overhang shadow
+      ctx.fillRect(slabX, plat.y + plat.h, 8, 3);
 
-      // ── Iron railing (on top of slab, front edge) ──
+      // ── Iron railing on top of slab ──
       const railH   = 10;
       const railTop = plat.y - railH;
       ctx.fillStyle = '#121018';
-      ctx.fillRect(slabX, railTop, slabW, 2);         // top bar
-      ctx.fillRect(slabX, plat.y - 2, slabW, 2);      // bottom bar
+      ctx.fillRect(slabX, railTop, slabW, 2);       // top bar
+      ctx.fillRect(slabX, plat.y - 2, slabW, 2);   // bottom bar
       for (let px2 = slabX + 3; px2 < slabX + slabW - 2; px2 += 7) {
-        ctx.fillRect(px2, railTop, 1, railH);           // vertical bar
+        ctx.fillRect(px2, railTop, 1, railH);        // vertical post
       }
     }
   }

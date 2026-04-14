@@ -19,7 +19,8 @@ import {
   updatePlayer, updateDrone, updateBullets, updateParticles, spawnParticleHelper,
 } from './physics';
 import {
-  drawSky, drawBuildings, drawAlleyDetails, drawGround, drawPlatforms,
+  drawSky, drawBuildings, drawAlleyDetails, drawGround,
+  drawStreetBuildings, drawPlatforms,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
   drawEditorUI,
@@ -711,6 +712,7 @@ export default function Game() {
       }
       ctx.restore();
 
+      drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawPlatforms(ctx, gs.platforms, gs.camera.x);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
