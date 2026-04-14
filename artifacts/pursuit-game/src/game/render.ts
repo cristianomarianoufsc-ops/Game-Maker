@@ -855,30 +855,103 @@ export function drawPlatforms(
       const slabW = plat.w + 10;
 
       // Roll-under platforms (y > GROUND_Y - 70) are low overhead obstacles —
-      // use a thin procedural ledge. True balconies use the sprite.
+      // use a thin ledge. True balconies get the full 2D pixel-art treatment.
       const isRollUnder = plat.y > GROUND_Y - 70;
 
-      if (!isRollUnder && balconyImg && balconyImg.complete && balconyImg.naturalWidth > 0) {
-        // ── Balcony sprite ──
-        // Window (top ~60% of image) sits above plat.y as pure visual.
-        // Concrete slab (bottom ~40%) starts at plat.y.
-        const WIN_FRAC  = 0.60;
-        const SLAB_GAME = 85;
-        const WIN_GAME  = Math.round(SLAB_GAME * (WIN_FRAC / (1 - WIN_FRAC))); // ~128 px
-        const Y_SHIFT   = 12;
-        const totalH    = WIN_GAME + SLAB_GAME;
-        const aspect    = balconyImg.naturalWidth / balconyImg.naturalHeight;
-        const displayW  = Math.round(totalH * aspect);
-        const centerX   = sx + plat.w / 2;
-        ctx.drawImage(
-          balconyImg,
-          centerX - displayW / 2,
-          plat.y - WIN_GAME + Y_SHIFT,
-          displayW,
-          totalH
-        );
+      if (!isRollUnder) {
+        // ── 2D pixel-art balcony ─────────────────────────────────────────
+        // Layout: window panel above plat.y, concrete slab below plat.y.
+        const WIN_H  = 72;  // window height (above plat.y)
+        const SLAB_H = 48;  // concrete slab height (below plat.y)
+        const bx     = slabX - 4;   // balcony left edge
+        const bw     = slabW + 8;   // balcony total width
+
+        // ── Concrete slab (below plat.y) ──────────────────────────────
+        // Top highlight (walk surface)
+        ctx.fillStyle = '#a09280';
+        ctx.fillRect(bx, plat.y, bw, 3);
+        // Front face
+        ctx.fillStyle = '#7a7060';
+        ctx.fillRect(bx, plat.y + 3, bw, SLAB_H - 8);
+        // Recessed panel line (pixel-art depth)
+        ctx.fillStyle = '#5e5648';
+        ctx.fillRect(bx + 4, plat.y + 10, bw - 8, SLAB_H - 20);
+        // Panel highlight top
+        ctx.fillStyle = '#8c8270';
+        ctx.fillRect(bx + 4, plat.y + 10, bw - 8, 2);
+        // Bottom ledge
+        ctx.fillStyle = '#5a5040';
+        ctx.fillRect(bx, plat.y + SLAB_H - 5, bw, 5);
+        ctx.fillStyle = '#3e3830';
+        ctx.fillRect(bx, plat.y + SLAB_H, bw, 2);
+        // Drop shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(bx + 3, plat.y + SLAB_H + 2, bw - 3, 3);
+        // Left/right edge caps
+        ctx.fillStyle = '#5a5040';
+        ctx.fillRect(bx,          plat.y, 4, SLAB_H);
+        ctx.fillRect(bx + bw - 4, plat.y, 4, SLAB_H);
+
+        // ── Window frame above plat.y ─────────────────────────────────
+        const wy  = plat.y - WIN_H;
+        const fw  = bw;            // frame width = slab width
+
+        // Stone/plaster surround behind frame
+        ctx.fillStyle = '#6e6050';
+        ctx.fillRect(bx, wy - 4, fw, WIN_H + 4);
+        // Stone lintel above window
+        ctx.fillStyle = '#7a6e5c';
+        ctx.fillRect(bx - 2, wy - 8, fw + 4, 6);
+        ctx.fillStyle = '#8a7e6c';
+        ctx.fillRect(bx - 2, wy - 8, fw + 4, 2);
+
+        // Outer wooden frame (dark brown)
+        ctx.fillStyle = '#2e1608';
+        ctx.fillRect(bx, wy, fw, WIN_H);
+
+        // Two-panel window (left panel + right panel)
+        const panelW = Math.floor((fw - 5) / 2);
+        const leftX  = bx + 2;
+        const rightX = bx + fw - 2 - panelW;
+
+        const paneW = Math.floor((panelW - 3) / 2);
+        const paneH = Math.floor((WIN_H - 7) / 2);
+
+        for (let panel = 0; panel < 2; panel++) {
+          const px2 = panel === 0 ? leftX : rightX;
+
+          // Panel frame inset
+          ctx.fillStyle = '#3e2010';
+          ctx.fillRect(px2, wy + 2, panelW, WIN_H - 4);
+
+          // 4 glass panes per panel (2×2 grid)
+          ctx.fillStyle = '#182030';
+          ctx.fillRect(px2 + 1,        wy + 3,          paneW, paneH);
+          ctx.fillRect(px2 + paneW + 2, wy + 3,          paneW, paneH);
+          ctx.fillRect(px2 + 1,        wy + paneH + 4,  paneW, paneH);
+          ctx.fillRect(px2 + paneW + 2, wy + paneH + 4,  paneW, paneH);
+
+          // Warm glow inside (same deterministic logic as building windows)
+          ctx.fillStyle = 'rgba(255,160,50,0.22)';
+          ctx.fillRect(px2 + 1, wy + 3, panelW - 2, WIN_H - 6);
+
+          // Pane highlight (top-left corner glint)
+          ctx.fillStyle = 'rgba(255,255,255,0.12)';
+          ctx.fillRect(px2 + 2, wy + 4, 3, 3);
+        }
+
+        // Centre divider mullion
+        ctx.fillStyle = '#2e1608';
+        ctx.fillRect(bx + fw / 2 - 1, wy, 3, WIN_H);
+
+        // Window sill between frame and slab
+        ctx.fillStyle = '#7a7060';
+        ctx.fillRect(bx, plat.y - 4, bw, 4);
+        ctx.fillStyle = '#a09280';
+        ctx.fillRect(bx, plat.y - 4, bw, 1);
+
       } else {
-        // ── Procedural slab (roll-under / fallback) ──
+        // ── Thin procedural ledge (roll-under obstacle) ──────────────
         ctx.fillStyle = '#4e4438';
         ctx.fillRect(slabX, plat.y + 4, slabW, plat.h - 4);
         ctx.fillStyle = '#6a5c50';
@@ -889,7 +962,6 @@ export function drawPlatforms(
         ctx.fillRect(slabX - 2, plat.y + 2, 3, plat.h - 2);
         ctx.fillStyle = 'rgba(0,0,0,0.4)';
         ctx.fillRect(slabX, plat.y + plat.h, 8, 3);
-        // Railing
         const railTop = plat.y - 10;
         ctx.fillStyle = '#121018';
         ctx.fillRect(slabX, railTop, slabW, 2);
