@@ -698,80 +698,93 @@ export function drawPlatforms(
       ctx.fillStyle = COLORS.wallMoss;
       ctx.fillRect(sx, plat.y, plat.w, plat.h);
     } else {
-      // Balcony on a building — building facade runs from slab bottom to ground
-      const slabX = sx - 5; // slab protrudes 5px to the left
+      // ── Brick-building balcony ──────────────────────────────────────
+      // Reference: pixel-art brick building with concrete balconies,
+      // 4-pane windows, iron railings. Adapted to the game's dark palette.
+      const slabX = sx - 5;           // slab protrudes 5 px to the left
       const slabW = plat.w + 5;
-      const bldX   = sx + 2;          // building is slightly inset from slab
-      const bldW   = plat.w - 4;
-      const bldTop = plat.y + plat.h; // top of building = bottom of slab
-      const bldBot = GROUND_Y;        // building sits on the ground
-      const bldH   = bldBot - bldTop;
+      const bldX  = sx;
+      const bldW  = plat.w;
+      const bldTop = plat.y + plat.h; // building top = slab bottom
+      const bldBot = GROUND_Y;
+      const bldH  = bldBot - bldTop;
 
       if (bldH > 0 && bldW > 0) {
-        // ── Building body ──
-        ctx.fillStyle = '#1e1c1a';
+        // ── Brick base fill ──
+        ctx.fillStyle = '#4a1e0e';
         ctx.fillRect(bldX, bldTop, bldW, bldH);
 
-        // Left-edge highlight
-        ctx.fillStyle = '#2c2a28';
-        ctx.fillRect(bldX, bldTop, 3, bldH);
-        // Right-edge shadow
-        ctx.fillStyle = '#111010';
-        ctx.fillRect(bldX + bldW - 3, bldTop, 3, bldH);
-
-        // ── Floor separators (every ~24 px) ──
-        const floorH = 24;
-        ctx.strokeStyle = 'rgba(8,6,6,0.8)';
+        // ── Brick pattern ──
+        const BRICK_ROW = 7;
+        const BRICK_COL = 14;
         ctx.lineWidth = 1;
-        for (let fy = bldTop + floorH; fy < bldBot - 2; fy += floorH) {
-          ctx.beginPath();
-          ctx.moveTo(bldX + 3, fy);
-          ctx.lineTo(bldX + bldW - 3, fy);
-          ctx.stroke();
+        ctx.strokeStyle = 'rgba(20,8,4,0.7)';
+        // Horizontal mortar
+        for (let row = bldTop + BRICK_ROW; row < bldBot; row += BRICK_ROW) {
+          ctx.beginPath(); ctx.moveTo(bldX, row); ctx.lineTo(bldX + bldW, row); ctx.stroke();
+        }
+        // Vertical mortar (alternating offset per row)
+        let rowIdx = 0;
+        for (let rowY = bldTop; rowY < bldBot; rowY += BRICK_ROW, rowIdx++) {
+          const offset = (rowIdx % 2) * (BRICK_COL / 2);
+          for (let bx = bldX + offset; bx < bldX + bldW; bx += BRICK_COL) {
+            ctx.beginPath(); ctx.moveTo(bx, rowY); ctx.lineTo(bx, Math.min(rowY + BRICK_ROW, bldBot)); ctx.stroke();
+          }
         }
 
-        // ── Windows — one per floor, centered ──
-        const winW = Math.min(20, bldW - 14);
-        const winH = 13;
+        // ── Windows (one per floor, centered) ──
+        const FLOOR_H  = 28;
+        const winW = Math.min(22, bldW - 10);
+        const winH = 16;
         const winX = Math.round(bldX + (bldW - winW) / 2);
-        for (let fy = bldTop + 5; fy + winH < bldBot - 3; fy += floorH) {
-          // Window dark pane
-          ctx.fillStyle = '#090808';
+        for (let fy = bldTop + 5; fy + winH < bldBot - 4; fy += FLOOR_H) {
+          // Stone lintel above window
+          ctx.fillStyle = '#6a5848';
+          ctx.fillRect(winX - 2, fy - 3, winW + 4, 4);
+          // Window frame (dark wood)
+          ctx.fillStyle = '#3a2010';
           ctx.fillRect(winX, fy, winW, winH);
-          // Warm interior glow
-          ctx.fillStyle = 'rgba(255,150,50,0.13)';
+          // 4 glass panes
+          const pw = Math.floor((winW - 3) / 2);
+          const ph = Math.floor((winH - 3) / 2);
+          ctx.fillStyle = '#1a2834';
+          ctx.fillRect(winX + 1,      fy + 1,      pw, ph);
+          ctx.fillRect(winX + pw + 2, fy + 1,      pw, ph);
+          ctx.fillRect(winX + 1,      fy + ph + 2, pw, ph);
+          ctx.fillRect(winX + pw + 2, fy + ph + 2, pw, ph);
+          // Subtle warm glow on glass
+          ctx.fillStyle = 'rgba(255,140,40,0.08)';
           ctx.fillRect(winX + 1, fy + 1, winW - 2, winH - 2);
-          // Vertical frame divider
-          ctx.strokeStyle = 'rgba(12,8,8,0.9)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(winX + Math.floor(winW / 2), fy);
-          ctx.lineTo(winX + Math.floor(winW / 2), fy + winH);
-          ctx.stroke();
-          // Horizontal frame divider
-          ctx.beginPath();
-          ctx.moveTo(winX, fy + Math.floor(winH / 2));
-          ctx.lineTo(winX + winW, fy + Math.floor(winH / 2));
-          ctx.stroke();
         }
+
+        // ── Edge shading ──
+        ctx.fillStyle = 'rgba(255,255,255,0.03)';
+        ctx.fillRect(bldX, bldTop, 2, bldH);           // left highlight
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(bldX + bldW - 3, bldTop, 3, bldH); // right shadow
       }
 
-      // ── Balcony slab ──
-      // Underside
-      ctx.fillStyle = COLORS.platformSide;
+      // ── Concrete balcony slab ──
+      ctx.fillStyle = '#4e4438';  // dark stone underside
       ctx.fillRect(slabX, plat.y + 4, slabW, plat.h - 4);
-      // Top surface
-      ctx.fillStyle = COLORS.platformTop;
+      ctx.fillStyle = '#6a5c50';  // top surface
       ctx.fillRect(slabX, plat.y, slabW, 5);
-      // Top highlight edge
-      ctx.fillStyle = COLORS.platformEdge;
+      ctx.fillStyle = '#7e6e60';  // highlight edge
       ctx.fillRect(slabX, plat.y, slabW, 2);
-      // Left protruding cap
-      ctx.fillStyle = COLORS.platformSide;
+      ctx.fillStyle = '#4e4438';  // left cap
       ctx.fillRect(slabX - 2, plat.y + 2, 3, plat.h - 2);
-      // Shadow under front overhang
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
-      ctx.fillRect(slabX, plat.y + plat.h, 8, 3);
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(slabX, plat.y + plat.h, 8, 3);  // overhang shadow
+
+      // ── Iron railing (on top of slab, front edge) ──
+      const railH   = 10;
+      const railTop = plat.y - railH;
+      ctx.fillStyle = '#121018';
+      ctx.fillRect(slabX, railTop, slabW, 2);         // top bar
+      ctx.fillRect(slabX, plat.y - 2, slabW, 2);      // bottom bar
+      for (let px2 = slabX + 3; px2 < slabX + slabW - 2; px2 += 7) {
+        ctx.fillRect(px2, railTop, 1, railH);           // vertical bar
+      }
     }
   }
 }
