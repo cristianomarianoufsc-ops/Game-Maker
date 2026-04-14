@@ -21,7 +21,7 @@ import {
   updatePlayer, updateDrone, updateBullets, updateParticles, spawnParticleHelper,
 } from './physics';
 import {
-  drawSky, drawBuildings, drawAlleyDetails, drawGround,
+  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawGround,
   drawStreetBuildings, drawPlatforms,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
@@ -720,6 +720,7 @@ export default function Game() {
       ctx.translate(0, -gs.camera.y);
       drawBuildings(ctx, buildingsRef.current, gs.camera.x);
       drawAlleyDetails(ctx, gs.camera.x, gs.time);
+      drawJunkyardBackdrop(ctx, gs.camera.x);
       drawStartingBackWall(ctx, gs.camera.x);
       drawGround(ctx, gs.camera.x);
 

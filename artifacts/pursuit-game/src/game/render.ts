@@ -46,6 +46,64 @@ const RUN_SHEET = {
 
 // --- Background & Buildings ---
 
+const JUNKYARD_X1 = 12100;
+const JUNKYARD_X2 = 14540;
+
+export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number): void {
+  const sx = JUNKYARD_X1 - camX;
+  const ex = JUNKYARD_X2 - camX;
+  if (ex < -20 || sx > CANVAS_W + 20) return;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(sx, 0, ex - sx, GROUND_Y);
+  ctx.clip();
+
+  const w = ex - sx;
+
+  // Dark earthy backdrop — terra batida / céu fechado
+  ctx.fillStyle = '#120b04';
+  ctx.fillRect(sx, 0, w, GROUND_Y);
+
+  // Atmosfera suja — degradê vertical
+  ctx.fillStyle = 'rgba(38,18,6,0.50)';
+  ctx.fillRect(sx, GROUND_Y * 0.3, w, GROUND_Y * 0.7);
+  ctx.fillStyle = 'rgba(50,24,8,0.40)';
+  ctx.fillRect(sx, GROUND_Y * 0.62, w, GROUND_Y * 0.38);
+
+  // Silhuetas de pilhas de carcaças ao fundo (escuras, distantes)
+  const piles = [
+    { ox: 0.03, pw: 0.18, ph: 0.22 },
+    { ox: 0.24, pw: 0.20, ph: 0.28 },
+    { ox: 0.48, pw: 0.14, ph: 0.17 },
+    { ox: 0.65, pw: 0.19, ph: 0.25 },
+    { ox: 0.86, pw: 0.13, ph: 0.19 },
+  ];
+  for (const p of piles) {
+    const px = sx + p.ox * w;
+    const pw = p.pw * w;
+    const ph = p.ph * GROUND_Y;
+    const py = GROUND_Y - ph;
+    ctx.fillStyle = '#0b0705';
+    ctx.fillRect(px, py, pw, ph);
+    // Borda superior enferrujada (linha de carros amassados)
+    ctx.fillStyle = 'rgba(60,28,10,0.38)';
+    ctx.fillRect(px, py, pw, 5);
+    ctx.fillStyle = 'rgba(40,18,6,0.22)';
+    ctx.fillRect(px + pw * 0.1, py - 4, pw * 0.8, 4);
+  }
+
+  // Névoa de poeira no nível do solo
+  ctx.fillStyle = 'rgba(28,14,5,0.55)';
+  ctx.fillRect(sx, GROUND_Y - 80, w, 80);
+
+  // Haze enferrujado horizontal (fumaça baixa)
+  ctx.fillStyle = 'rgba(75,32,8,0.10)';
+  ctx.fillRect(sx, GROUND_Y * 0.50, w, GROUND_Y * 0.22);
+
+  ctx.restore();
+}
+
 export function drawSky(ctx: CanvasRenderingContext2D): void {
   // Bravuna sky: near-black with authoritarian red bleeding up from below
   const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);

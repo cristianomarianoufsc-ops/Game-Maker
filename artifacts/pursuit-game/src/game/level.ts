@@ -27,9 +27,9 @@ export function generateLevel(): Platform[] {
     { x: 5500, y: GROUND_Y - 215, h: 215 },
     { x: 6500, y: GROUND_Y - 235, h: 235 },
 
-    { x: 12100, y: GROUND_Y - 260, h: 260 },
+    { x: 12100, y: GROUND_Y - 400, h: 400 },
     { x: 13300, y: GROUND_Y - 280, h: 280 },
-    { x: 14500, y: GROUND_Y - 265, h: 265 },
+    { x: 14500, y: GROUND_Y - 400, h: 400 },
     { x: 15200, y: GROUND_Y - 250, h: 250 },
 
     { x: 20900, y: GROUND_Y - 300, h: 300 },
@@ -64,10 +64,8 @@ export function generateLevel(): Platform[] {
 
     // WALL ZONE 2 — buracos maiores + paredes
     { x: 11700, w: 550 },
-    { x: 12350, w: 500 },
-    { x: 12950, w: 500 },
-    { x: 13550, w: 450 },
-    { x: 14100, w: 550 },
+    // Ferro velho (x:12100-14500): chão contínuo, sem buracos
+    { x: 12250, w: 2290 },  // 12250 → 14540 (cobre toda a zona do ferro velho)
     { x: 14750, w: 500 },
     { x: 15350, w: 600 },
 
@@ -135,9 +133,9 @@ export function generateLevel(): Platform[] {
   // Todos removíveis pelo modo editor.
 
   const junkyardItems: Array<{ x: number; type: 'car' | 'tire' | 'box'; w: number; h: number }> = [
-    // Wall Zone 2
+    // Ferro velho (x:12100-14500) — só carros e pneus
     { x: 12500, type: 'car',  w: 150, h: 65 },
-    { x: 12800, type: 'box',  w: 65,  h: 55 },
+    { x: 13050, type: 'tire', w: 45,  h: 95 },
     { x: 13650, type: 'car',  w: 150, h: 65 },
     { x: 14000, type: 'tire', w: 45,  h: 95 },
     { x: 15600, type: 'car',  w: 150, h: 65 },
