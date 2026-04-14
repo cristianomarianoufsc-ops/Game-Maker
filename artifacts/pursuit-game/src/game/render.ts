@@ -1881,6 +1881,7 @@ export function drawEditorUI(
   camX: number,
   hoveredIdx: number,
   mouseWorld: { x: number; y: number },
+  copiedMsg: { text: string; until: number } | null,
 ): void {
   const typeColor: Record<string, string> = {
     ground: 'rgba(80,200,80,0.25)',
@@ -1924,7 +1925,7 @@ export function drawEditorUI(
       ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'center';
       const gy = Math.round(p.y - 410); // offset from GROUND_Y
-      const label = `x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type.toUpperCase()}]  — CLIQUE PARA DELETAR`;
+      const label = `x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type.toUpperCase()}]  — CLIQUE PARA COPIAR`;
       ctx.fillText(label, p.x + p.w / 2, p.y - 6);
       ctx.textAlign = 'left';
     }
@@ -1959,13 +1960,20 @@ export function drawEditorUI(
 
   ctx.textAlign = 'left';
 
-  ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  ctx.fillRect(0, CANVAS_H - 30, CANVAS_W, 30);
-  ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(255,80,80,0.8)';
-  ctx.font = '10px monospace';
-  ctx.fillText('ATENÇÃO: deleções ficam salvas neste navegador e continuam após recarregar o jogo.', CANVAS_W / 2, CANVAS_H - 12);
-  ctx.textAlign = 'left';
+  // Feedback de cópia
+  if (copiedMsg && Date.now() < copiedMsg.until) {
+    const alpha = Math.min(1, (copiedMsg.until - Date.now()) / 400);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(20,180,80,0.92)';
+    ctx.fillRect(0, CANVAS_H / 2 - 22, CANVAS_W, 44);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(copiedMsg.text, CANVAS_W / 2, CANVAS_H / 2 + 5);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
 }
 
 export function drawGameOverScreen(ctx: CanvasRenderingContext2D, score: number, time: number): void {

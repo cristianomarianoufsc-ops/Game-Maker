@@ -257,6 +257,7 @@ export default function Game() {
   const editorCamXRef = useRef(0);
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
   const editorHoveredIdxRef = useRef(-1);
+  const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
   const EDITOR_PAN_SPEED = 6;
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
@@ -479,12 +480,12 @@ export default function Game() {
         return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h;
       });
       if (idx >= 0) {
-        const removedPlatform = platformsRef.current[idx];
-        deletedPlatformKeysRef.current.add(getPlatformKey(removedPlatform));
-        saveDeletedPlatformKeys(deletedPlatformKeysRef.current);
-        platformsRef.current = platformsRef.current.filter((_, i) => i !== idx);
-        if (gsRef.current) gsRef.current.platforms = platformsRef.current;
-        editorHoveredIdxRef.current = -1;
+        const p = platformsRef.current[idx];
+        const GROUND_Y = 410;
+        const gy = Math.round(p.y - GROUND_Y);
+        const text = `x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type}]`;
+        navigator.clipboard.writeText(text).catch(() => {});
+        editorCopiedMsgRef.current = { text: `✓ COPIADO: ${text}`, until: Date.now() + 2500 };
       }
     };
 
@@ -741,7 +742,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorMouseWorldRef.current);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);
