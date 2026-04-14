@@ -13,6 +13,7 @@ export interface Rect {
 export interface Platform extends Rect {
   type: 'ground' | 'platform' | 'wall' | 'obstacle';
   climbable?: boolean;
+  collisionH?: number;
 }
 
 export type PlayerState =

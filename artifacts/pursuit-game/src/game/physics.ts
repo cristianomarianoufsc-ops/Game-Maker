@@ -18,12 +18,13 @@ function rectOverlap(ax: number, ay: number, aw: number, ah: number,
 
 function resolvePlayerPlatform(p: Player, plat: Platform): boolean {
   const ph = (p.isRolling || p.forcedCrouch) ? PLAYER_ROLL_H : PLAYER_H;
-  if (!rectOverlap(p.x, p.y, p.w, ph, plat.x, plat.y, plat.w, plat.h)) return false;
+  const platH = plat.collisionH ?? plat.h;
+  if (!rectOverlap(p.x, p.y, p.w, ph, plat.x, plat.y, plat.w, platH)) return false;
 
   const overlapLeft = p.x + p.w - plat.x;
   const overlapRight = plat.x + plat.w - p.x;
   const overlapTop = p.y + ph - plat.y;
-  const overlapBottom = plat.y + plat.h - p.y;
+  const overlapBottom = plat.y + platH - p.y;
 
   const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
 
@@ -121,7 +122,7 @@ export function updatePlayer(
         const expandH = PLAYER_H - PLAYER_ROLL_H;
         const blockedAbove = platforms.some(plat =>
           plat.type !== 'ground' &&
-          rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, plat.x, plat.y, plat.w, plat.h)
+          rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, plat.x, plat.y, plat.w, plat.collisionH ?? plat.h)
         );
         if (blockedAbove) {
           p.forcedCrouch = true;
@@ -140,7 +141,7 @@ export function updatePlayer(
       const expandH = PLAYER_H - PLAYER_ROLL_H;
       const stillBlocked = platforms.some(plat =>
         plat.type !== 'ground' &&
-        rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, plat.x, plat.y, plat.w, plat.h)
+        rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, plat.x, plat.y, plat.w, plat.collisionH ?? plat.h)
       );
       if (!stillBlocked) {
         p.forcedCrouch = false;

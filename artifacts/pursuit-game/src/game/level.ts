@@ -279,9 +279,11 @@ export function generateLevel(): Platform[] {
   ];
 
   plats.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, y, w }) => {
-    // Sacadas (GY-125): slab h=85 → fundo em GY-40 → bloqueia em pé (PLAYER_H=50) e libera rolando (PLAYER_ROLL_H=26).
-    const h = y === GROUND_Y - 125 ? 85 : 18;
-    platforms.push({ x, y, w, h, type: 'platform' });
+    // Sacadas (GY-125): h visual=62, collisionH=85 → fundo de colisão em GY-40.
+    // Bloqueia em pé (PLAYER_H=50) mas libera rolando (PLAYER_ROLL_H=26).
+    const h = y === GROUND_Y - 125 ? 62 : 18;
+    const collisionH = y === GROUND_Y - 125 ? 85 : undefined;
+    platforms.push({ x, y, w, h, type: 'platform', ...(collisionH !== undefined ? { collisionH } : {}) });
   });
 
   // ── CLIMBABLE WALLS — SOMENTE dentro das WALL ZONES ──────────
