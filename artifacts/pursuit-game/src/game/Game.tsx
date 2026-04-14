@@ -264,7 +264,7 @@ export default function Game() {
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
   const editorSelectedIdxRef = useRef(-1);
   type EditorDrag = {
-    mode: 'move' | 'resize-right' | 'resize-top';
+    mode: 'move' | 'resize-right' | 'resize-top' | 'resize-corner';
     startWX: number; startWY: number;
     origX: number; origY: number; origW: number; origH: number;
     origText: string;
@@ -535,6 +535,13 @@ export default function Game() {
             const newH = Math.round(Math.max(10, drag.origH - dy));
             p.y = Math.round(drag.origY + drag.origH - newH);
             p.h = newH;
+          } else if (drag.mode === 'resize-corner') {
+            const scale = Math.max(0.05, (drag.origW + dx) / drag.origW);
+            const newW = Math.round(Math.max(10, drag.origW * scale));
+            const newH = Math.round(Math.max(10, drag.origH * scale));
+            p.w = newW;
+            p.h = newH;
+            p.y = Math.round(drag.origY + drag.origH - newH);
           }
         }
         return;
@@ -576,7 +583,29 @@ export default function Game() {
         const rightHY = p.y + p.h / 2;
         const topHX = p.x + p.w / 2;
         const topHY = p.y;
+        const cornerHX = p.x + p.w;
+        const cornerHY = p.y;
         const origText = platCoordText(p);
+
+        // Duplicate button hit (world-space, right side of object)
+        const dupBtnX = p.x + p.w + 14;
+        const dupBtnY = p.y + p.h / 2 - 11;
+        const dupBtnW = 62;
+        const dupBtnH = 22;
+        if (wx >= dupBtnX && wx <= dupBtnX + dupBtnW && wy >= dupBtnY && wy <= dupBtnY + dupBtnH) {
+          const copy = { ...p, x: p.x + p.w + 20 };
+          platforms.push(copy);
+          const newIdx = platforms.length - 1;
+          editorSelectedIdxRef.current = newIdx;
+          const text = platCoordText(copy);
+          copyPlatText(text, `✓ DUPLICADO: ${text}`);
+          return;
+        }
+
+        if (hitHandle(wx, wy, cornerHX, cornerHY)) {
+          editorDragRef.current = { mode: 'resize-corner', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText, hasMoved: false };
+          return;
+        }
         if (hitHandle(wx, wy, rightHX, rightHY)) {
           editorDragRef.current = { mode: 'resize-right', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText, hasMoved: false };
           return;

@@ -2256,6 +2256,42 @@ export function drawEditorUI(
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 1;
       ctx.strokeRect(thx - HANDLE_SIZE / 2, thy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+
+      // Top-right corner handle (proportional resize)
+      const chx = p.x + p.w;
+      const chy = p.y;
+      ctx.fillStyle = 'rgba(80,255,120,1)';
+      ctx.beginPath();
+      ctx.arc(chx, chy, HANDLE_SIZE / 2 + 1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // diagonal arrow hint
+      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(chx - 4, chy + 4);
+      ctx.lineTo(chx + 4, chy - 4);
+      ctx.stroke();
+
+      // Duplicate button (right side, vertically centred)
+      const dupBtnX = p.x + p.w + 14;
+      const dupBtnY = p.y + drawH / 2 - 11;
+      const dupBtnW = 62;
+      const dupBtnH = 22;
+      ctx.fillStyle = 'rgba(30,30,60,0.88)';
+      ctx.strokeStyle = 'rgba(120,180,255,0.9)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(dupBtnX, dupBtnY, dupBtnW, dupBtnH, 4);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(160,210,255,1)';
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('⧉ DUP', dupBtnX + dupBtnW / 2, dupBtnY + 15);
+      ctx.textAlign = 'left';
     } else if (isHovered) {
       ctx.fillStyle = 'rgba(255,80,60,0.9)';
       ctx.font = 'bold 11px monospace';
