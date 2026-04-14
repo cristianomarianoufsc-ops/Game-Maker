@@ -105,7 +105,6 @@ export function generateLevel(): Platform[] {
     { x: 6700 },
 
     // Free zone 2 — só lixeiras, sem paredes
-    { x: 7500 },
     { x: 9000 },
     { x: 9800 },
     { x: 10500 },
