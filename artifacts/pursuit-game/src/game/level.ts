@@ -277,12 +277,18 @@ export function generateLevel(): Platform[] {
     { x: 24290, y: GROUND_Y - 125, w: 115 },
   ];
 
+  // Altura uniforme para todos os ares-condicionados (AC_Y).
+  // Altere somente este valor para subir/descer todos juntos.
+  const AC_Y = GROUND_Y - 240;
+
   plats.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, y, w }) => {
     // Sacadas (GY-125): h visual=62, collisionH=85 → fundo de colisão em GY-40.
     // Bloqueia em pé (PLAYER_H=50) mas libera rolando (PLAYER_ROLL_H=26).
-    const h = y === GROUND_Y - 125 ? 62 : 18;
-    const collisionH = y === GROUND_Y - 125 ? 85 : undefined;
-    platforms.push({ x, y, w, h, type: 'platform', ...(collisionH !== undefined ? { collisionH } : {}) });
+    const isSacada = y === GROUND_Y - 125;
+    const finalY      = isSacada ? y : AC_Y;
+    const h           = isSacada ? 62 : 18;
+    const collisionH  = isSacada ? 85 : undefined;
+    platforms.push({ x, y: finalY, w, h, type: 'platform', ...(collisionH !== undefined ? { collisionH } : {}) });
   });
 
   // ── CLIMBABLE WALLS — SOMENTE dentro das WALL ZONES ──────────
