@@ -701,70 +701,7 @@ export function drawStreetBuildings(
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fillRect(sx, 6, sw, 8);
 
-    // ── 5. Windows ──
-    const WIN_W   = Math.round(g.plats.reduce((s, p) => s + p.w, 0) / g.plats.length) + 10;
-    const WIN_H   = 44;
-    const anchorY = Math.max(...g.plats.map(p => p.y));
-    const wy      = Math.max(6, anchorY - WIN_H - 6);
-    const n       = g.plats.length;
-
-    // Deterministic seed per building
-    const seed = (g.x1 * 2654435761) >>> 0;
-    const rng  = (salt: number) => (((seed ^ (salt * 2246822519)) >>> 0) / 0xffffffff);
-
-    for (let i = 0; i < n; i++) {
-      const fraction = n === 1 ? 0.5 : (i + 1) / (n + 1);
-      const wx = Math.round(sx + sw * fraction - WIN_W / 2);
-      const pw = Math.floor((WIN_W - 3) / 2);
-      const ph = Math.floor((WIN_H - 3) / 2);
-
-      const isLit      = rng(i * 7 + 1) > 0.35;
-      const hasCurtain = rng(i * 7 + 2) > 0.55;
-      const curtainLeft = rng(i * 7 + 3) > 0.5;
-
-      // Stone lintel
-      ctx.fillStyle = '#6a5040';
-      ctx.fillRect(wx - 4, wy - 5, WIN_W + 8, 5);
-
-      // Frame
-      ctx.fillStyle = '#2e1a0e';
-      ctx.fillRect(wx, wy, WIN_W, WIN_H);
-
-      // Glass panes
-      ctx.fillStyle = isLit ? '#1c2830' : '#121820';
-      ctx.fillRect(wx + 1,      wy + 1,      pw, ph);
-      ctx.fillRect(wx + pw + 2, wy + 1,      pw, ph);
-      ctx.fillRect(wx + 1,      wy + ph + 2, pw, ph);
-      ctx.fillRect(wx + pw + 2, wy + ph + 2, pw, ph);
-
-      if (isLit) {
-        // Warm glow overlay (simple flat rect, no gradient — cheap)
-        ctx.fillStyle = 'rgba(255,160,50,0.28)';
-        ctx.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
-        // Bottom brighter strip (lamp effect)
-        ctx.fillStyle = 'rgba(255,200,80,0.18)';
-        ctx.fillRect(wx + 1, wy + ph + 2, WIN_W - 2, ph);
-
-        if (hasCurtain) {
-          const curtW = Math.round(pw * 0.55);
-          const cx    = curtainLeft ? wx + 1 : wx + WIN_W - 1 - curtW;
-          ctx.fillStyle = 'rgba(140,70,30,0.70)';
-          ctx.fillRect(cx, wy + 1, curtW, WIN_H - 2);
-          ctx.fillStyle = 'rgba(180,100,50,0.30)';
-          ctx.fillRect(curtainLeft ? cx + curtW - 2 : cx, wy + 1, 2, WIN_H - 2);
-        }
-      } else {
-        // Moonlight glint on cold glass
-        ctx.fillStyle = 'rgba(120,150,200,0.07)';
-        ctx.fillRect(wx + 1, wy + 1, WIN_W - 2, WIN_H - 2);
-      }
-
-      // Window sill
-      ctx.fillStyle = '#584840';
-      ctx.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 4);
-      ctx.fillStyle = '#6e5e54';
-      ctx.fillRect(wx - 4, wy + WIN_H, WIN_W + 8, 2);
-    }
+    // Janelas do fundo removidas — as sacadas em drawPlatforms já cuidam disso
   }
 }
 
@@ -859,14 +796,35 @@ export function drawPlatforms(
       const isRollUnder = plat.y > GROUND_Y - 70;
 
       if (!isRollUnder) {
-        // ── Janela acima da plataforma (sem laje abaixo) ─────────────
+        // ── 2D pixel-art balcony: janela acima + laje abaixo ────────
         const WIN_H  = 72;
+        const SLAB_H = plat.h;
         const bx     = slabX - 4;
         const bw     = slabW + 8;
-        const wy     = plat.y - WIN_H;
-        const fw     = bw;
 
-        // Stone/plaster surround + lintel
+        // ── Laje (abaixo de plat.y) ───────────────────────────────
+        ctx.fillStyle = '#a09280';
+        ctx.fillRect(bx, plat.y, bw, 3);
+        ctx.fillStyle = '#7a7060';
+        ctx.fillRect(bx, plat.y + 3, bw, SLAB_H - 8);
+        ctx.fillStyle = '#5e5648';
+        ctx.fillRect(bx + 4, plat.y + 10, bw - 8, SLAB_H - 20);
+        ctx.fillStyle = '#8c8270';
+        ctx.fillRect(bx + 4, plat.y + 10, bw - 8, 2);
+        ctx.fillStyle = '#5a5040';
+        ctx.fillRect(bx, plat.y + SLAB_H - 5, bw, 5);
+        ctx.fillStyle = '#3e3830';
+        ctx.fillRect(bx, plat.y + SLAB_H, bw, 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(bx + 3, plat.y + SLAB_H + 2, bw - 3, 3);
+        ctx.fillStyle = '#5a5040';
+        ctx.fillRect(bx,          plat.y, 4, SLAB_H);
+        ctx.fillRect(bx + bw - 4, plat.y, 4, SLAB_H);
+
+        // ── Janela (acima de plat.y) ──────────────────────────────
+        const wy = plat.y - WIN_H;
+        const fw = bw;
+
         ctx.fillStyle = '#6e6050';
         ctx.fillRect(bx, wy - 4, fw, WIN_H + 4);
         ctx.fillStyle = '#7a6e5c';
@@ -874,11 +832,9 @@ export function drawPlatforms(
         ctx.fillStyle = '#8a7e6c';
         ctx.fillRect(bx - 2, wy - 8, fw + 4, 2);
 
-        // Outer wooden frame
         ctx.fillStyle = '#2e1608';
         ctx.fillRect(bx, wy, fw, WIN_H);
 
-        // Two-panel window
         const panelW = Math.floor((fw - 5) / 2);
         const leftX  = bx + 2;
         const rightX = bx + fw - 2 - panelW;
@@ -890,9 +846,9 @@ export function drawPlatforms(
           ctx.fillStyle = '#3e2010';
           ctx.fillRect(px2, wy + 2, panelW, WIN_H - 4);
           ctx.fillStyle = '#182030';
-          ctx.fillRect(px2 + 1,         wy + 3,         paneW, paneH);
-          ctx.fillRect(px2 + paneW + 2,  wy + 3,         paneW, paneH);
-          ctx.fillRect(px2 + 1,         wy + paneH + 4,  paneW, paneH);
+          ctx.fillRect(px2 + 1,         wy + 3,          paneW, paneH);
+          ctx.fillRect(px2 + paneW + 2,  wy + 3,          paneW, paneH);
+          ctx.fillRect(px2 + 1,         wy + paneH + 4,   paneW, paneH);
           ctx.fillRect(px2 + paneW + 2,  wy + paneH + 4,  paneW, paneH);
           ctx.fillStyle = 'rgba(255,160,50,0.22)';
           ctx.fillRect(px2 + 1, wy + 3, panelW - 2, WIN_H - 6);
@@ -900,9 +856,14 @@ export function drawPlatforms(
           ctx.fillRect(px2 + 2, wy + 4, 3, 3);
         }
 
-        // Centre divider mullion
         ctx.fillStyle = '#2e1608';
         ctx.fillRect(bx + fw / 2 - 1, wy, 3, WIN_H);
+
+        // Peitoril
+        ctx.fillStyle = '#7a7060';
+        ctx.fillRect(bx, plat.y - 4, bw, 4);
+        ctx.fillStyle = '#a09280';
+        ctx.fillRect(bx, plat.y - 4, bw, 1);
 
       } else {
         // ── Thin procedural ledge (roll-under obstacle) ──────────────
