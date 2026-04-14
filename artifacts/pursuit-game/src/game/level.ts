@@ -149,11 +149,6 @@ export function generateLevel(): Platform[] {
   // y = GROUND_Y - 55 → bottom at GROUND_Y - 37 → clearance 37px
   // Player standing h=50 > 37 → blocked;  roll h=26 < 37 → passes
   const rollUnderBalconies: Array<{ x: number; y: number; w: number }> = [
-    // Free Zone 1 — first encounter with the mechanic
-    { x: 900,  y: GROUND_Y - 55, w: 115 },
-    { x: 1600, y: GROUND_Y - 55, w: 115 },
-    { x: 2400, y: GROUND_Y - 55, w: 115 },
-
     // Wall Zone 1
     { x: 3800, y: GROUND_Y - 55, w: 110 },
     { x: 5050, y: GROUND_Y - 55, w: 110 },

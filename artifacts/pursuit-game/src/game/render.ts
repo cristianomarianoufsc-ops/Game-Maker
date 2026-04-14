@@ -698,68 +698,80 @@ export function drawPlatforms(
       ctx.fillStyle = COLORS.wallMoss;
       ctx.fillRect(sx, plat.y, plat.w, plat.h);
     } else {
-      // Balcony platform — concrete slab jutting from a building facade
-      const sX = sx - 5; // slab protrudes 5px to the left
-      const sW = plat.w + 5;
+      // Balcony on a building — building facade runs from slab bottom to ground
+      const slabX = sx - 5; // slab protrudes 5px to the left
+      const slabW = plat.w + 5;
+      const bldX   = sx + 2;          // building is slightly inset from slab
+      const bldW   = plat.w - 4;
+      const bldTop = plat.y + plat.h; // top of building = bottom of slab
+      const bldBot = GROUND_Y;        // building sits on the ground
+      const bldH   = bldBot - bldTop;
 
-      // Building facade strip below slab
-      const toGround = GROUND_Y - (plat.y + plat.h);
-      const stripH = Math.min(toGround, 40);
-      const stripX = sx + 6;
-      const stripW = plat.w - 12;
+      if (bldH > 0 && bldW > 0) {
+        // ── Building body ──
+        ctx.fillStyle = '#1e1c1a';
+        ctx.fillRect(bldX, bldTop, bldW, bldH);
 
-      if (stripH > 0 && stripW > 0) {
-        // Building wall body
-        ctx.fillStyle = '#1c1a18';
-        ctx.fillRect(stripX, plat.y + plat.h, stripW, stripH);
-        // Edge lines
-        ctx.fillStyle = '#242220';
-        ctx.fillRect(stripX, plat.y + plat.h, 2, stripH);
-        ctx.fillRect(stripX + stripW - 2, plat.y + plat.h, 2, stripH);
-        // Subtle horizontal mortar lines
-        ctx.strokeStyle = 'rgba(10,8,8,0.5)';
+        // Left-edge highlight
+        ctx.fillStyle = '#2c2a28';
+        ctx.fillRect(bldX, bldTop, 3, bldH);
+        // Right-edge shadow
+        ctx.fillStyle = '#111010';
+        ctx.fillRect(bldX + bldW - 3, bldTop, 3, bldH);
+
+        // ── Floor separators (every ~24 px) ──
+        const floorH = 24;
+        ctx.strokeStyle = 'rgba(8,6,6,0.8)';
         ctx.lineWidth = 1;
-        for (let my = plat.y + plat.h + 8; my < plat.y + plat.h + stripH - 2; my += 8) {
+        for (let fy = bldTop + floorH; fy < bldBot - 2; fy += floorH) {
           ctx.beginPath();
-          ctx.moveTo(stripX + 2, my);
-          ctx.lineTo(stripX + stripW - 2, my);
+          ctx.moveTo(bldX + 3, fy);
+          ctx.lineTo(bldX + bldW - 3, fy);
           ctx.stroke();
         }
-        // Window (if enough room)
-        if (stripH >= 18 && stripW >= 20) {
-          const wW = Math.min(20, stripW - 8);
-          const wH = Math.min(13, stripH - 6);
-          const wX = Math.round(stripX + (stripW - wW) / 2);
-          const wY = Math.round(plat.y + plat.h + (stripH - wH) / 2);
-          ctx.fillStyle = '#0a0808';
-          ctx.fillRect(wX, wY, wW, wH);
-          ctx.fillStyle = 'rgba(255,150,50,0.14)';
-          ctx.fillRect(wX + 1, wY + 1, wW - 2, wH - 2);
-          // Window frame divider
-          ctx.strokeStyle = 'rgba(20,14,14,0.9)';
+
+        // ── Windows — one per floor, centered ──
+        const winW = Math.min(20, bldW - 14);
+        const winH = 13;
+        const winX = Math.round(bldX + (bldW - winW) / 2);
+        for (let fy = bldTop + 5; fy + winH < bldBot - 3; fy += floorH) {
+          // Window dark pane
+          ctx.fillStyle = '#090808';
+          ctx.fillRect(winX, fy, winW, winH);
+          // Warm interior glow
+          ctx.fillStyle = 'rgba(255,150,50,0.13)';
+          ctx.fillRect(winX + 1, fy + 1, winW - 2, winH - 2);
+          // Vertical frame divider
+          ctx.strokeStyle = 'rgba(12,8,8,0.9)';
           ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.moveTo(wX + Math.floor(wW / 2), wY);
-          ctx.lineTo(wX + Math.floor(wW / 2), wY + wH);
+          ctx.moveTo(winX + Math.floor(winW / 2), fy);
+          ctx.lineTo(winX + Math.floor(winW / 2), fy + winH);
+          ctx.stroke();
+          // Horizontal frame divider
+          ctx.beginPath();
+          ctx.moveTo(winX, fy + Math.floor(winH / 2));
+          ctx.lineTo(winX + winW, fy + Math.floor(winH / 2));
           ctx.stroke();
         }
       }
 
-      // Slab underside
+      // ── Balcony slab ──
+      // Underside
       ctx.fillStyle = COLORS.platformSide;
-      ctx.fillRect(sX, plat.y + 4, sW, plat.h - 4);
-      // Slab top surface
+      ctx.fillRect(slabX, plat.y + 4, slabW, plat.h - 4);
+      // Top surface
       ctx.fillStyle = COLORS.platformTop;
-      ctx.fillRect(sX, plat.y, sW, 5);
-      // Slab top highlight edge
+      ctx.fillRect(slabX, plat.y, slabW, 5);
+      // Top highlight edge
       ctx.fillStyle = COLORS.platformEdge;
-      ctx.fillRect(sX, plat.y, sW, 2);
-      // Slab front cap (left protrusion edge)
+      ctx.fillRect(slabX, plat.y, slabW, 2);
+      // Left protruding cap
       ctx.fillStyle = COLORS.platformSide;
-      ctx.fillRect(sX - 2, plat.y + 2, 3, plat.h - 2);
-      // Overhang shadow beneath front lip
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.fillRect(sX, plat.y + plat.h, 7, 3);
+      ctx.fillRect(slabX - 2, plat.y + 2, 3, plat.h - 2);
+      // Shadow under front overhang
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(slabX, plat.y + plat.h, 8, 3);
     }
   }
 }
