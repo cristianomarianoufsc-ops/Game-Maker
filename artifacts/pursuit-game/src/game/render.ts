@@ -7,6 +7,7 @@ import {
   DIVE_FRAME_W, DIVE_FRAME_H, DIVE_DISPLAY_H,
   WALLCLIMB_DURATION, WALLFLIP_DURATION,
 } from './constants';
+import { getPlatformCollisionRect } from './collision';
 
 // Sprite sheet regions in the 1024x1024 source image
 // Three characters: idle (front) | run (side) | jump (crouched)
@@ -2355,12 +2356,18 @@ export function drawEditorUI(
     platform: 'rgba(80,140,255,0.30)',
     wall: 'rgba(255,180,60,0.30)',
     obstacle: 'rgba(255,80,80,0.30)',
+    car: 'rgba(0,220,255,0.18)',
+    tire: 'rgba(255,160,60,0.25)',
+    box: 'rgba(180,120,60,0.25)',
   };
   const typeStroke: Record<string, string> = {
     ground: 'rgba(80,255,80,0.75)',
     platform: 'rgba(100,160,255,0.9)',
     wall: 'rgba(255,200,60,0.9)',
     obstacle: 'rgba(255,100,80,0.9)',
+    car: 'rgba(0,220,255,0.85)',
+    tire: 'rgba(255,180,80,0.85)',
+    box: 'rgba(200,140,80,0.85)',
   };
 
   ctx.save();
@@ -2388,9 +2395,13 @@ export function drawEditorUI(
       ctx.lineWidth = 1;
     }
 
-    const drawH = p.type === 'ground' ? 90 : p.h;
-    ctx.fillRect(p.x, p.y, p.w, drawH);
-    ctx.strokeRect(p.x, p.y, p.w, drawH);
+    const hit = getPlatformCollisionRect(p);
+    const drawX = p.type === 'ground' ? p.x : hit.x;
+    const drawY = p.type === 'ground' ? p.y : hit.y;
+    const drawW = p.type === 'ground' ? p.w : hit.w;
+    const drawH = p.type === 'ground' ? 90 : hit.h;
+    ctx.fillRect(drawX, drawY, drawW, drawH);
+    ctx.strokeRect(drawX, drawY, drawW, drawH);
 
     if (isSelected) {
       // Coord label above
@@ -2398,13 +2409,13 @@ export function drawEditorUI(
       ctx.fillStyle = 'rgba(0,220,255,0.95)';
       ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}  [${p.type}]`, p.x + p.w / 2, p.y - 8);
+      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}  [${p.type}]`, drawX + drawW / 2, drawY - 8);
       ctx.textAlign = 'left';
 
       const HANDLE_SIZE = 8;
       // Right-middle handle (resize width)
-      const rhx = p.x + p.w;
-      const rhy = p.y + drawH / 2;
+      const rhx = drawX + drawW;
+      const rhy = drawY + drawH / 2;
       ctx.fillStyle = 'rgba(0,220,255,1)';
       ctx.fillRect(rhx - HANDLE_SIZE / 2, rhy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
       ctx.strokeStyle = '#fff';
@@ -2412,8 +2423,8 @@ export function drawEditorUI(
       ctx.strokeRect(rhx - HANDLE_SIZE / 2, rhy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
 
       // Top-middle handle (resize height)
-      const thx = p.x + p.w / 2;
-      const thy = p.y;
+      const thx = drawX + drawW / 2;
+      const thy = drawY;
       ctx.fillStyle = 'rgba(255,200,0,1)';
       ctx.fillRect(thx - HANDLE_SIZE / 2, thy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
       ctx.strokeStyle = '#fff';
@@ -2421,8 +2432,8 @@ export function drawEditorUI(
       ctx.strokeRect(thx - HANDLE_SIZE / 2, thy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
 
       // Top-right corner handle (proportional resize)
-      const chx = p.x + p.w;
-      const chy = p.y;
+      const chx = drawX + drawW;
+      const chy = drawY;
       ctx.fillStyle = 'rgba(80,255,120,1)';
       ctx.beginPath();
       ctx.arc(chx, chy, HANDLE_SIZE / 2 + 1, 0, Math.PI * 2);
@@ -2439,8 +2450,8 @@ export function drawEditorUI(
       ctx.stroke();
 
       // Duplicate button (right side, vertically centred)
-      const dupBtnX = p.x + p.w + 14;
-      const dupBtnY = p.y + drawH / 2 - 11;
+      const dupBtnX = drawX + drawW + 14;
+      const dupBtnY = drawY + drawH / 2 - 11;
       const dupBtnW = 62;
       const dupBtnH = 22;
       ctx.fillStyle = 'rgba(30,30,60,0.88)';
@@ -2460,7 +2471,7 @@ export function drawEditorUI(
       ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'center';
       const gy = Math.round(p.y - 410);
-      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type}]  — clique para selecionar`, p.x + p.w / 2, p.y - 6);
+      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type}]  — clique para selecionar`, drawX + drawW / 2, drawY - 6);
       ctx.textAlign = 'left';
     }
   }

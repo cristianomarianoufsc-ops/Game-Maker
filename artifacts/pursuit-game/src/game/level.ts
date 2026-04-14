@@ -165,6 +165,23 @@ export function generateLevel(): Platform[] {
   ];
 
   junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h }) => {
+    if (type === 'car') {
+      const collisionW = Math.round(w * 0.82);
+      const collisionH = Math.round(h * 0.68);
+      const collisionOffsetX = Math.round((w - collisionW) / 2);
+      platforms.push({
+        x,
+        y: GROUND_Y - collisionH,
+        w,
+        h,
+        type,
+        collisionW,
+        collisionH,
+        collisionOffsetX,
+      });
+      return;
+    }
+
     platforms.push({ x, y: GROUND_Y - h, w, h, type });
   });
 

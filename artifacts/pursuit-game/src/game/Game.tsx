@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import type { GameState, Keys, Player, Drone } from './types';
+import type { GameState, Keys, Player, Drone, Platform } from './types';
 import spriteUrl from '/horacio_transparent.png';
 import runSheetUrl from '/run_sheet_transparent.png';
 import idleUrl from '/idle_transparent.png';
@@ -27,6 +27,7 @@ import {
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
   drawEditorUI,
 } from './render';
+import { getPlatformCollisionRect, getPlatformGroundClampOffset } from './collision';
 
 function makePlayer(): Player {
   return {
@@ -106,6 +107,11 @@ const EDITOR_DELETED_PLATFORMS_STORAGE_KEY = 'pursuit-deleted-platforms-v1';
 
 function getPlatformKey(platform: Platform): string {
   return `${platform.type}:${platform.x}:${platform.y}:${platform.w}:${platform.h}`;
+}
+
+function isEditorPointInsidePlatform(wx: number, wy: number, platform: Platform): boolean {
+  const hit = getPlatformCollisionRect(platform);
+  return wx >= hit.x && wx <= hit.x + hit.w && wy >= hit.y && wy <= hit.y + hit.h;
 }
 
 function loadDeletedPlatformKeys(): Set<string> {
@@ -558,7 +564,7 @@ export default function Game() {
         if (p) {
           if (drag.mode === 'move') {
             p.x = Math.round(drag.origX + dx);
-            p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - p.h));
+            p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
             p.y = Math.max(60, p.y);
           } else if (drag.mode === 'resize-right') {
             p.w = Math.round(Math.max(10, drag.origW + dx));
@@ -581,7 +587,7 @@ export default function Game() {
       // Middle-button pan
       editorHoveredIdxRef.current = platformsRef.current.findIndex(p => {
         if (p.type === 'ground') return false;
-        return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h;
+        return isEditorPointInsidePlatform(wx, wy, p);
       });
     };
 
@@ -610,17 +616,18 @@ export default function Game() {
       // Check handle hits on currently selected object first
       if (selIdx >= 0 && selIdx < platforms.length) {
         const p = platforms[selIdx];
-        const rightHX = p.x + p.w;
-        const rightHY = p.y + p.h / 2;
-        const topHX = p.x + p.w / 2;
-        const topHY = p.y;
-        const cornerHX = p.x + p.w;
-        const cornerHY = p.y;
+        const hit = getPlatformCollisionRect(p);
+        const rightHX = hit.x + hit.w;
+        const rightHY = hit.y + hit.h / 2;
+        const topHX = hit.x + hit.w / 2;
+        const topHY = hit.y;
+        const cornerHX = hit.x + hit.w;
+        const cornerHY = hit.y;
         const origText = platCoordText(p);
 
         // Duplicate button hit (world-space, right side of object)
-        const dupBtnX = p.x + p.w + 14;
-        const dupBtnY = p.y + p.h / 2 - 11;
+        const dupBtnX = hit.x + hit.w + 14;
+        const dupBtnY = hit.y + hit.h / 2 - 11;
         const dupBtnW = 62;
         const dupBtnH = 22;
         if (wx >= dupBtnX && wx <= dupBtnX + dupBtnW && wy >= dupBtnY && wy <= dupBtnY + dupBtnH) {
@@ -646,7 +653,7 @@ export default function Game() {
           return;
         }
         // Hit body of selected → start move drag
-        if (wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h) {
+        if (isEditorPointInsidePlatform(wx, wy, p)) {
           editorDragRef.current = { mode: 'move', startWX: wx, startWY: wy, origX: p.x, origY: p.y, origW: p.w, origH: p.h, origText, hasMoved: false };
           return;
         }
@@ -655,7 +662,7 @@ export default function Game() {
       // Hit a different platform → select it, copy its coords
       const idx = platforms.findIndex(p => {
         if (p.type === 'ground') return false;
-        return wx >= p.x && wx <= p.x + p.w && wy >= p.y && wy <= p.y + p.h;
+        return isEditorPointInsidePlatform(wx, wy, p);
       });
       if (idx >= 0) {
         editorSelectedIdxRef.current = idx;

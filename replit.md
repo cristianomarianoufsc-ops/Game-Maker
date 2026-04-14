@@ -26,6 +26,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Ajuste recente: mergulho não pode mais ser convertido depois que o pulo normal já saiu no ar; continua aceitando a janela enquanto há chão/coyote time. A câmera agora acompanha verticalmente quando Horácio sobe acima da tela.
 - Ajuste recente: drone agora usa velocidade fixa igual à perseguição base inicial (`DRONE_BASE_SPEED`), sem aceleração extra de catch-up quando Horácio abre distância.
 - Editor de fase: deleções de obstáculos/plataformas/paredes agora são salvas no navegador com `localStorage` e reaplicadas após recarregar ou reiniciar a partida; chão continua protegido contra remoção.
+- Editor de fase: objetos do tipo `car` agora usam uma caixa de colisão proporcional menor que o sprite visual, permitindo descer o carro até a base visual sem parecer flutuar; a física, seleção e overlay do editor usam essa caixa física.
 
 ## Key Commands
 
