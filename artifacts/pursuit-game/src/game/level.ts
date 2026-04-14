@@ -28,7 +28,6 @@ export function generateLevel(): Platform[] {
     { x: 6500, y: GROUND_Y - 235, h: 235 },
 
     { x: 12100, y: GROUND_Y - 400, h: 400 },
-    { x: 13300, y: GROUND_Y - 280, h: 280 },
     { x: 14500, y: GROUND_Y - 400, h: 400 },
     { x: 15200, y: GROUND_Y - 250, h: 250 },
 
