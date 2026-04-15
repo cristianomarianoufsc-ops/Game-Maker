@@ -149,9 +149,9 @@ export function generateLevel(): Platform[] {
     { x: 13304, type: 'car',  w: 337, h: 115 },
     { x: 13650, type: 'car',  w: 150, h: 65 },
     { x: 14000, type: 'tire', w: 45,  h: 95 },
-    { x: 15850, type: 'tire', w: 45,  h: 95 },
 
-    // Free Zone 3
+    // Wall Zone 2 (end) + Free Zone 3
+
     { x: 16250, type: 'car',  w: 150, h: 65 },
     { x: 16520, type: 'box',  w: 65,  h: 55 },
     { x: 16620, type: 'box',  w: 65,  h: 55 },
