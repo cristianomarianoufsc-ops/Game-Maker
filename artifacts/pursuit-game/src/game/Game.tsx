@@ -1443,15 +1443,15 @@ export default function Game() {
           gs.gamePhase = 'menu';
         } else if (editorSpawnJustPressed.current) {
           editorSpawnJustPressed.current = false;
-          // Spawna Horácio na posição atual da câmera do editor
-          const spawnX = editorCamXRef.current + CANVAS_W * CAMERA_LEAD_X;
+          // Spawna Horácio na posição do cursor do mouse, caindo do alto
+          const spawnX = editorMouseWorldRef.current.x;
           editorLastSpawnXRef.current = spawnX;
           const newState = makeInitialState('story');
           // Usa gameMode wall-test para desabilitar o drone durante o teste
           newState.gameMode = 'wall-test';
           newState.gamePhase = 'playing';
           newState.player.x = spawnX;
-          newState.player.y = GROUND_Y - PLAYER_H;
+          newState.player.y = -300;
           newState.player.vx = 0;
           newState.player.vy = 0;
           newState.camera.x = editorCamXRef.current;

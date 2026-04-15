@@ -48,7 +48,7 @@ const RUN_SHEET = {
 // --- Background & Buildings ---
 
 const JUNKYARD_X1 = 12100;
-const JUNKYARD_X2 = 14540;
+const JUNKYARD_X2 = 16900;
 
 export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number): void {
   const sx = JUNKYARD_X1 - camX;
@@ -73,12 +73,18 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
   ctx.fillRect(sx, GROUND_Y * 0.62, w, GROUND_Y * 0.38);
 
   // Silhuetas de pilhas de carcaças ao fundo (escuras, distantes)
+  // Dobro de pilhas para manter a densidade visual na área ampliada
   const piles = [
-    { ox: 0.03, pw: 0.18, ph: 0.22 },
-    { ox: 0.24, pw: 0.20, ph: 0.28 },
-    { ox: 0.48, pw: 0.14, ph: 0.17 },
-    { ox: 0.65, pw: 0.19, ph: 0.25 },
-    { ox: 0.86, pw: 0.13, ph: 0.19 },
+    { ox: 0.02, pw: 0.09, ph: 0.22 },
+    { ox: 0.12, pw: 0.10, ph: 0.28 },
+    { ox: 0.24, pw: 0.07, ph: 0.17 },
+    { ox: 0.33, pw: 0.09, ph: 0.25 },
+    { ox: 0.44, pw: 0.07, ph: 0.19 },
+    { ox: 0.53, pw: 0.09, ph: 0.22 },
+    { ox: 0.63, pw: 0.10, ph: 0.26 },
+    { ox: 0.74, pw: 0.07, ph: 0.18 },
+    { ox: 0.83, pw: 0.09, ph: 0.24 },
+    { ox: 0.93, pw: 0.06, ph: 0.20 },
   ];
   for (const p of piles) {
     const px = sx + p.ox * w;
