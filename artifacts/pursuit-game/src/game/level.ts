@@ -141,10 +141,14 @@ export function generateLevel(): Platform[] {
     collisionOffsetX?: number;
     collisionOffsetY?: number;
     collisionBoxes?: { x: number; y: number; w: number; h: number }[];
+    cropLeft?: number;
+    cropTop?: number;
+    cropRight?: number;
+    cropBottom?: number;
     yOffset?: number;
   }> = [
     // Ferro velho (x:12100-14500) — só carros e pneus
-    { x: 12505, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:149,y:10,w:219,h:62}] },
+    { x: 12516, type: 'car',  w: 445, h: 164, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:149,y:10,w:219,h:61}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     { x: 13050, type: 'tire', w: 45,  h: 95 },
     { x: 13327, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:54,w:445,h:62},{x:149,y:10,w:219,h:62}] },
 
@@ -176,20 +180,20 @@ export function generateLevel(): Platform[] {
     { x: 24700, type: 'tire', w: 45,  h: 95 },
   ];
 
-  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY, collisionBoxes, yOffset }) => {
+  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY, collisionBoxes, cropLeft, cropTop, cropRight, cropBottom, yOffset }) => {
     if (type === 'car') {
       if (collisionBoxes && collisionBoxes.length > 0) {
         const y = yOffset !== undefined
           ? GROUND_Y - yOffset
           : (() => { const lb = collisionBoxes.reduce((a, b) => (a.y + a.h > b.y + b.h ? a : b)); return GROUND_Y - lb.y - lb.h; })();
-        platforms.push({ x, y, w, h, type, collisionBoxes });
+        platforms.push({ x, y, w, h, type, collisionBoxes, cropLeft, cropTop, cropRight, cropBottom });
       } else {
         const collisionW = customCollisionW ?? Math.round(w * 0.82);
         const collisionH = customCollisionH ?? Math.round(h * 0.68);
         const collisionOffsetX = customCollisionOffsetX ?? Math.round((w - collisionW) / 2);
         const collisionOffsetY = customCollisionOffsetY ?? 0;
         const y = yOffset !== undefined ? GROUND_Y - yOffset : GROUND_Y - collisionOffsetY - collisionH;
-        platforms.push({ x, y, w, h, type, collisionW, collisionH, collisionOffsetX, collisionOffsetY });
+        platforms.push({ x, y, w, h, type, collisionW, collisionH, collisionOffsetX, collisionOffsetY, cropLeft, cropTop, cropRight, cropBottom });
       }
       return;
     }
