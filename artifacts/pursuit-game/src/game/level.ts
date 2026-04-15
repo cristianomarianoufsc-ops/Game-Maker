@@ -146,8 +146,6 @@ export function generateLevel(): Platform[] {
     // Ferro velho (x:12100-14500)
     { x: 12498, type: 'car',  w: 445, h: 168, platformY: GROUND_Y - 114, collisionBoxes: [{x:0, y:44, w:445, h:71}, {x:151, y:6, w:214, h:65}] },
     { x: 12900, type: 'box',  w: 65,  h: 55 },
-    { x: 13050, type: 'tire', w: 45,  h: 95 },
-    { x: 13304, type: 'car',  w: 337, h: 115 },
     { x: 13650, type: 'car',  w: 150, h: 65 },
     { x: 14000, type: 'tire', w: 45,  h: 95 },
 
