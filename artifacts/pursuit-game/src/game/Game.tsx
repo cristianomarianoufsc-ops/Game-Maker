@@ -303,6 +303,8 @@ export default function Game() {
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
   const editorSelectedIdxRef = useRef(-1);
+  const editorMultiSelectRef = useRef<Set<number>>(new Set());
+  const editorMarqueeRef = useRef<{ startWX: number; startWY: number; endWX: number; endWY: number } | null>(null);
   const editorCollisionModeRef = useRef(false);
   const editorCollisionBoxIdxRef = useRef(0);
   type EditorDrag = {
@@ -555,6 +557,13 @@ export default function Game() {
     const copyPlatText = (text: string, msg: string) => {
       navigator.clipboard.writeText(text).catch(() => {});
       editorCopiedMsgRef.current = { text: msg, until: Date.now() + 3000 };
+    };
+
+    const copyMultiSelectText = (platforms: Platform[], indices: Set<number>) => {
+      const sorted = [...indices].sort((a, b) => (platforms[a]?.x ?? 0) - (platforms[b]?.x ?? 0));
+      const text = sorted.map(i => platforms[i] ? platCoordText(platforms[i]) : '').filter(Boolean).join(',');
+      const msg = `✓ ${indices.size} objetos copiados`;
+      copyPlatText(text, msg);
     };
 
     const getEditorWorldCoords = (e: MouseEvent) => {
