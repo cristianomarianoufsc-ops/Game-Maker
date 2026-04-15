@@ -772,12 +772,34 @@ export function updateDrone(
   return shakeAmount;
 }
 
+function spawnBoxShatter(particles: Particle[], box: Platform): void {
+  const colors = ['#9c6b35', '#7a5228', '#5c3d1a', '#b07840', '#3a2510', '#c8843f'];
+  const cx = box.x + box.w / 2;
+  const cy = box.y + box.h / 2;
+  for (let i = 0; i < 22; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2.5 + Math.random() * 5.5;
+    particles.push({
+      x: cx + (Math.random() - 0.5) * box.w,
+      y: cy + (Math.random() - 0.5) * box.h,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 3,
+      life: 500 + Math.random() * 500,
+      maxLife: 1000,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: 3 + Math.random() * 6,
+    });
+  }
+}
+
 export function updateBullets(
   bullets: Bullet[],
   player: Player,
   platforms: Platform[],
   dt: number,
-  onHit: () => void
+  onHit: () => void,
+  destroyedBoxIndices: number[],
+  particles: Particle[]
 ): Bullet[] {
   const ph = player.isRolling ? PLAYER_ROLL_H : PLAYER_H;
   const surviving: Bullet[] = [];
@@ -793,8 +815,14 @@ export function updateBullets(
 
     // Hit platform
     let hitPlatform = false;
-    for (const plat of platforms) {
+    for (let pi = 0; pi < platforms.length; pi++) {
+      const plat = platforms[pi];
+      if (plat.type === 'box' && destroyedBoxIndices.includes(pi)) continue;
       if (getPlatformCollisionRects(plat).some((hit) => rectOverlap(b.x - 4, b.y - 4, 8, 8, hit.x, hit.y, hit.w, hit.h))) {
+        if (plat.type === 'box') {
+          destroyedBoxIndices.push(pi);
+          spawnBoxShatter(particles, plat);
+        }
         hitPlatform = true;
         break;
       }

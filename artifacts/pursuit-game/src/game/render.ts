@@ -775,10 +775,13 @@ export function drawPlatforms(
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
   camX: number,
   balconyImg?: HTMLImageElement | null,
-  carroImg?: HTMLImageElement | null
+  carroImg?: HTMLImageElement | null,
+  destroyedBoxIndices?: number[]
 ): void {
-  for (const plat of platforms) {
+  for (let pi = 0; pi < platforms.length; pi++) {
+    const plat = platforms[pi];
     if (plat.type === 'ground') continue; // drawn separately
+    if (plat.type === 'box' && destroyedBoxIndices?.includes(pi)) continue;
     const sx = plat.x - camX;
     if (sx + plat.w < -20 || sx > CANVAS_W + 20) continue;
 

@@ -381,6 +381,7 @@ export default function Game() {
     time: 0,
     particles: [],
     screenShake: 0,
+    destroyedBoxIndices: [],
   }), []);
 
   const resetGame = useCallback((gameMode: GameState['gameMode'] = 'story') => {
@@ -1533,7 +1534,10 @@ export default function Game() {
           ((keys.space || keys.up) && (now - lastDownPressTime.current) < DIVE_COMBO_WINDOW);
         const effectiveKeys = windowDive ? { ...keys, dive: true } : keys;
 
-        updatePlayer(gs.player, effectiveKeys, gs.platforms, dt, spawnP);
+        const activePlatforms = gs.platforms.filter((p, i) =>
+          !(p.type === 'box' && gs.destroyedBoxIndices.includes(i))
+        );
+        updatePlayer(gs.player, effectiveKeys, activePlatforms, dt, spawnP);
 
         // Camera follows player
         const targetCamX = gs.player.x - CANVAS_W * CAMERA_LEAD_X;
@@ -1550,7 +1554,7 @@ export default function Game() {
           gs.bullets = updateBullets(gs.bullets, gs.player, gs.platforms, dt, () => {
             gs.screenShake = 6;
             for (let i = 0; i < 8; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
-          });
+          }, gs.destroyedBoxIndices, gs.particles);
         }
 
         gs.particles = updateParticles(gs.particles, dt);
@@ -1659,7 +1663,7 @@ export default function Game() {
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);
-      drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current);
+      drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current, gs.destroyedBoxIndices);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
       if (gs.gameMode !== 'wall-test') {

@@ -157,6 +157,7 @@ export interface GameState {
   droneAlert: DroneAlert | null;
   droneIntroduced: boolean;
   victoryTimer: number;
+  destroyedBoxIndices: number[];
 }
 
 export interface Keys {
