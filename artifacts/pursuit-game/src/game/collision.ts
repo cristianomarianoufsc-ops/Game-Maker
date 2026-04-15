@@ -1,5 +1,15 @@
 import type { CollisionBox, Platform, Rect } from './types';
 
+export interface SlopedRect extends Rect {
+  slopeTop?: { left: number; right: number };
+}
+
+export function getSlopeSurfaceY(hit: SlopedRect, worldX: number): number {
+  if (!hit.slopeTop) return hit.y;
+  const t = Math.max(0, Math.min(1, (worldX - hit.x) / (hit.w || 1)));
+  return hit.y + hit.slopeTop.left * (1 - t) + hit.slopeTop.right * t;
+}
+
 const CAR_COLLISION_W_RATIO = 0.82;
 const CAR_COLLISION_H_RATIO = 0.68;
 
@@ -23,13 +33,15 @@ export function getDefaultPlatformCollisionRect(platform: Platform): Rect {
   };
 }
 
-function rectToBox(platform: Platform, rect: Rect): CollisionBox {
-  return {
+function rectToBox(platform: Platform, rect: SlopedRect): CollisionBox {
+  const box: CollisionBox = {
     x: Math.round(rect.x - platform.x),
     y: Math.round(rect.y - platform.y),
     w: Math.round(rect.w),
     h: Math.round(rect.h),
   };
+  if (rect.slopeTop) box.slopeTop = { ...rect.slopeTop };
+  return box;
 }
 
 function clampBox(platform: Platform, box: CollisionBox): CollisionBox {
@@ -38,7 +50,14 @@ function clampBox(platform: Platform, box: CollisionBox): CollisionBox {
   const h = Math.max(minSize, Math.min(Math.round(box.h), platform.h));
   const x = Math.max(0, Math.min(Math.round(box.x), platform.w - w));
   const y = Math.max(0, Math.min(Math.round(box.y), platform.h - h));
-  return { x, y, w, h };
+  const result: CollisionBox = { x, y, w, h };
+  if (box.slopeTop) {
+    result.slopeTop = {
+      left: Math.max(0, Math.min(Math.round(box.slopeTop.left), h)),
+      right: Math.max(0, Math.min(Math.round(box.slopeTop.right), h)),
+    };
+  }
+  return result;
 }
 
 export function getPlatformCollisionBoxes(platform: Platform): CollisionBox[] {
@@ -57,12 +76,13 @@ export function getPlatformCollisionBoxes(platform: Platform): CollisionBox[] {
   ];
 }
 
-export function getPlatformCollisionRects(platform: Platform): Rect[] {
+export function getPlatformCollisionRects(platform: Platform): SlopedRect[] {
   return getPlatformCollisionBoxes(platform).map((box) => ({
     x: platform.x + box.x,
     y: platform.y + box.y,
     w: box.w,
     h: box.h,
+    slopeTop: box.slopeTop,
   }));
 }
 
@@ -174,12 +194,21 @@ export function scalePlatformCollisionOverrides(
 ): void {
   if (!hasCustomPlatformCollision(platform)) return;
   if (platform.collisionBoxes && platform.collisionBoxes.length > 0) {
-    platform.collisionBoxes = platform.collisionBoxes.map((box) => clampBox(platform, {
-      x: Math.round(box.x * scaleX),
-      y: Math.round(box.y * scaleY),
-      w: Math.round(box.w * scaleX),
-      h: Math.round(box.h * scaleY),
-    }));
+    platform.collisionBoxes = platform.collisionBoxes.map((box) => {
+      const scaled: CollisionBox = {
+        x: Math.round(box.x * scaleX),
+        y: Math.round(box.y * scaleY),
+        w: Math.round(box.w * scaleX),
+        h: Math.round(box.h * scaleY),
+      };
+      if (box.slopeTop) {
+        scaled.slopeTop = {
+          left: Math.round(box.slopeTop.left * scaleY),
+          right: Math.round(box.slopeTop.right * scaleY),
+        };
+      }
+      return clampBox(platform, scaled);
+    });
     return;
   }
   platform.collisionOffsetX = Math.round((platform.collisionOffsetX ?? 0) * scaleX);
@@ -197,7 +226,10 @@ export function getPlatformCollisionSummary(platform: Platform): string {
   if (!hasCustomPlatformCollision(platform)) return '';
   if (platform.collisionBoxes && platform.collisionBoxes.length > 0) {
     const boxes = getPlatformCollisionBoxes(platform)
-      .map((box) => `${box.x},${box.y},${box.w},${box.h}`)
+      .map((box) => {
+        const base = `${box.x},${box.y},${box.w},${box.h}`;
+        return box.slopeTop ? `${base},sl:${box.slopeTop.left},sr:${box.slopeTop.right}` : base;
+      })
       .join('|');
     return `  boxes:${boxes}`;
   }

@@ -10,7 +10,9 @@ export interface Rect {
   h: number;
 }
 
-export interface CollisionBox extends Rect {}
+export interface CollisionBox extends Rect {
+  slopeTop?: { left: number; right: number };
+}
 
 export interface Platform extends Rect {
   type: 'ground' | 'platform' | 'wall' | 'obstacle' | 'car' | 'tire' | 'box';

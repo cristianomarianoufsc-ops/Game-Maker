@@ -2450,9 +2450,21 @@ export function drawEditorUI(
           ctx.setLineDash(isBoxSelected ? [] : [5, 3]);
           ctx.strokeStyle = isBoxSelected ? 'rgba(255,230,80,1)' : 'rgba(255,210,60,0.75)';
           ctx.lineWidth = isBoxSelected ? 2 : 1.25;
-          ctx.strokeRect(box.x, box.y, box.w, box.h);
-          ctx.fillStyle = isBoxSelected ? 'rgba(255,190,40,0.16)' : 'rgba(255,210,60,0.05)';
-          ctx.fillRect(box.x, box.y, box.w, box.h);
+          if (box.slopeTop) {
+            ctx.beginPath();
+            ctx.moveTo(box.x, box.y + box.slopeTop.left);
+            ctx.lineTo(box.x + box.w, box.y + box.slopeTop.right);
+            ctx.lineTo(box.x + box.w, box.y + box.h);
+            ctx.lineTo(box.x, box.y + box.h);
+            ctx.closePath();
+            ctx.fillStyle = isBoxSelected ? 'rgba(255,190,40,0.18)' : 'rgba(255,210,60,0.07)';
+            ctx.fill();
+            ctx.stroke();
+          } else {
+            ctx.strokeRect(box.x, box.y, box.w, box.h);
+            ctx.fillStyle = isBoxSelected ? 'rgba(255,190,40,0.16)' : 'rgba(255,210,60,0.05)';
+            ctx.fillRect(box.x, box.y, box.w, box.h);
+          }
           if (isSelected && collisionMode && hits.length > 1) {
             ctx.setLineDash([]);
             ctx.fillStyle = isBoxSelected ? 'rgba(255,245,150,1)' : 'rgba(255,220,100,0.8)';
@@ -2531,6 +2543,32 @@ export function drawEditorUI(
       ctx.lineTo(chx + 4, chy - 4);
       ctx.stroke();
 
+      // Slope handles (diamond-shaped, orange) for the selected collision box
+      if (collisionMode && hit.slopeTop) {
+        const drawDiamondHandle = (hx: number, hy: number) => {
+          const s = 7;
+          ctx.beginPath();
+          ctx.moveTo(hx, hy - s);
+          ctx.lineTo(hx + s, hy);
+          ctx.lineTo(hx, hy + s);
+          ctx.lineTo(hx - s, hy);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(255,140,30,1)';
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        };
+        drawDiamondHandle(hit.x, hit.y + hit.slopeTop.left);
+        drawDiamondHandle(hit.x + hit.w, hit.y + hit.slopeTop.right);
+        // Label da superfície inclinada
+        ctx.fillStyle = 'rgba(255,180,60,0.9)';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`◥ slope  L:${hit.slopeTop.left}  R:${hit.slopeTop.right}`, hit.x + hit.w / 2, hit.y + Math.min(hit.slopeTop.left, hit.slopeTop.right) - 6);
+        ctx.textAlign = 'left';
+      }
+
       // Duplicate button (right side, vertically centred)
       const dupBtnX = drawX + drawW + 14;
       const dupBtnY = drawY + drawH / 2 - 24;
@@ -2601,6 +2639,24 @@ export function drawEditorUI(
         ctx.font = 'bold 11px monospace';
         ctx.textAlign = 'center';
         ctx.fillText('− HITBOX', remBtnX + remBtnW / 2, remBtnY + 15);
+        ctx.textAlign = 'left';
+
+        const hasSlope = !!(hit.slopeTop);
+        const slopeBtnX = remBtnX;
+        const slopeBtnY = remBtnY + 26;
+        const slopeBtnW = 82;
+        const slopeBtnH = 22;
+        ctx.fillStyle = hasSlope ? 'rgba(60,35,10,0.94)' : 'rgba(30,25,20,0.88)';
+        ctx.strokeStyle = hasSlope ? 'rgba(255,160,40,0.95)' : 'rgba(180,120,60,0.70)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(slopeBtnX, slopeBtnY, slopeBtnW, slopeBtnH, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = hasSlope ? 'rgba(255,200,100,1)' : 'rgba(210,170,120,0.9)';
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(hasSlope ? '◥ SEM SLOPE' : '◥ + SLOPE', slopeBtnX + slopeBtnW / 2, slopeBtnY + 15);
         ctx.textAlign = 'left';
       }
     } else if (isSelected) {

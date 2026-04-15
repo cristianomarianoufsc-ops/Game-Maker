@@ -313,7 +313,7 @@ export default function Game() {
   const editorCollisionModeRef = useRef(false);
   const editorCollisionBoxIdxRef = useRef(0);
   type EditorDrag = {
-    mode: 'move' | 'resize-right' | 'resize-left' | 'resize-top' | 'resize-bottom' | 'resize-corner';
+    mode: 'move' | 'resize-right' | 'resize-left' | 'resize-top' | 'resize-bottom' | 'resize-corner' | 'slope-left' | 'slope-right';
     editingCollision: boolean;
     editingCrop: boolean;
     startWX: number; startWY: number;
@@ -326,11 +326,13 @@ export default function Game() {
     origCollisionOffsetY: number;
     origCollisionW: number;
     origCollisionH: number;
-    origCollisionBoxes: { x: number; y: number; w: number; h: number }[];
+    origCollisionBoxes: { x: number; y: number; w: number; h: number; slopeTop?: { left: number; right: number } }[];
     hadCustomCollision: boolean;
     origText: string;
     hasMoved: boolean;
     origGroupPositions: { idx: number; origX: number; origY: number }[];
+    origSlopeLeft: number;
+    origSlopeRight: number;
   };
   const editorDragRef = useRef<EditorDrag | null>(null);
   const EDITOR_PAN_SPEED = 12;
@@ -688,18 +690,26 @@ export default function Game() {
         origCollisionOffsetY: hit.y - p.y,
         origCollisionW: hit.w,
         origCollisionH: hit.h,
-        origCollisionBoxes: (p.collisionBoxes ?? []).map((box) => ({ ...box })),
+        origCollisionBoxes: (p.collisionBoxes ?? []).map((box) => ({
+          ...box,
+          slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined,
+        })),
         hadCustomCollision: hasCustomPlatformCollision(p),
         origText,
         hasMoved: false,
         origGroupPositions: [],
+        origSlopeLeft: hit.slopeTop?.left ?? 0,
+        origSlopeRight: hit.slopeTop?.right ?? 0,
       };
     };
 
     const snapshotPlatforms = (): Platform[] =>
       platformsRef.current.map(p => ({
         ...p,
-        collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({ ...b })) : undefined,
+        collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({
+          ...b,
+          slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
+        })) : undefined,
       })) as Platform[];
 
     const pushEditorHistory = () => {
@@ -788,6 +798,12 @@ export default function Game() {
               const scale = Math.max(0.05, (drag.origCollisionW + dx) / drag.origCollisionW);
               box.w = Math.round(Math.max(6, Math.min(drag.origCollisionW * scale, p.w - drag.origCollisionOffsetX)));
               box.h = Math.round(Math.max(6, Math.min(drag.origCollisionH * scale, p.h - drag.origCollisionOffsetY)));
+            } else if (drag.mode === 'slope-left') {
+              if (!box.slopeTop) box.slopeTop = { left: 0, right: 0 };
+              box.slopeTop.left = Math.max(0, Math.min(box.h, drag.origSlopeLeft + dy));
+            } else if (drag.mode === 'slope-right') {
+              if (!box.slopeTop) box.slopeTop = { left: 0, right: 0 };
+              box.slopeTop.right = Math.max(0, Math.min(box.h, drag.origSlopeRight + dy));
             }
             clampPlatformCollisionOverrides(p);
           } else if (drag.mode === 'move') {
@@ -1062,6 +1078,43 @@ export default function Game() {
           if (!hasBoxes) editorCollisionModeRef.current = false;
           copyPlatText(platCoordText(p), hasBoxes ? `✓ BOX REMOVIDA` : `✓ COLISÃO RESETADA`);
           return;
+        }
+
+        // Slope toggle button
+        const slopeBtnX = dupBtnX;
+        const slopeBtnY = removeBoxBtnY + 26;
+        const slopeBtnW = 82;
+        const slopeBtnH = 22;
+        if (editorCollisionModeRef.current && wx >= slopeBtnX && wx <= slopeBtnX + slopeBtnW && wy >= slopeBtnY && wy <= slopeBtnY + slopeBtnH) {
+          pushEditorHistory();
+          const box = ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+          if (box.slopeTop) {
+            delete box.slopeTop;
+            copyPlatText(platCoordText(p), '✓ SLOPE REMOVIDO');
+          } else {
+            box.slopeTop = { left: box.h, right: 0 };
+            copyPlatText(platCoordText(p), '✓ SLOPE ADICIONADO');
+          }
+          return;
+        }
+
+        // Slope handles (diamond, laranja) — somente em modo colisão
+        if (editorCollisionModeRef.current && hit.slopeTop) {
+          const slopeHitRadius = 10;
+          const sLX = hit.x, sLY = hit.y + hit.slopeTop.left;
+          const sRX = hit.x + hit.w, sRY = hit.y + hit.slopeTop.right;
+          if (Math.abs(wx - sLX) <= slopeHitRadius && Math.abs(wy - sLY) <= slopeHitRadius) {
+            ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+            editorPendingHistoryRef.current = snapshotPlatforms();
+            editorDragRef.current = { ...makeEditorDrag(p, 'slope-left', wx, wy, origText), origSlopeLeft: hit.slopeTop.left, origSlopeRight: hit.slopeTop.right };
+            return;
+          }
+          if (Math.abs(wx - sRX) <= slopeHitRadius && Math.abs(wy - sRY) <= slopeHitRadius) {
+            ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+            editorPendingHistoryRef.current = snapshotPlatforms();
+            editorDragRef.current = { ...makeEditorDrag(p, 'slope-right', wx, wy, origText), origSlopeLeft: hit.slopeTop.left, origSlopeRight: hit.slopeTop.right };
+            return;
+          }
         }
 
         if (editorCollisionModeRef.current && e.altKey) {

@@ -10,16 +10,36 @@ import {
   WALLCLIMB_DURATION, WALLFLIP_BACK_VX, WALLFLIP_DURATION, WALLFLIP_JUMP_VY,
   SIDEFLIP_DURATION, SIDEFLIP_BOOST,
 } from './constants';
-import { getPlatformCollisionRects } from './collision';
+import { getPlatformCollisionRects, getSlopeSurfaceY } from './collision';
+import type { SlopedRect } from './collision';
 
 function rectOverlap(ax: number, ay: number, aw: number, ah: number,
   bx: number, by: number, bw: number, bh: number): boolean {
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 
-function resolvePlayerPlatform(p: Player, plat: Platform, hit: { x: number; y: number; w: number; h: number }): boolean {
+function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect): boolean {
   const ph = (p.isRolling || p.forcedCrouch) ? PLAYER_ROLL_H : PLAYER_H;
   if (!rectOverlap(p.x, p.y, p.w, ph, hit.x, hit.y, hit.w, hit.h)) return false;
+
+  // --- Slope resolution ---
+  if (hit.slopeTop) {
+    // Sample surface Y at the player's horizontal center
+    const centerX = p.x + p.w / 2;
+    const surfaceY = getSlopeSurfaceY(hit, centerX);
+    const feetY = p.y + ph;
+
+    // Land on slope: feet at or below surface, player's head above the surface
+    if (feetY >= surfaceY && p.y <= surfaceY) {
+      p.y = surfaceY - ph;
+      if (p.vy > 0) p.vy = 0;
+      p.onGround = true;
+      p.coyoteTime = 6;
+      return true;
+    }
+    // Otherwise let player pass through freely (they're above or passing under)
+    return false;
+  }
 
   const overlapLeft = p.x + p.w - hit.x;
   const overlapRight = hit.x + hit.w - p.x;
