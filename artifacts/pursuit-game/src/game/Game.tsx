@@ -307,6 +307,9 @@ export default function Game() {
   const editorSelectedIdxRef = useRef(-1);
   const editorSelectedIndicesRef = useRef<Set<number>>(new Set());
   const editorMarqueeRef = useRef<{ startWX: number; startWY: number; endWX: number; endWY: number } | null>(null);
+  const editorUndoStackRef = useRef<Platform[][]>([]);
+  const editorRedoStackRef = useRef<Platform[][]>([]);
+  const editorPendingHistoryRef = useRef<Platform[] | null>(null);
   const editorCollisionModeRef = useRef(false);
   const editorCollisionBoxIdxRef = useRef(0);
   type EditorDrag = {
@@ -327,6 +330,7 @@ export default function Game() {
     hadCustomCollision: boolean;
     origText: string;
     hasMoved: boolean;
+    origGroupPositions: { idx: number; origX: number; origY: number }[];
   };
   const editorDragRef = useRef<EditorDrag | null>(null);
   const EDITOR_PAN_SPEED = 12;
@@ -688,7 +692,41 @@ export default function Game() {
         hadCustomCollision: hasCustomPlatformCollision(p),
         origText,
         hasMoved: false,
+        origGroupPositions: [],
       };
+    };
+
+    const snapshotPlatforms = (): Platform[] =>
+      platformsRef.current.map(p => ({
+        ...p,
+        collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({ ...b })) : undefined,
+      })) as Platform[];
+
+    const pushEditorHistory = () => {
+      editorUndoStackRef.current.push(snapshotPlatforms());
+      if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
+      editorRedoStackRef.current = [];
+    };
+
+    const applyEditorSnapshot = (snapshot: Platform[]) => {
+      platformsRef.current = snapshot;
+      if (gsRef.current) gsRef.current.platforms = snapshot;
+      editorSelectedIdxRef.current = -1;
+      editorSelectedIndicesRef.current = new Set();
+      editorDragRef.current = null;
+      editorPendingHistoryRef.current = null;
+    };
+
+    const editorUndo = () => {
+      if (editorUndoStackRef.current.length === 0) return;
+      editorRedoStackRef.current.push(snapshotPlatforms());
+      applyEditorSnapshot(editorUndoStackRef.current.pop()!);
+    };
+
+    const editorRedo = () => {
+      if (editorRedoStackRef.current.length === 0) return;
+      editorUndoStackRef.current.push(snapshotPlatforms());
+      applyEditorSnapshot(editorRedoStackRef.current.pop()!);
     };
 
     const onCanvasMouseMove = (e: MouseEvent) => {
@@ -757,6 +795,16 @@ export default function Game() {
             p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
             p.y = Math.max(60, p.y);
             snapEditorPlatform(p, editorSelectedIdxRef.current);
+            if (drag.origGroupPositions.length > 0) {
+              drag.origGroupPositions.forEach(({ idx, origX, origY }) => {
+                const gp = platformsRef.current[idx];
+                if (gp) {
+                  gp.x = Math.round(origX + dx);
+                  gp.y = Math.round(Math.min(origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(gp)));
+                  gp.y = Math.max(60, gp.y);
+                }
+              });
+            }
           } else if (drag.mode === 'resize-right') {
             p.w = Math.round(Math.max(10, drag.origW + dx));
             if (drag.hadCustomCollision) {
@@ -899,6 +947,13 @@ export default function Game() {
       if (!coords) return;
       const { wx, wy } = coords;
 
+      // Undo/Redo buttons (tela fixa no header do editor)
+      const screenX = wx - editorCamXRef.current;
+      if (wy >= 5 && wy <= 23) {
+        if (screenX >= 166 && screenX <= 220) { editorUndo(); return; }
+        if (screenX >= 224 && screenX <= 278) { editorRedo(); return; }
+      }
+
       const selIdx = editorSelectedIdxRef.current;
       const platforms = platformsRef.current;
 
@@ -938,6 +993,7 @@ export default function Game() {
         const addBoxBtnW = 82;
         const addBoxBtnH = 22;
         if (wx >= dupBtnX && wx <= dupBtnX + dupBtnW && wy >= dupBtnY && wy <= dupBtnY + dupBtnH) {
+          pushEditorHistory();
           const selectedGroup = Array.from(editorSelectedIndicesRef.current)
             .filter((idx) => idx >= 0 && idx < platforms.length && platforms[idx].type !== 'ground')
             .sort((a, b) => a - b);
@@ -1046,7 +1102,13 @@ export default function Game() {
           : (wx >= editRect.x && wx <= editRect.x + editRect.w && wy >= editRect.y && wy <= editRect.y + editRect.h)
         ) {
           if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+          editorPendingHistoryRef.current = snapshotPlatforms();
           editorDragRef.current = makeEditorDrag(p, 'move', wx, wy, origText);
+          if (editorSelectedIndicesRef.current.size > 1 && editorSelectedIndicesRef.current.has(selIdx)) {
+            editorDragRef.current.origGroupPositions = [...editorSelectedIndicesRef.current]
+              .filter(i => i !== selIdx && i >= 0 && i < platforms.length && platforms[i].type !== 'ground')
+              .map(i => ({ idx: i, origX: platforms[i].x, origY: platforms[i].y }));
+          }
           return;
         }
       }
@@ -1074,8 +1136,18 @@ export default function Game() {
           const texts = indices.map(i => platCoordText(platforms[i])).join(',\n');
           const msg = indices.length === 1 ? `✓ SELECIONADO: ${platCoordText(platforms[indices[0]])}` : `✓ ${indices.length} SELECIONADOS`;
           copyPlatText(texts, msg);
+        } else if (editorSelectedIndicesRef.current.has(idx) && editorSelectedIndicesRef.current.size > 1) {
+          // Clique em membro do grupo → arrastar grupo inteiro sem mudar seleção
+          editorSelectedIdxRef.current = idx;
+          const clickedP = platforms[idx];
+          editorPendingHistoryRef.current = snapshotPlatforms();
+          const newDrag = makeEditorDrag(clickedP, 'move', wx, wy, platCoordText(clickedP));
+          newDrag.origGroupPositions = [...editorSelectedIndicesRef.current]
+            .filter(i => i !== idx && i >= 0 && i < platforms.length && platforms[i].type !== 'ground')
+            .map(i => ({ idx: i, origX: platforms[i].x, origY: platforms[i].y }));
+          editorDragRef.current = newDrag;
         } else {
-          // Normal selection — clear multi, select only this one
+          // Seleção normal — limpa multi, seleciona só este
           editorSelectedIdxRef.current = idx;
           editorSelectedIndicesRef.current = new Set([idx]);
           editorCollisionModeRef.current = false;
@@ -1083,6 +1155,7 @@ export default function Game() {
           const p = platforms[idx];
           const text = platCoordText(p);
           copyPlatText(text, `✓ SELECIONADO: ${text}`);
+          editorPendingHistoryRef.current = snapshotPlatforms();
           editorDragRef.current = makeEditorDrag(p, 'move', wx, wy, text);
         }
       } else {
@@ -1147,6 +1220,12 @@ export default function Game() {
       if (!drag) return;
       editorDragRef.current = null;
       if (drag.hasMoved) {
+        // Commit pending history snapshot (tirado antes do drag começar)
+        if (editorPendingHistoryRef.current) {
+          editorUndoStackRef.current.push(editorPendingHistoryRef.current);
+          if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
+          editorRedoStackRef.current = [];
+        }
         const p = platformsRef.current[editorSelectedIdxRef.current];
         if (p) {
           const newText = platCoordText(p);
@@ -1154,6 +1233,7 @@ export default function Game() {
           copyPlatText(clipText, `✓ ATUALIZADO — cole aqui e diga "atualizar"`);
         }
       }
+      editorPendingHistoryRef.current = null;
     };
 
     const cvs = canvasRef.current;
@@ -1224,6 +1304,7 @@ export default function Game() {
           editorDeleteBoxJustPressed.current = false;
           const p = platformsRef.current[editorSelectedIdxRef.current];
           if (p && editorCollisionModeRef.current) {
+            pushEditorHistory();
             editorCollisionBoxIdxRef.current = removePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
             const hasBoxes = (p.collisionBoxes?.length ?? 0) > 0;
             if (!hasBoxes) editorCollisionModeRef.current = false;
@@ -1441,7 +1522,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS, editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS, editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);

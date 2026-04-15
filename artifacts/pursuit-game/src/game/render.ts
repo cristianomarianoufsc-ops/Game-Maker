@@ -2366,6 +2366,8 @@ export function drawEditorUI(
   selectedCollisionBoxIdx = 0,
   selectedIndices: Set<number> = new Set(),
   marquee: { startWX: number; startWY: number; endWX: number; endWY: number } | null = null,
+  canUndo = false,
+  canRedo = false,
 ): void {
   const typeColor: Record<string, string> = {
     ground: 'rgba(80,200,80,0.25)',
@@ -2645,6 +2647,34 @@ export function drawEditorUI(
   ctx.fillStyle = 'rgba(255,200,60,0.95)';
   ctx.font = 'bold 13px monospace';
   ctx.fillText('EDITOR DE FASE', 12, 16);
+
+  // Botões Desfazer / Refazer
+  const undoBtnX = 166, redoBtnX = 224, histBtnY = 5, histBtnW = 54, histBtnH = 18;
+  ctx.save();
+  ctx.fillStyle = canUndo ? 'rgba(40,50,80,0.92)' : 'rgba(25,25,35,0.6)';
+  ctx.strokeStyle = canUndo ? 'rgba(120,170,255,0.9)' : 'rgba(80,80,110,0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(undoBtnX, histBtnY, histBtnW, histBtnH, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = canUndo ? 'rgba(160,200,255,1)' : 'rgba(100,100,140,0.55)';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('↩ DESFAZ', undoBtnX + histBtnW / 2, histBtnY + 12);
+
+  ctx.fillStyle = canRedo ? 'rgba(40,50,80,0.92)' : 'rgba(25,25,35,0.6)';
+  ctx.strokeStyle = canRedo ? 'rgba(120,170,255,0.9)' : 'rgba(80,80,110,0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(redoBtnX, histBtnY, histBtnW, histBtnH, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = canRedo ? 'rgba(160,200,255,1)' : 'rgba(100,100,140,0.55)';
+  ctx.font = 'bold 10px monospace';
+  ctx.fillText('REFAZ ↪', redoBtnX + histBtnW / 2, histBtnY + 12);
+  ctx.textAlign = 'left';
+  ctx.restore();
 
   ctx.fillStyle = 'rgba(180,175,210,0.75)';
   ctx.font = '10px monospace';
