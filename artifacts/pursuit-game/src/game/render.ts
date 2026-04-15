@@ -2352,6 +2352,8 @@ export function drawEditorUI(
   checkpoints: { label: string; x: number }[],
   collisionMode = false,
   selectedCollisionBoxIdx = 0,
+  selectedIndices: Set<number> = new Set(),
+  marquee: { startWX: number; startWY: number; endWX: number; endWY: number } | null = null,
 ): void {
   const typeColor: Record<string, string> = {
     ground: 'rgba(80,200,80,0.25)',
@@ -2380,13 +2382,18 @@ export function drawEditorUI(
     const screenLeft = p.x - camX;
     if (screenLeft > CANVAS_W + 20 || screenLeft + p.w < -20) continue;
 
-    const isSelected = i === selectedIdx;
+    const isPrimary = i === selectedIdx;
+    const isSelected = isPrimary || selectedIndices.has(i);
     const isHovered = i === hoveredIdx && !isSelected;
 
-    if (isSelected) {
+    if (isPrimary) {
       ctx.fillStyle = collisionMode ? 'rgba(255,180,0,0.16)' : 'rgba(0,200,255,0.18)';
       ctx.strokeStyle = collisionMode ? 'rgba(255,210,60,1)' : 'rgba(0,220,255,1)';
       ctx.lineWidth = 2;
+    } else if (isSelected) {
+      ctx.fillStyle = 'rgba(0,200,255,0.10)';
+      ctx.strokeStyle = 'rgba(0,200,255,0.7)';
+      ctx.lineWidth = 1.5;
     } else if (isHovered) {
       ctx.fillStyle = 'rgba(255,40,40,0.35)';
       ctx.strokeStyle = 'rgba(255,80,60,0.9)';
@@ -2442,7 +2449,7 @@ export function drawEditorUI(
       }
     }
 
-    if (isSelected) {
+    if (isPrimary) {
       // Coord label above
       const gy = Math.round(p.y - 410);
       ctx.fillStyle = 'rgba(0,220,255,0.95)';
@@ -2543,6 +2550,14 @@ export function drawEditorUI(
         ctx.fillText('+ BOX', addBtnX + addBtnW / 2, addBtnY + 15);
         ctx.textAlign = 'left';
       }
+    } else if (isSelected) {
+      // Selecionado secundário (multi-seleção) — só rótulo, sem alças
+      const gy = Math.round(p.y - 410);
+      ctx.fillStyle = 'rgba(0,200,255,0.75)';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type}]`, drawX + drawW / 2, drawY - 6);
+      ctx.textAlign = 'left';
     } else if (isHovered) {
       ctx.fillStyle = 'rgba(255,80,60,0.9)';
       ctx.font = 'bold 11px monospace';
@@ -2552,6 +2567,24 @@ export function drawEditorUI(
       ctx.textAlign = 'left';
     }
   }
+
+  // Desenhar marquee de seleção (contexto já está transladado por -camX)
+  if (marquee) {
+    const mx1 = Math.min(marquee.startWX, marquee.endWX);
+    const my1 = Math.min(marquee.startWY, marquee.endWY);
+    const mw = Math.abs(marquee.endWX - marquee.startWX);
+    const mh = Math.abs(marquee.endWY - marquee.startWY);
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,200,255,0.06)';
+    ctx.fillRect(mx1, my1, mw, mh);
+    ctx.strokeStyle = 'rgba(0,220,255,0.85)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(mx1, my1, mw, mh);
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
   ctx.restore();
 
   ctx.fillStyle = 'rgba(0,0,0,0.62)';

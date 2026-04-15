@@ -303,6 +303,8 @@ export default function Game() {
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
   const editorSelectedIdxRef = useRef(-1);
+  const editorSelectedIndicesRef = useRef<Set<number>>(new Set());
+  const editorMarqueeRef = useRef<{ startWX: number; startWY: number; endWX: number; endWY: number } | null>(null);
   const editorCollisionModeRef = useRef(false);
   const editorCollisionBoxIdxRef = useRef(0);
   type EditorDrag = {
@@ -702,6 +704,13 @@ export default function Game() {
         return;
       }
 
+      // Marquee drag tracking
+      if (editorMarqueeRef.current) {
+        editorMarqueeRef.current.endWX = wx;
+        editorMarqueeRef.current.endWY = wy;
+        return;
+      }
+
       // Middle-button pan
       editorHoveredIdxRef.current = platformsRef.current.findIndex(p => {
         if (p.type === 'ground') return false;
@@ -824,24 +833,49 @@ export default function Game() {
         }
       }
 
-      // Hit a different platform → select it, copy its coords
+      // Hit a different platform → select or multi-select it
       const idx = platforms.findIndex(p => {
         if (p.type === 'ground') return false;
         return isEditorPointInsidePlatform(wx, wy, p);
       });
       if (idx >= 0) {
-        editorSelectedIdxRef.current = idx;
-        editorCollisionModeRef.current = false;
-        editorCollisionBoxIdxRef.current = 0;
-        const p = platforms[idx];
-        const text = platCoordText(p);
-        copyPlatText(text, `✓ SELECIONADO: ${text}`);
-        // Also start a potential move drag right away
-        editorDragRef.current = makeEditorDrag(p, 'move', wx, wy, text);
+        if (e.shiftKey) {
+          // Toggle platform in/out of multi-selection
+          if (editorSelectedIndicesRef.current.has(idx)) {
+            editorSelectedIndicesRef.current.delete(idx);
+            if (editorSelectedIdxRef.current === idx) {
+              editorSelectedIdxRef.current = [...editorSelectedIndicesRef.current][0] ?? -1;
+            }
+          } else {
+            editorSelectedIndicesRef.current.add(idx);
+            editorSelectedIdxRef.current = idx;
+            editorCollisionModeRef.current = false;
+            editorCollisionBoxIdxRef.current = 0;
+          }
+          const indices = [...editorSelectedIndicesRef.current];
+          const texts = indices.map(i => platCoordText(platforms[i])).join(',\n');
+          const msg = indices.length === 1 ? `✓ SELECIONADO: ${platCoordText(platforms[indices[0]])}` : `✓ ${indices.length} SELECIONADOS`;
+          copyPlatText(texts, msg);
+        } else {
+          // Normal selection — clear multi, select only this one
+          editorSelectedIdxRef.current = idx;
+          editorSelectedIndicesRef.current = new Set([idx]);
+          editorCollisionModeRef.current = false;
+          editorCollisionBoxIdxRef.current = 0;
+          const p = platforms[idx];
+          const text = platCoordText(p);
+          copyPlatText(text, `✓ SELECIONADO: ${text}`);
+          editorDragRef.current = makeEditorDrag(p, 'move', wx, wy, text);
+        }
       } else {
-        editorSelectedIdxRef.current = -1;
-        editorCollisionModeRef.current = false;
-        editorCollisionBoxIdxRef.current = 0;
+        if (!e.shiftKey) {
+          // Click on empty space: clear selection and start marquee
+          editorSelectedIdxRef.current = -1;
+          editorSelectedIndicesRef.current = new Set();
+          editorCollisionModeRef.current = false;
+          editorCollisionBoxIdxRef.current = 0;
+          editorMarqueeRef.current = { startWX: wx, startWY: wy, endWX: wx, endWY: wy };
+        }
       }
     };
 
@@ -861,6 +895,36 @@ export default function Game() {
     const onMouseUp = (e: MouseEvent) => {
       if (e.button === 1) { middleDragging = false; return; }
       if (e.button !== 0) return;
+
+      // Finalizar marquee de seleção
+      const marquee = editorMarqueeRef.current;
+      if (marquee) {
+        editorMarqueeRef.current = null;
+        const mx1 = Math.min(marquee.startWX, marquee.endWX);
+        const mx2 = Math.max(marquee.startWX, marquee.endWX);
+        const my1 = Math.min(marquee.startWY, marquee.endWY);
+        const my2 = Math.max(marquee.startWY, marquee.endWY);
+        if (mx2 - mx1 > 4 || my2 - my1 > 4) {
+          const selected = new Set<number>();
+          platformsRef.current.forEach((p, i) => {
+            if (p.type === 'ground') return;
+            if (p.x < mx2 && p.x + p.w > mx1 && p.y < my2 && p.y + p.h > my1) {
+              selected.add(i);
+            }
+          });
+          editorSelectedIndicesRef.current = selected;
+          editorSelectedIdxRef.current = [...selected][0] ?? -1;
+          if (selected.size > 0) {
+            const texts = [...selected].map(i => platCoordText(platformsRef.current[i])).join(',\n');
+            const msg = selected.size === 1
+              ? `✓ SELECIONADO: ${platCoordText(platformsRef.current[[...selected][0]])}`
+              : `✓ ${selected.size} SELECIONADOS`;
+            copyPlatText(texts, msg);
+          }
+        }
+        return;
+      }
+
       const drag = editorDragRef.current;
       if (!drag) return;
       editorDragRef.current = null;
@@ -1148,7 +1212,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS, editorCollisionModeRef.current, editorCollisionBoxIdxRef.current);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS, editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);
