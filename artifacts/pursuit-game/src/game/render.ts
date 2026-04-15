@@ -2735,7 +2735,7 @@ export function drawEditorUI(
   ctx.fillStyle = 'rgba(180,175,210,0.75)';
   ctx.font = '10px monospace';
   const helpText = collisionMode
-    ? 'HITBOX: clique numa caixa para escolher  |  +BOX / −HITBOX  |  S ou ◥ +SLOPE  |  arraste os losangos laranja para configurar a rampa'
+    ? 'HITBOX: clique numa caixa para escolher  |  setas movem 1px (Shift=5px)  |  +BOX / −HITBOX  |  S ou ◥ +SLOPE'
     : '← → MOVER  |  ARRASTAR: SNAP MAGNÉTICO  |  CLIQUE: SELECIONAR  |  botão HITBOX configura colisão/slope  |  ESC: MENU';
   ctx.fillText(helpText, 12, 32);
 

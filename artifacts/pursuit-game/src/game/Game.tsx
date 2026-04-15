@@ -491,6 +491,13 @@ export default function Game() {
     carroImg.src = '/carro.png';
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
+      if (down && gsRef.current?.gamePhase === 'editor' && editorCollisionModeRef.current) {
+        const step = e.shiftKey ? 5 : 1;
+        if (e.code === 'ArrowLeft' && nudgeEditorSelectedHitbox(-step, 0)) { e.preventDefault(); return; }
+        if (e.code === 'ArrowRight' && nudgeEditorSelectedHitbox(step, 0)) { e.preventDefault(); return; }
+        if (e.code === 'ArrowUp' && nudgeEditorSelectedHitbox(0, -step)) { e.preventDefault(); return; }
+        if (e.code === 'ArrowDown' && nudgeEditorSelectedHitbox(0, step)) { e.preventDefault(); return; }
+      }
       const k = keysRef.current;
       switch (e.code) {
         case 'ArrowLeft':  case 'KeyA': k.left  = down; break;
@@ -732,6 +739,18 @@ export default function Game() {
       editorUndoStackRef.current.push(snapshotPlatforms());
       if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
       editorRedoStackRef.current = [];
+    };
+
+    const nudgeEditorSelectedHitbox = (dx: number, dy: number): boolean => {
+      const p = platformsRef.current[editorSelectedIdxRef.current];
+      if (!p || p.type === 'ground' || !editorCollisionModeRef.current) return false;
+      pushEditorHistory();
+      const box = ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+      box.x = Math.round(box.x + dx);
+      box.y = Math.round(box.y + dy);
+      clampPlatformCollisionOverrides(p);
+      copyPlatText(platCoordText(p), `✓ HITBOX MOVIDA: ${dx === 0 ? '' : dx > 0 ? '→' : '←'}${dy === 0 ? '' : dy > 0 ? '↓' : '↑'}`);
+      return true;
     };
 
     const applyEditorSnapshot = (snapshot: Platform[]) => {
@@ -983,7 +1002,40 @@ export default function Game() {
 
     const onCanvasMouseDown = (e: MouseEvent) => {
       const gs = gsRef.current;
-      if (!gs || gs.gamePhase !== 'editor') return;
+      if (!gs) return;
+
+      if (gs.gamePhase === 'playing' && editorTestModeRef.current && e.button === 0) {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = CANVAS_W / rect.width;
+        const scaleY = CANVAS_H / rect.height;
+        const cx = (e.clientX - rect.left) * scaleX;
+        const cy = (e.clientY - rect.top) * scaleY;
+        const wx = cx + gs.camera.x;
+        const wy = cy + gs.camera.y;
+        const idx = platformsRef.current.findIndex(p => {
+          if (p.type === 'ground') return false;
+          return isEditorPointInsidePlatform(wx, wy, p);
+        });
+        if (idx >= 0) {
+          e.preventDefault();
+          editorCamXRef.current = gs.camera.x;
+          gs.gamePhase = 'editor';
+          gs.camera.x = editorCamXRef.current;
+          editorSelectedIdxRef.current = idx;
+          editorSelectedIndicesRef.current = new Set([idx]);
+          editorCollisionModeRef.current = false;
+          editorCollisionBoxIdxRef.current = 0;
+          editorDragRef.current = null;
+          editorMarqueeRef.current = null;
+          const p = platformsRef.current[idx];
+          copyPlatText(platCoordText(p), `✓ VOLTOU AO EDITOR: ${platCoordText(p)}`);
+        }
+        return;
+      }
+
+      if (gs.gamePhase !== 'editor') return;
 
       if (e.button === 1) {
         e.preventDefault();
