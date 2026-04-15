@@ -1373,6 +1373,23 @@ export default function Game() {
               : `✓ ${selected.size} SELECIONADOS`;
             copyPlatText(texts, msg);
           }
+        } else {
+          // Clique simples em espaço vazio → spawna Horácio no cursor, caindo do alto
+          const gs = gsRef.current;
+          if (gs && gs.gamePhase === 'editor') {
+            const spawnX = marquee.startWX;
+            editorLastSpawnXRef.current = spawnX;
+            const newState = makeInitialState('story');
+            newState.gameMode = 'wall-test';
+            newState.gamePhase = 'playing';
+            newState.player.x = spawnX;
+            newState.player.y = -300;
+            newState.player.vx = 0;
+            newState.player.vy = 0;
+            newState.camera.x = editorCamXRef.current;
+            gsRef.current = newState;
+            editorTestModeRef.current = true;
+          }
         }
         return;
       }
