@@ -1004,6 +1004,27 @@ export default function Game() {
       const gs = gsRef.current;
       if (!gs) return;
 
+      // Botão direito em jogo: spawna Horácio na posição do clique, caindo do céu
+      if (gs.gamePhase === 'playing' && e.button === 2) {
+        e.preventDefault();
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = CANVAS_W / rect.width;
+        const cx = (e.clientX - rect.left) * scaleX;
+        const worldX = cx + gs.camera.x;
+        gs.player.x = worldX - gs.player.w / 2;
+        gs.player.y = -300;
+        gs.player.vx = 0;
+        gs.player.vy = 2;
+        gs.player.onGround = false;
+        gs.player.state = 'jump';
+        gs.player.health = gs.player.maxHealth;
+        gs.player.invincible = false;
+        gs.player.hurtStunTimer = 0;
+        return;
+      }
+
       if (gs.gamePhase === 'playing' && editorTestModeRef.current && e.button === 0) {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -1377,10 +1398,12 @@ export default function Game() {
     };
 
     const cvs = canvasRef.current;
+    const onContextMenu = (e: MouseEvent) => e.preventDefault();
     if (cvs) {
       cvs.addEventListener('mousemove', onCanvasMouseMove);
       cvs.addEventListener('mousemove', onCanvasMiddleMove);
       cvs.addEventListener('mousedown', onCanvasMouseDown);
+      cvs.addEventListener('contextmenu', onContextMenu);
     }
     window.addEventListener('mouseup', onMouseUp);
 
@@ -1680,6 +1703,7 @@ export default function Game() {
         cvs.removeEventListener('mousemove', onCanvasMouseMove);
         cvs.removeEventListener('mousemove', onCanvasMiddleMove);
         cvs.removeEventListener('mousedown', onCanvasMouseDown);
+        cvs.removeEventListener('contextmenu', onContextMenu);
       }
       cancelAnimationFrame(animRef.current);
     };

@@ -28,8 +28,8 @@ export function generateLevel(): Platform[] {
     { x: 6500, y: GROUND_Y - 235, h: 235 },
 
     { x: 12100, y: GROUND_Y - 400, h: 400 },
-    { x: 14500, y: GROUND_Y - 400, h: 400 },
-    { x: 15200, y: GROUND_Y - 250, h: 250 },
+    { x: 16900, y: GROUND_Y - 400, h: 400 },
+    { x: 17600, y: GROUND_Y - 250, h: 250 },
 
     { x: 20900, y: GROUND_Y - 300, h: 300 },
     { x: 22100, y: GROUND_Y - 320, h: 320 },
@@ -63,15 +63,12 @@ export function generateLevel(): Platform[] {
 
     // WALL ZONE 2 — buracos maiores + paredes
     { x: 11700, w: 550 },
-    // Ferro velho (x:12100-14500): chão contínuo, sem buracos
-    { x: 12250, w: 2290 },  // 12250 → 14540 (cobre toda a zona do ferro velho)
-    { x: 14750, w: 500 },
-    { x: 15350, w: 600 },
+    // Ferro velho (x:12100-16900): chão contínuo, sem buracos (dobro do original)
+    { x: 12250, w: 4690 },  // 12250 → 16940 (cobre toda a zona do ferro velho)
 
     // FREE ZONE 3 — buracos moderados, ZERO paredes
-    { x: 16100, w: 700 },
-    { x: 16900, w: 650 },
-    { x: 17650, w: 600 },
+    { x: 17100, w: 550 },
+    { x: 17750, w: 600 },
     { x: 18350, w: 700 },
     { x: 19150, w: 600 },
     { x: 19850, w: 500 },
@@ -107,8 +104,6 @@ export function generateLevel(): Platform[] {
 
     // Wall zone 2
     { x: 11900 },
-    { x: 14400 },
-    { x: 15100 },
 
     // Free zone 3 — só lixeiras, sem paredes
     { x: 20000 },
@@ -152,10 +147,14 @@ export function generateLevel(): Platform[] {
     { x: 13330, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     { x: 14000, type: 'tire', w: 45,  h: 95 },
     { x: 14050, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:80,y:10,w:69,h:43,slopeTop:{left:43,right:0}},{x:149,y:10,w:219,h:16},{x:368,y:10,w:69,h:43,slopeTop:{left:0,right:43}}] },
-    // Free Zone 3
-    { x: 16250, type: 'car',  w: 150, h: 65 },
-    { x: 16520, type: 'box',  w: 65,  h: 55 },
-    { x: 16620, type: 'box',  w: 65,  h: 55 },
+    // Ferro velho — extensão (x:14600-16850)
+    { x: 14700, type: 'tire', w: 45,  h: 95 },
+    { x: 14900, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
+    { x: 15450, type: 'tire', w: 45,  h: 95 },
+    { x: 15680, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
+    { x: 16250, type: 'tire', w: 45,  h: 95 },
+    { x: 16400, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:80,y:10,w:69,h:43,slopeTop:{left:43,right:0}},{x:149,y:10,w:219,h:16},{x:368,y:10,w:69,h:43,slopeTop:{left:0,right:43}}] },
+    // Free Zone 3 (começa após muro x:16900)
     { x: 17100, type: 'tire', w: 45,  h: 95 },
     { x: 17400, type: 'car',  w: 150, h: 65 },
     { x: 17700, type: 'box',  w: 65,  h: 55 },
@@ -225,6 +224,28 @@ export function generateLevel(): Platform[] {
     { x: 13930, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 13800, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 13865, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+
+    // Pilha 4 — extensão: antes do 5º carro (x:14900)
+    { x: 14710, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 14775, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 14840, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 14710, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 14775, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 14710, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
+
+    // Pilha 5 — extensão: entre o pneu (x:15450) e o 6º carro (x:15680)
+    { x: 15510, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 15575, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 15510, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 15575, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 15510, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
+
+    // Pilha 6 — extensão: entre o 6º carro e o pneu (x:16250)
+    { x: 16150, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 16215, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 16280, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 16150, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 16215, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
   ];
   platforms.push(...junkyardBoxStacks);
 
@@ -241,7 +262,7 @@ export function generateLevel(): Platform[] {
 
     // Wall Zone 2
     { x: 11850, y: GROUND_Y - 55, w: 110 },
-    { x: 14700, y: GROUND_Y - 55, w: 110 },
+    { x: 17100, y: GROUND_Y - 55, w: 110 },
 
     // Free Zone 3
     { x: 17900, y: GROUND_Y - 55, w: 115 },
@@ -295,32 +316,25 @@ export function generateLevel(): Platform[] {
     // ── WALL ZONE 2 ──
     { x: 11800, y: GROUND_Y - 125, w: 115 },
     { x: 12020, y: GROUND_Y - 210, w: 90  },
-    // x:12100-14500 = ferro velho: sem sacadas, sem ACs, sem tijolos
-    { x: 14620, y: GROUND_Y - 125, w: 115 },
-    { x: 14840, y: GROUND_Y - 215, w: 90  },
-    { x: 15060, y: GROUND_Y - 125, w: 115 },
+    // x:12100-16900 = ferro velho: sem sacadas, sem ACs, sem tijolos
+    { x: 17020, y: GROUND_Y - 125, w: 115 },
+    { x: 17240, y: GROUND_Y - 215, w: 90  },
+    { x: 17460, y: GROUND_Y - 125, w: 115 },
 
-    // ── FREE ZONE 3 — parkour rápido, sem paredes ──
-    { x: 16200, y: GROUND_Y - 125, w: 115 },
-    { x: 16400, y: GROUND_Y - 180, w: 90  },
-    { x: 16600, y: GROUND_Y - 270, w: 90  },
-    { x: 16800, y: GROUND_Y - 180, w: 90  },
-    { x: 17000, y: GROUND_Y - 125, w: 115 },
+    // ── FREE ZONE 3 — parkour rápido, sem paredes (começa após muro x:16900) ──
+    { x: 17800, y: GROUND_Y - 125, w: 115 },
+    { x: 18000, y: GROUND_Y - 180, w: 90  },
+    { x: 18200, y: GROUND_Y - 270, w: 90  },
+    { x: 18400, y: GROUND_Y - 180, w: 90  },
+    { x: 18600, y: GROUND_Y - 125, w: 115 },
 
-    { x: 17300, y: GROUND_Y - 125, w: 115 },
-    { x: 17520, y: GROUND_Y - 220, w: 85  },
-    { x: 17740, y: GROUND_Y - 125, w: 115 },
+    { x: 18900, y: GROUND_Y - 125, w: 115 },
+    { x: 19100, y: GROUND_Y - 200, w: 90  },
+    { x: 19320, y: GROUND_Y - 125, w: 115 },
 
-    { x: 18050, y: GROUND_Y - 125, w: 115 },
-    { x: 18270, y: GROUND_Y - 200, w: 90  },
-    { x: 18490, y: GROUND_Y - 125, w: 115 },
-
-    { x: 18800, y: GROUND_Y - 125, w: 115 },
-    { x: 19020, y: GROUND_Y - 215, w: 85  },
-    { x: 19240, y: GROUND_Y - 125, w: 115 },
-
-    { x: 19550, y: GROUND_Y - 125, w: 115 },
-    { x: 19770, y: GROUND_Y - 185, w: 90  },
+    { x: 19620, y: GROUND_Y - 125, w: 115 },
+    { x: 19840, y: GROUND_Y - 215, w: 85  },
+    { x: 20060, y: GROUND_Y - 125, w: 115 },
 
     // ── WALL ZONE 3 ──
     { x: 20600, y: GROUND_Y - 125, w: 115 },
