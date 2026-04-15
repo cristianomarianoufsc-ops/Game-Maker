@@ -30,7 +30,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Editor de fase: objetos selecionados agora têm botão `HITBOX` abaixo de `DUP`; ao ativar, as alças e o arrasto editam somente a caixa de colisão, mantendo o tamanho visual do sprite. O texto copiado inclui `cw`, `ch`, `cox` e `coy` quando houver colisão customizada.
 - Editor de fase: Shift + arrastar uma alça do objeto faz crop visual da imagem (`crop:left,top,right,bottom`) sem alterar a colisão; a caixa de seleção/alças passa a acompanhar a área recortada. `,`/`.` e também Numpad 4/6 navegam entre checkpoints do editor.
 - Editor de fase: mover objetos no editor usa snap magnético pelas caixas de colisão, grudando bordas, centros, topo/base e chão quando estiverem próximos; duplicar (`DUP`) cria a cópia encostada ao original em vez de deixar uma folga. Quando há múltiplos objetos selecionados por marquee, o botão muda para `DUP N` e duplica o grupo inteiro mantendo posições relativas.
-- Hitboxes inclinadas: caixas de colisão agora podem ter `slopeTop` para transformar o topo em rampa; os carros grandes do ferro velho usam slopes nos vidros frontal/traseiro para Horácio subir do capô/porta-malas até o teto sem agarrar na lateral retangular.
+- Hitboxes inclinadas: caixas de colisão agora podem ter `slopeTop` para transformar o topo em rampa; os carros grandes do ferro velho usam slopes nos vidros frontal/traseiro para Horácio subir do capô/porta-malas até o teto sem agarrar na lateral retangular. No editor, entre em `HITBOX`, selecione a caixa com Alt+clique, use `S` ou o botão `+ SLOPE`, e arraste os losangos laranja para ajustar o ângulo.
 
 ## Key Commands
 

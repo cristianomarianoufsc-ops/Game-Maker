@@ -503,6 +503,22 @@ export default function Game() {
           }
           break;
         case 'ArrowDown': case 'KeyS':
+          if (e.code === 'KeyS' && down && gsRef.current?.gamePhase === 'editor' && editorCollisionModeRef.current) {
+            const p = platformsRef.current[editorSelectedIdxRef.current];
+            if (p) {
+              pushEditorHistory();
+              const box = ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+              if (box.slopeTop) {
+                delete box.slopeTop;
+                copyPlatText(platCoordText(p), '✓ SLOPE REMOVIDO DA HITBOX');
+              } else {
+                box.slopeTop = { left: box.h, right: 0 };
+                copyPlatText(platCoordText(p), '✓ SLOPE ADICIONADO — arraste os losangos laranja');
+              }
+            }
+            e.preventDefault();
+            break;
+          }
           k.down = down;
           if (down) {
             lastDownPressTime.current = performance.now();
@@ -1104,10 +1120,10 @@ export default function Game() {
           const box = ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
           if (box.slopeTop) {
             delete box.slopeTop;
-            copyPlatText(platCoordText(p), '✓ SLOPE REMOVIDO');
+            copyPlatText(platCoordText(p), '✓ SLOPE REMOVIDO DA HITBOX');
           } else {
             box.slopeTop = { left: box.h, right: 0 };
-            copyPlatText(platCoordText(p), '✓ SLOPE ADICIONADO');
+            copyPlatText(platCoordText(p), '✓ SLOPE ADICIONADO — arraste os losangos laranja');
           }
           return;
         }
