@@ -142,7 +142,7 @@ export function generateLevel(): Platform[] {
     collisionOffsetY?: number;
   }> = [
     // Ferro velho (x:12100-14500) — só carros e pneus
-    { x: 12505, type: 'car',  w: 445, h: 168, collisionW: 445, collisionH: 71, collisionOffsetX: 0, collisionOffsetY: 43 },
+    { x: 12505, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:43,w:445,h:71},{x:150,y:0,w:221,h:71}] },
     { x: 13050, type: 'tire', w: 45,  h: 95 },
 
     { x: 14000, type: 'tire', w: 45,  h: 95 },

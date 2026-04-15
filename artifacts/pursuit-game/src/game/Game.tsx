@@ -29,6 +29,7 @@ import {
 } from './render';
 import {
   addPlatformCollisionBox,
+  removePlatformCollisionBox,
   clampPlatformCollisionOverrides,
   ensurePlatformCollisionBox,
   ensurePlatformCollisionBoxes,
@@ -296,6 +297,7 @@ export default function Game() {
   const DIVE_COMBO_WINDOW = 420;
   const editorJustPressed = useRef(false);
   const editorSpawnJustPressed = useRef(false);
+  const editorDeleteBoxJustPressed = useRef(false);
   const editorTestModeRef = useRef(false);
   const editorCamXRef = useRef(0);
   const editorLastSpawnXRef = useRef(0);
@@ -513,6 +515,12 @@ export default function Game() {
           break;
         case 'KeyE':
           if (down) editorJustPressed.current = true;
+          break;
+        case 'Delete':
+          if (down && gsRef.current?.gamePhase === 'editor') {
+            editorDeleteBoxJustPressed.current = true;
+            e.preventDefault();
+          }
           break;
         case 'Period':
           if (down && gsRef.current?.gamePhase === 'editor') {
@@ -798,6 +806,17 @@ export default function Game() {
           copyPlatText(text, `✓ BOX ${editorCollisionBoxIdxRef.current + 1} ADICIONADA`);
           return;
         }
+        const removeBoxBtnX = dupBtnX;
+        const removeBoxBtnY = addBoxBtnY + 26;
+        const removeBoxBtnW = 82;
+        const removeBoxBtnH = 22;
+        if (editorCollisionModeRef.current && wx >= removeBoxBtnX && wx <= removeBoxBtnX + removeBoxBtnW && wy >= removeBoxBtnY && wy <= removeBoxBtnY + removeBoxBtnH) {
+          editorCollisionBoxIdxRef.current = removePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+          const hasBoxes = (p.collisionBoxes?.length ?? 0) > 0;
+          if (!hasBoxes) editorCollisionModeRef.current = false;
+          copyPlatText(platCoordText(p), hasBoxes ? `✓ BOX REMOVIDA` : `✓ COLISÃO RESETADA`);
+          return;
+        }
 
         if (editorCollisionModeRef.current && e.altKey) {
           const idx = getPlatformCollisionRects(p).findIndex((box) =>
@@ -1000,6 +1019,17 @@ export default function Game() {
           const keys = keysRef.current;
           if (keys.left)  editorCamXRef.current = Math.max(0, editorCamXRef.current - EDITOR_PAN_SPEED);
           if (keys.right) editorCamXRef.current = editorCamXRef.current + EDITOR_PAN_SPEED;
+        }
+        // Delete key: remove hitbox selecionada em modo colisão
+        if (editorDeleteBoxJustPressed.current) {
+          editorDeleteBoxJustPressed.current = false;
+          const p = platformsRef.current[editorSelectedIdxRef.current];
+          if (p && editorCollisionModeRef.current) {
+            editorCollisionBoxIdxRef.current = removePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+            const hasBoxes = (p.collisionBoxes?.length ?? 0) > 0;
+            if (!hasBoxes) editorCollisionModeRef.current = false;
+            copyPlatText(platCoordText(p), hasBoxes ? `✓ BOX REMOVIDA` : `✓ COLISÃO RESETADA`);
+          }
         }
         gs.camera.x = editorCamXRef.current;
         spaceJustPressed.current = false;

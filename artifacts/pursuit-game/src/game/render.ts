@@ -2549,6 +2549,23 @@ export function drawEditorUI(
         ctx.textAlign = 'center';
         ctx.fillText('+ BOX', addBtnX + addBtnW / 2, addBtnY + 15);
         ctx.textAlign = 'left';
+
+        const remBtnX = addBtnX;
+        const remBtnY = addBtnY + 26;
+        const remBtnW = 82;
+        const remBtnH = 22;
+        ctx.fillStyle = 'rgba(55,20,20,0.92)';
+        ctx.strokeStyle = 'rgba(255,100,100,0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(remBtnX, remBtnY, remBtnW, remBtnH, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,160,160,1)';
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('− HITBOX', remBtnX + remBtnW / 2, remBtnY + 15);
+        ctx.textAlign = 'left';
       }
     } else if (isSelected) {
       // Selecionado secundário (multi-seleção) — só rótulo, sem alças

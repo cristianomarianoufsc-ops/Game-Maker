@@ -125,6 +125,22 @@ export function addPlatformCollisionBox(platform: Platform, sourceIndex: number)
   return boxes.length - 1;
 }
 
+export function removePlatformCollisionBox(platform: Platform, index: number): number {
+  const boxes = platform.collisionBoxes;
+  if (!boxes || boxes.length === 0) return 0;
+  if (boxes.length === 1) {
+    // Última caixa — remove todo o override customizado
+    delete platform.collisionBoxes;
+    delete platform.collisionOffsetX;
+    delete platform.collisionOffsetY;
+    delete platform.collisionW;
+    delete platform.collisionH;
+    return 0;
+  }
+  boxes.splice(index, 1);
+  return Math.max(0, Math.min(index, boxes.length - 1));
+}
+
 export function resetPlatformCollisionOverrides(platform: Platform): void {
   delete platform.collisionBoxes;
   delete platform.collisionOffsetX;
