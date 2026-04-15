@@ -834,6 +834,7 @@ export default function Game() {
                   y: box.y,
                   w: Math.round(box.w * (p.w / drag.origW)),
                   h: box.h,
+                  slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined,
                 }));
                 clampPlatformCollisionOverrides(p);
               } else {
@@ -855,6 +856,7 @@ export default function Game() {
                   y: box.y,
                   w: Math.round(box.w * (p.w / drag.origW)),
                   h: box.h,
+                  slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined,
                 }));
                 clampPlatformCollisionOverrides(p);
               } else {
@@ -876,6 +878,10 @@ export default function Game() {
                   y: Math.round(box.y * (p.h / drag.origH)),
                   w: box.w,
                   h: Math.round(box.h * (p.h / drag.origH)),
+                  slopeTop: box.slopeTop ? {
+                    left: Math.round(box.slopeTop.left * (p.h / drag.origH)),
+                    right: Math.round(box.slopeTop.right * (p.h / drag.origH)),
+                  } : undefined,
                 }));
                 clampPlatformCollisionOverrides(p);
               } else {
@@ -895,6 +901,10 @@ export default function Game() {
                   y: Math.round(box.y * (p.h / drag.origH)),
                   w: box.w,
                   h: Math.round(box.h * (p.h / drag.origH)),
+                  slopeTop: box.slopeTop ? {
+                    left: Math.round(box.slopeTop.left * (p.h / drag.origH)),
+                    right: Math.round(box.slopeTop.right * (p.h / drag.origH)),
+                  } : undefined,
                 }));
                 clampPlatformCollisionOverrides(p);
               } else {
@@ -919,6 +929,10 @@ export default function Game() {
                   y: Math.round(box.y * (p.h / drag.origH)),
                   w: Math.round(box.w * (p.w / drag.origW)),
                   h: Math.round(box.h * (p.h / drag.origH)),
+                  slopeTop: box.slopeTop ? {
+                    left: Math.round(box.slopeTop.left * (p.h / drag.origH)),
+                    right: Math.round(box.slopeTop.right * (p.h / drag.origH)),
+                  } : undefined,
                 }));
                 clampPlatformCollisionOverrides(p);
               } else {
@@ -1027,7 +1041,7 @@ export default function Game() {
             selectedGroup.forEach((idx) => {
               const original = platforms[idx];
               const copy = { ...original, x: original.x + offsetX };
-              if (original.collisionBoxes) copy.collisionBoxes = original.collisionBoxes.map((box) => ({ ...box }));
+              if (original.collisionBoxes) copy.collisionBoxes = original.collisionBoxes.map((box) => ({ ...box, slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined }));
               platforms.push(copy);
               newIndices.push(platforms.length - 1);
             });
@@ -1040,7 +1054,7 @@ export default function Game() {
           }
 
           const copy = { ...p, x: p.x + p.w };
-          if (p.collisionBoxes) copy.collisionBoxes = p.collisionBoxes.map((box) => ({ ...box }));
+          if (p.collisionBoxes) copy.collisionBoxes = p.collisionBoxes.map((box) => ({ ...box, slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined }));
           platforms.push(copy);
           const newIdx = platforms.length - 1;
           snapEditorPlatform(copy, newIdx);

@@ -140,6 +140,7 @@ export function addPlatformCollisionBox(platform: Platform, sourceIndex: number)
     y: source.y,
     w: source.w,
     h: source.h,
+    slopeTop: source.slopeTop ? { ...source.slopeTop } : undefined,
   });
   boxes.push(copy);
   return boxes.length - 1;
