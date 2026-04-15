@@ -144,6 +144,7 @@ export function generateLevel(): Platform[] {
     // Ferro velho (x:12100-14500) — só carros e pneus
     { x: 12505, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:43,w:445,h:71},{x:150,y:0,w:221,h:71}] },
     { x: 13050, type: 'tire', w: 45,  h: 95 },
+    { x: 13331, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:40,y:0,w:365,h:114}] },
 
     { x: 14000, type: 'tire', w: 45,  h: 95 },
     { x: 15850, type: 'tire', w: 45,  h: 95 },
