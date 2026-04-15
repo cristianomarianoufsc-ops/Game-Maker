@@ -528,6 +528,7 @@ export default function Game() {
           }
           break;
         case 'Period':
+        case 'Numpad6':
           if (down && gsRef.current?.gamePhase === 'editor') {
             const next = Math.min(editorCheckpointIdxRef.current + 1, EDITOR_CHECKPOINTS.length - 1);
             editorCheckpointIdxRef.current = next;
@@ -535,6 +536,7 @@ export default function Game() {
           }
           break;
         case 'Comma':
+        case 'Numpad4':
           if (down && gsRef.current?.gamePhase === 'editor') {
             const prev = Math.max(editorCheckpointIdxRef.current - 1, 0);
             editorCheckpointIdxRef.current = prev;
@@ -588,6 +590,19 @@ export default function Game() {
 
     const hitHandle = (wx: number, wy: number, hx: number, hy: number) =>
       Math.abs(wx - hx) <= HANDLE_R && Math.abs(wy - hy) <= HANDLE_R;
+
+    const getPlatformEditRect = (p: Platform) => {
+      const cropLeft = Math.max(0, Math.min(p.cropLeft ?? 0, p.w - 6));
+      const cropRight = Math.max(0, Math.min(p.cropRight ?? 0, p.w - cropLeft - 6));
+      const cropTop = Math.max(0, Math.min(p.cropTop ?? 0, p.h - 6));
+      const cropBottom = Math.max(0, Math.min(p.cropBottom ?? 0, p.h - cropTop - 6));
+      return {
+        x: p.x + cropLeft,
+        y: p.y + cropTop,
+        w: Math.max(6, p.w - cropLeft - cropRight),
+        h: Math.max(6, p.h - cropTop - cropBottom),
+      };
+    };
 
     const makeEditorDrag = (p: Platform, mode: EditorDrag['mode'], wx: number, wy: number, origText: string, editingCrop = false): EditorDrag => {
       const hits = getPlatformCollisionRects(p);
@@ -837,7 +852,7 @@ export default function Game() {
         const hit = hits[selectedHitIdx] ?? getPlatformCollisionRect(p);
         const editRect = editorCollisionModeRef.current
           ? hit
-          : { x: p.x, y: p.y, w: p.w, h: p.h };
+          : getPlatformEditRect(p);
         const rightHX = editRect.x + editRect.w;
         const rightHY = editRect.y + editRect.h / 2;
         const leftHX = editRect.x;
@@ -940,7 +955,10 @@ export default function Game() {
           return;
         }
         // Hit body of selected → start move drag
-        if (editorCollisionModeRef.current ? isEditorPointInsideCollision(wx, wy, p) : isEditorPointInsidePlatform(wx, wy, p)) {
+        if (editorCollisionModeRef.current
+          ? isEditorPointInsideCollision(wx, wy, p)
+          : (wx >= editRect.x && wx <= editRect.x + editRect.w && wy >= editRect.y && wy <= editRect.y + editRect.h)
+        ) {
           if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
           editorDragRef.current = makeEditorDrag(p, 'move', wx, wy, origText);
           return;

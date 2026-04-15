@@ -2416,14 +2416,25 @@ export function drawEditorUI(
       ctx.lineWidth = 1;
     }
 
+    const cropLeft = Math.max(0, Math.min(p.cropLeft ?? 0, p.w - 6));
+    const cropRight = Math.max(0, Math.min(p.cropRight ?? 0, p.w - cropLeft - 6));
+    const cropTop = Math.max(0, Math.min(p.cropTop ?? 0, p.h - 6));
+    const cropBottom = Math.max(0, Math.min(p.cropBottom ?? 0, p.h - cropTop - 6));
+    const hasCrop = cropLeft > 0 || cropRight > 0 || cropTop > 0 || cropBottom > 0;
+    const cropRect = {
+      x: p.x + cropLeft,
+      y: p.y + cropTop,
+      w: Math.max(6, p.w - cropLeft - cropRight),
+      h: Math.max(6, p.h - cropTop - cropBottom),
+    };
     const hits = getPlatformCollisionRects(p);
     const selectedHitIdx = Math.max(0, Math.min(selectedCollisionBoxIdx, hits.length - 1));
     const hit = hits[selectedHitIdx] ?? { x: p.x, y: p.y, w: p.w, h: p.h };
     const visualH = p.type === 'ground' ? 90 : p.h;
-    const drawX = isSelected && collisionMode ? hit.x : p.x;
-    const drawY = isSelected && collisionMode ? hit.y : p.y;
-    const drawW = isSelected && collisionMode ? hit.w : p.w;
-    const drawH = isSelected && collisionMode ? hit.h : visualH;
+    const drawX = isSelected && collisionMode ? hit.x : hasCrop ? cropRect.x : p.x;
+    const drawY = isSelected && collisionMode ? hit.y : hasCrop ? cropRect.y : p.y;
+    const drawW = isSelected && collisionMode ? hit.w : hasCrop ? cropRect.w : p.w;
+    const drawH = isSelected && collisionMode ? hit.h : hasCrop ? cropRect.h : visualH;
     ctx.fillRect(drawX, drawY, drawW, drawH);
     ctx.strokeRect(drawX, drawY, drawW, drawH);
 
@@ -2472,20 +2483,16 @@ export function drawEditorUI(
       ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}  [${p.type}]${modeLabel}${boxLabel}`, drawX + drawW / 2, drawY - 8);
       ctx.textAlign = 'left';
 
-      if (p.cropLeft || p.cropTop || p.cropRight || p.cropBottom) {
-        const cropX = p.x + (p.cropLeft ?? 0);
-        const cropY = p.y + (p.cropTop ?? 0);
-        const cropW = Math.max(1, p.w - (p.cropLeft ?? 0) - (p.cropRight ?? 0));
-        const cropH = Math.max(1, p.h - (p.cropTop ?? 0) - (p.cropBottom ?? 0));
+      if (hasCrop && !collisionMode) {
         ctx.save();
         ctx.setLineDash([3, 3]);
         ctx.strokeStyle = 'rgba(255,80,220,0.95)';
         ctx.lineWidth = 1.5;
-        ctx.strokeRect(cropX, cropY, cropW, cropH);
+        ctx.strokeRect(drawX, drawY, drawW, drawH);
         ctx.fillStyle = 'rgba(255,80,220,0.95)';
         ctx.font = 'bold 9px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('CROP', cropX + cropW / 2, cropY + cropH + 11);
+        ctx.fillText('CROP', drawX + drawW / 2, drawY + drawH + 11);
         ctx.restore();
       }
 
@@ -2639,7 +2646,7 @@ export function drawEditorUI(
 
   ctx.fillStyle = 'rgba(180,175,210,0.75)';
   ctx.font = '10px monospace';
-  ctx.fillText('← → MOVER  |  SCROLL: ARRASTAR  |  CLIQUE: DELETAR  |  ESC: MENU  |  , / . : CHECKPOINT', 12, 32);
+  ctx.fillText('← → MOVER  |  SCROLL: ARRASTAR  |  CLIQUE: DELETAR  |  ESC: MENU  |  ,/. ou NUM4/6: CHECKPOINT', 12, 32);
 
   // Checkpoint markers in world space
   ctx.save();
