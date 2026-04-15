@@ -298,6 +298,8 @@ export default function Game() {
   const editorJustPressed = useRef(false);
   const editorSpawnJustPressed = useRef(false);
   const editorDeleteBoxJustPressed = useRef(false);
+  const zJustPressed = useRef(false);
+  const editorDroneEnabledRef = useRef(false);
   const editorTestModeRef = useRef(false);
   const editorCamXRef = useRef(0);
   const editorLastSpawnXRef = useRef(0);
@@ -541,7 +543,7 @@ export default function Game() {
           }
           break;
         case 'ShiftLeft': case 'ShiftRight': k.shift = down; break;
-        case 'KeyZ': k.z = down; break;
+        case 'KeyZ': k.z = down; if (down) zJustPressed.current = true; break;
         case 'KeyT':
           if (down) testJustPressed.current = true;
           break;
@@ -1513,6 +1515,8 @@ export default function Game() {
           editorCamXRef.current = gs.camera.x;
           gs.gamePhase = 'editor';
           gs.camera.x = editorCamXRef.current;
+          editorDroneEnabledRef.current = false;
+          gs.bullets = [];
         } else if (escJustPressed.current) {
           escJustPressed.current = false;
           pauseSelection.current = 0;
@@ -1547,7 +1551,26 @@ export default function Game() {
         gs.camera.y += (targetCamY - gs.camera.y) * 0.12;
         if (Math.abs(gs.camera.y) < 0.5) gs.camera.y = 0;
 
-        if (gs.gameMode !== 'wall-test') {
+        // Toggle drone com Z no modo de teste do editor
+        if (gs.gameMode === 'wall-test' && zJustPressed.current) {
+          zJustPressed.current = false;
+          editorDroneEnabledRef.current = !editorDroneEnabledRef.current;
+          if (editorDroneEnabledRef.current) {
+            // Spawna drone perto do jogador
+            gs.drone.x = gs.player.x + 200;
+            gs.drone.y = gs.player.y - 120;
+            gs.drone.vx = 0;
+            gs.drone.vy = 0;
+            gs.drone.shootTimer = SHOOT_COOLDOWN * 2;
+            gs.bullets = [];
+          } else {
+            gs.bullets = [];
+          }
+        } else {
+          zJustPressed.current = false;
+        }
+
+        if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
           const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP);
           if (shakeAmount > 0) gs.screenShake = shakeAmount;
 
@@ -1666,7 +1689,7 @@ export default function Game() {
       drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current, gs.destroyedBoxIndices);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
-      if (gs.gameMode !== 'wall-test') {
+      if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
         drawDrone(ctx, gs);
         drawBullets(ctx, gs);
       }
