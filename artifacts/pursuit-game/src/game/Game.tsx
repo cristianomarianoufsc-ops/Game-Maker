@@ -794,13 +794,17 @@ export default function Game() {
             p.x = Math.round(drag.origX + dx);
             p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
             p.y = Math.max(60, p.y);
+            const preSnapX = p.x;
+            const preSnapY = p.y;
             snapEditorPlatform(p, editorSelectedIdxRef.current);
+            const snapDx = p.x - preSnapX;
+            const snapDy = p.y - preSnapY;
             if (drag.origGroupPositions.length > 0) {
               drag.origGroupPositions.forEach(({ idx, origX, origY }) => {
                 const gp = platformsRef.current[idx];
                 if (gp) {
-                  gp.x = Math.round(origX + dx);
-                  gp.y = Math.round(Math.min(origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(gp)));
+                  gp.x = Math.round(origX + dx) + snapDx;
+                  gp.y = Math.round(Math.min(origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(gp))) + snapDy;
                   gp.y = Math.max(60, gp.y);
                 }
               });
