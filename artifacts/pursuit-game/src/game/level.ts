@@ -140,6 +140,7 @@ export function generateLevel(): Platform[] {
     collisionH?: number;
     collisionOffsetX?: number;
     collisionOffsetY?: number;
+    collisionBoxes?: { x: number; y: number; w: number; h: number }[];
   }> = [
     // Ferro velho (x:12100-14500) — só carros e pneus
     { x: 12505, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:149,y:10,w:219,h:62}] },
@@ -174,28 +175,54 @@ export function generateLevel(): Platform[] {
     { x: 24700, type: 'tire', w: 45,  h: 95 },
   ];
 
-  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY }) => {
+  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY, collisionBoxes }) => {
     if (type === 'car') {
-      const collisionW = customCollisionW ?? Math.round(w * 0.82);
-      const collisionH = customCollisionH ?? Math.round(h * 0.68);
-      const collisionOffsetX = customCollisionOffsetX ?? Math.round((w - collisionW) / 2);
-      const collisionOffsetY = customCollisionOffsetY ?? 0;
-      platforms.push({
-        x,
-        y: GROUND_Y - collisionOffsetY - collisionH,
-        w,
-        h,
-        type,
-        collisionW,
-        collisionH,
-        collisionOffsetX,
-        collisionOffsetY,
-      });
+      if (collisionBoxes && collisionBoxes.length > 0) {
+        // Usa collisionBoxes — y calculado pela primeira caixa mais baixa
+        const lowestBox = collisionBoxes.reduce((a, b) => (a.y + a.h > b.y + b.h ? a : b));
+        platforms.push({ x, y: GROUND_Y - lowestBox.y - lowestBox.h, w, h, type, collisionBoxes });
+      } else {
+        const collisionW = customCollisionW ?? Math.round(w * 0.82);
+        const collisionH = customCollisionH ?? Math.round(h * 0.68);
+        const collisionOffsetX = customCollisionOffsetX ?? Math.round((w - collisionW) / 2);
+        const collisionOffsetY = customCollisionOffsetY ?? 0;
+        platforms.push({ x, y: GROUND_Y - collisionOffsetY - collisionH, w, h, type, collisionW, collisionH, collisionOffsetX, collisionOffsetY });
+      }
       return;
     }
 
     platforms.push({ x, y: GROUND_Y - h, w, h, type });
   });
+
+  // ── PILHAS DE CAIXAS NO FERRO VELHO ─────────────────────────────
+  // Caixas empilhadas — cada caixa tem h:55; a segunda fica em GY-110, a terceira em GY-165
+  const GY = GROUND_Y;
+  const BOX_H = 55;
+  const BOX_W = 65;
+  const junkyardBoxStacks: Platform[] = [
+    // Pilha 1 — entrada do ferro velho (antes do primeiro carro)
+    { x: 12310, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12375, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12310, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12375, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12310, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
+
+    // Pilha 2 — entre o pneu (x:13050) e o segundo carro (x:13331)
+    { x: 13100, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 13165, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 13230, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 13100, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 13165, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 13100, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
+
+    // Pilha 3 — entre o segundo carro (x:13776) e o pneu/terceiro carro
+    { x: 13800, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 13865, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 13930, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 13800, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 13865, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+  ];
+  platforms.push(...junkyardBoxStacks);
 
   // ── ELEVATED PLATFORMS ─────────────────────────────────────────
 
