@@ -153,8 +153,6 @@ export function generateLevel(): Platform[] {
 
     { x: 14000, type: 'tire', w: 45,  h: 95 },
     { x: 14050, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:80,y:10,w:69,h:43,slopeTop:{left:43,right:0}},{x:149,y:10,w:219,h:16},{x:368,y:10,w:69,h:43,slopeTop:{left:0,right:43}}] },
-    { x: 15850, type: 'tire', w: 45,  h: 95 },
-
     // Free Zone 3
     { x: 16250, type: 'car',  w: 150, h: 65 },
     { x: 16520, type: 'box',  w: 65,  h: 55 },
