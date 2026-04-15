@@ -190,7 +190,26 @@ export function generateLevel(): Platform[] {
       return;
     }
 
-    platforms.push({ x, y: GROUND_Y - h, w, h, type });
+    platforms.push({ x, y: platformY ?? GROUND_Y - h, w, h, type });
+  });
+
+  // ── FERRO VELHO — PILHA DE CAIXAS (bypass isNearWallBase) ──────
+  const ferroBoxes: Array<{ x: number; y: number }> = [
+    // camada 1 (chão)
+    { x: 14034, y: GROUND_Y - 113 },
+    { x: 14151, y: GROUND_Y - 113 },
+    { x: 14266, y: GROUND_Y - 113 },
+    { x: 14382, y: GROUND_Y - 113 },
+    // camada 2
+    { x: 14152, y: GROUND_Y - 228 },
+    { x: 14268, y: GROUND_Y - 229 },
+    { x: 14382, y: GROUND_Y - 227 },
+    // camada 3
+    { x: 14266, y: GROUND_Y - 343 },
+    { x: 14383, y: GROUND_Y - 344 },
+  ];
+  ferroBoxes.forEach(({ x, y }) => {
+    platforms.push({ x, y, w: 115, h: 113, type: 'box' });
   });
 
   // ── ELEVATED PLATFORMS ─────────────────────────────────────────
