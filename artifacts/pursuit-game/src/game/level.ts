@@ -107,7 +107,6 @@ export function generateLevel(): Platform[] {
 
     // Wall zone 2
     { x: 11900 },
-    { x: 13200 },
     { x: 14400 },
     { x: 15100 },
 
