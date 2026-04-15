@@ -838,15 +838,27 @@ export function drawPlatforms(
         // A imagem é 1080×1080; o carro ocupa aprox. 5%-95% em x e 33%-72% em y
         const SRC_W = carroImg.naturalWidth;
         const SRC_H = carroImg.naturalHeight;
-        const sx0 = SRC_W * 0.04;
-        const sy0 = SRC_H * 0.32;
-        const sw0 = SRC_W * 0.92;
-        const sh0 = SRC_H * 0.42;
+        const baseSx = SRC_W * 0.04;
+        const baseSy = SRC_H * 0.32;
+        const baseSw = SRC_W * 0.92;
+        const baseSh = SRC_H * 0.42;
+        const cropLeft = Math.max(0, Math.min(plat.cropLeft ?? 0, w - 6));
+        const cropRight = Math.max(0, Math.min(plat.cropRight ?? 0, w - cropLeft - 6));
+        const cropTop = Math.max(0, Math.min(plat.cropTop ?? 0, h - 6));
+        const cropBottom = Math.max(0, Math.min(plat.cropBottom ?? 0, h - cropTop - 6));
+        const sx0 = baseSx + baseSw * (cropLeft / w);
+        const sy0 = baseSy + baseSh * (cropTop / h);
+        const sw0 = baseSw * ((w - cropLeft - cropRight) / w);
+        const sh0 = baseSh * ((h - cropTop - cropBottom) / h);
+        const dx0 = x + cropLeft;
+        const dy0 = y + cropTop;
+        const dw0 = w - cropLeft - cropRight;
+        const dh0 = h - cropTop - cropBottom;
         // Sombra no chão
         ctx.fillStyle = 'rgba(0,0,0,0.38)';
         ctx.fillRect(x + w * 0.05, y + h * 0.96, w * 0.90, h * 0.04);
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(carroImg, sx0, sy0, sw0, sh0, x, y, w, h);
+        ctx.drawImage(carroImg, sx0, sy0, sw0, sh0, dx0, dy0, dw0, dh0);
         ctx.imageSmoothingEnabled = true;
         continue;
       }
@@ -2459,6 +2471,23 @@ export function drawEditorUI(
       const boxLabel = collisionMode && hits.length > 1 ? ` ${selectedHitIdx + 1}/${hits.length}` : '';
       ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}  [${p.type}]${modeLabel}${boxLabel}`, drawX + drawW / 2, drawY - 8);
       ctx.textAlign = 'left';
+
+      if (p.cropLeft || p.cropTop || p.cropRight || p.cropBottom) {
+        const cropX = p.x + (p.cropLeft ?? 0);
+        const cropY = p.y + (p.cropTop ?? 0);
+        const cropW = Math.max(1, p.w - (p.cropLeft ?? 0) - (p.cropRight ?? 0));
+        const cropH = Math.max(1, p.h - (p.cropTop ?? 0) - (p.cropBottom ?? 0));
+        ctx.save();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = 'rgba(255,80,220,0.95)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cropX, cropY, cropW, cropH);
+        ctx.fillStyle = 'rgba(255,80,220,0.95)';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('CROP', cropX + cropW / 2, cropY + cropH + 11);
+        ctx.restore();
+      }
 
       const HANDLE_SIZE = 8;
       const sideHandleColor = collisionMode ? 'rgba(255,210,60,1)' : 'rgba(0,220,255,1)';

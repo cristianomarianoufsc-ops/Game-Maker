@@ -20,6 +20,10 @@ export interface Platform extends Rect {
   collisionOffsetX?: number;
   collisionOffsetY?: number;
   collisionBoxes?: CollisionBox[];
+  cropLeft?: number;
+  cropTop?: number;
+  cropRight?: number;
+  cropBottom?: number;
 }
 
 export type PlayerState =

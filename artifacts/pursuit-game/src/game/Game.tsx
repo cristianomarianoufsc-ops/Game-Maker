@@ -312,8 +312,13 @@ export default function Game() {
   type EditorDrag = {
     mode: 'move' | 'resize-right' | 'resize-left' | 'resize-top' | 'resize-bottom' | 'resize-corner';
     editingCollision: boolean;
+    editingCrop: boolean;
     startWX: number; startWY: number;
     origX: number; origY: number; origW: number; origH: number;
+    origCropLeft: number;
+    origCropTop: number;
+    origCropRight: number;
+    origCropBottom: number;
     origCollisionOffsetX: number;
     origCollisionOffsetY: number;
     origCollisionW: number;
@@ -559,7 +564,10 @@ export default function Game() {
 
     const platCoordText = (p: Platform) => {
       const gy = Math.round(p.y - EDITOR_GROUND_Y);
-      return `x:${Math.round(p.x)}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${Math.round(p.w)}  h:${Math.round(p.h)}  [${p.type}]${getPlatformCollisionSummary(p)}`;
+      const crop = (p.cropLeft || p.cropTop || p.cropRight || p.cropBottom)
+        ? `  crop:${Math.round(p.cropLeft ?? 0)},${Math.round(p.cropTop ?? 0)},${Math.round(p.cropRight ?? 0)},${Math.round(p.cropBottom ?? 0)}`
+        : '';
+      return `x:${Math.round(p.x)}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${Math.round(p.w)}  h:${Math.round(p.h)}  [${p.type}]${getPlatformCollisionSummary(p)}${crop}`;
     };
 
     const copyPlatText = (text: string, msg: string) => {
@@ -581,7 +589,7 @@ export default function Game() {
     const hitHandle = (wx: number, wy: number, hx: number, hy: number) =>
       Math.abs(wx - hx) <= HANDLE_R && Math.abs(wy - hy) <= HANDLE_R;
 
-    const makeEditorDrag = (p: Platform, mode: EditorDrag['mode'], wx: number, wy: number, origText: string): EditorDrag => {
+    const makeEditorDrag = (p: Platform, mode: EditorDrag['mode'], wx: number, wy: number, origText: string, editingCrop = false): EditorDrag => {
       const hits = getPlatformCollisionRects(p);
       const hit = editorCollisionModeRef.current
         ? hits[Math.max(0, Math.min(editorCollisionBoxIdxRef.current, hits.length - 1))] ?? getPlatformCollisionRect(p)
@@ -589,12 +597,17 @@ export default function Game() {
       return {
         mode,
         editingCollision: editorCollisionModeRef.current,
+        editingCrop,
         startWX: wx,
         startWY: wy,
         origX: p.x,
         origY: p.y,
         origW: p.w,
         origH: p.h,
+        origCropLeft: p.cropLeft ?? 0,
+        origCropTop: p.cropTop ?? 0,
+        origCropRight: p.cropRight ?? 0,
+        origCropBottom: p.cropBottom ?? 0,
         origCollisionOffsetX: hit.x - p.x,
         origCollisionOffsetY: hit.y - p.y,
         origCollisionW: hit.w,
@@ -621,7 +634,28 @@ export default function Game() {
         if (Math.abs(dx) > 1 || Math.abs(dy) > 1) drag.hasMoved = true;
         const p = platformsRef.current[editorSelectedIdxRef.current];
         if (p) {
-          if (drag.editingCollision) {
+          if (drag.editingCrop) {
+            const minVisible = 6;
+            const clampCrop = () => {
+              p.cropLeft = Math.round(Math.max(0, Math.min(p.cropLeft ?? 0, p.w - (p.cropRight ?? 0) - minVisible)));
+              p.cropRight = Math.round(Math.max(0, Math.min(p.cropRight ?? 0, p.w - (p.cropLeft ?? 0) - minVisible)));
+              p.cropTop = Math.round(Math.max(0, Math.min(p.cropTop ?? 0, p.h - (p.cropBottom ?? 0) - minVisible)));
+              p.cropBottom = Math.round(Math.max(0, Math.min(p.cropBottom ?? 0, p.h - (p.cropTop ?? 0) - minVisible)));
+            };
+            if (drag.mode === 'resize-left') {
+              p.cropLeft = drag.origCropLeft + dx;
+            } else if (drag.mode === 'resize-right') {
+              p.cropRight = drag.origCropRight - dx;
+            } else if (drag.mode === 'resize-top') {
+              p.cropTop = drag.origCropTop + dy;
+            } else if (drag.mode === 'resize-bottom') {
+              p.cropBottom = drag.origCropBottom - dy;
+            } else if (drag.mode === 'resize-corner') {
+              p.cropRight = drag.origCropRight - dx;
+              p.cropTop = drag.origCropTop + dy;
+            }
+            clampCrop();
+          } else if (drag.editingCollision) {
             const box = ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
             if (drag.mode === 'move') {
               box.x = Math.round(Math.max(0, Math.min(drag.origCollisionOffsetX + dx, p.w - drag.origCollisionW)));
@@ -882,27 +916,27 @@ export default function Game() {
 
         if (hitHandle(wx, wy, cornerHX, cornerHY)) {
           if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorDragRef.current = makeEditorDrag(p, 'resize-corner', wx, wy, origText);
+          editorDragRef.current = makeEditorDrag(p, 'resize-corner', wx, wy, origText, e.shiftKey);
           return;
         }
         if (hitHandle(wx, wy, rightHX, rightHY)) {
           if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorDragRef.current = makeEditorDrag(p, 'resize-right', wx, wy, origText);
+          editorDragRef.current = makeEditorDrag(p, 'resize-right', wx, wy, origText, e.shiftKey);
           return;
         }
         if (hitHandle(wx, wy, leftHX, leftHY)) {
           if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorDragRef.current = makeEditorDrag(p, 'resize-left', wx, wy, origText);
+          editorDragRef.current = makeEditorDrag(p, 'resize-left', wx, wy, origText, e.shiftKey);
           return;
         }
         if (hitHandle(wx, wy, topHX, topHY)) {
           if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorDragRef.current = makeEditorDrag(p, 'resize-top', wx, wy, origText);
+          editorDragRef.current = makeEditorDrag(p, 'resize-top', wx, wy, origText, e.shiftKey);
           return;
         }
         if (hitHandle(wx, wy, bottomHX, bottomHY)) {
           if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorDragRef.current = makeEditorDrag(p, 'resize-bottom', wx, wy, origText);
+          editorDragRef.current = makeEditorDrag(p, 'resize-bottom', wx, wy, origText, e.shiftKey);
           return;
         }
         // Hit body of selected → start move drag
