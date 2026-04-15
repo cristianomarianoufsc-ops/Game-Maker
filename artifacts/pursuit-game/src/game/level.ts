@@ -141,11 +141,12 @@ export function generateLevel(): Platform[] {
     collisionOffsetX?: number;
     collisionOffsetY?: number;
     collisionBoxes?: { x: number; y: number; w: number; h: number }[];
+    yOffset?: number;
   }> = [
     // Ferro velho (x:12100-14500) — só carros e pneus
     { x: 12505, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:149,y:10,w:219,h:62}] },
     { x: 13050, type: 'tire', w: 45,  h: 95 },
-    { x: 13331, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:40,y:0,w:365,h:114}] },
+    { x: 13338, type: 'car',  w: 445, h: 168, yOffset: 217, collisionBoxes: [{x:0,y:54,w:445,h:62},{x:149,y:10,w:219,h:62}] },
 
     { x: 14000, type: 'tire', w: 45,  h: 95 },
     { x: 14050, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:149,y:10,w:219,h:62}] },
@@ -175,23 +176,26 @@ export function generateLevel(): Platform[] {
     { x: 24700, type: 'tire', w: 45,  h: 95 },
   ];
 
-  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY, collisionBoxes }) => {
+  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY, collisionBoxes, yOffset }) => {
     if (type === 'car') {
       if (collisionBoxes && collisionBoxes.length > 0) {
-        // Usa collisionBoxes — y calculado pela primeira caixa mais baixa
-        const lowestBox = collisionBoxes.reduce((a, b) => (a.y + a.h > b.y + b.h ? a : b));
-        platforms.push({ x, y: GROUND_Y - lowestBox.y - lowestBox.h, w, h, type, collisionBoxes });
+        const y = yOffset !== undefined
+          ? GROUND_Y - yOffset
+          : (() => { const lb = collisionBoxes.reduce((a, b) => (a.y + a.h > b.y + b.h ? a : b)); return GROUND_Y - lb.y - lb.h; })();
+        platforms.push({ x, y, w, h, type, collisionBoxes });
       } else {
         const collisionW = customCollisionW ?? Math.round(w * 0.82);
         const collisionH = customCollisionH ?? Math.round(h * 0.68);
         const collisionOffsetX = customCollisionOffsetX ?? Math.round((w - collisionW) / 2);
         const collisionOffsetY = customCollisionOffsetY ?? 0;
-        platforms.push({ x, y: GROUND_Y - collisionOffsetY - collisionH, w, h, type, collisionW, collisionH, collisionOffsetX, collisionOffsetY });
+        const y = yOffset !== undefined ? GROUND_Y - yOffset : GROUND_Y - collisionOffsetY - collisionH;
+        platforms.push({ x, y, w, h, type, collisionW, collisionH, collisionOffsetX, collisionOffsetY });
       }
       return;
     }
 
-    platforms.push({ x, y: GROUND_Y - h, w, h, type });
+    const y = yOffset !== undefined ? GROUND_Y - yOffset : GROUND_Y - h;
+    platforms.push({ x, y, w, h, type });
   });
 
   // ── PILHAS DE CAIXAS NO FERRO VELHO ─────────────────────────────
