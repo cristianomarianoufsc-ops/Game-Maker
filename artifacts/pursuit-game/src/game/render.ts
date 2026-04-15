@@ -2532,7 +2532,9 @@ export function drawEditorUI(
       // Duplicate button (right side, vertically centred)
       const dupBtnX = drawX + drawW + 14;
       const dupBtnY = drawY + drawH / 2 - 24;
-      const dupBtnW = 62;
+      const selectedCount = selectedIndices.has(selectedIdx) ? Math.max(1, selectedIndices.size) : 1;
+      const dupLabel = selectedCount > 1 ? `⧉ DUP ${selectedCount}` : '⧉ DUP';
+      const dupBtnW = selectedCount > 1 ? 78 : 62;
       const dupBtnH = 22;
       ctx.fillStyle = 'rgba(30,30,60,0.88)';
       ctx.strokeStyle = 'rgba(120,180,255,0.9)';
@@ -2544,7 +2546,7 @@ export function drawEditorUI(
       ctx.fillStyle = 'rgba(160,210,255,1)';
       ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('⧉ DUP', dupBtnX + dupBtnW / 2, dupBtnY + 15);
+      ctx.fillText(dupLabel, dupBtnX + dupBtnW / 2, dupBtnY + 15);
       ctx.textAlign = 'left';
 
       const hitBtnX = dupBtnX;

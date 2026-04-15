@@ -926,7 +926,8 @@ export default function Game() {
         // Duplicate button hit (world-space, right side of object)
         const dupBtnX = editRect.x + editRect.w + 14;
         const dupBtnY = editRect.y + editRect.h / 2 - 24;
-        const dupBtnW = 62;
+        const selectedDupCount = editorSelectedIndicesRef.current.has(selIdx) ? Math.max(1, editorSelectedIndicesRef.current.size) : 1;
+        const dupBtnW = selectedDupCount > 1 ? 78 : 62;
         const dupBtnH = 22;
         const collisionBtnX = dupBtnX;
         const collisionBtnY = dupBtnY + 26;
@@ -937,11 +938,37 @@ export default function Game() {
         const addBoxBtnW = 82;
         const addBoxBtnH = 22;
         if (wx >= dupBtnX && wx <= dupBtnX + dupBtnW && wy >= dupBtnY && wy <= dupBtnY + dupBtnH) {
+          const selectedGroup = Array.from(editorSelectedIndicesRef.current)
+            .filter((idx) => idx >= 0 && idx < platforms.length && platforms[idx].type !== 'ground')
+            .sort((a, b) => a - b);
+
+          if (selectedGroup.length > 1 && selectedGroup.includes(selIdx)) {
+            const groupMinX = Math.min(...selectedGroup.map((idx) => platforms[idx].x));
+            const groupMaxX = Math.max(...selectedGroup.map((idx) => platforms[idx].x + platforms[idx].w));
+            const offsetX = Math.max(1, groupMaxX - groupMinX);
+            const newIndices: number[] = [];
+
+            selectedGroup.forEach((idx) => {
+              const original = platforms[idx];
+              const copy = { ...original, x: original.x + offsetX };
+              if (original.collisionBoxes) copy.collisionBoxes = original.collisionBoxes.map((box) => ({ ...box }));
+              platforms.push(copy);
+              newIndices.push(platforms.length - 1);
+            });
+
+            editorSelectedIndicesRef.current = new Set(newIndices);
+            editorSelectedIdxRef.current = newIndices[0] ?? selIdx;
+            editorCollisionBoxIdxRef.current = 0;
+            copyPlatText(platCoordText(platforms[editorSelectedIdxRef.current]), `✓ GRUPO DUPLICADO: ${newIndices.length} OBJETOS`);
+            return;
+          }
+
           const copy = { ...p, x: p.x + p.w };
           if (p.collisionBoxes) copy.collisionBoxes = p.collisionBoxes.map((box) => ({ ...box }));
           platforms.push(copy);
           const newIdx = platforms.length - 1;
           snapEditorPlatform(copy, newIdx);
+          editorSelectedIndicesRef.current = new Set([newIdx]);
           editorSelectedIdxRef.current = newIdx;
           editorCollisionBoxIdxRef.current = 0;
           const text = platCoordText(copy);
