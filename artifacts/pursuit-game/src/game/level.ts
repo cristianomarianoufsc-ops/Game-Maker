@@ -140,9 +140,11 @@ export function generateLevel(): Platform[] {
     collisionH?: number;
     collisionOffsetX?: number;
     collisionOffsetY?: number;
+    collisionBoxes?: Array<{ x: number; y: number; w: number; h: number }>;
+    platformY?: number;
   }> = [
     // Ferro velho (x:12100-14500) — só carros e pneus
-    { x: 12505, type: 'car',  w: 445, h: 168, collisionW: 445, collisionH: 71, collisionOffsetX: 0, collisionOffsetY: 43 },
+    { x: 12498, type: 'car',  w: 445, h: 168, platformY: GROUND_Y - 114, collisionBoxes: [{x:0, y:44, w:445, h:71}, {x:151, y:6, w:214, h:65}] },
     { x: 13050, type: 'tire', w: 45,  h: 95 },
     { x: 13304, type: 'car',  w: 337, h: 115 },
     { x: 13650, type: 'car',  w: 150, h: 65 },
@@ -173,8 +175,16 @@ export function generateLevel(): Platform[] {
     { x: 24700, type: 'tire', w: 45,  h: 95 },
   ];
 
-  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY }) => {
+  junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY, collisionBoxes, platformY }) => {
     if (type === 'car') {
+      if (collisionBoxes && collisionBoxes.length > 0) {
+        const y = platformY ?? (() => {
+          const maxBottom = Math.max(...collisionBoxes.map((b) => b.y + b.h));
+          return GROUND_Y - maxBottom;
+        })();
+        platforms.push({ x, y, w, h, type, collisionBoxes });
+        return;
+      }
       const collisionW = customCollisionW ?? Math.round(w * 0.82);
       const collisionH = customCollisionH ?? Math.round(h * 0.68);
       const collisionOffsetX = customCollisionOffsetX ?? Math.round((w - collisionW) / 2);
