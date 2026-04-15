@@ -2490,6 +2490,24 @@ export function drawEditorUI(
       ctx.lineTo(chx + 4, chy - 4);
       ctx.stroke();
 
+      // Bottom-middle handle (resize height downward)
+      const bhx = drawX + drawW / 2;
+      const bhy = drawY + drawH;
+      ctx.fillStyle = 'rgba(255,100,220,1)';
+      ctx.fillRect(bhx - HANDLE_SIZE / 2, bhy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bhx - HANDLE_SIZE / 2, bhy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+
+      // Left-middle handle (resize width from left)
+      const lhx = drawX;
+      const lhy = drawY + drawH / 2;
+      ctx.fillStyle = 'rgba(180,100,255,1)';
+      ctx.fillRect(lhx - HANDLE_SIZE / 2, lhy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(lhx - HANDLE_SIZE / 2, lhy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+
       // Duplicate button (right side, vertically centred)
       const dupBtnX = drawX + drawW + 14;
       const dupBtnY = drawY + drawH / 2 - 24;
@@ -2541,6 +2559,23 @@ export function drawEditorUI(
         ctx.font = 'bold 11px monospace';
         ctx.textAlign = 'center';
         ctx.fillText('+ BOX', addBtnX + addBtnW / 2, addBtnY + 15);
+        ctx.textAlign = 'left';
+
+        const delBtnX = addBtnX;
+        const delBtnY = addBtnY + 26;
+        const delBtnW = 82;
+        const delBtnH = 22;
+        ctx.fillStyle = 'rgba(55,20,20,0.92)';
+        ctx.strokeStyle = 'rgba(255,80,80,0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(delBtnX, delBtnY, delBtnW, delBtnH, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,160,160,1)';
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('– BOX', delBtnX + delBtnW / 2, delBtnY + 15);
         ctx.textAlign = 'left';
       }
     } else if (isHovered) {

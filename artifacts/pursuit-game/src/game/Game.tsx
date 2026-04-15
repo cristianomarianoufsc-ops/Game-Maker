@@ -306,7 +306,7 @@ export default function Game() {
   const editorCollisionModeRef = useRef(false);
   const editorCollisionBoxIdxRef = useRef(0);
   type EditorDrag = {
-    mode: 'move' | 'resize-right' | 'resize-top' | 'resize-corner';
+    mode: 'move' | 'resize-right' | 'resize-top' | 'resize-corner' | 'resize-bottom' | 'resize-left';
     editingCollision: boolean;
     startWX: number; startWY: number;
     origX: number; origY: number; origW: number; origH: number;
@@ -627,6 +627,13 @@ export default function Game() {
               const scale = Math.max(0.05, (drag.origCollisionW + dx) / drag.origCollisionW);
               box.w = Math.round(Math.max(6, Math.min(drag.origCollisionW * scale, p.w - drag.origCollisionOffsetX)));
               box.h = Math.round(Math.max(6, Math.min(drag.origCollisionH * scale, p.h - drag.origCollisionOffsetY)));
+            } else if (drag.mode === 'resize-bottom') {
+              box.h = Math.round(Math.max(6, Math.min(drag.origCollisionH + dy, p.h - drag.origCollisionOffsetY)));
+            } else if (drag.mode === 'resize-left') {
+              const origRight = drag.origCollisionOffsetX + drag.origCollisionW;
+              const newX = Math.round(Math.max(0, Math.min(drag.origCollisionOffsetX + dx, origRight - 6)));
+              box.x = newX;
+              box.w = Math.round(origRight - newX);
             }
             clampPlatformCollisionOverrides(p);
           } else if (drag.mode === 'move') {
@@ -697,6 +704,40 @@ export default function Game() {
                 clampPlatformCollisionOverrides(p);
               }
             }
+          } else if (drag.mode === 'resize-bottom') {
+            p.h = Math.round(Math.max(10, drag.origH + dy));
+            if (drag.hadCustomCollision) {
+              if (drag.origCollisionBoxes.length > 0) {
+                p.collisionBoxes = drag.origCollisionBoxes.map((box) => ({
+                  x: box.x, y: Math.round(box.y * (p.h / drag.origH)),
+                  w: box.w, h: Math.round(box.h * (p.h / drag.origH)),
+                }));
+                clampPlatformCollisionOverrides(p);
+              } else {
+                p.collisionOffsetY = Math.round(drag.origCollisionOffsetY * (p.h / drag.origH));
+                p.collisionH = Math.round(drag.origCollisionH * (p.h / drag.origH));
+                clampPlatformCollisionOverrides(p);
+              }
+            }
+          } else if (drag.mode === 'resize-left') {
+            const newW = Math.round(Math.max(10, drag.origW - dx));
+            p.x = Math.round(drag.origX + drag.origW - newW);
+            p.w = newW;
+            if (drag.hadCustomCollision) {
+              if (drag.origCollisionBoxes.length > 0) {
+                p.collisionBoxes = drag.origCollisionBoxes.map((box) => ({
+                  x: Math.round(box.x * (p.w / drag.origW)),
+                  y: box.y,
+                  w: Math.round(box.w * (p.w / drag.origW)),
+                  h: box.h,
+                }));
+                clampPlatformCollisionOverrides(p);
+              } else {
+                p.collisionOffsetX = Math.round(drag.origCollisionOffsetX * (p.w / drag.origW));
+                p.collisionW = Math.round(drag.origCollisionW * (p.w / drag.origW));
+                clampPlatformCollisionOverrides(p);
+              }
+            }
           }
         }
         return;
@@ -746,6 +787,10 @@ export default function Game() {
         const topHY = editRect.y;
         const cornerHX = editRect.x + editRect.w;
         const cornerHY = editRect.y;
+        const bottomHX = editRect.x + editRect.w / 2;
+        const bottomHY = editRect.y + editRect.h;
+        const leftHX = editRect.x;
+        const leftHY = editRect.y + editRect.h / 2;
         const origText = platCoordText(p);
 
         // Duplicate button hit (world-space, right side of object)
@@ -789,6 +834,24 @@ export default function Game() {
           copyPlatText(text, `✓ BOX ${editorCollisionBoxIdxRef.current + 1} ADICIONADA`);
           return;
         }
+        const delBoxBtnX = addBoxBtnX;
+        const delBoxBtnY = addBoxBtnY + 26;
+        const delBoxBtnW = 82;
+        const delBoxBtnH = 22;
+        if (editorCollisionModeRef.current && wx >= delBoxBtnX && wx <= delBoxBtnX + delBoxBtnW && wy >= delBoxBtnY && wy <= delBoxBtnY + delBoxBtnH) {
+          ensurePlatformCollisionBoxes(p);
+          const boxes = p.collisionBoxes!;
+          if (boxes.length > 1) {
+            const idx = Math.max(0, Math.min(editorCollisionBoxIdxRef.current, boxes.length - 1));
+            boxes.splice(idx, 1);
+            editorCollisionBoxIdxRef.current = Math.max(0, idx - 1);
+            const text = platCoordText(p);
+            copyPlatText(text, `✓ BOX ${idx + 1} REMOVIDA`);
+          } else {
+            copyPlatText(platCoordText(p), '⚠ Deve ter pelo menos 1 box');
+          }
+          return;
+        }
 
         if (editorCollisionModeRef.current && e.altKey) {
           const idx = getPlatformCollisionRects(p).findIndex((box) =>
@@ -814,6 +877,16 @@ export default function Game() {
         if (hitHandle(wx, wy, topHX, topHY)) {
           if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
           editorDragRef.current = makeEditorDrag(p, 'resize-top', wx, wy, origText);
+          return;
+        }
+        if (hitHandle(wx, wy, bottomHX, bottomHY)) {
+          if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+          editorDragRef.current = makeEditorDrag(p, 'resize-bottom', wx, wy, origText);
+          return;
+        }
+        if (hitHandle(wx, wy, leftHX, leftHY)) {
+          if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+          editorDragRef.current = makeEditorDrag(p, 'resize-left', wx, wy, origText);
           return;
         }
         // Hit body of selected → start move drag
