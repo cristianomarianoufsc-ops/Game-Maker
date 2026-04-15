@@ -1147,13 +1147,14 @@ export default function Game() {
           }
         }
 
-        if (editorCollisionModeRef.current && e.altKey) {
-          const idx = getPlatformCollisionRects(p).findIndex((box) =>
-            wx >= box.x && wx <= box.x + box.w && wy >= box.y && wy <= box.y + box.h
-          );
-          if (idx >= 0) {
-            editorCollisionBoxIdxRef.current = idx;
-            copyPlatText(platCoordText(p), `✓ BOX ${idx + 1} SELECIONADA`);
+        if (editorCollisionModeRef.current && !e.shiftKey) {
+          const boxHit = getPlatformCollisionRects(p)
+            .map((box, idx) => ({ box, idx }))
+            .filter(({ box }) => wx >= box.x && wx <= box.x + box.w && wy >= box.y && wy <= box.y + box.h)
+            .sort((a, b) => (a.box.w * a.box.h) - (b.box.w * b.box.h))[0];
+          if (boxHit && boxHit.idx !== selectedHitIdx) {
+            editorCollisionBoxIdxRef.current = boxHit.idx;
+            copyPlatText(platCoordText(p), `✓ BOX ${boxHit.idx + 1} SELECIONADA`);
             return;
           }
         }
