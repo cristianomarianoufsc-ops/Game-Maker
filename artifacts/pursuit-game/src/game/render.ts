@@ -2461,25 +2461,21 @@ export function drawEditorUI(
       ctx.textAlign = 'left';
 
       const HANDLE_SIZE = 8;
-      // Right-middle handle (resize width)
-      const rhx = drawX + drawW;
-      const rhy = drawY + drawH / 2;
-      ctx.fillStyle = 'rgba(0,220,255,1)';
-      ctx.fillRect(rhx - HANDLE_SIZE / 2, rhy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(rhx - HANDLE_SIZE / 2, rhy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+      const sideHandleColor = collisionMode ? 'rgba(255,210,60,1)' : 'rgba(0,220,255,1)';
+      const verticalHandleColor = collisionMode ? 'rgba(255,170,60,1)' : 'rgba(255,200,0,1)';
+      const drawSquareHandle = (hx: number, hy: number, color: string) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(hx - HANDLE_SIZE / 2, hy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(hx - HANDLE_SIZE / 2, hy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+      };
 
-      // Top-middle handle (resize height)
-      const thx = drawX + drawW / 2;
-      const thy = drawY;
-      ctx.fillStyle = 'rgba(255,200,0,1)';
-      ctx.fillRect(thx - HANDLE_SIZE / 2, thy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(thx - HANDLE_SIZE / 2, thy - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+      drawSquareHandle(drawX + drawW, drawY + drawH / 2, sideHandleColor);
+      drawSquareHandle(drawX, drawY + drawH / 2, sideHandleColor);
+      drawSquareHandle(drawX + drawW / 2, drawY, verticalHandleColor);
+      drawSquareHandle(drawX + drawW / 2, drawY + drawH, verticalHandleColor);
 
-      // Top-right corner handle (proportional resize)
       const chx = drawX + drawW;
       const chy = drawY;
       ctx.fillStyle = 'rgba(80,255,120,1)';
