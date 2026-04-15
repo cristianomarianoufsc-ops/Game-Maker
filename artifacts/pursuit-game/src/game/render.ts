@@ -2646,7 +2646,7 @@ export function drawEditorUI(
 
   ctx.fillStyle = 'rgba(180,175,210,0.75)';
   ctx.font = '10px monospace';
-  ctx.fillText('← → MOVER  |  SCROLL: ARRASTAR  |  CLIQUE: DELETAR  |  ESC: MENU  |  ,/. ou NUM4/6: CHECKPOINT', 12, 32);
+  ctx.fillText('← → MOVER  |  ARRASTAR: SNAP MAGNÉTICO  |  CLIQUE: DELETAR  |  ESC: MENU  |  ,/. ou NUM4/6: CHECKPOINT', 12, 32);
 
   // Checkpoint markers in world space
   ctx.save();

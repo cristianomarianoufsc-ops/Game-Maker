@@ -604,6 +604,63 @@ export default function Game() {
       };
     };
 
+    const snapEditorPlatform = (platform: Platform, platformIdx: number) => {
+      const SNAP = 8;
+      const movingHit = getPlatformCollisionRect(platform);
+      const movingCenterX = movingHit.x + movingHit.w / 2;
+      const movingCenterY = movingHit.y + movingHit.h / 2;
+      let bestDx = 0;
+      let bestDy = 0;
+      let bestAbsX = SNAP + 1;
+      let bestAbsY = SNAP + 1;
+
+      const considerX = (from: number, to: number) => {
+        const delta = to - from;
+        const abs = Math.abs(delta);
+        if (abs <= SNAP && abs < bestAbsX) {
+          bestAbsX = abs;
+          bestDx = delta;
+        }
+      };
+
+      const considerY = (from: number, to: number) => {
+        const delta = to - from;
+        const abs = Math.abs(delta);
+        if (abs <= SNAP && abs < bestAbsY) {
+          bestAbsY = abs;
+          bestDy = delta;
+        }
+      };
+
+      considerY(movingHit.y + movingHit.h, EDITOR_GROUND_Y);
+
+      platformsRef.current.forEach((target, targetIdx) => {
+        if (targetIdx === platformIdx || target.type === 'ground') return;
+        const targetRects = getPlatformCollisionRects(target);
+        targetRects.forEach((targetHit) => {
+          const targetCenterX = targetHit.x + targetHit.w / 2;
+          const targetCenterY = targetHit.y + targetHit.h / 2;
+
+          considerX(movingHit.x, targetHit.x);
+          considerX(movingHit.x + movingHit.w, targetHit.x + targetHit.w);
+          considerX(movingCenterX, targetCenterX);
+          considerX(movingHit.x, targetHit.x + targetHit.w);
+          considerX(movingHit.x + movingHit.w, targetHit.x);
+
+          considerY(movingHit.y, targetHit.y);
+          considerY(movingHit.y + movingHit.h, targetHit.y + targetHit.h);
+          considerY(movingCenterY, targetCenterY);
+          considerY(movingHit.y, targetHit.y + targetHit.h);
+          considerY(movingHit.y + movingHit.h, targetHit.y);
+        });
+      });
+
+      if (bestDx !== 0) platform.x = Math.round(platform.x + bestDx);
+      if (bestDy !== 0) platform.y = Math.round(platform.y + bestDy);
+      platform.y = Math.round(Math.min(platform.y, EDITOR_GROUND_Y - getPlatformGroundClampOffset(platform)));
+      platform.y = Math.max(60, platform.y);
+    };
+
     const makeEditorDrag = (p: Platform, mode: EditorDrag['mode'], wx: number, wy: number, origText: string, editingCrop = false): EditorDrag => {
       const hits = getPlatformCollisionRects(p);
       const hit = editorCollisionModeRef.current
@@ -699,6 +756,7 @@ export default function Game() {
             p.x = Math.round(drag.origX + dx);
             p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
             p.y = Math.max(60, p.y);
+            snapEditorPlatform(p, editorSelectedIdxRef.current);
           } else if (drag.mode === 'resize-right') {
             p.w = Math.round(Math.max(10, drag.origW + dx));
             if (drag.hadCustomCollision) {
@@ -879,10 +937,11 @@ export default function Game() {
         const addBoxBtnW = 82;
         const addBoxBtnH = 22;
         if (wx >= dupBtnX && wx <= dupBtnX + dupBtnW && wy >= dupBtnY && wy <= dupBtnY + dupBtnH) {
-          const copy = { ...p, x: p.x + p.w + 20 };
+          const copy = { ...p, x: p.x + p.w };
           if (p.collisionBoxes) copy.collisionBoxes = p.collisionBoxes.map((box) => ({ ...box }));
           platforms.push(copy);
           const newIdx = platforms.length - 1;
+          snapEditorPlatform(copy, newIdx);
           editorSelectedIdxRef.current = newIdx;
           editorCollisionBoxIdxRef.current = 0;
           const text = platCoordText(copy);
