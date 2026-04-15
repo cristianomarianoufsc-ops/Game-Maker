@@ -10,6 +10,8 @@ export interface Rect {
   h: number;
 }
 
+export interface CollisionBox extends Rect {}
+
 export interface Platform extends Rect {
   type: 'ground' | 'platform' | 'wall' | 'obstacle' | 'car' | 'tire' | 'box';
   climbable?: boolean;
@@ -17,6 +19,7 @@ export interface Platform extends Rect {
   collisionH?: number;
   collisionOffsetX?: number;
   collisionOffsetY?: number;
+  collisionBoxes?: CollisionBox[];
 }
 
 export type PlayerState =

@@ -10,16 +10,15 @@ import {
   WALLCLIMB_DURATION, WALLFLIP_BACK_VX, WALLFLIP_DURATION, WALLFLIP_JUMP_VY,
   SIDEFLIP_DURATION, SIDEFLIP_BOOST,
 } from './constants';
-import { getPlatformCollisionRect } from './collision';
+import { getPlatformCollisionRects } from './collision';
 
 function rectOverlap(ax: number, ay: number, aw: number, ah: number,
   bx: number, by: number, bw: number, bh: number): boolean {
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 
-function resolvePlayerPlatform(p: Player, plat: Platform): boolean {
+function resolvePlayerPlatform(p: Player, plat: Platform, hit: { x: number; y: number; w: number; h: number }): boolean {
   const ph = (p.isRolling || p.forcedCrouch) ? PLAYER_ROLL_H : PLAYER_H;
-  const hit = getPlatformCollisionRect(plat);
   if (!rectOverlap(p.x, p.y, p.w, ph, hit.x, hit.y, hit.w, hit.h)) return false;
 
   const overlapLeft = p.x + p.w - hit.x;
@@ -123,8 +122,9 @@ export function updatePlayer(
         const expandH = PLAYER_H - PLAYER_ROLL_H;
         const blockedAbove = platforms.some(plat => {
           if (plat.type === 'ground') return false;
-          const hit = getPlatformCollisionRect(plat);
-          return rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, hit.x, hit.y, hit.w, hit.h);
+          return getPlatformCollisionRects(plat).some((hit) =>
+            rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, hit.x, hit.y, hit.w, hit.h)
+          );
         });
         if (blockedAbove) {
           p.forcedCrouch = true;
@@ -143,8 +143,9 @@ export function updatePlayer(
       const expandH = PLAYER_H - PLAYER_ROLL_H;
       const stillBlocked = platforms.some(plat => {
         if (plat.type === 'ground') return false;
-        const hit = getPlatformCollisionRect(plat);
-        return rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, hit.x, hit.y, hit.w, hit.h);
+        return getPlatformCollisionRects(plat).some((hit) =>
+          rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, hit.x, hit.y, hit.w, hit.h)
+        );
       });
       if (!stillBlocked) {
         p.forcedCrouch = false;
@@ -472,7 +473,9 @@ export function updatePlayer(
   // Collision
   if (!p.isWallClimbUp) {
     for (const plat of platforms) {
-      resolvePlayerPlatform(p, plat);
+      for (const hit of getPlatformCollisionRects(plat)) {
+        resolvePlayerPlatform(p, plat, hit);
+      }
     }
   }
 
@@ -771,8 +774,7 @@ export function updateBullets(
     // Hit platform
     let hitPlatform = false;
     for (const plat of platforms) {
-      const hit = getPlatformCollisionRect(plat);
-      if (rectOverlap(b.x - 4, b.y - 4, 8, 8, hit.x, hit.y, hit.w, hit.h)) {
+      if (getPlatformCollisionRects(plat).some((hit) => rectOverlap(b.x - 4, b.y - 4, 8, 8, hit.x, hit.y, hit.w, hit.h))) {
         hitPlatform = true;
         break;
       }
