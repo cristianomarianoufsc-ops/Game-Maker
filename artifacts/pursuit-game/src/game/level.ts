@@ -106,7 +106,6 @@ export function generateLevel(): Platform[] {
     { x: 11900 },
 
     // Free zone 3 — só lixeiras, sem paredes
-    { x: 20000 },
 
     // Wall zone 3
     { x: 20700 },
@@ -143,36 +142,16 @@ export function generateLevel(): Platform[] {
   }> = [
     // Ferro velho (x:12100-14500) — só carros e pneus
     { x: 12548, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
-    { x: 13050, type: 'tire', w: 45,  h: 95 },
     { x: 13330, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
-    { x: 14000, type: 'tire', w: 45,  h: 95 },
-    { x: 14050, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:80,y:10,w:69,h:43,slopeTop:{left:43,right:0}},{x:149,y:10,w:219,h:16},{x:368,y:10,w:69,h:43,slopeTop:{left:0,right:43}}] },
     // Ferro velho — extensão (x:14600-16850)
-    { x: 14700, type: 'tire', w: 45,  h: 95 },
     { x: 14900, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
-    { x: 15450, type: 'tire', w: 45,  h: 95 },
     { x: 15680, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
-    { x: 16250, type: 'tire', w: 45,  h: 95 },
     { x: 16400, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:80,y:10,w:69,h:43,slopeTop:{left:43,right:0}},{x:149,y:10,w:219,h:16},{x:368,y:10,w:69,h:43,slopeTop:{left:0,right:43}}] },
     // Free Zone 3 (começa após muro x:16900)
-    { x: 17100, type: 'tire', w: 45,  h: 95 },
     { x: 17400, type: 'car',  w: 150, h: 65 },
     { x: 17700, type: 'box',  w: 65,  h: 55 },
-    { x: 18100, type: 'tire', w: 45,  h: 95 },
-    { x: 18600, type: 'car',  w: 150, h: 65 },
-    { x: 19100, type: 'box',  w: 65,  h: 110 },
-    { x: 19700, type: 'tire', w: 45,  h: 95 },
 
     // Wall Zone 3
-    { x: 20200, type: 'car',  w: 150, h: 65 },
-    { x: 20400, type: 'tire', w: 45,  h: 95 },
-    { x: 21200, type: 'car',  w: 150, h: 65 },
-    { x: 21600, type: 'box',  w: 65,  h: 55 },
-    { x: 22400, type: 'car',  w: 150, h: 65 },
-    { x: 22600, type: 'tire', w: 45,  h: 95 },
-    { x: 23400, type: 'car',  w: 150, h: 65 },
-    { x: 24350, type: 'box',  w: 65,  h: 110 },
-    { x: 24700, type: 'tire', w: 45,  h: 95 },
   ];
 
   junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY, collisionBoxes, cropLeft, cropTop, cropRight, cropBottom, yOffset }) => {

@@ -33,6 +33,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Hitboxes inclinadas: caixas de colisão agora podem ter `slopeTop` para transformar o topo em rampa; os carros grandes do ferro velho usam slopes nos vidros frontal/traseiro para Horácio subir do capô/porta-malas até o teto sem agarrar na lateral retangular. No editor, entre em `HITBOX`, clique diretamente na caixa que quer editar, use as setas para mover a hitbox selecionada em 1px (`Shift` = 5px), use `S` ou o botão `+ SLOPE`, e arraste os losangos laranja para ajustar o ângulo. Durante o teste iniciado com `Ctrl`, clicar em um objeto volta para o editor e seleciona aquele objeto.
 - Editor de fase: botão `UPLOAD SPRITE` no topo aceita PNG/WebP transparente, cria um objeto do tipo `sprite` com o nome original do arquivo, salva os sprites no `localStorage` e permite mover, redimensionar, recortar e editar hitbox como os outros objetos.
 - Física: pilhas conectadas de caixas com altura mínima de 3 caixas agora contam como parede escalável para wall run/subida, mas continuam com `type: 'box'`, mantendo a quebra por tiro do drone.
+- Fase: removidos permanentemente da geração do ferro velho os pneus/carros/caixas listados pelo usuário em x:13050, 14000, 14050, 14700, 15450, 16250, 17100, 18100, 18600, 19100, 19700, 20200, 20400, 21200, 21600, 22400, 22600, 23400, 24350 e 24700; também removida a lixeira x:20000.
 
 ## Key Commands
 
