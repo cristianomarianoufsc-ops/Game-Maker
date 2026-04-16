@@ -86,6 +86,8 @@ export interface Player {
   wallFlipTimer: number;
   isWallClimbUp: boolean;
   wallClimbTimer: number;
+  wallClimbAdjustedDuration: number;
+  wallClimbLiftAmount: number;
   wallClimbStartX: number;
   wallClimbStartY: number;
   wallClimbTargetX: number;

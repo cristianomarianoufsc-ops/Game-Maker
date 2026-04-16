@@ -294,12 +294,22 @@ export function updatePlayer(
       if (canJumpOffWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide) {
         p.isWallRunning = false;
         p.isWallClimbUp = true;
-        p.wallClimbTimer = WALLCLIMB_DURATION;
         p.wallClimbStartX = p.x;
         p.wallClimbStartY = p.y;
         p.wallClimbTargetX = wallSide === 'right' ? p.wallX + 22 : p.wallX - p.w - 22;
         p.wallClimbTargetY = p.wallTopY - PLAYER_H - 4;
         p.wallClimbSide = wallSide;
+        // Escala velocidade proporcionalmente à distância vertical até o hang point
+        // Paredes mais altas = fase 1 mais rápida
+        {
+          const hangY = p.wallTopY + 35;
+          const climbDist = Math.max(1, p.wallClimbStartY - hangY);
+          const REF_DIST = 120; // distância de referência (parede padrão)
+          p.wallClimbLiftAmount = Math.min(160, Math.max(86, climbDist * 0.58));
+          const speedRatio = Math.min(1, REF_DIST / climbDist);
+          p.wallClimbAdjustedDuration = Math.max(300, Math.round(WALLCLIMB_DURATION * speedRatio));
+          p.wallClimbTimer = p.wallClimbAdjustedDuration;
+        }
         p.coyoteTime = 0;
         p.vx = 0;
         p.vy = 0;
@@ -390,8 +400,8 @@ export function updatePlayer(
     } else {
       // Climb animation
       p.wallClimbTimer -= dt;
-      const t = Math.max(0, Math.min(1, 1 - p.wallClimbTimer / WALLCLIMB_DURATION));
-      const liftY = p.wallClimbStartY - 86;
+      const t = Math.max(0, Math.min(1, 1 - p.wallClimbTimer / p.wallClimbAdjustedDuration));
+      const liftY = p.wallClimbStartY - p.wallClimbLiftAmount;
       const lerp = (a: number, b: number, n: number) => a + (b - a) * n;
 
       if (t < 0.38) {
