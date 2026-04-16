@@ -304,9 +304,12 @@ function stripBlackAndWhiteBackground(src: HTMLImageElement): HTMLImageElement {
   return out;
 }
 
+const isTouchDevice = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
 function getScale() {
   const scaleX = window.innerWidth / CANVAS_W;
-  const scaleY = (window.innerHeight - CONTROLS_H) / CANVAS_H;
+  const reserve = isTouchDevice() ? 0 : CONTROLS_H;
+  const scaleY = (window.innerHeight - reserve) / CANVAS_H;
   return Math.min(1, scaleX, scaleY);
 }
 
@@ -1879,6 +1882,7 @@ export default function Game() {
   return (
     <div
       style={{
+        position: 'relative',
         width: '100vw',
         height: '100vh',
         background: '#0a0909',
@@ -1913,8 +1917,8 @@ export default function Game() {
         onChange={handleSpriteUpload}
         style={{ display: 'none' }}
       />
-      {/* Mobile controls sit below the canvas, never overlap */}
-      <MobileControls keysRef={keysRef} spaceJustPressed={spaceJustPressed} canvasW={cssW} />
+      {/* Mobile controls — overlay absolutely positioned */}
+      <MobileControls keysRef={keysRef} spaceJustPressed={spaceJustPressed} />
     </div>
   );
 }
@@ -1922,98 +1926,118 @@ export default function Game() {
 function MobileControls({
   keysRef,
   spaceJustPressed,
-  canvasW,
 }: {
   keysRef: React.MutableRefObject<Keys>;
   spaceJustPressed: React.MutableRefObject<boolean>;
-  canvasW: number;
 }) {
-  const btnStyle = (color = 'rgba(50,40,35,0.92)'): React.CSSProperties => ({
-    background: color,
-    border: '1px solid rgba(120,60,40,0.55)',
-    borderRadius: 8,
-    color: '#c8c0b8',
-    fontFamily: 'monospace',
-    fontSize: 15,
-    padding: '10px 16px',
-    cursor: 'pointer',
+  const [isTouch] = useState(() => isTouchDevice());
+  const [isPortrait, setIsPortrait] = useState(() => window.innerHeight > window.innerWidth);
+
+  useEffect(() => {
+    const check = () => setIsPortrait(window.innerHeight > window.innerWidth);
+    window.addEventListener('resize', check);
+    window.addEventListener('orientationchange', check);
+    return () => {
+      window.removeEventListener('resize', check);
+      window.removeEventListener('orientationchange', check);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isTouch) return;
+    const lock = async () => {
+      try { await (screen.orientation as any).lock('landscape'); } catch { /* unsupported */ }
+    };
+    lock();
+  }, [isTouch]);
+
+  if (!isTouch) return null;
+
+  if (isPortrait) {
+    return (
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'rgba(8,4,2,0.96)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        zIndex: 999,
+        color: '#c8b090', fontFamily: 'monospace',
+        textAlign: 'center', padding: 24,
+      }}>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>↻</div>
+        <div style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>Vire o celular</div>
+        <div style={{ fontSize: 14, opacity: 0.65 }}>O jogo funciona na horizontal</div>
+      </div>
+    );
+  }
+
+  const D = 62;
+  const base: React.CSSProperties = {
+    width: D, height: D,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'rgba(30,25,20,0.72)',
+    border: '1px solid rgba(140,100,60,0.45)',
+    borderRadius: 10,
+    color: '#c8b090',
+    fontSize: 22,
+    touchAction: 'none',
     userSelect: 'none',
     WebkitUserSelect: 'none',
-    touchAction: 'none',
-    minWidth: 52,
-    minHeight: 48,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  });
-
-  const press = (key: keyof Keys) => () => {
-    keysRef.current[key] = true;
-    if (key === 'space') spaceJustPressed.current = true;
+    cursor: 'pointer',
+    WebkitTapHighlightColor: 'transparent',
   };
-  const release = (key: keyof Keys) => () => { keysRef.current[key] = false; };
+
+  const mkBtn = (key: keyof Keys, label: string, style: React.CSSProperties = base, isSpace = false) => (
+    <div
+      style={style}
+      onPointerDown={(e) => { e.preventDefault(); keysRef.current[key] = true; if (isSpace) spaceJustPressed.current = true; }}
+      onPointerUp={(e) => { e.preventDefault(); keysRef.current[key] = false; }}
+      onPointerLeave={(e) => { e.preventDefault(); keysRef.current[key] = false; }}
+      onPointerCancel={(e) => { e.preventDefault(); keysRef.current[key] = false; }}
+    >{label}</div>
+  );
 
   return (
-    <div
-      style={{
-        width: canvasW,
-        height: CONTROLS_H,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0 8px',
-        flexShrink: 0,
-      }}
-    >
-      {/* Left side: directional */}
-      <div style={{ display: 'flex', gap: 4 }}>
-        <button
-          style={btnStyle()}
-          onPointerDown={press('left')}
-          onPointerUp={release('left')}
-          onPointerLeave={release('left')}
-        >◀</button>
-        <button
-          style={btnStyle()}
-          onPointerDown={press('right')}
-          onPointerUp={release('right')}
-          onPointerLeave={release('right')}
-        >▶</button>
-        <button
-          style={btnStyle()}
-          onPointerDown={press('up')}
-          onPointerUp={release('up')}
-          onPointerLeave={release('up')}
-        >▲</button>
-        <button
-          style={btnStyle()}
-          onPointerDown={press('down')}
-          onPointerUp={release('down')}
-          onPointerLeave={release('down')}
-        >▼</button>
+    <>
+      {/* D-pad em cruz — lado esquerdo */}
+      <div style={{
+        position: 'absolute', bottom: 14, left: 14,
+        display: 'grid',
+        gridTemplateColumns: `${D}px ${D}px ${D}px`,
+        gridTemplateRows: `${D}px ${D}px ${D}px`,
+        gap: 3,
+        pointerEvents: 'none',
+      }}>
+        <div style={{ pointerEvents: 'none' }} />
+        <div style={{ pointerEvents: 'auto' }}>{mkBtn('up', '▲')}</div>
+        <div style={{ pointerEvents: 'none' }} />
+        <div style={{ pointerEvents: 'auto' }}>{mkBtn('left', '◀')}</div>
+        <div style={{ ...base, background: 'rgba(20,15,10,0.5)', pointerEvents: 'none', borderStyle: 'dashed', opacity: 0.4, fontSize: 10 }}>✛</div>
+        <div style={{ pointerEvents: 'auto' }}>{mkBtn('right', '▶')}</div>
+        <div style={{ pointerEvents: 'none' }} />
+        <div style={{ pointerEvents: 'auto' }}>{mkBtn('down', '▼')}</div>
+        <div style={{ pointerEvents: 'none' }} />
       </div>
 
-      {/* Right side: actions */}
-      <div style={{ display: 'flex', gap: 4 }}>
-        <button
-          style={btnStyle('rgba(80,25,20,0.92)')}
-          onPointerDown={press('shift')}
-          onPointerUp={release('shift')}
-          onPointerLeave={release('shift')}
-        >ROLAR</button>
-        <button
-          style={btnStyle('rgba(40,60,20,0.92)')}
-          onPointerDown={press('dive')}
-          onPointerUp={release('dive')}
-          onPointerLeave={release('dive')}
-        >MERGULHO</button>
-        <button
-          style={btnStyle('rgba(25,45,90,0.92)')}
-          onPointerDown={press('space')}
-          onPointerUp={release('space')}
-          onPointerLeave={release('space')}
-        >PULAR</button>
-      </div>
-    </div>
+      {/* Botão PULAR — lado direito */}
+      {mkBtn('space', 'PULAR', {
+        position: 'absolute', bottom: 22, right: 22,
+        width: 88, height: 88,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(18,35,80,0.82)',
+        border: '2px solid rgba(70,110,210,0.65)',
+        borderRadius: '50%',
+        color: '#90aee0',
+        fontSize: 13,
+        fontFamily: 'monospace',
+        fontWeight: 'bold',
+        letterSpacing: 1,
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        cursor: 'pointer',
+        WebkitTapHighlightColor: 'transparent',
+      }, true)}
+    </>
   );
 }
