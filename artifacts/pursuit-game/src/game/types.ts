@@ -15,7 +15,7 @@ export interface CollisionBox extends Rect {
 }
 
 export interface Platform extends Rect {
-  type: 'ground' | 'platform' | 'wall' | 'obstacle' | 'car' | 'tire' | 'box';
+  type: 'ground' | 'platform' | 'wall' | 'obstacle' | 'car' | 'tire' | 'box' | 'sprite';
   climbable?: boolean;
   collisionW?: number;
   collisionH?: number;
@@ -26,6 +26,8 @@ export interface Platform extends Rect {
   cropTop?: number;
   cropRight?: number;
   cropBottom?: number;
+  customSpriteName?: string;
+  customSpriteDataUrl?: string;
 }
 
 export type PlayerState =

@@ -1,4 +1,4 @@
-import type { GameState } from './types';
+import type { GameState, Platform } from './types';
 import type { BuildingDef } from './level';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, COLORS,
@@ -772,11 +772,12 @@ export function drawStreetBuildings(
 
 export function drawPlatforms(
   ctx: CanvasRenderingContext2D,
-  platforms: ReturnType<typeof import('./level')['generateLevel']>,
+  platforms: Platform[],
   camX: number,
   balconyImg?: HTMLImageElement | null,
   carroImg?: HTMLImageElement | null,
-  destroyedBoxIndices?: number[]
+  destroyedBoxIndices?: number[],
+  customSpriteImages?: Map<string, HTMLImageElement>,
 ): void {
   for (let pi = 0; pi < platforms.length; pi++) {
     const plat = platforms[pi];
@@ -784,6 +785,29 @@ export function drawPlatforms(
     if (plat.type === 'box' && destroyedBoxIndices?.includes(pi)) continue;
     const sx = plat.x - camX;
     if (sx + plat.w < -20 || sx > CANVAS_W + 20) continue;
+
+    if (plat.type === 'sprite') {
+      const img = plat.customSpriteName ? customSpriteImages?.get(plat.customSpriteName) : undefined;
+      if (img && img.complete && img.naturalWidth > 0) {
+        const cropLeft = Math.max(0, Math.min(plat.cropLeft ?? 0, plat.w - 6));
+        const cropRight = Math.max(0, Math.min(plat.cropRight ?? 0, plat.w - cropLeft - 6));
+        const cropTop = Math.max(0, Math.min(plat.cropTop ?? 0, plat.h - 6));
+        const cropBottom = Math.max(0, Math.min(plat.cropBottom ?? 0, plat.h - cropTop - 6));
+        const srcX = img.naturalWidth * (cropLeft / plat.w);
+        const srcY = img.naturalHeight * (cropTop / plat.h);
+        const srcW = img.naturalWidth * ((plat.w - cropLeft - cropRight) / plat.w);
+        const srcH = img.naturalHeight * ((plat.h - cropTop - cropBottom) / plat.h);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(img, srcX, srcY, srcW, srcH, sx + cropLeft, plat.y + cropTop, plat.w - cropLeft - cropRight, plat.h - cropTop - cropBottom);
+        ctx.imageSmoothingEnabled = true;
+      } else {
+        ctx.fillStyle = 'rgba(80,180,255,0.18)';
+        ctx.fillRect(sx, plat.y, plat.w, plat.h);
+        ctx.strokeStyle = 'rgba(120,220,255,0.85)';
+        ctx.strokeRect(sx, plat.y, plat.w, plat.h);
+      }
+      continue;
+    }
 
     if (plat.type === 'obstacle') {
       // Trash can — large dark green municipal bin
@@ -2386,6 +2410,7 @@ export function drawEditorUI(
     car: 'rgba(0,220,255,0.18)',
     tire: 'rgba(255,160,60,0.25)',
     box: 'rgba(180,120,60,0.25)',
+    sprite: 'rgba(80,180,255,0.20)',
   };
   const typeStroke: Record<string, string> = {
     ground: 'rgba(80,255,80,0.75)',
@@ -2395,6 +2420,7 @@ export function drawEditorUI(
     car: 'rgba(0,220,255,0.85)',
     tire: 'rgba(255,180,80,0.85)',
     box: 'rgba(200,140,80,0.85)',
+    sprite: 'rgba(120,220,255,0.95)',
   };
 
   ctx.save();
@@ -2503,7 +2529,8 @@ export function drawEditorUI(
       ctx.textAlign = 'center';
       const modeLabel = collisionMode ? '  HITBOX' : '';
       const boxLabel = collisionMode && hits.length > 1 ? ` ${selectedHitIdx + 1}/${hits.length}` : '';
-      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}  [${p.type}]${modeLabel}${boxLabel}`, drawX + drawW / 2, drawY - 8);
+      const nameLabel = p.type === 'sprite' && p.customSpriteName ? ` ${p.customSpriteName}` : '';
+      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}  [${p.type}]${nameLabel}${modeLabel}${boxLabel}`, drawX + drawW / 2, drawY - 8);
       ctx.textAlign = 'left';
 
       if (hasCrop && !collisionMode) {
@@ -2674,14 +2701,16 @@ export function drawEditorUI(
       ctx.fillStyle = 'rgba(0,200,255,0.75)';
       ctx.font = '10px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type}]`, drawX + drawW / 2, drawY - 6);
+      const nameLabel = p.type === 'sprite' && p.customSpriteName ? ` ${p.customSpriteName}` : '';
+      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type}]${nameLabel}`, drawX + drawW / 2, drawY - 6);
       ctx.textAlign = 'left';
     } else if (isHovered) {
       ctx.fillStyle = 'rgba(255,80,60,0.9)';
       ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'center';
       const gy = Math.round(p.y - 410);
-      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type}]  — clique para selecionar`, drawX + drawW / 2, drawY - 6);
+      const nameLabel = p.type === 'sprite' && p.customSpriteName ? ` ${p.customSpriteName}` : '';
+      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  [${p.type}]${nameLabel}  — clique para selecionar`, drawX + drawW / 2, drawY - 6);
       ctx.textAlign = 'left';
     }
   }
@@ -2714,7 +2743,7 @@ export function drawEditorUI(
   ctx.fillText('EDITOR DE FASE', 12, 16);
 
   // Botões Desfazer / Refazer
-  const undoBtnX = 166, redoBtnX = 224, histBtnY = 5, histBtnW = 54, histBtnH = 18;
+  const undoBtnX = 166, redoBtnX = 224, uploadBtnX = 286, histBtnY = 5, histBtnW = 54, histBtnH = 18;
   ctx.save();
   ctx.fillStyle = canUndo ? 'rgba(40,50,80,0.92)' : 'rgba(25,25,35,0.6)';
   ctx.strokeStyle = canUndo ? 'rgba(120,170,255,0.9)' : 'rgba(80,80,110,0.45)';
@@ -2739,6 +2768,20 @@ export function drawEditorUI(
   ctx.font = 'bold 10px monospace';
   ctx.fillText('REFAZ ↪', redoBtnX + histBtnW / 2, histBtnY + 12);
   ctx.textAlign = 'left';
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(30,55,70,0.92)';
+  ctx.strokeStyle = 'rgba(120,220,255,0.9)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(uploadBtnX, histBtnY, 104, histBtnH, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(170,235,255,1)';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('UPLOAD SPRITE', uploadBtnX + 52, histBtnY + 12);
   ctx.restore();
 
   ctx.fillStyle = 'rgba(180,175,210,0.75)';

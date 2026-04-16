@@ -115,6 +115,7 @@ function makeDrone(): Drone {
 
 const CONTROLS_H = 68; // px reserved below canvas for mobile buttons
 const EDITOR_DELETED_PLATFORMS_STORAGE_KEY = 'pursuit-deleted-platforms-v1';
+const EDITOR_CUSTOM_SPRITES_STORAGE_KEY = 'pursuit-custom-sprites-v1';
 
 function getPlatformKey(platform: Platform): string {
   return `${platform.type}:${platform.x}:${platform.y}:${platform.w}:${platform.h}`;
@@ -146,6 +147,31 @@ function saveDeletedPlatformKeys(keys: Set<string>): void {
 
 function applyDeletedPlatformKeys(platforms: Platform[], keys: Set<string>): Platform[] {
   return platforms.filter((platform) => platform.type === 'ground' || !keys.has(getPlatformKey(platform)));
+}
+
+function loadCustomSpritePlatforms(): Platform[] {
+  try {
+    const raw = window.localStorage.getItem(EDITOR_CUSTOM_SPRITES_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((platform): platform is Platform =>
+      platform &&
+      platform.type === 'sprite' &&
+      typeof platform.x === 'number' &&
+      typeof platform.y === 'number' &&
+      typeof platform.w === 'number' &&
+      typeof platform.h === 'number' &&
+      typeof platform.customSpriteName === 'string' &&
+      typeof platform.customSpriteDataUrl === 'string'
+    );
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomSpritePlatforms(platforms: Platform[]): void {
+  const customSprites = platforms.filter((platform) => platform.type === 'sprite');
+  window.localStorage.setItem(EDITOR_CUSTOM_SPRITES_STORAGE_KEY, JSON.stringify(customSprites));
 }
 
 // Remove white/near-white background from a sprite sheet exported without transparency.
@@ -304,6 +330,7 @@ export default function Game() {
   const editorCamXRef = useRef(0);
   const editorLastSpawnXRef = useRef(0);
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
+  const spriteUploadInputRef = useRef<HTMLInputElement>(null);
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
   const editorSelectedIdxRef = useRef(-1);
@@ -362,6 +389,7 @@ export default function Game() {
   const brickTextureImgRef = useRef<HTMLImageElement | null>(null);
   const balconyImgRef = useRef<HTMLImageElement | null>(null);
   const carroImgRef = useRef<HTMLImageElement | null>(null);
+  const customSpriteImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   // Responsive scale: fit canvas inside available viewport
   const [scale, setScale] = useState(getScale);
@@ -386,6 +414,13 @@ export default function Game() {
     destroyedBoxIndices: [],
   }), []);
 
+  const registerCustomSpriteImage = useCallback((platform: Platform) => {
+    if (platform.type !== 'sprite' || !platform.customSpriteName || !platform.customSpriteDataUrl) return;
+    const img = new Image();
+    img.src = platform.customSpriteDataUrl;
+    customSpriteImagesRef.current.set(platform.customSpriteName, img);
+  }, []);
+
   const resetGame = useCallback((gameMode: GameState['gameMode'] = 'story') => {
     // Ao iniciar modo história, garante que o modo editor não interfere
     if (gameMode === 'story') {
@@ -399,7 +434,13 @@ export default function Game() {
 
   useEffect(() => {
     deletedPlatformKeysRef.current = loadDeletedPlatformKeys();
-    platformsRef.current = applyDeletedPlatformKeys(generateLevel(), deletedPlatformKeysRef.current);
+    const customSpritePlatforms = loadCustomSpritePlatforms();
+    customSpriteImagesRef.current = new Map();
+    customSpritePlatforms.forEach(registerCustomSpriteImage);
+    platformsRef.current = [
+      ...applyDeletedPlatformKeys(generateLevel(), deletedPlatformKeysRef.current),
+      ...customSpritePlatforms,
+    ];
     gsRef.current = makeInitialState();
 
     // Load sprite images
@@ -759,6 +800,7 @@ export default function Game() {
     const applyEditorSnapshot = (snapshot: Platform[]) => {
       platformsRef.current = snapshot;
       if (gsRef.current) gsRef.current.platforms = snapshot;
+      saveCustomSpritePlatforms(snapshot);
       editorSelectedIdxRef.current = -1;
       editorSelectedIndicesRef.current = new Set();
       editorDragRef.current = null;
@@ -1078,6 +1120,7 @@ export default function Game() {
       if (wy >= 5 && wy <= 23) {
         if (screenX >= 166 && screenX <= 220) { editorUndo(); return; }
         if (screenX >= 224 && screenX <= 278) { editorRedo(); return; }
+        if (screenX >= 286 && screenX <= 390) { spriteUploadInputRef.current?.click(); return; }
       }
 
       const selIdx = editorSelectedIdxRef.current;
@@ -1139,6 +1182,7 @@ export default function Game() {
             });
 
             editorSelectedIndicesRef.current = new Set(newIndices);
+            saveCustomSpritePlatforms(platforms);
             editorSelectedIdxRef.current = newIndices[0] ?? selIdx;
             editorCollisionBoxIdxRef.current = 0;
             copyPlatText(platCoordText(platforms[editorSelectedIdxRef.current]), `✓ GRUPO DUPLICADO: ${newIndices.length} OBJETOS`);
@@ -1148,6 +1192,7 @@ export default function Game() {
           const copy = { ...p, x: p.x + p.w };
           if (p.collisionBoxes) copy.collisionBoxes = p.collisionBoxes.map((box) => ({ ...box, slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined }));
           platforms.push(copy);
+          saveCustomSpritePlatforms(platforms);
           const newIdx = platforms.length - 1;
           snapEditorPlatform(copy, newIdx);
           editorSelectedIndicesRef.current = new Set([newIdx]);
@@ -1396,6 +1441,7 @@ export default function Game() {
           const clipText = `ANTIGO: ${drag.origText}\nNOVO:   ${newText}`;
           copyPlatText(clipText, `✓ ATUALIZADO — cole aqui e diga "atualizar"`);
         }
+        saveCustomSpritePlatforms(platformsRef.current);
       }
       editorPendingHistoryRef.current = null;
     };
@@ -1686,7 +1732,7 @@ export default function Game() {
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);
-      drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current, gs.destroyedBoxIndices);
+      drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current, gs.destroyedBoxIndices, customSpriteImagesRef.current);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
       if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
@@ -1736,6 +1782,59 @@ export default function Game() {
     };
   }, [makeInitialState, resetGame]);
 
+  const handleSpriteUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!['image/png', 'image/webp'].includes(file.type)) {
+      editorCopiedMsgRef.current = { text: 'USE PNG OU WEBP COM FUNDO TRANSPARENTE', until: Date.now() + 3000 };
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+      if (!dataUrl) return;
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 180;
+        const scale = Math.min(1, maxW / img.naturalWidth);
+        const w = Math.max(12, Math.round(img.naturalWidth * scale));
+        const h = Math.max(12, Math.round(img.naturalHeight * scale));
+        const platform: Platform = {
+          type: 'sprite',
+          x: Math.round(editorMouseWorldRef.current.x - w / 2),
+          y: Math.round(Math.min(editorMouseWorldRef.current.y - h / 2, GROUND_Y - h)),
+          w,
+          h,
+          customSpriteName: file.name,
+          customSpriteDataUrl: dataUrl,
+        };
+        const snapshot = platformsRef.current.map(p => ({
+          ...p,
+          collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({
+            ...b,
+            slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
+          })) : undefined,
+        })) as Platform[];
+        editorUndoStackRef.current.push(snapshot);
+        if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
+        editorRedoStackRef.current = [];
+        customSpriteImagesRef.current.set(file.name, img);
+        platformsRef.current.push(platform);
+        saveCustomSpritePlatforms(platformsRef.current);
+        if (gsRef.current) gsRef.current.platforms = platformsRef.current;
+        const idx = platformsRef.current.length - 1;
+        editorSelectedIdxRef.current = idx;
+        editorSelectedIndicesRef.current = new Set([idx]);
+        editorCollisionModeRef.current = false;
+        editorCollisionBoxIdxRef.current = 0;
+        editorCopiedMsgRef.current = { text: `✓ SPRITE ADICIONADO: ${file.name}`, until: Date.now() + 3000 };
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
   const cssW = Math.floor(CANVAS_W * scale);
   const cssH = Math.floor(CANVAS_H * scale);
 
@@ -1768,6 +1867,13 @@ export default function Game() {
           boxShadow: '0 0 60px rgba(0,0,0,0.95), 0 0 20px rgba(120,20,10,0.25)',
           flexShrink: 0,
         }}
+      />
+      <input
+        ref={spriteUploadInputRef}
+        type="file"
+        accept="image/png,image/webp"
+        onChange={handleSpriteUpload}
+        style={{ display: 'none' }}
       />
       {/* Mobile controls sit below the canvas, never overlap */}
       <MobileControls keysRef={keysRef} spaceJustPressed={spaceJustPressed} canvasW={cssW} />
