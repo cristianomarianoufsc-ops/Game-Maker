@@ -1791,7 +1791,7 @@ export default function Game() {
     event.target.value = '';
     if (!file) return;
     if (!['image/png', 'image/webp'].includes(file.type)) {
-      editorCopiedMsgRef.current = { text: 'USE PNG OU WEBP COM FUNDO TRANSPARENTE', until: Date.now() + 3000 };
+      editorCopiedMsgRef.current = { text: 'USE PNG OU WEBP — FUNDO BRANCO REMOVIDO AUTO', until: Date.now() + 3000 };
       return;
     }
     const reader = new FileReader();
@@ -1800,6 +1800,10 @@ export default function Game() {
       if (!dataUrl) return;
       const img = new Image();
       img.onload = () => {
+        // Strip white/near-white background automatically on upload
+        const processed = stripWhiteBackground(img);
+        const processedDataUrl = processed.src;
+
         const maxW = 180;
         const scale = Math.min(1, maxW / img.naturalWidth);
         const w = Math.max(12, Math.round(img.naturalWidth * scale));
@@ -1811,7 +1815,7 @@ export default function Game() {
           w,
           h,
           customSpriteName: file.name,
-          customSpriteDataUrl: dataUrl,
+          customSpriteDataUrl: processedDataUrl,
         };
         const snapshot = platformsRef.current.map(p => ({
           ...p,
@@ -1823,7 +1827,7 @@ export default function Game() {
         editorUndoStackRef.current.push(snapshot);
         if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
         editorRedoStackRef.current = [];
-        customSpriteImagesRef.current.set(file.name, img);
+        customSpriteImagesRef.current.set(file.name, processed);
         platformsRef.current.push(platform);
         saveCustomSpritePlatforms(platformsRef.current);
         if (gsRef.current) gsRef.current.platforms = platformsRef.current;
