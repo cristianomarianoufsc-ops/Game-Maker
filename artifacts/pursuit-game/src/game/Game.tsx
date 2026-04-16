@@ -1932,6 +1932,9 @@ function MobileControls({
 }) {
   const [isTouch] = useState(() => isTouchDevice());
   const [isPortrait, setIsPortrait] = useState(() => window.innerHeight > window.innerWidth);
+  const joystickRef = useRef<HTMLDivElement>(null);
+  const [knob, setKnob] = useState({ x: 0, y: 0 });
+  const joystickPointer = useRef<number | null>(null);
 
   useEffect(() => {
     const check = () => setIsPortrait(window.innerHeight > window.innerWidth);
@@ -1956,7 +1959,7 @@ function MobileControls({
   if (isPortrait) {
     return (
       <div style={{
-        position: 'absolute', inset: 0,
+        position: 'fixed', inset: 0,
         background: 'rgba(8,4,2,0.96)',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
@@ -1971,73 +1974,114 @@ function MobileControls({
     );
   }
 
-  const D = 62;
-  const base: React.CSSProperties = {
-    width: D, height: D,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(30,25,20,0.72)',
-    border: '1px solid rgba(140,100,60,0.45)',
-    borderRadius: 10,
-    color: '#c8b090',
-    fontSize: 22,
-    touchAction: 'none',
-    userSelect: 'none',
-    WebkitUserSelect: 'none',
-    cursor: 'pointer',
-    WebkitTapHighlightColor: 'transparent',
-  };
+  const BASE = 118;
+  const KNOB = 44;
+  const maxDist = BASE / 2 - KNOB / 2;
+  const THRESH = 0.32;
 
-  const mkBtn = (key: keyof Keys, label: string, style: React.CSSProperties = base, isSpace = false) => (
-    <div
-      style={style}
-      onPointerDown={(e) => { e.preventDefault(); keysRef.current[key] = true; if (isSpace) spaceJustPressed.current = true; }}
-      onPointerUp={(e) => { e.preventDefault(); keysRef.current[key] = false; }}
-      onPointerLeave={(e) => { e.preventDefault(); keysRef.current[key] = false; }}
-      onPointerCancel={(e) => { e.preventDefault(); keysRef.current[key] = false; }}
-    >{label}</div>
-  );
+  const releaseJoystick = () => {
+    joystickPointer.current = null;
+    setKnob({ x: 0, y: 0 });
+    keysRef.current.left = false;
+    keysRef.current.right = false;
+    keysRef.current.up = false;
+    keysRef.current.down = false;
+  };
 
   return (
     <>
-      {/* D-pad em cruz — lado esquerdo */}
-      <div style={{
-        position: 'absolute', bottom: 14, left: 14,
-        display: 'grid',
-        gridTemplateColumns: `${D}px ${D}px ${D}px`,
-        gridTemplateRows: `${D}px ${D}px ${D}px`,
-        gap: 3,
-        pointerEvents: 'none',
-      }}>
-        <div style={{ pointerEvents: 'none' }} />
-        <div style={{ pointerEvents: 'auto' }}>{mkBtn('up', '▲')}</div>
-        <div style={{ pointerEvents: 'none' }} />
-        <div style={{ pointerEvents: 'auto' }}>{mkBtn('left', '◀')}</div>
-        <div style={{ ...base, background: 'rgba(20,15,10,0.5)', pointerEvents: 'none', borderStyle: 'dashed', opacity: 0.4, fontSize: 10 }}>✛</div>
-        <div style={{ pointerEvents: 'auto' }}>{mkBtn('right', '▶')}</div>
-        <div style={{ pointerEvents: 'none' }} />
-        <div style={{ pointerEvents: 'auto' }}>{mkBtn('down', '▼')}</div>
-        <div style={{ pointerEvents: 'none' }} />
+      {/* ── Virtual Joystick ── */}
+      <div
+        ref={joystickRef}
+        style={{
+          position: 'fixed',
+          bottom: 32,
+          left: 60,
+          width: BASE, height: BASE,
+          borderRadius: '50%',
+          background: 'rgba(18,13,8,0.68)',
+          border: '2px solid rgba(160,120,55,0.45)',
+          touchAction: 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          zIndex: 200,
+          WebkitTapHighlightColor: 'transparent',
+        }}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.currentTarget.setPointerCapture(e.pointerId);
+          joystickPointer.current = e.pointerId;
+        }}
+        onPointerMove={(e) => {
+          if (joystickPointer.current !== e.pointerId) return;
+          e.preventDefault();
+          const rect = joystickRef.current!.getBoundingClientRect();
+          const dx = e.clientX - (rect.left + rect.width / 2);
+          const dy = e.clientY - (rect.top + rect.height / 2);
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const clamped = Math.min(dist, maxDist);
+          const angle = Math.atan2(dy, dx);
+          setKnob({ x: clamped * Math.cos(angle), y: clamped * Math.sin(angle) });
+          const nx = dx / maxDist;
+          const ny = dy / maxDist;
+          keysRef.current.left  = nx < -THRESH;
+          keysRef.current.right = nx >  THRESH;
+          keysRef.current.up    = ny < -THRESH;
+          keysRef.current.down  = ny >  THRESH;
+        }}
+        onPointerUp={(e) => { if (joystickPointer.current === e.pointerId) releaseJoystick(); }}
+        onPointerCancel={(e) => { if (joystickPointer.current === e.pointerId) releaseJoystick(); }}
+      >
+        {/* Guias cruzadas */}
+        <div style={{ position: 'absolute', left: BASE/2-1, top: 10, width: 2, height: BASE-20, background: 'rgba(160,120,55,0.18)', borderRadius: 1 }} />
+        <div style={{ position: 'absolute', top: BASE/2-1, left: 10, height: 2, width: BASE-20, background: 'rgba(160,120,55,0.18)', borderRadius: 1 }} />
+        {/* Knob */}
+        <div style={{
+          position: 'absolute',
+          left: BASE/2 - KNOB/2 + knob.x,
+          top:  BASE/2 - KNOB/2 + knob.y,
+          width: KNOB, height: KNOB,
+          borderRadius: '50%',
+          background: 'rgba(200,160,75,0.88)',
+          border: '2px solid rgba(240,200,110,0.75)',
+          boxShadow: '0 0 10px rgba(200,150,60,0.35)',
+          transition: joystickPointer.current === null ? 'left 0.09s ease, top 0.09s ease' : 'none',
+          pointerEvents: 'none',
+        }} />
       </div>
 
-      {/* Botão PULAR — lado direito */}
-      {mkBtn('space', 'PULAR', {
-        position: 'absolute', bottom: 22, right: 22,
-        width: 88, height: 88,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(18,35,80,0.82)',
-        border: '2px solid rgba(70,110,210,0.65)',
-        borderRadius: '50%',
-        color: '#90aee0',
-        fontSize: 13,
-        fontFamily: 'monospace',
-        fontWeight: 'bold',
-        letterSpacing: 1,
-        touchAction: 'none',
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        cursor: 'pointer',
-        WebkitTapHighlightColor: 'transparent',
-      }, true)}
+      {/* ── Botão PULAR ── */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 32,
+          right: 32,
+          width: 88, height: 88,
+          borderRadius: '50%',
+          background: 'rgba(18,35,80,0.80)',
+          border: '2px solid rgba(70,110,210,0.65)',
+          color: '#90aee0',
+          fontSize: 13,
+          fontFamily: 'monospace',
+          fontWeight: 'bold',
+          letterSpacing: 1,
+          touchAction: 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 200,
+          cursor: 'pointer',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.currentTarget.setPointerCapture(e.pointerId);
+          keysRef.current.space = true;
+          spaceJustPressed.current = true;
+        }}
+        onPointerUp={(e) => { e.preventDefault(); keysRef.current.space = false; }}
+        onPointerCancel={(e) => { e.preventDefault(); keysRef.current.space = false; }}
+      >PULAR</div>
     </>
   );
 }
