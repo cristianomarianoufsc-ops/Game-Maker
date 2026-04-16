@@ -724,7 +724,10 @@ export function drawStreetBuildings(
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
   camX: number
 ): void {
-  const platKey = platforms.length + ':' + (platforms[0]?.x ?? 0);
+  const platKey = platforms
+    .filter(p => p.type === 'platform')
+    .map(p => `${p.x},${p.y},${p.w}`)
+    .join('|');
   if (platKey !== _cachedPlatKey) {
     _cachedGroups  = buildGroups(platforms as PlatType2[]);
     _cachedPlatKey = platKey;
