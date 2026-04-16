@@ -1447,7 +1447,7 @@ export default function Game() {
         } else if (editorSpawnJustPressed.current) {
           editorSpawnJustPressed.current = false;
           const spawnX = editorMouseWorldRef.current.x;
-          const spawnY = GROUND_Y - PLAYER_H - 1;
+          const spawnY = GROUND_Y - PLAYER_H - 28;
           editorLastSpawnXRef.current = spawnX;
           const newState = makeInitialState('story');
           // Usa gameMode wall-test para desabilitar o drone durante o teste
