@@ -1446,15 +1446,18 @@ export default function Game() {
           gs.gamePhase = 'menu';
         } else if (editorSpawnJustPressed.current) {
           editorSpawnJustPressed.current = false;
-          // Spawna Horácio na posição do cursor do mouse, caindo do alto
           const spawnX = editorMouseWorldRef.current.x;
+          const spawnY = Math.max(
+            -PLAYER_H,
+            Math.min(editorMouseWorldRef.current.y - PLAYER_H, GROUND_Y - PLAYER_H - 4),
+          );
           editorLastSpawnXRef.current = spawnX;
           const newState = makeInitialState('story');
           // Usa gameMode wall-test para desabilitar o drone durante o teste
           newState.gameMode = 'wall-test';
           newState.gamePhase = 'playing';
           newState.player.x = spawnX;
-          newState.player.y = -300;
+          newState.player.y = spawnY;
           newState.player.vx = 0;
           newState.player.vy = 0;
           newState.camera.x = editorCamXRef.current;
