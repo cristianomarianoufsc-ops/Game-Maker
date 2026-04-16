@@ -328,6 +328,7 @@ export default function Game() {
   const editorDroneEnabledRef = useRef(false);
   const editorTestModeRef = useRef(false);
   const editorCamXRef = useRef(0);
+  const editorCamYRef = useRef(0);
   const editorLastSpawnXRef = useRef(0);
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
   const spriteUploadInputRef = useRef<HTMLInputElement>(null);
@@ -1510,6 +1511,8 @@ export default function Game() {
           const keys = keysRef.current;
           if (keys.left)  editorCamXRef.current = Math.max(0, editorCamXRef.current - EDITOR_PAN_SPEED);
           if (keys.right) editorCamXRef.current = editorCamXRef.current + EDITOR_PAN_SPEED;
+          if (keys.up)    editorCamYRef.current = Math.max(-300, editorCamYRef.current - EDITOR_PAN_SPEED);
+          if (keys.down)  editorCamYRef.current = Math.min(300,  editorCamYRef.current + EDITOR_PAN_SPEED);
         }
         // Delete key: remove hitbox selecionada em modo colisão
         if (editorDeleteBoxJustPressed.current) {
@@ -1524,6 +1527,7 @@ export default function Game() {
           }
         }
         gs.camera.x = editorCamXRef.current;
+        gs.camera.y = editorCamYRef.current;
         spaceJustPressed.current = false;
         testJustPressed.current = false;
         editorJustPressed.current = false;
