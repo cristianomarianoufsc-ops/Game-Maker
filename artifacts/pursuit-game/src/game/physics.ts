@@ -310,8 +310,10 @@ export function updatePlayer(
           p.wallClimbAdjustedDuration = Math.max(300, Math.round(WALLCLIMB_DURATION * speedRatio));
           p.wallClimbTimer = p.wallClimbAdjustedDuration;
           // Penalidade de pulo: quanto mais alto o muro, menos impulso no pulo seguinte
-          // penalty = 1.0 (parede baixa) → 0.60 (parede muito alta)
-          p.wallClimbJumpPenalty = Math.max(0.60, 86 / p.wallClimbLiftAmount);
+          // Curva exponencial — cai rápido para paredes altas
+          // penalty = 1.0 (parede padrão) → ~0.54 (liftAmount=130) → 0.30 mínimo (muito alta)
+          const rawPenalty = Math.pow(86 / Math.max(86, p.wallClimbLiftAmount), 1.5);
+          p.wallClimbJumpPenalty = Math.max(0.30, rawPenalty);
         }
         p.coyoteTime = 0;
         p.vx = 0;
