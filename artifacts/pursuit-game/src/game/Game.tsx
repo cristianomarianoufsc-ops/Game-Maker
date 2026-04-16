@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import type { GameState, Keys, Player, Drone, Platform } from './types';
+import type { GameState, Keys, Player, Drone } from './types';
 import spriteUrl from '/horacio_transparent.png';
 import runSheetUrl from '/run_sheet_transparent.png';
 import idleUrl from '/idle_transparent.png';
@@ -9,9 +9,6 @@ import diveJumpSheetUrl from '/dive_jump_sheet.png';
 import wallRunSheetUrl from '@assets/Wall_Run_1776005817769.png';
 import mortalSheetUrl from '@assets/mortal_1776009939272.png';
 import subidaSheetUrl from '@assets/subida_1776012458574.png';
-import sideFlipSheetUrl from '@assets/SIDE_FLIP_1776053462942.png';
-import brickTextureUrl from '/brick_texture.png';
-import balconyUrl from '/balcony.png';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, PLAYER_W, PLAYER_H, DRONE_W, DRONE_H,
   PLAYER_MAX_HEALTH, SHOOT_COOLDOWN, CAMERA_LEAD_X, COLORS,
@@ -21,24 +18,10 @@ import {
   updatePlayer, updateDrone, updateBullets, updateParticles, spawnParticleHelper,
 } from './physics';
 import {
-  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawGround,
-  drawStreetBuildings, drawPlatforms,
+  drawSky, drawBuildings, drawAlleyDetails, drawGround, drawPlatforms,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
-  drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
-  drawEditorUI,
+  drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen, drawEditorOverlay,
 } from './render';
-import {
-  addPlatformCollisionBox,
-  removePlatformCollisionBox,
-  clampPlatformCollisionOverrides,
-  ensurePlatformCollisionBox,
-  ensurePlatformCollisionBoxes,
-  getPlatformCollisionRect,
-  getPlatformCollisionRects,
-  getPlatformCollisionSummary,
-  getPlatformGroundClampOffset,
-  hasCustomPlatformCollision,
-} from './collision';
 
 function makePlayer(): Player {
   return {
@@ -74,7 +57,6 @@ function makePlayer(): Player {
     landingCrouch: false,
     landingCrouchTimer: 0,
     isCrouching: false,
-    forcedCrouch: false,
     isDivejumping: false,
     isWallRunning: false,
     wallRunTimer: 0,
@@ -90,11 +72,6 @@ function makePlayer(): Player {
     isWallHanging: false,
     wallHangJumpConsumed: false,
     jumpedFromWall: false,
-    jumpCount: 0,
-    doubleJumpReady: false,
-    isSideFlipping: false,
-    sideFlipTimer: 0,
-    sideFlipImmune: false,
   };
 }
 
@@ -114,68 +91,6 @@ function makeDrone(): Drone {
 }
 
 const CONTROLS_H = 68; // px reserved below canvas for mobile buttons
-const EDITOR_DELETED_PLATFORMS_STORAGE_KEY = 'pursuit-deleted-platforms-v1';
-const EDITOR_CUSTOM_SPRITES_STORAGE_KEY = 'pursuit-custom-sprites-v1';
-
-function getPlatformKey(platform: Platform): string {
-  return `${platform.type}:${platform.x}:${platform.y}:${platform.w}:${platform.h}`;
-}
-
-function isEditorPointInsidePlatform(wx: number, wy: number, platform: Platform): boolean {
-  // True balconies (sacadas) draw a 72px window above plat.y — include that in the hit area
-  const isSacada = platform.type === 'platform' && platform.y <= GROUND_Y - 70 && platform.h > 20;
-  const topY = isSacada ? platform.y - 72 : platform.y;
-  return wx >= platform.x && wx <= platform.x + platform.w && wy >= topY && wy <= platform.y + platform.h;
-}
-
-function isEditorPointInsideCollision(wx: number, wy: number, platform: Platform): boolean {
-  return getPlatformCollisionRects(platform).some((hit) =>
-    wx >= hit.x && wx <= hit.x + hit.w && wy >= hit.y && wy <= hit.y + hit.h
-  );
-}
-
-function loadDeletedPlatformKeys(): Set<string> {
-  try {
-    const raw = window.localStorage.getItem(EDITOR_DELETED_PLATFORMS_STORAGE_KEY);
-    const keys = raw ? JSON.parse(raw) : [];
-    return new Set(Array.isArray(keys) ? keys.filter((key): key is string => typeof key === 'string') : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function saveDeletedPlatformKeys(keys: Set<string>): void {
-  window.localStorage.setItem(EDITOR_DELETED_PLATFORMS_STORAGE_KEY, JSON.stringify([...keys]));
-}
-
-function applyDeletedPlatformKeys(platforms: Platform[], keys: Set<string>): Platform[] {
-  return platforms.filter((platform) => platform.type === 'ground' || !keys.has(getPlatformKey(platform)));
-}
-
-function loadCustomSpritePlatforms(): Platform[] {
-  try {
-    const raw = window.localStorage.getItem(EDITOR_CUSTOM_SPRITES_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((platform): platform is Platform =>
-      platform &&
-      platform.type === 'sprite' &&
-      typeof platform.x === 'number' &&
-      typeof platform.y === 'number' &&
-      typeof platform.w === 'number' &&
-      typeof platform.h === 'number' &&
-      typeof platform.customSpriteName === 'string' &&
-      typeof platform.customSpriteDataUrl === 'string'
-    );
-  } catch {
-    return [];
-  }
-}
-
-function saveCustomSpritePlatforms(platforms: Platform[]): void {
-  const customSprites = platforms.filter((platform) => platform.type === 'sprite');
-  window.localStorage.setItem(EDITOR_CUSTOM_SPRITES_STORAGE_KEY, JSON.stringify(customSprites));
-}
 
 // Remove white/near-white background from a sprite sheet exported without transparency.
 // Uses perceptual brightness so anti-aliased edges fade out smoothly instead of leaving a white fringe.
@@ -222,53 +137,6 @@ function stripBlackBackground(src: HTMLImageElement): HTMLImageElement {
     const brightness = r * 0.299 + g * 0.587 + b * 0.114;
     if (brightness < 32) {
       px[i + 3] = Math.round((brightness / 32) * px[i + 3]);
-    }
-  }
-  ctx.putImageData(imageData, 0, 0);
-  const out = new Image();
-  out.src = canvas.toDataURL('image/png');
-  return out;
-}
-
-// Remove fundo escuro e dessaturado (cinza-escuro/preto) preservando cores saturadas (roupas azuis etc.)
-function stripPureBlackExact(src: HTMLImageElement): HTMLImageElement {
-  const canvas = document.createElement('canvas');
-  canvas.width = src.naturalWidth;
-  canvas.height = src.naturalHeight;
-  const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(src, 0, 0);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const px = imageData.data;
-  for (let i = 0; i < px.length; i += 4) {
-    if (px[i] < 10 && px[i + 1] < 10 && px[i + 2] < 10) {
-      px[i + 3] = 0;
-    }
-  }
-  ctx.putImageData(imageData, 0, 0);
-  const out = new Image();
-  out.src = canvas.toDataURL('image/png');
-  return out;
-}
-
-function stripPureBlackBackground(src: HTMLImageElement): HTMLImageElement {
-  const canvas = document.createElement('canvas');
-  canvas.width = src.naturalWidth;
-  canvas.height = src.naturalHeight;
-  const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(src, 0, 0);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const px = imageData.data;
-  for (let i = 0; i < px.length; i += 4) {
-    const r = px[i], g = px[i + 1], b = px[i + 2];
-    const brightness = r * 0.299 + g * 0.587 + b * 0.114;
-    const maxC = Math.max(r, g, b);
-    const minC = Math.min(r, g, b);
-    // Saturação: quão longe de cinza puro (0 = cinza, 1 = cor pura)
-    const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
-    // Remove pixel se for escuro (brilho < 36) E pouco saturado (< 0.40)
-    // Preserva pixels saturados (roupas azuis, pele, detalhes coloridos)
-    if (brightness < 36 && saturation < 0.40) {
-      px[i + 3] = 0;
     }
   }
   ctx.putImageData(imageData, 0, 0);
@@ -327,61 +195,10 @@ export default function Game() {
   const scaleRef = useRef(1);
   const lastJumpPressTime = useRef(0);
   const lastDownPressTime = useRef(0);
-  const DIVE_COMBO_WINDOW = 420;
-  const editorJustPressed = useRef(false);
-  const editorSpawnJustPressed = useRef(false);
-  const editorDeleteBoxJustPressed = useRef(false);
-  const zJustPressed = useRef(false);
-  const editorDroneEnabledRef = useRef(false);
-  const editorTestModeRef = useRef(false);
-  const editorCamXRef = useRef(0);
-  const editorCamYRef = useRef(0);
-  const editorLastSpawnXRef = useRef(0);
-  const editorMouseWorldRef = useRef({ x: 0, y: 0 });
-  const spriteUploadInputRef = useRef<HTMLInputElement>(null);
-  const editorHoveredIdxRef = useRef(-1);
-  const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
-  const editorSelectedIdxRef = useRef(-1);
-  const editorSelectedIndicesRef = useRef<Set<number>>(new Set());
-  const editorMarqueeRef = useRef<{ startWX: number; startWY: number; endWX: number; endWY: number } | null>(null);
-  const editorUndoStackRef = useRef<Platform[][]>([]);
-  const editorRedoStackRef = useRef<Platform[][]>([]);
-  const editorPendingHistoryRef = useRef<Platform[] | null>(null);
-  const editorCollisionModeRef = useRef(false);
-  const editorCollisionBoxIdxRef = useRef(0);
-  type EditorDrag = {
-    mode: 'move' | 'resize-right' | 'resize-left' | 'resize-top' | 'resize-bottom' | 'resize-corner' | 'slope-left' | 'slope-right';
-    editingCollision: boolean;
-    editingCrop: boolean;
-    startWX: number; startWY: number;
-    origX: number; origY: number; origW: number; origH: number;
-    origCropLeft: number;
-    origCropTop: number;
-    origCropRight: number;
-    origCropBottom: number;
-    origCollisionOffsetX: number;
-    origCollisionOffsetY: number;
-    origCollisionW: number;
-    origCollisionH: number;
-    origCollisionBoxes: { x: number; y: number; w: number; h: number; slopeTop?: { left: number; right: number } }[];
-    hadCustomCollision: boolean;
-    origText: string;
-    hasMoved: boolean;
-    origGroupPositions: { idx: number; origX: number; origY: number }[];
-    origSlopeLeft: number;
-    origSlopeRight: number;
-  };
-  const editorDragRef = useRef<EditorDrag | null>(null);
-  const EDITOR_PAN_SPEED = 12;
-  const EDITOR_CHECKPOINTS = [
-    { label: 'CP1', x: 6500 },
-    { label: 'CP2', x: 12100 },
-  ];
-  const editorCheckpointIdxRef = useRef(-1);
+  const DIVE_COMBO_WINDOW = 220;
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
   const buildingsRef = useRef(generateBuildings());
-  const deletedPlatformKeysRef = useRef<Set<string>>(new Set());
   const platformsRef = useRef(generateLevel());
   const showControls = useRef(true);
   const spriteImgRef = useRef<HTMLImageElement | null>(null);
@@ -393,11 +210,6 @@ export default function Game() {
   const wallRunSheetImgRef = useRef<HTMLImageElement | null>(null);
   const mortalSheetImgRef = useRef<HTMLImageElement | null>(null);
   const subidaSheetImgRef = useRef<HTMLImageElement | null>(null);
-  const sideFlipSheetImgRef = useRef<HTMLImageElement | null>(null);
-  const brickTextureImgRef = useRef<HTMLImageElement | null>(null);
-  const balconyImgRef = useRef<HTMLImageElement | null>(null);
-  const carroImgRef = useRef<HTMLImageElement | null>(null);
-  const customSpriteImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   // Responsive scale: fit canvas inside available viewport
   const [scale, setScale] = useState(getScale);
@@ -422,21 +234,9 @@ export default function Game() {
     time: 0,
     particles: [],
     screenShake: 0,
-    destroyedBoxIndices: [],
   }), []);
 
-  const registerCustomSpriteImage = useCallback((platform: Platform) => {
-    if (platform.type !== 'sprite' || !platform.customSpriteName || !platform.customSpriteDataUrl) return;
-    const img = new Image();
-    img.src = platform.customSpriteDataUrl;
-    customSpriteImagesRef.current.set(platform.customSpriteName, img);
-  }, []);
-
   const resetGame = useCallback((gameMode: GameState['gameMode'] = 'story') => {
-    // Ao iniciar modo história, garante que o modo editor não interfere
-    if (gameMode === 'story') {
-      editorTestModeRef.current = false;
-    }
     gsRef.current = {
       ...makeInitialState(gameMode),
       gamePhase: 'playing',
@@ -444,14 +244,6 @@ export default function Game() {
   }, [makeInitialState]);
 
   useEffect(() => {
-    deletedPlatformKeysRef.current = loadDeletedPlatformKeys();
-    const customSpritePlatforms = loadCustomSpritePlatforms();
-    customSpriteImagesRef.current = new Map();
-    customSpritePlatforms.forEach(registerCustomSpriteImage);
-    platformsRef.current = [
-      ...applyDeletedPlatformKeys(generateLevel(), deletedPlatformKeysRef.current),
-      ...customSpritePlatforms,
-    ];
     gsRef.current = makeInitialState();
 
     // Load sprite images
@@ -501,58 +293,7 @@ export default function Game() {
     };
     subidaImg.src = subidaSheetUrl;
 
-    const sideFlipImg = new Image();
-    sideFlipImg.onload = () => {
-      // Testa se o PNG já tem transparência nativa antes de aplicar stripping
-      const testCanvas = document.createElement('canvas');
-      testCanvas.width = 1;
-      testCanvas.height = 1;
-      const testCtx = testCanvas.getContext('2d')!;
-      // Pegar pixel no canto — se for preto e alpha=0 o PNG já tem transparência
-      testCtx.drawImage(sideFlipImg, 0, 0, 1, 1);
-      const pixel = testCtx.getImageData(0, 0, 1, 1).data;
-      const hasNativeAlpha = pixel[3] < 128;
-      if (hasNativeAlpha) {
-        sideFlipSheetImgRef.current = sideFlipImg;
-      } else {
-        const stripped = stripPureBlackBackground(sideFlipImg);
-        // Espera a decodificação do data URL antes de atribuir
-        if (stripped.complete && stripped.naturalWidth > 0) {
-          sideFlipSheetImgRef.current = stripped;
-        } else {
-          stripped.onload = () => { sideFlipSheetImgRef.current = stripped; };
-        }
-      }
-    };
-    sideFlipImg.src = sideFlipSheetUrl;
-
-    const brickImg = new Image();
-    brickImg.src = brickTextureUrl;
-    brickTextureImgRef.current = brickImg;
-
-    const balconyImg = new Image();
-    balconyImg.src = balconyUrl;
-    balconyImgRef.current = balconyImg;
-
-    const carroImg = new Image();
-    carroImg.onload = () => {
-      const stripped = stripPureBlackExact(carroImg);
-      if (stripped.complete && stripped.naturalWidth > 0) {
-        carroImgRef.current = stripped;
-      } else {
-        stripped.onload = () => { carroImgRef.current = stripped; };
-      }
-    };
-    carroImg.src = '/carro.png';
-
     const onKey = (e: KeyboardEvent, down: boolean) => {
-      if (down && gsRef.current?.gamePhase === 'editor' && editorCollisionModeRef.current) {
-        const step = e.shiftKey ? 5 : 1;
-        if (e.code === 'ArrowLeft' && nudgeEditorSelectedHitbox(-step, 0)) { e.preventDefault(); return; }
-        if (e.code === 'ArrowRight' && nudgeEditorSelectedHitbox(step, 0)) { e.preventDefault(); return; }
-        if (e.code === 'ArrowUp' && nudgeEditorSelectedHitbox(0, -step)) { e.preventDefault(); return; }
-        if (e.code === 'ArrowDown' && nudgeEditorSelectedHitbox(0, step)) { e.preventDefault(); return; }
-      }
       const k = keysRef.current;
       switch (e.code) {
         case 'ArrowLeft':  case 'KeyA': k.left  = down; break;
@@ -565,22 +306,6 @@ export default function Game() {
           }
           break;
         case 'ArrowDown': case 'KeyS':
-          if (e.code === 'KeyS' && down && gsRef.current?.gamePhase === 'editor' && editorCollisionModeRef.current) {
-            const p = platformsRef.current[editorSelectedIdxRef.current];
-            if (p) {
-              pushEditorHistory();
-              const box = ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-              if (box.slopeTop) {
-                delete box.slopeTop;
-                copyPlatText(platCoordText(p), '✓ SLOPE REMOVIDO DA HITBOX');
-              } else {
-                box.slopeTop = { left: box.h, right: 0 };
-                copyPlatText(platCoordText(p), '✓ SLOPE ADICIONADO — arraste os losangos laranja');
-              }
-            }
-            e.preventDefault();
-            break;
-          }
           k.down = down;
           if (down) {
             lastDownPressTime.current = performance.now();
@@ -595,37 +320,9 @@ export default function Game() {
           }
           break;
         case 'ShiftLeft': case 'ShiftRight': k.shift = down; break;
-        case 'KeyZ': k.z = down; if (down) zJustPressed.current = true; break;
+        case 'KeyZ': k.z = down; break;
         case 'KeyT':
           if (down) testJustPressed.current = true;
-          break;
-        case 'ControlLeft': case 'ControlRight': case 'Tab':
-          if (down) editorSpawnJustPressed.current = true;
-          break;
-        case 'KeyE':
-          if (down) editorJustPressed.current = true;
-          break;
-        case 'Delete':
-          if (down && gsRef.current?.gamePhase === 'editor') {
-            editorDeleteBoxJustPressed.current = true;
-            e.preventDefault();
-          }
-          break;
-        case 'Period':
-        case 'Numpad6':
-          if (down && gsRef.current?.gamePhase === 'editor') {
-            const next = Math.min(editorCheckpointIdxRef.current + 1, EDITOR_CHECKPOINTS.length - 1);
-            editorCheckpointIdxRef.current = next;
-            editorCamXRef.current = Math.max(0, EDITOR_CHECKPOINTS[next].x - CANVAS_W / 2);
-          }
-          break;
-        case 'Comma':
-        case 'Numpad4':
-          if (down && gsRef.current?.gamePhase === 'editor') {
-            const prev = Math.max(editorCheckpointIdxRef.current - 1, 0);
-            editorCheckpointIdxRef.current = prev;
-            editorCamXRef.current = Math.max(0, EDITOR_CHECKPOINTS[prev].x - CANVAS_W / 2);
-          }
           break;
         case 'Enter':
           if (down) enterJustPressed.current = true;
@@ -644,7 +341,7 @@ export default function Game() {
           break;
       }
       // Prevent scroll on space/arrows
-      if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','ControlLeft','ControlRight','Tab'].includes(e.code)) {
+      if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code)) {
         e.preventDefault();
       }
     };
@@ -653,855 +350,6 @@ export default function Game() {
     const ku = (e: KeyboardEvent) => onKey(e, false);
     window.addEventListener('keydown', kd);
     window.addEventListener('keyup', ku);
-
-    const EDITOR_GROUND_Y = 410;
-    const HANDLE_R = 8; // px hit radius for handles
-
-    const platCoordText = (p: Platform) => {
-      const gy = Math.round(p.y - EDITOR_GROUND_Y);
-      const crop = (p.cropLeft || p.cropTop || p.cropRight || p.cropBottom)
-        ? `  crop:${Math.round(p.cropLeft ?? 0)},${Math.round(p.cropTop ?? 0)},${Math.round(p.cropRight ?? 0)},${Math.round(p.cropBottom ?? 0)}`
-        : '';
-      return `x:${Math.round(p.x)}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${Math.round(p.w)}  h:${Math.round(p.h)}  [${p.type}]${getPlatformCollisionSummary(p)}${crop}`;
-    };
-
-    const copyPlatText = (text: string, msg: string) => {
-      navigator.clipboard.writeText(text).catch(() => {});
-      editorCopiedMsgRef.current = { text: msg, until: Date.now() + 3000 };
-    };
-
-    const getEditorWorldCoords = (e: MouseEvent) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return null;
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = CANVAS_W / rect.width;
-      const scaleY = CANVAS_H / rect.height;
-      const cx = (e.clientX - rect.left) * scaleX;
-      const cy = (e.clientY - rect.top) * scaleY;
-      return { wx: cx + editorCamXRef.current, wy: cy + editorCamYRef.current };
-    };
-
-    const hitHandle = (wx: number, wy: number, hx: number, hy: number) =>
-      Math.abs(wx - hx) <= HANDLE_R && Math.abs(wy - hy) <= HANDLE_R;
-
-    const getPlatformEditRect = (p: Platform) => {
-      const cropLeft = Math.max(0, Math.min(p.cropLeft ?? 0, p.w - 6));
-      const cropRight = Math.max(0, Math.min(p.cropRight ?? 0, p.w - cropLeft - 6));
-      const cropTop = Math.max(0, Math.min(p.cropTop ?? 0, p.h - 6));
-      const cropBottom = Math.max(0, Math.min(p.cropBottom ?? 0, p.h - cropTop - 6));
-      return {
-        x: p.x + cropLeft,
-        y: p.y + cropTop,
-        w: Math.max(6, p.w - cropLeft - cropRight),
-        h: Math.max(6, p.h - cropTop - cropBottom),
-      };
-    };
-
-    const snapEditorPlatform = (platform: Platform, platformIdx: number) => {
-      const SNAP = 8;
-      const movingHit = getPlatformCollisionRect(platform);
-      const movingCenterX = movingHit.x + movingHit.w / 2;
-      const movingCenterY = movingHit.y + movingHit.h / 2;
-      let bestDx = 0;
-      let bestDy = 0;
-      let bestAbsX = SNAP + 1;
-      let bestAbsY = SNAP + 1;
-
-      const considerX = (from: number, to: number) => {
-        const delta = to - from;
-        const abs = Math.abs(delta);
-        if (abs <= SNAP && abs < bestAbsX) {
-          bestAbsX = abs;
-          bestDx = delta;
-        }
-      };
-
-      const considerY = (from: number, to: number) => {
-        const delta = to - from;
-        const abs = Math.abs(delta);
-        if (abs <= SNAP && abs < bestAbsY) {
-          bestAbsY = abs;
-          bestDy = delta;
-        }
-      };
-
-      considerY(movingHit.y + movingHit.h, EDITOR_GROUND_Y);
-
-      platformsRef.current.forEach((target, targetIdx) => {
-        if (targetIdx === platformIdx || target.type === 'ground') return;
-        const targetRects = getPlatformCollisionRects(target);
-        targetRects.forEach((targetHit) => {
-          const targetCenterX = targetHit.x + targetHit.w / 2;
-          const targetCenterY = targetHit.y + targetHit.h / 2;
-
-          considerX(movingHit.x, targetHit.x);
-          considerX(movingHit.x + movingHit.w, targetHit.x + targetHit.w);
-          considerX(movingCenterX, targetCenterX);
-          considerX(movingHit.x, targetHit.x + targetHit.w);
-          considerX(movingHit.x + movingHit.w, targetHit.x);
-
-          considerY(movingHit.y, targetHit.y);
-          considerY(movingHit.y + movingHit.h, targetHit.y + targetHit.h);
-          considerY(movingCenterY, targetCenterY);
-          considerY(movingHit.y, targetHit.y + targetHit.h);
-          considerY(movingHit.y + movingHit.h, targetHit.y);
-        });
-      });
-
-      if (bestDx !== 0) platform.x = Math.round(platform.x + bestDx);
-      if (bestDy !== 0) platform.y = Math.round(platform.y + bestDy);
-      platform.y = Math.round(Math.min(platform.y, EDITOR_GROUND_Y - getPlatformGroundClampOffset(platform)));
-      platform.y = Math.max(60, platform.y);
-    };
-
-    const makeEditorDrag = (p: Platform, mode: EditorDrag['mode'], wx: number, wy: number, origText: string, editingCrop = false): EditorDrag => {
-      const hits = getPlatformCollisionRects(p);
-      const hit = editorCollisionModeRef.current
-        ? hits[Math.max(0, Math.min(editorCollisionBoxIdxRef.current, hits.length - 1))] ?? getPlatformCollisionRect(p)
-        : getPlatformCollisionRect(p);
-      return {
-        mode,
-        editingCollision: editorCollisionModeRef.current,
-        editingCrop,
-        startWX: wx,
-        startWY: wy,
-        origX: p.x,
-        origY: p.y,
-        origW: p.w,
-        origH: p.h,
-        origCropLeft: p.cropLeft ?? 0,
-        origCropTop: p.cropTop ?? 0,
-        origCropRight: p.cropRight ?? 0,
-        origCropBottom: p.cropBottom ?? 0,
-        origCollisionOffsetX: hit.x - p.x,
-        origCollisionOffsetY: hit.y - p.y,
-        origCollisionW: hit.w,
-        origCollisionH: hit.h,
-        origCollisionBoxes: (p.collisionBoxes ?? []).map((box) => ({
-          ...box,
-          slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined,
-        })),
-        hadCustomCollision: hasCustomPlatformCollision(p),
-        origText,
-        hasMoved: false,
-        origGroupPositions: [],
-        origSlopeLeft: hit.slopeTop?.left ?? 0,
-        origSlopeRight: hit.slopeTop?.right ?? 0,
-      };
-    };
-
-    const snapshotPlatforms = (): Platform[] =>
-      platformsRef.current.map(p => ({
-        ...p,
-        collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({
-          ...b,
-          slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
-        })) : undefined,
-      })) as Platform[];
-
-    const pushEditorHistory = () => {
-      editorUndoStackRef.current.push(snapshotPlatforms());
-      if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
-      editorRedoStackRef.current = [];
-    };
-
-    const nudgeEditorSelectedHitbox = (dx: number, dy: number): boolean => {
-      const p = platformsRef.current[editorSelectedIdxRef.current];
-      if (!p || p.type === 'ground' || !editorCollisionModeRef.current) return false;
-      pushEditorHistory();
-      const box = ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-      box.x = Math.round(box.x + dx);
-      box.y = Math.round(box.y + dy);
-      clampPlatformCollisionOverrides(p);
-      copyPlatText(platCoordText(p), `✓ HITBOX MOVIDA: ${dx === 0 ? '' : dx > 0 ? '→' : '←'}${dy === 0 ? '' : dy > 0 ? '↓' : '↑'}`);
-      return true;
-    };
-
-    const applyEditorSnapshot = (snapshot: Platform[]) => {
-      platformsRef.current = snapshot;
-      if (gsRef.current) gsRef.current.platforms = snapshot;
-      saveCustomSpritePlatforms(snapshot);
-      editorSelectedIdxRef.current = -1;
-      editorSelectedIndicesRef.current = new Set();
-      editorDragRef.current = null;
-      editorPendingHistoryRef.current = null;
-    };
-
-    const editorUndo = () => {
-      if (editorUndoStackRef.current.length === 0) return;
-      editorRedoStackRef.current.push(snapshotPlatforms());
-      applyEditorSnapshot(editorUndoStackRef.current.pop()!);
-    };
-
-    const editorRedo = () => {
-      if (editorRedoStackRef.current.length === 0) return;
-      editorUndoStackRef.current.push(snapshotPlatforms());
-      applyEditorSnapshot(editorRedoStackRef.current.pop()!);
-    };
-
-    const onCanvasMouseMove = (e: MouseEvent) => {
-      const gs = gsRef.current;
-      if (!gs || gs.gamePhase !== 'editor') return;
-      const coords = getEditorWorldCoords(e);
-      if (!coords) return;
-      const { wx, wy } = coords;
-      editorMouseWorldRef.current = { x: wx, y: wy };
-
-      const drag = editorDragRef.current;
-      if (drag) {
-        const dx = wx - drag.startWX;
-        const dy = wy - drag.startWY;
-        if (Math.abs(dx) > 1 || Math.abs(dy) > 1) drag.hasMoved = true;
-        const p = platformsRef.current[editorSelectedIdxRef.current];
-        if (p) {
-          if (drag.editingCrop) {
-            const minVisible = 6;
-            const clampCrop = () => {
-              p.cropLeft = Math.round(Math.max(0, Math.min(p.cropLeft ?? 0, p.w - (p.cropRight ?? 0) - minVisible)));
-              p.cropRight = Math.round(Math.max(0, Math.min(p.cropRight ?? 0, p.w - (p.cropLeft ?? 0) - minVisible)));
-              p.cropTop = Math.round(Math.max(0, Math.min(p.cropTop ?? 0, p.h - (p.cropBottom ?? 0) - minVisible)));
-              p.cropBottom = Math.round(Math.max(0, Math.min(p.cropBottom ?? 0, p.h - (p.cropTop ?? 0) - minVisible)));
-            };
-            if (drag.mode === 'resize-left') {
-              p.cropLeft = drag.origCropLeft + dx;
-            } else if (drag.mode === 'resize-right') {
-              p.cropRight = drag.origCropRight - dx;
-            } else if (drag.mode === 'resize-top') {
-              p.cropTop = drag.origCropTop + dy;
-            } else if (drag.mode === 'resize-bottom') {
-              p.cropBottom = drag.origCropBottom - dy;
-            } else if (drag.mode === 'resize-corner') {
-              p.cropRight = drag.origCropRight - dx;
-              p.cropTop = drag.origCropTop + dy;
-            }
-            clampCrop();
-          } else if (drag.editingCollision) {
-            const box = ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-            if (drag.mode === 'move') {
-              box.x = Math.round(Math.max(0, Math.min(drag.origCollisionOffsetX + dx, p.w - drag.origCollisionW)));
-              box.y = Math.round(Math.max(0, Math.min(drag.origCollisionOffsetY + dy, p.h - drag.origCollisionH)));
-            } else if (drag.mode === 'resize-right') {
-              box.w = Math.round(Math.max(6, Math.min(drag.origCollisionW + dx, p.w - drag.origCollisionOffsetX)));
-            } else if (drag.mode === 'resize-left') {
-              const maxW = drag.origCollisionOffsetX + drag.origCollisionW;
-              const newW = Math.round(Math.max(6, Math.min(drag.origCollisionW - dx, maxW)));
-              box.x = Math.round(drag.origCollisionOffsetX + drag.origCollisionW - newW);
-              box.w = newW;
-            } else if (drag.mode === 'resize-top') {
-              const maxH = drag.origCollisionOffsetY + drag.origCollisionH;
-              const newH = Math.round(Math.max(6, Math.min(drag.origCollisionH - dy, maxH)));
-              box.y = Math.round(drag.origCollisionOffsetY + drag.origCollisionH - newH);
-              box.h = newH;
-            } else if (drag.mode === 'resize-bottom') {
-              box.h = Math.round(Math.max(6, Math.min(drag.origCollisionH + dy, p.h - drag.origCollisionOffsetY)));
-            } else if (drag.mode === 'resize-corner') {
-              const scale = Math.max(0.05, (drag.origCollisionW + dx) / drag.origCollisionW);
-              box.w = Math.round(Math.max(6, Math.min(drag.origCollisionW * scale, p.w - drag.origCollisionOffsetX)));
-              box.h = Math.round(Math.max(6, Math.min(drag.origCollisionH * scale, p.h - drag.origCollisionOffsetY)));
-            } else if (drag.mode === 'slope-left') {
-              if (!box.slopeTop) box.slopeTop = { left: 0, right: 0 };
-              box.slopeTop.left = Math.max(0, Math.min(box.h, drag.origSlopeLeft + dy));
-            } else if (drag.mode === 'slope-right') {
-              if (!box.slopeTop) box.slopeTop = { left: 0, right: 0 };
-              box.slopeTop.right = Math.max(0, Math.min(box.h, drag.origSlopeRight + dy));
-            }
-            clampPlatformCollisionOverrides(p);
-          } else if (drag.mode === 'move') {
-            p.x = Math.round(drag.origX + dx);
-            p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
-            p.y = Math.max(60, p.y);
-            const preSnapX = p.x;
-            const preSnapY = p.y;
-            snapEditorPlatform(p, editorSelectedIdxRef.current);
-            const snapDx = p.x - preSnapX;
-            const snapDy = p.y - preSnapY;
-            if (drag.origGroupPositions.length > 0) {
-              drag.origGroupPositions.forEach(({ idx, origX, origY }) => {
-                const gp = platformsRef.current[idx];
-                if (gp) {
-                  gp.x = Math.round(origX + dx) + snapDx;
-                  gp.y = Math.round(Math.min(origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(gp))) + snapDy;
-                  gp.y = Math.max(60, gp.y);
-                }
-              });
-            }
-          } else if (drag.mode === 'resize-right') {
-            p.w = Math.round(Math.max(10, drag.origW + dx));
-            if (drag.hadCustomCollision) {
-              if (drag.origCollisionBoxes.length > 0) {
-                p.collisionBoxes = drag.origCollisionBoxes.map((box) => ({
-                  x: Math.round(box.x * (p.w / drag.origW)),
-                  y: box.y,
-                  w: Math.round(box.w * (p.w / drag.origW)),
-                  h: box.h,
-                  slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined,
-                }));
-                clampPlatformCollisionOverrides(p);
-              } else {
-                p.collisionOffsetX = Math.round(drag.origCollisionOffsetX * (p.w / drag.origW));
-                p.collisionOffsetY = Math.round(drag.origCollisionOffsetY);
-                p.collisionW = Math.round(drag.origCollisionW * (p.w / drag.origW));
-                p.collisionH = Math.round(drag.origCollisionH);
-                clampPlatformCollisionOverrides(p);
-              }
-            }
-          } else if (drag.mode === 'resize-left') {
-            const newW = Math.round(Math.max(10, drag.origW - dx));
-            p.x = Math.round(drag.origX + drag.origW - newW);
-            p.w = newW;
-            if (drag.hadCustomCollision) {
-              if (drag.origCollisionBoxes.length > 0) {
-                p.collisionBoxes = drag.origCollisionBoxes.map((box) => ({
-                  x: Math.round(box.x * (p.w / drag.origW)),
-                  y: box.y,
-                  w: Math.round(box.w * (p.w / drag.origW)),
-                  h: box.h,
-                  slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined,
-                }));
-                clampPlatformCollisionOverrides(p);
-              } else {
-                p.collisionOffsetX = Math.round(drag.origCollisionOffsetX * (p.w / drag.origW));
-                p.collisionOffsetY = Math.round(drag.origCollisionOffsetY);
-                p.collisionW = Math.round(drag.origCollisionW * (p.w / drag.origW));
-                p.collisionH = Math.round(drag.origCollisionH);
-                clampPlatformCollisionOverrides(p);
-              }
-            }
-          } else if (drag.mode === 'resize-top') {
-            const newH = Math.round(Math.max(10, drag.origH - dy));
-            p.y = Math.round(drag.origY + drag.origH - newH);
-            p.h = newH;
-            if (drag.hadCustomCollision) {
-              if (drag.origCollisionBoxes.length > 0) {
-                p.collisionBoxes = drag.origCollisionBoxes.map((box) => ({
-                  x: box.x,
-                  y: Math.round(box.y * (p.h / drag.origH)),
-                  w: box.w,
-                  h: Math.round(box.h * (p.h / drag.origH)),
-                  slopeTop: box.slopeTop ? {
-                    left: Math.round(box.slopeTop.left * (p.h / drag.origH)),
-                    right: Math.round(box.slopeTop.right * (p.h / drag.origH)),
-                  } : undefined,
-                }));
-                clampPlatformCollisionOverrides(p);
-              } else {
-                p.collisionOffsetX = Math.round(drag.origCollisionOffsetX);
-                p.collisionOffsetY = Math.round(drag.origCollisionOffsetY * (p.h / drag.origH));
-                p.collisionW = Math.round(drag.origCollisionW);
-                p.collisionH = Math.round(drag.origCollisionH * (p.h / drag.origH));
-                clampPlatformCollisionOverrides(p);
-              }
-            }
-          } else if (drag.mode === 'resize-bottom') {
-            p.h = Math.round(Math.max(10, drag.origH + dy));
-            if (drag.hadCustomCollision) {
-              if (drag.origCollisionBoxes.length > 0) {
-                p.collisionBoxes = drag.origCollisionBoxes.map((box) => ({
-                  x: box.x,
-                  y: Math.round(box.y * (p.h / drag.origH)),
-                  w: box.w,
-                  h: Math.round(box.h * (p.h / drag.origH)),
-                  slopeTop: box.slopeTop ? {
-                    left: Math.round(box.slopeTop.left * (p.h / drag.origH)),
-                    right: Math.round(box.slopeTop.right * (p.h / drag.origH)),
-                  } : undefined,
-                }));
-                clampPlatformCollisionOverrides(p);
-              } else {
-                p.collisionOffsetX = Math.round(drag.origCollisionOffsetX);
-                p.collisionOffsetY = Math.round(drag.origCollisionOffsetY * (p.h / drag.origH));
-                p.collisionW = Math.round(drag.origCollisionW);
-                p.collisionH = Math.round(drag.origCollisionH * (p.h / drag.origH));
-                clampPlatformCollisionOverrides(p);
-              }
-            }
-          } else if (drag.mode === 'resize-corner') {
-            const scale = Math.max(0.05, (drag.origW + dx) / drag.origW);
-            const newW = Math.round(Math.max(10, drag.origW * scale));
-            const newH = Math.round(Math.max(10, drag.origH * scale));
-            p.w = newW;
-            p.h = newH;
-            p.y = Math.round(drag.origY + drag.origH - newH);
-            if (drag.hadCustomCollision) {
-              if (drag.origCollisionBoxes.length > 0) {
-                p.collisionBoxes = drag.origCollisionBoxes.map((box) => ({
-                  x: Math.round(box.x * (p.w / drag.origW)),
-                  y: Math.round(box.y * (p.h / drag.origH)),
-                  w: Math.round(box.w * (p.w / drag.origW)),
-                  h: Math.round(box.h * (p.h / drag.origH)),
-                  slopeTop: box.slopeTop ? {
-                    left: Math.round(box.slopeTop.left * (p.h / drag.origH)),
-                    right: Math.round(box.slopeTop.right * (p.h / drag.origH)),
-                  } : undefined,
-                }));
-                clampPlatformCollisionOverrides(p);
-              } else {
-                p.collisionOffsetX = Math.round(drag.origCollisionOffsetX * (p.w / drag.origW));
-                p.collisionOffsetY = Math.round(drag.origCollisionOffsetY * (p.h / drag.origH));
-                p.collisionW = Math.round(drag.origCollisionW * (p.w / drag.origW));
-                p.collisionH = Math.round(drag.origCollisionH * (p.h / drag.origH));
-                clampPlatformCollisionOverrides(p);
-              }
-            }
-          }
-        }
-        return;
-      }
-
-      // Marquee drag tracking
-      if (editorMarqueeRef.current) {
-        editorMarqueeRef.current.endWX = wx;
-        editorMarqueeRef.current.endWY = wy;
-        return;
-      }
-
-      // Middle-button pan
-      {
-        let hovIdx = -1;
-        for (let _i = platformsRef.current.length - 1; _i >= 0; _i--) {
-          const _p = platformsRef.current[_i];
-          if (_p.type === 'ground') continue;
-          if (isEditorPointInsidePlatform(wx, wy, _p)) { hovIdx = _i; break; }
-        }
-        editorHoveredIdxRef.current = hovIdx;
-      }
-    };
-
-    let middleDragging = false;
-    let middleLastX = 0;
-
-    const onCanvasMouseDown = (e: MouseEvent) => {
-      const gs = gsRef.current;
-      if (!gs) return;
-
-      // Botão direito em jogo: spawna Horácio na posição do clique, caindo do céu
-      if (gs.gamePhase === 'playing' && e.button === 2) {
-        e.preventDefault();
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = CANVAS_W / rect.width;
-        const cx = (e.clientX - rect.left) * scaleX;
-        const worldX = cx + gs.camera.x;
-        gs.player.x = worldX - gs.player.w / 2;
-        gs.player.y = -300;
-        gs.player.vx = 0;
-        gs.player.vy = 2;
-        gs.player.onGround = false;
-        gs.player.state = 'jump';
-        gs.player.health = gs.player.maxHealth;
-        gs.player.invincible = false;
-        gs.player.hurtStunTimer = 0;
-        return;
-      }
-
-      if (gs.gamePhase === 'playing' && editorTestModeRef.current && e.button === 0) {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = CANVAS_W / rect.width;
-        const scaleY = CANVAS_H / rect.height;
-        const cx = (e.clientX - rect.left) * scaleX;
-        const cy = (e.clientY - rect.top) * scaleY;
-        const wx = cx + gs.camera.x;
-        const wy = cy + gs.camera.y;
-        let idx = -1;
-        for (let _i = platformsRef.current.length - 1; _i >= 0; _i--) {
-          const _p = platformsRef.current[_i];
-          if (_p.type === 'ground') continue;
-          if (isEditorPointInsidePlatform(wx, wy, _p)) { idx = _i; break; }
-        }
-        if (idx >= 0) {
-          e.preventDefault();
-          editorCamXRef.current = gs.camera.x;
-          gs.gamePhase = 'editor';
-          gs.camera.x = editorCamXRef.current;
-          editorSelectedIdxRef.current = idx;
-          editorSelectedIndicesRef.current = new Set([idx]);
-          editorCollisionModeRef.current = false;
-          editorCollisionBoxIdxRef.current = 0;
-          editorDragRef.current = null;
-          editorMarqueeRef.current = null;
-          const p = platformsRef.current[idx];
-          copyPlatText(platCoordText(p), `✓ VOLTOU AO EDITOR: ${platCoordText(p)}`);
-        }
-        return;
-      }
-
-      if (gs.gamePhase !== 'editor') return;
-
-      if (e.button === 1) {
-        e.preventDefault();
-        middleDragging = true;
-        middleLastX = e.clientX;
-        return;
-      }
-
-      if (e.button !== 0) return;
-      const coords = getEditorWorldCoords(e);
-      if (!coords) return;
-      const { wx, wy } = coords;
-
-      // Undo/Redo buttons (tela fixa no header do editor)
-      const screenX = wx - editorCamXRef.current;
-      if (wy >= 5 && wy <= 23) {
-        if (screenX >= 166 && screenX <= 220) { editorUndo(); return; }
-        if (screenX >= 224 && screenX <= 278) { editorRedo(); return; }
-        if (screenX >= 286 && screenX <= 390) { spriteUploadInputRef.current?.click(); return; }
-      }
-
-      const selIdx = editorSelectedIdxRef.current;
-      const platforms = platformsRef.current;
-
-      // Check handle hits on currently selected object first
-      if (selIdx >= 0 && selIdx < platforms.length) {
-        const p = platforms[selIdx];
-        const hits = getPlatformCollisionRects(p);
-        const selectedHitIdx = Math.max(0, Math.min(editorCollisionBoxIdxRef.current, hits.length - 1));
-        const hit = hits[selectedHitIdx] ?? getPlatformCollisionRect(p);
-        const editRect = editorCollisionModeRef.current
-          ? hit
-          : getPlatformEditRect(p);
-        const rightHX = editRect.x + editRect.w;
-        const rightHY = editRect.y + editRect.h / 2;
-        const leftHX = editRect.x;
-        const leftHY = editRect.y + editRect.h / 2;
-        const topHX = editRect.x + editRect.w / 2;
-        const topHY = editRect.y;
-        const bottomHX = editRect.x + editRect.w / 2;
-        const bottomHY = editRect.y + editRect.h;
-        const cornerHX = editRect.x + editRect.w;
-        const cornerHY = editRect.y;
-        const origText = platCoordText(p);
-
-        // Duplicate button hit (world-space, right side of object)
-        const dupBtnX = editRect.x + editRect.w + 14;
-        const dupBtnY = editRect.y + editRect.h / 2 - 24;
-        const selectedDupCount = editorSelectedIndicesRef.current.has(selIdx) ? Math.max(1, editorSelectedIndicesRef.current.size) : 1;
-        const dupBtnW = selectedDupCount > 1 ? 78 : 62;
-        const dupBtnH = 22;
-        const collisionBtnX = dupBtnX;
-        const collisionBtnY = dupBtnY + 26;
-        const collisionBtnW = 82;
-        const collisionBtnH = 22;
-        const addBoxBtnX = dupBtnX;
-        const addBoxBtnY = collisionBtnY + 26;
-        const addBoxBtnW = 82;
-        const addBoxBtnH = 22;
-        if (wx >= dupBtnX && wx <= dupBtnX + dupBtnW && wy >= dupBtnY && wy <= dupBtnY + dupBtnH) {
-          pushEditorHistory();
-          const selectedGroup = Array.from(editorSelectedIndicesRef.current)
-            .filter((idx) => idx >= 0 && idx < platforms.length && platforms[idx].type !== 'ground')
-            .sort((a, b) => a - b);
-
-          if (selectedGroup.length > 1 && selectedGroup.includes(selIdx)) {
-            const groupMinX = Math.min(...selectedGroup.map((idx) => platforms[idx].x));
-            const groupMaxX = Math.max(...selectedGroup.map((idx) => platforms[idx].x + platforms[idx].w));
-            const offsetX = Math.max(1, groupMaxX - groupMinX);
-            const newIndices: number[] = [];
-
-            selectedGroup.forEach((idx) => {
-              const original = platforms[idx];
-              const copy = { ...original, x: original.x + offsetX };
-              if (original.collisionBoxes) copy.collisionBoxes = original.collisionBoxes.map((box) => ({ ...box, slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined }));
-              platforms.push(copy);
-              newIndices.push(platforms.length - 1);
-            });
-
-            editorSelectedIndicesRef.current = new Set(newIndices);
-            saveCustomSpritePlatforms(platforms);
-            editorSelectedIdxRef.current = newIndices[0] ?? selIdx;
-            editorCollisionBoxIdxRef.current = 0;
-            copyPlatText(platCoordText(platforms[editorSelectedIdxRef.current]), `✓ GRUPO DUPLICADO: ${newIndices.length} OBJETOS`);
-            return;
-          }
-
-          const copy = { ...p, x: p.x + p.w };
-          if (p.collisionBoxes) copy.collisionBoxes = p.collisionBoxes.map((box) => ({ ...box, slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined }));
-          platforms.push(copy);
-          saveCustomSpritePlatforms(platforms);
-          const newIdx = platforms.length - 1;
-          snapEditorPlatform(copy, newIdx);
-          editorSelectedIndicesRef.current = new Set([newIdx]);
-          editorSelectedIdxRef.current = newIdx;
-          editorCollisionBoxIdxRef.current = 0;
-          const text = platCoordText(copy);
-          copyPlatText(text, `✓ DUPLICADO: ${text}`);
-          return;
-        }
-        if (wx >= collisionBtnX && wx <= collisionBtnX + collisionBtnW && wy >= collisionBtnY && wy <= collisionBtnY + collisionBtnH) {
-          editorCollisionModeRef.current = !editorCollisionModeRef.current;
-          if (editorCollisionModeRef.current) {
-            ensurePlatformCollisionBoxes(p);
-            editorCollisionBoxIdxRef.current = Math.max(0, Math.min(editorCollisionBoxIdxRef.current, (p.collisionBoxes?.length ?? 1) - 1));
-            copyPlatText(platCoordText(p), '✓ MODO HITBOX — ALT+clique escolhe caixa, +BOX cria outra');
-          } else {
-            copyPlatText(platCoordText(p), '✓ MODO OBJETO — alças voltaram ao sprite');
-          }
-          return;
-        }
-        if (editorCollisionModeRef.current && wx >= addBoxBtnX && wx <= addBoxBtnX + addBoxBtnW && wy >= addBoxBtnY && wy <= addBoxBtnY + addBoxBtnH) {
-          editorCollisionBoxIdxRef.current = addPlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          const text = platCoordText(p);
-          copyPlatText(text, `✓ BOX ${editorCollisionBoxIdxRef.current + 1} ADICIONADA`);
-          return;
-        }
-        const removeBoxBtnX = dupBtnX;
-        const removeBoxBtnY = addBoxBtnY + 26;
-        const removeBoxBtnW = 82;
-        const removeBoxBtnH = 22;
-        if (editorCollisionModeRef.current && wx >= removeBoxBtnX && wx <= removeBoxBtnX + removeBoxBtnW && wy >= removeBoxBtnY && wy <= removeBoxBtnY + removeBoxBtnH) {
-          editorCollisionBoxIdxRef.current = removePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          const hasBoxes = (p.collisionBoxes?.length ?? 0) > 0;
-          if (!hasBoxes) editorCollisionModeRef.current = false;
-          copyPlatText(platCoordText(p), hasBoxes ? `✓ BOX REMOVIDA` : `✓ COLISÃO RESETADA`);
-          return;
-        }
-
-        // Slope toggle button
-        const slopeBtnX = dupBtnX;
-        const slopeBtnY = removeBoxBtnY + 26;
-        const slopeBtnW = 82;
-        const slopeBtnH = 22;
-        if (editorCollisionModeRef.current && wx >= slopeBtnX && wx <= slopeBtnX + slopeBtnW && wy >= slopeBtnY && wy <= slopeBtnY + slopeBtnH) {
-          pushEditorHistory();
-          const box = ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          if (box.slopeTop) {
-            delete box.slopeTop;
-            copyPlatText(platCoordText(p), '✓ SLOPE REMOVIDO DA HITBOX');
-          } else {
-            box.slopeTop = { left: box.h, right: 0 };
-            copyPlatText(platCoordText(p), '✓ SLOPE ADICIONADO — arraste os losangos laranja');
-          }
-          return;
-        }
-
-        // Slope handles (diamond, laranja) — somente em modo colisão
-        if (editorCollisionModeRef.current && hit.slopeTop) {
-          const slopeHitRadius = 10;
-          const sLX = hit.x, sLY = hit.y + hit.slopeTop.left;
-          const sRX = hit.x + hit.w, sRY = hit.y + hit.slopeTop.right;
-          if (Math.abs(wx - sLX) <= slopeHitRadius && Math.abs(wy - sLY) <= slopeHitRadius) {
-            ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-            editorPendingHistoryRef.current = snapshotPlatforms();
-            editorDragRef.current = { ...makeEditorDrag(p, 'slope-left', wx, wy, origText), origSlopeLeft: hit.slopeTop.left, origSlopeRight: hit.slopeTop.right };
-            return;
-          }
-          if (Math.abs(wx - sRX) <= slopeHitRadius && Math.abs(wy - sRY) <= slopeHitRadius) {
-            ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-            editorPendingHistoryRef.current = snapshotPlatforms();
-            editorDragRef.current = { ...makeEditorDrag(p, 'slope-right', wx, wy, origText), origSlopeLeft: hit.slopeTop.left, origSlopeRight: hit.slopeTop.right };
-            return;
-          }
-        }
-
-        if (editorCollisionModeRef.current && !e.shiftKey) {
-          const boxHit = getPlatformCollisionRects(p)
-            .map((box, idx) => ({ box, idx }))
-            .filter(({ box }) => wx >= box.x && wx <= box.x + box.w && wy >= box.y && wy <= box.y + box.h)
-            .sort((a, b) => (a.box.w * a.box.h) - (b.box.w * b.box.h))[0];
-          if (boxHit && boxHit.idx !== selectedHitIdx) {
-            editorCollisionBoxIdxRef.current = boxHit.idx;
-            copyPlatText(platCoordText(p), `✓ BOX ${boxHit.idx + 1} SELECIONADA`);
-            return;
-          }
-        }
-
-        if (hitHandle(wx, wy, cornerHX, cornerHY)) {
-          if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorDragRef.current = makeEditorDrag(p, 'resize-corner', wx, wy, origText, e.shiftKey);
-          return;
-        }
-        if (hitHandle(wx, wy, rightHX, rightHY)) {
-          if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorDragRef.current = makeEditorDrag(p, 'resize-right', wx, wy, origText, e.shiftKey);
-          return;
-        }
-        if (hitHandle(wx, wy, leftHX, leftHY)) {
-          if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorDragRef.current = makeEditorDrag(p, 'resize-left', wx, wy, origText, e.shiftKey);
-          return;
-        }
-        if (hitHandle(wx, wy, topHX, topHY)) {
-          if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorDragRef.current = makeEditorDrag(p, 'resize-top', wx, wy, origText, e.shiftKey);
-          return;
-        }
-        if (hitHandle(wx, wy, bottomHX, bottomHY)) {
-          if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorDragRef.current = makeEditorDrag(p, 'resize-bottom', wx, wy, origText, e.shiftKey);
-          return;
-        }
-        // Hit body of selected → start move drag
-        if (editorCollisionModeRef.current
-          ? isEditorPointInsideCollision(wx, wy, p)
-          : (wx >= editRect.x && wx <= editRect.x + editRect.w && wy >= editRect.y && wy <= editRect.y + editRect.h)
-        ) {
-          if (editorCollisionModeRef.current) ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-          editorPendingHistoryRef.current = snapshotPlatforms();
-          editorDragRef.current = makeEditorDrag(p, 'move', wx, wy, origText);
-          if (editorSelectedIndicesRef.current.size > 1 && editorSelectedIndicesRef.current.has(selIdx)) {
-            editorDragRef.current.origGroupPositions = [...editorSelectedIndicesRef.current]
-              .filter(i => i !== selIdx && i >= 0 && i < platforms.length && platforms[i].type !== 'ground')
-              .map(i => ({ idx: i, origX: platforms[i].x, origY: platforms[i].y }));
-          }
-          return;
-        }
-      }
-
-      // Hit a different platform → select or multi-select it
-      let idx = -1;
-      for (let _i = platforms.length - 1; _i >= 0; _i--) {
-        const _p = platforms[_i];
-        if (_p.type === 'ground') continue;
-        if (isEditorPointInsidePlatform(wx, wy, _p)) { idx = _i; break; }
-      }
-      if (idx >= 0) {
-        if (e.shiftKey) {
-          // Toggle platform in/out of multi-selection
-          if (editorSelectedIndicesRef.current.has(idx)) {
-            editorSelectedIndicesRef.current.delete(idx);
-            if (editorSelectedIdxRef.current === idx) {
-              editorSelectedIdxRef.current = [...editorSelectedIndicesRef.current][0] ?? -1;
-            }
-          } else {
-            editorSelectedIndicesRef.current.add(idx);
-            editorSelectedIdxRef.current = idx;
-            editorCollisionModeRef.current = false;
-            editorCollisionBoxIdxRef.current = 0;
-          }
-          const indices = [...editorSelectedIndicesRef.current];
-          const texts = indices.map(i => platCoordText(platforms[i])).join(',\n');
-          const msg = indices.length === 1 ? `✓ SELECIONADO: ${platCoordText(platforms[indices[0]])}` : `✓ ${indices.length} SELECIONADOS`;
-          copyPlatText(texts, msg);
-        } else if (editorSelectedIndicesRef.current.has(idx) && editorSelectedIndicesRef.current.size > 1) {
-          // Clique em membro do grupo → arrastar grupo inteiro sem mudar seleção
-          editorSelectedIdxRef.current = idx;
-          const clickedP = platforms[idx];
-          editorPendingHistoryRef.current = snapshotPlatforms();
-          const newDrag = makeEditorDrag(clickedP, 'move', wx, wy, platCoordText(clickedP));
-          newDrag.origGroupPositions = [...editorSelectedIndicesRef.current]
-            .filter(i => i !== idx && i >= 0 && i < platforms.length && platforms[i].type !== 'ground')
-            .map(i => ({ idx: i, origX: platforms[i].x, origY: platforms[i].y }));
-          editorDragRef.current = newDrag;
-        } else {
-          // Seleção normal — limpa multi, seleciona só este
-          editorSelectedIdxRef.current = idx;
-          editorSelectedIndicesRef.current = new Set([idx]);
-          editorCollisionModeRef.current = false;
-          editorCollisionBoxIdxRef.current = 0;
-          const p = platforms[idx];
-          const text = platCoordText(p);
-          copyPlatText(text, `✓ SELECIONADO: ${text}`);
-          editorPendingHistoryRef.current = snapshotPlatforms();
-          editorDragRef.current = makeEditorDrag(p, 'move', wx, wy, text);
-        }
-      } else {
-        if (!e.shiftKey) {
-          // Click on empty space: clear selection and start marquee
-          editorSelectedIdxRef.current = -1;
-          editorSelectedIndicesRef.current = new Set();
-          editorCollisionModeRef.current = false;
-          editorCollisionBoxIdxRef.current = 0;
-          editorMarqueeRef.current = { startWX: wx, startWY: wy, endWX: wx, endWY: wy };
-        }
-      }
-    };
-
-    const onCanvasMiddleMove = (e: MouseEvent) => {
-      if (!middleDragging) return;
-      const gs = gsRef.current;
-      if (!gs || gs.gamePhase !== 'editor') { middleDragging = false; return; }
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = CANVAS_W / rect.width;
-      const delta = (e.clientX - middleLastX) * scaleX;
-      middleLastX = e.clientX;
-      editorCamXRef.current = Math.max(0, editorCamXRef.current - delta);
-    };
-
-    const onMouseUp = (e: MouseEvent) => {
-      if (e.button === 1) { middleDragging = false; return; }
-      if (e.button !== 0) return;
-
-      // Finalizar marquee de seleção
-      const marquee = editorMarqueeRef.current;
-      if (marquee) {
-        editorMarqueeRef.current = null;
-        const mx1 = Math.min(marquee.startWX, marquee.endWX);
-        const mx2 = Math.max(marquee.startWX, marquee.endWX);
-        const my1 = Math.min(marquee.startWY, marquee.endWY);
-        const my2 = Math.max(marquee.startWY, marquee.endWY);
-        if (mx2 - mx1 > 4 || my2 - my1 > 4) {
-          const selected = new Set<number>();
-          platformsRef.current.forEach((p, i) => {
-            if (p.type === 'ground') return;
-            if (p.x < mx2 && p.x + p.w > mx1 && p.y < my2 && p.y + p.h > my1) {
-              selected.add(i);
-            }
-          });
-          editorSelectedIndicesRef.current = selected;
-          editorSelectedIdxRef.current = [...selected][0] ?? -1;
-          if (selected.size > 0) {
-            const texts = [...selected].map(i => platCoordText(platformsRef.current[i])).join(',\n');
-            const msg = selected.size === 1
-              ? `✓ SELECIONADO: ${platCoordText(platformsRef.current[[...selected][0]])}`
-              : `✓ ${selected.size} SELECIONADOS`;
-            copyPlatText(texts, msg);
-          }
-        }
-        return;
-      }
-
-      const drag = editorDragRef.current;
-      if (!drag) return;
-      editorDragRef.current = null;
-      if (drag.hasMoved) {
-        // Commit pending history snapshot (tirado antes do drag começar)
-        if (editorPendingHistoryRef.current) {
-          editorUndoStackRef.current.push(editorPendingHistoryRef.current);
-          if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
-          editorRedoStackRef.current = [];
-        }
-        // Bake crop into real platform dimensions so the bounding box shrinks correctly
-        if (drag.editingCrop) {
-          const p = platformsRef.current[editorSelectedIdxRef.current];
-          if (p) {
-            const cl = Math.max(0, Math.min(p.cropLeft ?? 0, p.w - 6));
-            const cr = Math.max(0, Math.min(p.cropRight ?? 0, p.w - cl - 6));
-            const ct = Math.max(0, Math.min(p.cropTop ?? 0, p.h - 6));
-            const cb = Math.max(0, Math.min(p.cropBottom ?? 0, p.h - ct - 6));
-            p.x += cl;
-            p.y += ct;
-            p.w = Math.max(6, p.w - cl - cr);
-            p.h = Math.max(6, p.h - ct - cb);
-            p.cropLeft = 0;
-            p.cropTop = 0;
-            p.cropRight = 0;
-            p.cropBottom = 0;
-          }
-        }
-        const p = platformsRef.current[editorSelectedIdxRef.current];
-        if (p) {
-          const newText = platCoordText(p);
-          const clipText = `ANTIGO: ${drag.origText}\nNOVO:   ${newText}`;
-          copyPlatText(clipText, `✓ ATUALIZADO — cole aqui e diga "atualizar"`);
-        }
-        saveCustomSpritePlatforms(platformsRef.current);
-      }
-      editorPendingHistoryRef.current = null;
-    };
-
-    const cvs = canvasRef.current;
-    const onContextMenu = (e: MouseEvent) => e.preventDefault();
-    if (cvs) {
-      cvs.addEventListener('mousemove', onCanvasMouseMove);
-      cvs.addEventListener('mousemove', onCanvasMiddleMove);
-      cvs.addEventListener('mousedown', onCanvasMouseDown);
-      cvs.addEventListener('contextmenu', onContextMenu);
-    }
-    window.addEventListener('mouseup', onMouseUp);
 
     const loop = (timestamp: number) => {
       const dt = Math.min(timestamp - lastTime.current, 50);
@@ -1516,14 +364,7 @@ export default function Game() {
 
       // --- Update ---
       if (gs.gamePhase === 'menu') {
-        if (editorJustPressed.current) {
-          editorJustPressed.current = false;
-          spaceJustPressed.current = false;
-          testJustPressed.current = false;
-          editorCamXRef.current = 0;
-          editorHoveredIdxRef.current = -1;
-          gs.gamePhase = 'editor';
-        } else if (testJustPressed.current) {
+        if (testJustPressed.current) {
           resetGame('wall-test');
           testJustPressed.current = false;
           spaceJustPressed.current = false;
@@ -1531,53 +372,6 @@ export default function Game() {
           resetGame('story');
           spaceJustPressed.current = false;
         }
-      } else if (gs.gamePhase === 'editor') {
-        if (escJustPressed.current) {
-          escJustPressed.current = false;
-          spaceJustPressed.current = false;
-          editorTestModeRef.current = false;
-          gs.gamePhase = 'menu';
-        } else if (editorSpawnJustPressed.current) {
-          editorSpawnJustPressed.current = false;
-          const spawnX = editorMouseWorldRef.current.x;
-          const spawnY = GROUND_Y - PLAYER_H - 28;
-          editorLastSpawnXRef.current = spawnX;
-          const newState = makeInitialState('story');
-          // Usa gameMode wall-test para desabilitar o drone durante o teste
-          newState.gameMode = 'wall-test';
-          newState.gamePhase = 'playing';
-          newState.player.x = spawnX;
-          newState.player.y = spawnY;
-          newState.player.vx = 0;
-          newState.player.vy = 0;
-          newState.camera.x = editorCamXRef.current;
-          gsRef.current = newState;
-          editorTestModeRef.current = true;
-        } else {
-          const keys = keysRef.current;
-          if (keys.left)  editorCamXRef.current = Math.max(0, editorCamXRef.current - EDITOR_PAN_SPEED);
-          if (keys.right) editorCamXRef.current = editorCamXRef.current + EDITOR_PAN_SPEED;
-          if (keys.up)    editorCamYRef.current = Math.max(-300, editorCamYRef.current - EDITOR_PAN_SPEED);
-          if (keys.down)  editorCamYRef.current = Math.min(300,  editorCamYRef.current + EDITOR_PAN_SPEED);
-        }
-        // Delete key: remove hitbox selecionada em modo colisão
-        if (editorDeleteBoxJustPressed.current) {
-          editorDeleteBoxJustPressed.current = false;
-          const p = platformsRef.current[editorSelectedIdxRef.current];
-          if (p && editorCollisionModeRef.current) {
-            pushEditorHistory();
-            editorCollisionBoxIdxRef.current = removePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
-            const hasBoxes = (p.collisionBoxes?.length ?? 0) > 0;
-            if (!hasBoxes) editorCollisionModeRef.current = false;
-            copyPlatText(platCoordText(p), hasBoxes ? `✓ BOX REMOVIDA` : `✓ COLISÃO RESETADA`);
-          }
-        }
-        gs.camera.x = editorCamXRef.current;
-        gs.camera.y = editorCamYRef.current;
-        spaceJustPressed.current = false;
-        testJustPressed.current = false;
-        editorJustPressed.current = false;
-        editorSpawnJustPressed.current = false;
       } else if (gs.gamePhase === 'paused') {
         if (pauseDownJustPressed.current) {
           pauseSelection.current = 1;
@@ -1599,21 +393,11 @@ export default function Game() {
           if (pauseSelection.current === 0) {
             gs.gamePhase = 'playing';
           } else {
-            editorTestModeRef.current = false;
             gs.gamePhase = 'menu';
           }
         }
       } else if (gs.gamePhase === 'playing') {
-        if (editorSpawnJustPressed.current && editorTestModeRef.current) {
-          // Ctrl pressionado durante teste do editor: volta pro editor onde o jogador está
-          editorSpawnJustPressed.current = false;
-          spaceJustPressed.current = false;
-          editorCamXRef.current = gs.camera.x;
-          gs.gamePhase = 'editor';
-          gs.camera.x = editorCamXRef.current;
-          editorDroneEnabledRef.current = false;
-          gs.bullets = [];
-        } else if (escJustPressed.current) {
+        if (escJustPressed.current) {
           escJustPressed.current = false;
           pauseSelection.current = 0;
           pauseDownJustPressed.current = false;
@@ -1634,46 +418,21 @@ export default function Game() {
           ((keys.space || keys.up) && (now - lastDownPressTime.current) < DIVE_COMBO_WINDOW);
         const effectiveKeys = windowDive ? { ...keys, dive: true } : keys;
 
-        const activePlatforms = gs.platforms.filter((p, i) =>
-          !(p.type === 'box' && gs.destroyedBoxIndices.includes(i))
-        );
-        updatePlayer(gs.player, effectiveKeys, activePlatforms, dt, spawnP);
+        updatePlayer(gs.player, effectiveKeys, gs.platforms, dt, spawnP);
 
         // Camera follows player
         const targetCamX = gs.player.x - CANVAS_W * CAMERA_LEAD_X;
         gs.camera.x += (targetCamX - gs.camera.x) * 0.1;
         if (gs.camera.x < 0) gs.camera.x = 0;
-        const targetCamY = Math.min(0, gs.player.y - CANVAS_H * 0.38);
-        gs.camera.y += (targetCamY - gs.camera.y) * 0.12;
-        if (Math.abs(gs.camera.y) < 0.5) gs.camera.y = 0;
 
-        // Toggle drone com Z no modo de teste do editor
-        if (gs.gameMode === 'wall-test' && zJustPressed.current) {
-          zJustPressed.current = false;
-          editorDroneEnabledRef.current = !editorDroneEnabledRef.current;
-          if (editorDroneEnabledRef.current) {
-            // Spawna drone perto do jogador
-            gs.drone.x = gs.player.x + 200;
-            gs.drone.y = gs.player.y - 120;
-            gs.drone.vx = 0;
-            gs.drone.vy = 0;
-            gs.drone.shootTimer = SHOOT_COOLDOWN * 2;
-            gs.bullets = [];
-          } else {
-            gs.bullets = [];
-          }
-        } else {
-          zJustPressed.current = false;
-        }
-
-        if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
+        if (gs.gameMode !== 'wall-test') {
           const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP);
           if (shakeAmount > 0) gs.screenShake = shakeAmount;
 
           gs.bullets = updateBullets(gs.bullets, gs.player, gs.platforms, dt, () => {
             gs.screenShake = 6;
             for (let i = 0; i < 8; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
-          }, gs.destroyedBoxIndices, gs.particles);
+          });
         }
 
         gs.particles = updateParticles(gs.particles, dt);
@@ -1681,24 +440,10 @@ export default function Game() {
         if (gs.screenShake > 0) gs.screenShake = Math.max(0, gs.screenShake - 0.4);
 
         if (gs.player.state === 'dead') {
-          if (editorTestModeRef.current) {
-            // Respawna no último ponto do editor sem sair do modo teste
-            const newState = makeInitialState('story');
-            newState.gameMode = 'wall-test';
-            newState.gamePhase = 'playing';
-            newState.player.x = editorLastSpawnXRef.current;
-            newState.player.y = GROUND_Y - PLAYER_H;
-            newState.player.vx = 0;
-            newState.player.vy = 0;
-            newState.camera.x = Math.max(0, editorLastSpawnXRef.current - CANVAS_W * CAMERA_LEAD_X);
-            gsRef.current = newState;
-          } else {
-            gs.gamePhase = 'gameover';
-          }
+          gs.gamePhase = 'gameover';
         }
 
         spaceJustPressed.current = false;
-        editorSpawnJustPressed.current = false;
       } else if (gs.gamePhase === 'gameover') {
         if (testJustPressed.current) {
           resetGame('wall-test');
@@ -1710,6 +455,22 @@ export default function Game() {
         }
       }
 
+      // ── EDITOR: delete selected platform ──
+      if (editorMode.current && deleteJustPressed.current) {
+        const idx = selectedPlatformIdx.current;
+        if (idx !== null && idx >= 0 && idx < gs.platforms.length) {
+          const removed = gs.platforms[idx];
+          gs.platforms.splice(idx, 1);
+          selectedPlatformIdx.current = null;
+          const GROUND_Y = 410;
+          console.log('[EDITOR] Removida:', JSON.stringify(removed));
+          const elevated = gs.platforms.filter(p => p.type !== 'ground' && p.type !== 'wall');
+          const lines = elevated.map(p => `  { x: ${p.x}, y: GROUND_Y - ${GROUND_Y - p.y}, w: ${p.w} },`);
+          console.log('[EDITOR] Plataformas restantes:\n' + lines.join('\n'));
+        }
+      }
+      deleteJustPressed.current = false;
+
       // --- Render ---
       ctx.save();
       if (gs.screenShake > 0.3) {
@@ -1720,8 +481,6 @@ export default function Game() {
       }
 
       drawSky(ctx);
-      ctx.save();
-      ctx.translate(0, -gs.camera.y);
       drawBuildings(ctx, buildingsRef.current, gs.camera.x);
       drawAlleyDetails(ctx, gs.camera.x, gs.time);
       drawStartingBackWall(ctx, gs.camera.x);
@@ -1780,38 +539,23 @@ export default function Game() {
       }
       ctx.restore();
 
-      drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
-      drawJunkyardBackdrop(ctx, gs.camera.x);
-      drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current, gs.destroyedBoxIndices, customSpriteImagesRef.current);
+      drawPlatforms(ctx, gs.platforms, gs.camera.x);
       drawParticles(ctx, gs);
-      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
-      if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
+      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current);
+      if (gs.gameMode !== 'wall-test') {
         drawDrone(ctx, gs);
         drawBullets(ctx, gs);
       }
-      ctx.restore();
 
       ctx.restore(); // end shake
 
       drawHUD(ctx, gs);
       if (showControls.current) drawControls(ctx);
 
-      // Barra de modo teste do editor
-      if (gs.gamePhase === 'playing' && editorTestModeRef.current) {
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(0, CANVAS_H - 16, CANVAS_W, 16);
-        ctx.fillStyle = 'rgba(80,230,140,0.9)';
-        ctx.font = 'bold 10px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('◆ MODO TESTE DO EDITOR  |  CTRL: VOLTAR AO EDITOR ◆', CANVAS_W / 2, CANVAS_H - 4);
-      }
-
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
-      if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS, editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0);
-      }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);
+      if (editorMode.current) drawEditorOverlay(ctx, gs, selectedPlatformIdx.current);
 
       animRef.current = requestAnimationFrame(loop);
     };
@@ -1821,73 +565,9 @@ export default function Game() {
     return () => {
       window.removeEventListener('keydown', kd);
       window.removeEventListener('keyup', ku);
-      window.removeEventListener('mouseup', onMouseUp);
-      if (cvs) {
-        cvs.removeEventListener('mousemove', onCanvasMouseMove);
-        cvs.removeEventListener('mousemove', onCanvasMiddleMove);
-        cvs.removeEventListener('mousedown', onCanvasMouseDown);
-        cvs.removeEventListener('contextmenu', onContextMenu);
-      }
       cancelAnimationFrame(animRef.current);
     };
   }, [makeInitialState, resetGame]);
-
-  const handleSpriteUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    if (!['image/png', 'image/webp'].includes(file.type)) {
-      editorCopiedMsgRef.current = { text: 'USE PNG OU WEBP — FUNDO BRANCO REMOVIDO AUTO', until: Date.now() + 3000 };
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = typeof reader.result === 'string' ? reader.result : '';
-      if (!dataUrl) return;
-      const img = new Image();
-      img.onload = () => {
-        // Strip white/near-white background automatically on upload
-        const processed = stripWhiteBackground(img);
-        const processedDataUrl = processed.src;
-
-        const maxW = 180;
-        const scale = Math.min(1, maxW / img.naturalWidth);
-        const w = Math.max(12, Math.round(img.naturalWidth * scale));
-        const h = Math.max(12, Math.round(img.naturalHeight * scale));
-        const platform: Platform = {
-          type: 'sprite',
-          x: Math.round(editorMouseWorldRef.current.x - w / 2),
-          y: Math.round(Math.min(editorMouseWorldRef.current.y - h / 2, GROUND_Y - h)),
-          w,
-          h,
-          customSpriteName: file.name,
-          customSpriteDataUrl: processedDataUrl,
-        };
-        const snapshot = platformsRef.current.map(p => ({
-          ...p,
-          collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({
-            ...b,
-            slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
-          })) : undefined,
-        })) as Platform[];
-        editorUndoStackRef.current.push(snapshot);
-        if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
-        editorRedoStackRef.current = [];
-        customSpriteImagesRef.current.set(file.name, processed);
-        platformsRef.current.push(platform);
-        saveCustomSpritePlatforms(platformsRef.current);
-        if (gsRef.current) gsRef.current.platforms = platformsRef.current;
-        const idx = platformsRef.current.length - 1;
-        editorSelectedIdxRef.current = idx;
-        editorSelectedIndicesRef.current = new Set([idx]);
-        editorCollisionModeRef.current = false;
-        editorCollisionBoxIdxRef.current = 0;
-        editorCopiedMsgRef.current = { text: `✓ SPRITE ADICIONADO: ${file.name}`, until: Date.now() + 3000 };
-      };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
-  }, []);
 
   const cssW = Math.floor(CANVAS_W * scale);
   const cssH = Math.floor(CANVAS_H * scale);
@@ -1920,14 +600,29 @@ export default function Game() {
           outline: 'none',
           boxShadow: '0 0 60px rgba(0,0,0,0.95), 0 0 20px rgba(120,20,10,0.25)',
           flexShrink: 0,
+          cursor: editorMode.current ? 'crosshair' : 'default',
         }}
-      />
-      <input
-        ref={spriteUploadInputRef}
-        type="file"
-        accept="image/png,image/webp"
-        onChange={handleSpriteUpload}
-        style={{ display: 'none' }}
+        onClick={(e) => {
+          if (!editorMode.current || !gsRef.current) return;
+          const canvas = canvasRef.current!;
+          const rect = canvas.getBoundingClientRect();
+          const canvasX = (e.clientX - rect.left) / scaleRef.current;
+          const canvasY = (e.clientY - rect.top) / scaleRef.current;
+          const gs = gsRef.current;
+          const worldX = canvasX + gs.camera.x;
+          const worldY = canvasY;
+          let found: number | null = null;
+          for (let i = gs.platforms.length - 1; i >= 0; i--) {
+            const p = gs.platforms[i];
+            if (p.type === 'ground') continue;
+            const ph = (p as { h?: number }).h ?? 18;
+            if (worldX >= p.x && worldX <= p.x + p.w && worldY >= p.y && worldY <= p.y + ph) {
+              found = i;
+              break;
+            }
+          }
+          selectedPlatformIdx.current = found;
+        }}
       />
       {/* Mobile controls sit below the canvas, never overlap */}
       <MobileControls keysRef={keysRef} spaceJustPressed={spaceJustPressed} canvasW={cssW} />

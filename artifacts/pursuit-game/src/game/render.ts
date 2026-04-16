@@ -2998,3 +2998,65 @@ export function drawPauseScreen(ctx: CanvasRenderingContext2D, selection: number
 
   ctx.textAlign = 'left';
 }
+
+export function drawEditorOverlay(
+  ctx: CanvasRenderingContext2D,
+  gs: GameState,
+  selectedIdx: number | null,
+): void {
+  const camX = gs.camera.x;
+
+  ctx.fillStyle = 'rgba(10,5,30,0.78)';
+  ctx.fillRect(0, 0, CANVAS_W, 28);
+  ctx.fillStyle = '#00ffcc';
+  ctx.font = 'bold 12px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('◈ MODO EDITOR ◈   CLIQUE = selecionar   DEL = remover   E = sair', CANVAS_W / 2, 18);
+  ctx.textAlign = 'left';
+
+  for (let i = 0; i < gs.platforms.length; i++) {
+    const p = gs.platforms[i];
+    if (p.type === 'ground') continue;
+    const ph = (p as { h?: number }).h ?? 18;
+    const sx = p.x - camX;
+    if (sx + p.w < 0 || sx > CANVAS_W) continue;
+
+    const isSelected = i === selectedIdx;
+    const isWall = p.type === 'wall';
+
+    ctx.strokeStyle = isSelected ? '#ff4444' : isWall ? '#ffaa00' : '#00ffcc';
+    ctx.lineWidth = isSelected ? 2.5 : 1.5;
+    ctx.setLineDash(isSelected ? [] : [4, 3]);
+    ctx.strokeRect(sx, p.y, p.w, ph);
+    ctx.setLineDash([]);
+
+    if (isSelected) {
+      ctx.fillStyle = 'rgba(255,68,68,0.15)';
+      ctx.fillRect(sx, p.y, p.w, ph);
+    }
+
+    ctx.font = '9px monospace';
+    ctx.fillStyle = isSelected ? '#ff8888' : 'rgba(0,255,200,0.7)';
+    const label = `x:${p.x} dy:${GROUND_Y - p.y}`;
+    ctx.fillText(label, Math.max(2, Math.min(sx, CANVAS_W - 90)), Math.max(10, p.y - 3));
+  }
+
+  if (selectedIdx !== null && selectedIdx >= 0 && selectedIdx < gs.platforms.length) {
+    const p = gs.platforms[selectedIdx];
+    const ph = (p as { h?: number }).h ?? 18;
+    ctx.fillStyle = 'rgba(10,5,30,0.9)';
+    ctx.fillRect(8, CANVAS_H - 68, 310, 60);
+    ctx.strokeStyle = '#ff4444';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(8, CANVAS_H - 68, 310, 60);
+    ctx.fillStyle = '#ff8888';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText('SELECIONADA:', 16, CANVAS_H - 52);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '11px monospace';
+    ctx.fillText(`x:${p.x}  y:GROUND_Y-${GROUND_Y - p.y}  w:${p.w}  h:${ph}`, 16, CANVAS_H - 36);
+    ctx.fillStyle = '#ff4444';
+    ctx.font = 'bold 11px monospace';
+    ctx.fillText('DEL / BACKSPACE para remover', 16, CANVAS_H - 18);
+  }
+}
