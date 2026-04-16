@@ -2389,6 +2389,7 @@ export function drawEditorUI(
   ctx: CanvasRenderingContext2D,
   platforms: import('./types').Platform[],
   camX: number,
+  camY: number,
   hoveredIdx: number,
   selectedIdx: number,
   mouseWorld: { x: number; y: number },
@@ -2424,7 +2425,7 @@ export function drawEditorUI(
   };
 
   ctx.save();
-  ctx.translate(-camX, 0);
+  ctx.translate(-camX, -camY);
 
   for (let i = 0; i < platforms.length; i++) {
     const p = platforms[i];
