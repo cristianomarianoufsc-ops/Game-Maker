@@ -84,6 +84,7 @@ function makePlayer(): Player {
     wallClimbTimer: 0,
     wallClimbAdjustedDuration: 720,
     wallClimbLiftAmount: 86,
+    wallClimbJumpPenalty: 1.0,
     wallClimbStartX: 0,
     wallClimbStartY: 0,
     wallClimbTargetX: 0,

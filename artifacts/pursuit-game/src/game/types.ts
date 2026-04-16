@@ -88,6 +88,7 @@ export interface Player {
   wallClimbTimer: number;
   wallClimbAdjustedDuration: number;
   wallClimbLiftAmount: number;
+  wallClimbJumpPenalty: number;
   wallClimbStartX: number;
   wallClimbStartY: number;
   wallClimbTargetX: number;

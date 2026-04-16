@@ -309,6 +309,9 @@ export function updatePlayer(
           const speedRatio = Math.min(1, REF_DIST / climbDist);
           p.wallClimbAdjustedDuration = Math.max(300, Math.round(WALLCLIMB_DURATION * speedRatio));
           p.wallClimbTimer = p.wallClimbAdjustedDuration;
+          // Penalidade de pulo: quanto mais alto o muro, menos impulso no pulo seguinte
+          // penalty = 1.0 (parede baixa) → 0.60 (parede muito alta)
+          p.wallClimbJumpPenalty = Math.max(0.60, 86 / p.wallClimbLiftAmount);
         }
         p.coyoteTime = 0;
         p.vx = 0;
@@ -381,12 +384,14 @@ export function updatePlayer(
         p.wallClimbSide = null;
 
         if (pressingAway) {
-          // Back + jump → drop off wall backward
+          // Back + jump → drop off wall backward (penalidade reduz impulso vertical)
           p.vx = side === 'right' ? -WALLFLIP_BACK_VX : WALLFLIP_BACK_VX;
-          p.vy = WALLFLIP_JUMP_VY;
+          p.vy = WALLFLIP_JUMP_VY * p.wallClimbJumpPenalty;
           p.jumpedFromWall = true;
+          p.wallClimbJumpPenalty = 1.0;
         } else {
           // Forward + jump (or just jump) → pull up onto wall top
+          // coyoteTime = 3 permite um pulo curto; penalidade será aplicada nesse pulo
           p.x = p.wallClimbTargetX;
           p.y = p.wallClimbTargetY;
           p.vx = side === 'right' ? 2.4 : -2.4;
@@ -481,7 +486,9 @@ export function updatePlayer(
       }
     // Normal jump
     } else if ((keys.space || (keys.up && !p.touchingWall)) && (p.coyoteTime > 0)) {
-      p.vy = JUMP_FORCE;
+      // Aplica penalidade de pulo se o personagem acabou de escalar uma parede alta
+      p.vy = JUMP_FORCE * p.wallClimbJumpPenalty;
+      p.wallClimbJumpPenalty = 1.0;
       p.onGround = false;
       p.coyoteTime = 0;
       p.jumpCount = 1;
@@ -752,6 +759,7 @@ export function updatePlayer(
     p.jumpCount = 0;
     p.doubleJumpReady = false;
     p.sideFlipImmune = false;
+    p.wallClimbJumpPenalty = 1.0;
     if (p.isSideFlipping) {
       p.isSideFlipping = false;
       p.sideFlipTimer = 0;
