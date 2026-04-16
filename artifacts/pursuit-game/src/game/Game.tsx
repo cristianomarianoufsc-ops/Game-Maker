@@ -1436,6 +1436,24 @@ export default function Game() {
           if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
           editorRedoStackRef.current = [];
         }
+        // Bake crop into real platform dimensions so the bounding box shrinks correctly
+        if (drag.editingCrop) {
+          const p = platformsRef.current[editorSelectedIdxRef.current];
+          if (p) {
+            const cl = Math.max(0, Math.min(p.cropLeft ?? 0, p.w - 6));
+            const cr = Math.max(0, Math.min(p.cropRight ?? 0, p.w - cl - 6));
+            const ct = Math.max(0, Math.min(p.cropTop ?? 0, p.h - 6));
+            const cb = Math.max(0, Math.min(p.cropBottom ?? 0, p.h - ct - 6));
+            p.x += cl;
+            p.y += ct;
+            p.w = Math.max(6, p.w - cl - cr);
+            p.h = Math.max(6, p.h - ct - cb);
+            p.cropLeft = 0;
+            p.cropTop = 0;
+            p.cropRight = 0;
+            p.cropBottom = 0;
+          }
+        }
         const p = platformsRef.current[editorSelectedIdxRef.current];
         if (p) {
           const newText = platCoordText(p);
