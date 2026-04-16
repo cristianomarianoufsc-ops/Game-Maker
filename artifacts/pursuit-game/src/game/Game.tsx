@@ -662,7 +662,7 @@ export default function Game() {
       const scaleY = CANVAS_H / rect.height;
       const cx = (e.clientX - rect.left) * scaleX;
       const cy = (e.clientY - rect.top) * scaleY;
-      return { wx: cx + editorCamXRef.current, wy: cy };
+      return { wx: cx + editorCamXRef.current, wy: cy + editorCamYRef.current };
     };
 
     const hitHandle = (wx: number, wy: number, hx: number, hy: number) =>
