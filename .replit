@@ -9,28 +9,6 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=5173 BASE_PATH=/ pnpm --filter @workspace/pursuit-game run dev"
-waitForPort = 5173
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [agent]
 stack = "PNPM_WORKSPACE"
@@ -53,6 +31,22 @@ localPort = 5175
 externalPort = 3002
 
 [[ports]]
+localPort = 5176
+externalPort = 3003
+
+[[ports]]
+localPort = 5177
+externalPort = 4200
+
+[[ports]]
+localPort = 5178
+externalPort = 5000
+
+[[ports]]
+localPort = 5179
+externalPort = 8008
+
+[[ports]]
 localPort = 8080
 externalPort = 8080
 
@@ -62,7 +56,15 @@ externalPort = 8081
 
 [[ports]]
 localPort = 8082
-externalPort = 4200
+externalPort = 6000
+
+[[ports]]
+localPort = 8083
+externalPort = 8000
+
+[[ports]]
+localPort = 8084
+externalPort = 8099
 
 [[ports]]
 localPort = 19918
@@ -71,3 +73,7 @@ externalPort = 80
 [[ports]]
 localPort = 19919
 externalPort = 3000
+
+[[ports]]
+localPort = 19920
+externalPort = 6800
