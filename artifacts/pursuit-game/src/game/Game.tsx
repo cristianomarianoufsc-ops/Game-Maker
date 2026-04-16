@@ -1037,10 +1037,15 @@ export default function Game() {
       }
 
       // Middle-button pan
-      editorHoveredIdxRef.current = platformsRef.current.findIndex(p => {
-        if (p.type === 'ground') return false;
-        return isEditorPointInsidePlatform(wx, wy, p);
-      });
+      {
+        let hovIdx = -1;
+        for (let _i = platformsRef.current.length - 1; _i >= 0; _i--) {
+          const _p = platformsRef.current[_i];
+          if (_p.type === 'ground') continue;
+          if (isEditorPointInsidePlatform(wx, wy, _p)) { hovIdx = _i; break; }
+        }
+        editorHoveredIdxRef.current = hovIdx;
+      }
     };
 
     let middleDragging = false;
@@ -1081,10 +1086,12 @@ export default function Game() {
         const cy = (e.clientY - rect.top) * scaleY;
         const wx = cx + gs.camera.x;
         const wy = cy + gs.camera.y;
-        const idx = platformsRef.current.findIndex(p => {
-          if (p.type === 'ground') return false;
-          return isEditorPointInsidePlatform(wx, wy, p);
-        });
+        let idx = -1;
+        for (let _i = platformsRef.current.length - 1; _i >= 0; _i--) {
+          const _p = platformsRef.current[_i];
+          if (_p.type === 'ground') continue;
+          if (isEditorPointInsidePlatform(wx, wy, _p)) { idx = _i; break; }
+        }
         if (idx >= 0) {
           e.preventDefault();
           editorCamXRef.current = gs.camera.x;
@@ -1324,10 +1331,12 @@ export default function Game() {
       }
 
       // Hit a different platform → select or multi-select it
-      const idx = platforms.findIndex(p => {
-        if (p.type === 'ground') return false;
-        return isEditorPointInsidePlatform(wx, wy, p);
-      });
+      let idx = -1;
+      for (let _i = platforms.length - 1; _i >= 0; _i--) {
+        const _p = platforms[_i];
+        if (_p.type === 'ground') continue;
+        if (isEditorPointInsidePlatform(wx, wy, _p)) { idx = _i; break; }
+      }
       if (idx >= 0) {
         if (e.shiftKey) {
           // Toggle platform in/out of multi-selection
