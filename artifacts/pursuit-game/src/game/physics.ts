@@ -18,7 +18,68 @@ function rectOverlap(ax: number, ay: number, aw: number, ah: number,
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 
-function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect): boolean {
+function getStackedBoxWall(platforms: Platform[], box: Platform): SlopedRect | null {
+  if (box.type !== 'box') return null;
+  const boxes = platforms.filter((plat) => plat.type === 'box');
+  const stack: Platform[] = [];
+  const queue: Platform[] = [box];
+  const seen = new Set<Platform>();
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || seen.has(current)) continue;
+    seen.add(current);
+    stack.push(current);
+
+    for (const other of boxes) {
+      if (seen.has(other)) continue;
+      const touchesHorizontally = Math.abs(current.x + current.w - other.x) <= 3 || Math.abs(other.x + other.w - current.x) <= 3;
+      const overlapsHorizontally = current.x < other.x + other.w - 3 && current.x + current.w > other.x + 3;
+      const touchesVertically = Math.abs(current.y + current.h - other.y) <= 3 || Math.abs(other.y + other.h - current.y) <= 3;
+      const overlapsVertically = current.y < other.y + other.h - 3 && current.y + current.h > other.y + 3;
+
+      if ((touchesHorizontally && overlapsVertically) || (touchesVertically && overlapsHorizontally)) {
+        queue.push(other);
+      }
+    }
+  }
+
+  if (stack.length < 3) return null;
+
+  const left = Math.min(...stack.map((plat) => plat.x));
+  const right = Math.max(...stack.map((plat) => plat.x + plat.w));
+  const top = Math.min(...stack.map((plat) => plat.y));
+  const bottom = Math.max(...stack.map((plat) => plat.y + plat.h));
+  const columnHeight = bottom - top;
+  const minStackHeight = box.h * 3 - 2;
+
+  if (columnHeight < minStackHeight) return null;
+
+  return { x: left, y: top, w: right - left, h: columnHeight };
+}
+
+function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number): void {
+  const overlapLeft = p.x + p.w - hit.x;
+  const overlapRight = hit.x + hit.w - p.x;
+
+  if (overlapLeft < overlapRight && vx >= 0) {
+    p.x = hit.x - p.w;
+    p.touchingWall = true;
+    p.wallSide = 'right';
+    p.wallX = hit.x;
+    p.wallTopY = hit.y;
+    if (p.vx > 0) p.vx = 0;
+  } else if (overlapRight <= overlapLeft && vx <= 0) {
+    p.x = hit.x + hit.w;
+    p.touchingWall = true;
+    p.wallSide = 'left';
+    p.wallX = hit.x + hit.w;
+    p.wallTopY = hit.y;
+    if (p.vx < 0) p.vx = 0;
+  }
+}
+
+function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climbableBoxWall?: SlopedRect | null): boolean {
   const ph = (p.isRolling || p.forcedCrouch) ? PLAYER_ROLL_H : PLAYER_H;
   if (!rectOverlap(p.x, p.y, p.w, ph, hit.x, hit.y, hit.w, hit.h)) return false;
 
@@ -49,22 +110,12 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect): bool
   const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
 
   if (plat.type === 'wall' && plat.climbable) {
-    // Only push out horizontally for walls
-    if (overlapLeft < overlapRight && p.vx >= 0) {
-      p.x = hit.x - p.w;
-      p.touchingWall = true;
-      p.wallSide = 'right';
-      p.wallX = hit.x;
-      p.wallTopY = hit.y;
-      if (p.vx > 0) p.vx = 0;
-    } else if (overlapRight <= overlapLeft && p.vx <= 0) {
-      p.x = hit.x + hit.w;
-      p.touchingWall = true;
-      p.wallSide = 'left';
-      p.wallX = hit.x + hit.w;
-      p.wallTopY = hit.y;
-      if (p.vx < 0) p.vx = 0;
-    }
+    resolveClimbableWallContact(p, hit, p.vx);
+    return false;
+  }
+
+  if (climbableBoxWall && (minOverlap === overlapLeft || minOverlap === overlapRight)) {
+    resolveClimbableWallContact(p, climbableBoxWall, p.vx);
     return false;
   }
 
@@ -493,8 +544,9 @@ export function updatePlayer(
   // Collision
   if (!p.isWallClimbUp) {
     for (const plat of platforms) {
+      const climbableBoxWall = getStackedBoxWall(platforms, plat);
       for (const hit of getPlatformCollisionRects(plat)) {
-        resolvePlayerPlatform(p, plat, hit);
+        resolvePlayerPlatform(p, plat, hit, climbableBoxWall);
       }
     }
   }

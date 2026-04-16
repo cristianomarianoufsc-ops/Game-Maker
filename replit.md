@@ -32,6 +32,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Editor de fase: mover objetos no editor usa snap magnético pelas caixas de colisão, grudando bordas, centros, topo/base e chão quando estiverem próximos; duplicar (`DUP`) cria a cópia encostada ao original em vez de deixar uma folga. Quando há múltiplos objetos selecionados por marquee, o botão muda para `DUP N` e duplica o grupo inteiro mantendo posições relativas.
 - Hitboxes inclinadas: caixas de colisão agora podem ter `slopeTop` para transformar o topo em rampa; os carros grandes do ferro velho usam slopes nos vidros frontal/traseiro para Horácio subir do capô/porta-malas até o teto sem agarrar na lateral retangular. No editor, entre em `HITBOX`, clique diretamente na caixa que quer editar, use as setas para mover a hitbox selecionada em 1px (`Shift` = 5px), use `S` ou o botão `+ SLOPE`, e arraste os losangos laranja para ajustar o ângulo. Durante o teste iniciado com `Ctrl`, clicar em um objeto volta para o editor e seleciona aquele objeto.
 - Editor de fase: botão `UPLOAD SPRITE` no topo aceita PNG/WebP transparente, cria um objeto do tipo `sprite` com o nome original do arquivo, salva os sprites no `localStorage` e permite mover, redimensionar, recortar e editar hitbox como os outros objetos.
+- Física: pilhas conectadas de caixas com altura mínima de 3 caixas agora contam como parede escalável para wall run/subida, mas continuam com `type: 'box'`, mantendo a quebra por tiro do drone.
 
 ## Key Commands
 
