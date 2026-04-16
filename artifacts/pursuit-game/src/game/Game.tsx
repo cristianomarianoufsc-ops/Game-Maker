@@ -592,7 +592,7 @@ export default function Game() {
         case 'KeyT':
           if (down) testJustPressed.current = true;
           break;
-        case 'ControlLeft': case 'ControlRight':
+        case 'ControlLeft': case 'ControlRight': case 'Tab':
           if (down) editorSpawnJustPressed.current = true;
           break;
         case 'KeyE':
@@ -628,7 +628,7 @@ export default function Game() {
           break;
       }
       // Prevent scroll on space/arrows
-      if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','ControlLeft','ControlRight'].includes(e.code)) {
+      if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','ControlLeft','ControlRight','Tab'].includes(e.code)) {
         e.preventDefault();
       }
     };
