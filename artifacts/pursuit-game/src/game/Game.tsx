@@ -122,7 +122,10 @@ function getPlatformKey(platform: Platform): string {
 }
 
 function isEditorPointInsidePlatform(wx: number, wy: number, platform: Platform): boolean {
-  return wx >= platform.x && wx <= platform.x + platform.w && wy >= platform.y && wy <= platform.y + platform.h;
+  // True balconies (sacadas) draw a 72px window above plat.y — include that in the hit area
+  const isSacada = platform.type === 'platform' && platform.y <= GROUND_Y - 70 && platform.h > 20;
+  const topY = isSacada ? platform.y - 72 : platform.y;
+  return wx >= platform.x && wx <= platform.x + platform.w && wy >= topY && wy <= platform.y + platform.h;
 }
 
 function isEditorPointInsideCollision(wx: number, wy: number, platform: Platform): boolean {
