@@ -1449,7 +1449,7 @@ export default function Game() {
           const spawnX = editorMouseWorldRef.current.x;
           const spawnY = Math.max(
             -PLAYER_H,
-            Math.min(editorMouseWorldRef.current.y - PLAYER_H, GROUND_Y - PLAYER_H - 4),
+            Math.min(editorMouseWorldRef.current.y - PLAYER_H / 2, GROUND_Y - PLAYER_H - 1),
           );
           editorLastSpawnXRef.current = spawnX;
           const newState = makeInitialState('story');
