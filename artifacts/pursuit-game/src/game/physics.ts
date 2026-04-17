@@ -306,8 +306,8 @@ export function updatePlayer(
           const climbDist = Math.max(1, p.wallClimbStartY - hangY);
           const REF_DIST = 120; // distância de referência (parede padrão)
           p.wallClimbLiftAmount = Math.min(160, Math.max(86, climbDist * 0.58));
-          const speedRatio = Math.min(1, REF_DIST / climbDist);
-          p.wallClimbAdjustedDuration = Math.max(300, Math.round(WALLCLIMB_DURATION * speedRatio));
+          const speedRatio = Math.sqrt(Math.min(1, REF_DIST / climbDist));
+          p.wallClimbAdjustedDuration = Math.max(350, Math.round(WALLCLIMB_DURATION * speedRatio));
           p.wallClimbTimer = p.wallClimbAdjustedDuration;
           // Penalidade de pulo: quanto mais alto o muro, menos impulso no pulo seguinte
           // Curva exponencial — cai rápido para paredes altas
