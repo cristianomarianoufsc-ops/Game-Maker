@@ -823,12 +823,90 @@ export function updatePlayer(
   }
 }
 
+// ── Drone obstacle avoidance helpers ────────────────────────────────────────
+
+/** Repulsion force vector from all nearby solid platforms. */
+function droneRepulsion(
+  drone: Drone,
+  platforms: Platform[]
+): { fx: number; fy: number } {
+  const SENSE = 100;          // sensing radius (px)
+  const SCALE = 7;            // max repulsion strength
+  let fx = 0, fy = 0;
+  const dCx = drone.x + DRONE_W / 2;
+  const dCy = drone.y + DRONE_H / 2;
+
+  for (const p of platforms) {
+    if (p.type === 'ground') continue;
+    // Quick distance cull
+    if (Math.abs((p.x + p.w / 2) - dCx) > SENSE + p.w / 2 + 40) continue;
+
+    // Closest point on AABB to drone centre
+    const cx = Math.max(p.x, Math.min(p.x + p.w, dCx));
+    const cy = Math.max(p.y, Math.min(p.y + p.h, dCy));
+    let dx = dCx - cx;
+    let dy = dCy - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist === 0) {
+      // Centre inside obstacle — push strongly upward
+      fy -= SCALE * 3;
+      continue;
+    }
+    if (dist < SENSE) {
+      const t = 1 - dist / SENSE;
+      const strength = t * t * SCALE;
+      fx += (dx / dist) * strength;
+      fy += (dy / dist) * strength;
+    }
+  }
+  return { fx, fy };
+}
+
+/** Hard pushout: resolve any current overlap between drone AABB and solid platforms. */
+function dronePushOut(drone: Drone, platforms: Platform[]): void {
+  for (const p of platforms) {
+    if (p.type === 'ground') continue;
+    // AABB overlap test
+    if (
+      drone.x < p.x + p.w && drone.x + DRONE_W > p.x &&
+      drone.y < p.y + p.h && drone.y + DRONE_H > p.y
+    ) {
+      const oLeft   = (p.x + p.w)  - drone.x;
+      const oRight  = (drone.x + DRONE_W) - p.x;
+      const oTop    = (p.y + p.h)  - drone.y;
+      const oBottom = (drone.y + DRONE_H) - p.y;
+      const minH = Math.min(oLeft, oRight);
+      const minV = Math.min(oTop, oBottom);
+
+      if (minV < minH) {
+        if (oTop < oBottom) {
+          drone.y = p.y + p.h + 1;
+          if (drone.vy < 0) drone.vy *= -0.2;
+        } else {
+          drone.y = p.y - DRONE_H - 1;
+          if (drone.vy > 0) drone.vy *= -0.2;
+        }
+      } else {
+        if (oLeft < oRight) {
+          drone.x = p.x - DRONE_W - 1;
+          if (drone.vx > 0) drone.vx *= -0.2;
+        } else {
+          drone.x = p.x + p.w + 1;
+          if (drone.vx < 0) drone.vx *= -0.2;
+        }
+      }
+    }
+  }
+}
+
 export function updateDrone(
   drone: Drone,
   player: Player,
   bullets: Bullet[],
   dt: number,
-  spawnParticle: (x: number, y: number, color: string) => void
+  spawnParticle: (x: number, y: number, color: string) => void,
+  platforms: Platform[] = []
 ): number {
   let shakeAmount = 0;
 
@@ -847,12 +925,24 @@ export function updateDrone(
     drone.vy += (dy / dist) * speed * 0.25;
   }
 
+  // Obstacle repulsion (steering away from platforms/walls)
+  if (platforms.length > 0) {
+    const { fx, fy } = droneRepulsion(drone, platforms);
+    drone.vx += fx;
+    drone.vy += fy;
+  }
+
   // Less damping — keeps momentum so drone stays on player's tail
   drone.vx *= 0.84;
   drone.vy *= 0.84;
 
   drone.x += drone.vx;
   drone.y += drone.vy;
+
+  // Hard pushout — resolve any remaining overlap
+  if (platforms.length > 0) {
+    dronePushOut(drone, platforms);
+  }
 
   // Keep drone on screen y (roughly)
   if (drone.y < 30) { drone.y = 30; drone.vy = Math.abs(drone.vy); }

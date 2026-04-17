@@ -1659,7 +1659,7 @@ export default function Game() {
         }
 
         if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
-          const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP);
+          const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP, gs.platforms);
           if (shakeAmount > 0) gs.screenShake = shakeAmount;
 
           gs.bullets = updateBullets(gs.bullets, gs.player, gs.platforms, dt, () => {
