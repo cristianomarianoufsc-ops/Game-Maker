@@ -952,8 +952,8 @@ function droneWallScan(
   } else if (canUnder) {
     bypassY = underY;
   } else {
-    // Full-height wall — aim as high as possible while approaching
-    bypassY = DRONE_MIN_Y;
+    // Parede muito alta (chega ao topo do canvas) — drone sobe acima da tela para passar por cima
+    bypassY = p.y - DRONE_H - 10; // pode ser negativo: drone some brevemente no topo
   }
 
   const bypassX = goingRight ? p.x + p.w + DRONE_W + 10 : p.x - DRONE_W - 10;
@@ -1059,6 +1059,9 @@ export function updateDrone(
       ? droneComputeWaypoint(drone, targetX, targetY, platforms)
       : { tx: targetX, ty: targetY });
 
+  // Se o waypoint está acima do canvas (ty < 0), o drone está em manobra de overfly
+  const isOverflying = ty < 0;
+
   const dx = tx - drone.x;
   const dy = ty - drone.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1089,8 +1092,9 @@ export function updateDrone(
     dronePushOut(drone, platforms);
   }
 
-  // Keep drone on screen y (roughly)
-  if (drone.y < 30) { drone.y = 30; drone.vy = Math.abs(drone.vy); }
+  // Keep drone on screen y — durante overfly de parede alta, permite sair pelo topo
+  const dronMinY = isOverflying ? -(DRONE_H + 10) : 30;
+  if (drone.y < dronMinY) { drone.y = dronMinY; if (!isOverflying) drone.vy = Math.abs(drone.vy); }
   if (drone.y > GROUND_Y - 60) { drone.y = GROUND_Y - 60; drone.vy = -Math.abs(drone.vy); }
 
   // ── Stuck detection: só teleporta se completamente imóvel por ~5s contra parede ──
@@ -1102,7 +1106,7 @@ export function updateDrone(
     // Preso: quase sem deslocamento, quase parado E longe do player
     if (traveled < 4 && almostStill && distToPlayer > 350) {
       drone.x = player.x + DRONE_TARGET_OFFSET_X;
-      drone.y = Math.max(30, player.y + DRONE_TARGET_OFFSET_Y);
+      drone.y = Math.max(dronMinY, player.y + DRONE_TARGET_OFFSET_Y);
       drone.vx = 0;
       drone.vy = 0;
     }
