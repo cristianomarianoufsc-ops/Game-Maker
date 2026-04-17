@@ -908,6 +908,58 @@ function droneComputeWaypoint(
   return { tx: bypassX, ty: bypassY };
 }
 
+/**
+ * Proactive wall lookahead: scans for walls AHEAD of the drone within a lookahead
+ * distance and returns a bypass waypoint before the drone even reaches the wall.
+ * Returns null if no wall is in the way.
+ */
+function droneWallScan(
+  drone: Drone,
+  targetX: number,
+  platforms: Platform[]
+): { tx: number; ty: number } | null {
+  const LOOKAHEAD  = 280; // px ahead to start planning
+  const DRONE_MIN_Y = 32;
+  const dCx = drone.x + DRONE_W / 2;
+  const dCy = drone.y + DRONE_H / 2;
+  const goingRight = targetX > dCx;
+
+  let bestWall: Platform | null = null;
+  let bestDist = Infinity;
+
+  for (const p of platforms) {
+    if (p.type !== 'wall') continue;
+    // Is this wall in front of the drone in the direction of travel?
+    const wallFront = goingRight ? p.x : p.x + p.w;
+    const ahead = goingRight
+      ? wallFront > dCx && wallFront < dCx + LOOKAHEAD
+      : wallFront < dCx && wallFront > dCx - LOOKAHEAD;
+    if (!ahead) continue;
+    const d = Math.abs(wallFront - dCx);
+    if (d < bestDist) { bestDist = d; bestWall = p; }
+  }
+
+  if (!bestWall) return null;
+  const p = bestWall;
+
+  const canOver  = DRONE_MIN_Y + DRONE_H < p.y;
+  const underY   = p.y + p.h + 30;
+  const canUnder = underY <= GROUND_Y - DRONE_H - 20;
+
+  let bypassY: number;
+  if (canOver) {
+    bypassY = p.y - DRONE_H - 20;
+  } else if (canUnder) {
+    bypassY = underY;
+  } else {
+    // Full-height wall — aim as high as possible while approaching
+    bypassY = DRONE_MIN_Y;
+  }
+
+  const bypassX = goingRight ? p.x + p.w + DRONE_W + 10 : p.x - DRONE_W - 10;
+  return { tx: bypassX, ty: bypassY };
+}
+
 // ── Drone obstacle avoidance helpers ────────────────────────────────────────
 
 /** Repulsion force vector from all nearby solid platforms. */
@@ -999,10 +1051,13 @@ export function updateDrone(
   const targetX = player.x + DRONE_TARGET_OFFSET_X + Math.sin(Date.now() * 0.0007) * 30;
   const targetY = player.y + DRONE_TARGET_OFFSET_Y + Math.cos(Date.now() * 0.0009) * 20;
 
-  // Pathfinding: compute bypass waypoint if something blocks the direct path
-  const { tx, ty } = platforms.length > 0
-    ? droneComputeWaypoint(drone, targetX, targetY, platforms)
-    : { tx: targetX, ty: targetY };
+  // Pathfinding: proactive wall scan first (sees wall 280px ahead),
+  // then fall back to general obstacle waypoint if no wall detected.
+  const wallAhead = platforms.length > 0 ? droneWallScan(drone, targetX, platforms) : null;
+  const { tx, ty } = wallAhead
+    ?? (platforms.length > 0
+      ? droneComputeWaypoint(drone, targetX, targetY, platforms)
+      : { tx: targetX, ty: targetY });
 
   const dx = tx - drone.x;
   const dy = ty - drone.y;
