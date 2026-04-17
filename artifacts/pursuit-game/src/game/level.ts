@@ -182,14 +182,21 @@ export function generateLevel(): Platform[] {
   const BOX_H = 55;
   const BOX_W = 65;
   const junkyardBoxStacks: Platform[] = [
-    // Pilha 1 — entrada do ferro velho (antes do primeiro carro)
-    { x: 12310, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    // Pilha A — entrada (x:12375-12440)
     { x: 12375, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12310, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12375, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12310, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12375, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12375, y: GY - BOX_H * 4,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12375, y: GY - 277,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12375, y: GY - 332,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12440, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12440, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12440, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12440, y: GY - BOX_H * 4,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12440, y: GY - 277,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12440, y: GY - 332,            w: BOX_W, h: BOX_H, type: 'box' },
 
-    // Pilha 2 — entre o pneu (x:13050) e o segundo carro (x:13331)
+    // Pilha 2 — entre o pneu e o segundo carro
     { x: 13100, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 13165, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 13230, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
@@ -197,14 +204,14 @@ export function generateLevel(): Platform[] {
     { x: 13165, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 13100, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
 
-    // Pilha 3 — entre o segundo carro (x:13776) e o pneu/terceiro carro
+    // Pilha 3 — entre o segundo e o terceiro carro
     { x: 13800, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 13865, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 13930, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 13800, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 13865, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
 
-    // Pilha 4 — extensão: antes do 5º carro (x:14900)
+    // Pilha 4 — antes do 5º carro
     { x: 14710, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 14775, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 14840, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
@@ -212,14 +219,14 @@ export function generateLevel(): Platform[] {
     { x: 14775, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 14710, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
 
-    // Pilha 5 — extensão: entre o pneu (x:15450) e o 6º carro (x:15680)
+    // Pilha 5 — antes do 6º carro
     { x: 15510, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 15575, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 15510, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 15575, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 15510, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
 
-    // Pilha 6 — extensão: entre o 6º carro e o pneu (x:16250)
+    // Pilha 6 — entre o 6º carro e o fim do ferro velho
     { x: 16150, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 16215, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 16280, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
@@ -228,113 +235,60 @@ export function generateLevel(): Platform[] {
   ];
   platforms.push(...junkyardBoxStacks);
 
-  // ── ELEVATED PLATFORMS ─────────────────────────────────────────
-
-  // ── ROLL-UNDER BALCONIES — low enough to need roll, jumpable on top ──
-  // y = GROUND_Y - 55 → bottom at GROUND_Y - 37 → clearance 37px
-  // Player standing h=50 > 37 → blocked;  roll h=26 < 37 → passes
-  const rollUnderBalconies: Array<{ x: number; y: number; w: number }> = [
-    // Wall Zone 1
-    { x: 3800, y: GROUND_Y - 55, w: 110 },
-    { x: 5050, y: GROUND_Y - 55, w: 110 },
-    { x: 6200, y: GROUND_Y - 55, w: 110 },
-
-    // Wall Zone 2
-    { x: 11850, y: GROUND_Y - 55, w: 110 },
-    { x: 17100, y: GROUND_Y - 55, w: 110 },
-
-    // Free Zone 3
-    { x: 17900, y: GROUND_Y - 55, w: 115 },
-    { x: 19200, y: GROUND_Y - 55, w: 115 },
-
-    // Wall Zone 3
-    { x: 20750, y: GROUND_Y - 55, w: 110 },
-    { x: 22150, y: GROUND_Y - 55, w: 110 },
-    { x: 23700, y: GROUND_Y - 55, w: 110 },
-  ];
-
+  // ── PLATAFORMAS ELEVADAS (sacadas + ares-condicionados) ─────────
+  // Sacadas:     y = GROUND_Y - 125, w = 115 → h=62, collisionH=85
+  // ACs:         y = qualquer valor ≠ GY-125  → normalizado para AC_Y=GY-240, h=18
+  // (array gerado a partir da Chave de Exportação do editor)
   const plats: Array<{ x: number; y: number; w: number }> = [
-    ...rollUnderBalconies,
-
     // ── WALL ZONE 1 ──
-    { x: 3500, y: GROUND_Y - 125, w: 115 },
-    { x: 3700, y: GROUND_Y - 165, w: 95  },
-    { x: 3920, y: GROUND_Y - 125, w: 115 },
+    { x:  3500, y: GROUND_Y - 125, w: 115 },
+    { x:  4350, y: GROUND_Y - 125, w: 115 },
+    { x:  4800, y: GROUND_Y - 125, w: 115 },
 
-    { x: 4350, y: GROUND_Y - 125, w: 115 },
-    { x: 4800, y: GROUND_Y - 125, w: 115 },
+    // ── FREE ZONE 2 ──
+    { x:  7560, y: GROUND_Y - 125, w: 115 },
+    { x:  7880, y: GROUND_Y - 125, w: 115 },
 
-    { x: 5200, y: GROUND_Y - 125, w: 115 },
-    { x: 5640, y: GROUND_Y - 125, w: 115 },
+    { x:  8300, y: GROUND_Y - 125, w: 115 },
+    { x:  8500, y: GROUND_Y -  55, w:  85 },  // AC
+    { x:  8700, y: GROUND_Y - 125, w: 115 },
 
-    { x: 5980, y: GROUND_Y - 125, w: 115 },
-    { x: 6200, y: GROUND_Y - 185, w: 85  },
-    { x: 6420, y: GROUND_Y - 125, w: 115 },
+    { x:  9050, y: GROUND_Y - 125, w: 115 },
+    { x:  9250, y: GROUND_Y -  55, w:  90 },  // AC
+    { x:  9450, y: GROUND_Y - 125, w: 115 },
 
-    // ── FREE ZONE 2 — escadaria aberta e parkour sem paredes ──
-    { x: 7560, y: GROUND_Y - 125, w: 115 },
-    { x: 7880, y: GROUND_Y - 125, w: 115 },
-
-    { x: 8300, y: GROUND_Y - 125, w: 115 },
-    { x: 8500, y: GROUND_Y - 215, w: 85  },
-    { x: 8700, y: GROUND_Y - 125, w: 115 },
-
-    { x: 9050, y: GROUND_Y - 125, w: 115 },
-    { x: 9250, y: GROUND_Y - 195, w: 90  },
-    { x: 9450, y: GROUND_Y - 125, w: 115 },
-
-    { x: 9750, y: GROUND_Y - 125, w: 115 },
-    { x: 9960, y: GROUND_Y - 210, w: 90  },
+    { x:  9750, y: GROUND_Y - 125, w: 115 },
+    { x:  9960, y: GROUND_Y -  55, w:  90 },  // AC
     { x: 10180, y: GROUND_Y - 125, w: 115 },
 
     { x: 10500, y: GROUND_Y - 125, w: 115 },
-    { x: 10710, y: GROUND_Y - 175, w: 90  },
+    { x: 10710, y: GROUND_Y -  55, w:  90 },  // AC
     { x: 10920, y: GROUND_Y - 125, w: 115 },
-    { x: 11150, y: GROUND_Y - 160, w: 90  },
+    { x: 11150, y: GROUND_Y -  55, w:  90 },  // AC
 
-    // ── WALL ZONE 2 ──
-    { x: 11800, y: GROUND_Y - 125, w: 115 },
-    { x: 12020, y: GROUND_Y - 210, w: 90  },
-    // x:12100-16900 = ferro velho: sem sacadas, sem ACs, sem tijolos
-    { x: 17020, y: GROUND_Y - 125, w: 115 },
-    { x: 17240, y: GROUND_Y - 215, w: 90  },
-    { x: 17460, y: GROUND_Y - 125, w: 115 },
-
-    // ── FREE ZONE 3 — parkour rápido, sem paredes (começa após muro x:16900) ──
+    // ── FREE ZONE 3 (após muro x:16900) ──
     { x: 17800, y: GROUND_Y - 125, w: 115 },
-    { x: 18000, y: GROUND_Y - 180, w: 90  },
-    { x: 18200, y: GROUND_Y - 270, w: 90  },
-    { x: 18400, y: GROUND_Y - 180, w: 90  },
+    { x: 17900, y: GROUND_Y -  55, w: 115 },  // AC (w largo)
+    { x: 18000, y: GROUND_Y -  55, w:  90 },  // AC
+    { x: 18200, y: GROUND_Y -  55, w:  90 },  // AC
+    { x: 18400, y: GROUND_Y -  55, w:  90 },  // AC
     { x: 18600, y: GROUND_Y - 125, w: 115 },
 
     { x: 18900, y: GROUND_Y - 125, w: 115 },
-    { x: 19100, y: GROUND_Y - 200, w: 90  },
+    { x: 19100, y: GROUND_Y -  55, w:  90 },  // AC
+    { x: 19200, y: GROUND_Y -  55, w: 115 },  // AC (w largo)
     { x: 19320, y: GROUND_Y - 125, w: 115 },
 
     { x: 19620, y: GROUND_Y - 125, w: 115 },
-    { x: 19840, y: GROUND_Y - 215, w: 85  },
+    { x: 19840, y: GROUND_Y -  55, w:  85 },  // AC
     { x: 20060, y: GROUND_Y - 125, w: 115 },
 
     // ── WALL ZONE 3 ──
-    { x: 20600, y: GROUND_Y - 125, w: 115 },
-    { x: 20820, y: GROUND_Y - 240, w: 90  },
-    { x: 21040, y: GROUND_Y - 125, w: 115 },
-
     { x: 21300, y: GROUND_Y - 125, w: 115 },
-    { x: 21520, y: GROUND_Y - 230, w: 85  },
-    { x: 21740, y: GROUND_Y - 125, w: 115 },
+    { x: 21520, y: GROUND_Y -  55, w:  85 },  // AC
 
-    { x: 22050, y: GROUND_Y - 125, w: 115 },
-    { x: 22270, y: GROUND_Y - 260, w: 85  },
     { x: 22490, y: GROUND_Y - 125, w: 115 },
 
-    { x: 22800, y: GROUND_Y - 125, w: 115 },
-    { x: 23020, y: GROUND_Y - 245, w: 85  },
-    { x: 23240, y: GROUND_Y - 125, w: 115 },
-
-    { x: 23600, y: GROUND_Y - 125, w: 115 },
-    { x: 23830, y: GROUND_Y - 225, w: 90  },
-    { x: 24060, y: GROUND_Y - 125, w: 115 },
     { x: 24290, y: GROUND_Y - 125, w: 115 },
   ];
 
