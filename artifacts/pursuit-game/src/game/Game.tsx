@@ -19,6 +19,7 @@ import {
 import { generateLevel, generateBuildings, generateWallTestLevel } from './level';
 import {
   updatePlayer, updateDrone, updateBullets, updateParticles, spawnParticleHelper,
+  updateFallingBoxes,
 } from './physics';
 import {
   drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawGround,
@@ -425,6 +426,7 @@ export default function Game() {
     particles: [],
     screenShake: 0,
     destroyedBoxIndices: [],
+    fallingBoxes: [],
   }), []);
 
   const registerCustomSpriteImage = useCallback((platform: Platform) => {
@@ -1667,7 +1669,9 @@ export default function Game() {
           gs.bullets = updateBullets(gs.bullets, gs.player, gs.platforms, dt, () => {
             gs.screenShake = 6;
             for (let i = 0; i < 8; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
-          }, gs.destroyedBoxIndices, gs.particles);
+          }, gs.destroyedBoxIndices, gs.particles, gs.fallingBoxes);
+
+          updateFallingBoxes(gs.fallingBoxes, gs.platforms, gs.destroyedBoxIndices);
         }
 
         gs.particles = updateParticles(gs.particles, dt);

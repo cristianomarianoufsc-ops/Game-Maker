@@ -149,6 +149,12 @@ export interface DroneAlert {
   phase: number;    // 0 = first warning, 1 = second warning, 2 = protocol activated
 }
 
+export interface FallingBox {
+  index: number; // índice em platforms[]
+  vy: number;    // velocidade vertical atual
+  y: number;     // y atual (atualizado a cada frame)
+}
+
 export interface GameState {
   player: Player;
   drone: Drone;
@@ -165,6 +171,7 @@ export interface GameState {
   droneIntroduced: boolean;
   victoryTimer: number;
   destroyedBoxIndices: number[];
+  fallingBoxes: FallingBox[];
 }
 
 export interface Keys {

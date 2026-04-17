@@ -1,4 +1,4 @@
-import type { Player, Drone, Bullet, Platform, Particle, GameState, Keys } from './types';
+import type { Player, Drone, Bullet, Platform, Particle, GameState, Keys, FallingBox } from './types';
 import {
   GRAVITY, JUMP_FORCE, PLAYER_SPEED, ROLL_SPEED, ROLL_DURATION, CLIMB_SPEED,
   MAX_FALL_SPEED, PLAYER_W, PLAYER_H, PLAYER_ROLL_H, DRONE_W, DRONE_H,
@@ -1169,6 +1169,126 @@ function spawnBoxShatter(particles: Particle[], box: Platform): void {
   }
 }
 
+// ── FÍSICA DE QUEDA DE CAIXAS ────────────────────────────────────────────────
+
+function triggerBoxFall(
+  destroyedIndex: number,
+  platforms: Platform[],
+  fallingBoxes: FallingBox[],
+  destroyedBoxIndices: number[]
+): void {
+  const destroyed = platforms[destroyedIndex];
+  const alreadyFallingSet = new Set(fallingBoxes.map(f => f.index));
+  const destroyedSet = new Set(destroyedBoxIndices);
+
+  const toFall: number[] = [];
+  const visited = new Set<number>([destroyedIndex]);
+  const queue: number[] = [];
+
+  // Semente: caixas imediatamente acima da destruída
+  for (let i = 0; i < platforms.length; i++) {
+    const p = platforms[i];
+    if (p.type !== 'box') continue;
+    if (destroyedSet.has(i) || alreadyFallingSet.has(i) || visited.has(i)) continue;
+    if (
+      Math.abs(p.y + p.h - destroyed.y) <= 2 &&
+      p.x < destroyed.x + destroyed.w &&
+      p.x + p.w > destroyed.x
+    ) {
+      visited.add(i);
+      queue.push(i);
+      toFall.push(i);
+    }
+  }
+
+  // BFS para caixas acima dessas
+  while (queue.length > 0) {
+    const curIdx = queue.shift()!;
+    const cur = platforms[curIdx];
+    for (let i = 0; i < platforms.length; i++) {
+      if (visited.has(i)) continue;
+      const p = platforms[i];
+      if (p.type !== 'box') continue;
+      if (destroyedSet.has(i) || alreadyFallingSet.has(i)) continue;
+      if (
+        Math.abs(p.y + p.h - cur.y) <= 2 &&
+        p.x < cur.x + cur.w &&
+        p.x + p.w > cur.x
+      ) {
+        visited.add(i);
+        queue.push(i);
+        toFall.push(i);
+      }
+    }
+  }
+
+  for (const idx of toFall) {
+    fallingBoxes.push({ index: idx, vy: 0, y: platforms[idx].y });
+  }
+}
+
+export function updateFallingBoxes(
+  fallingBoxes: FallingBox[],
+  platforms: Platform[],
+  destroyedBoxIndices: number[]
+): void {
+  if (fallingBoxes.length === 0) return;
+
+  const FALL_GRAVITY = 0.6;
+  const MAX_FALL_VY = 20;
+  const destroyedSet = new Set(destroyedBoxIndices);
+  const fallingIndexSet = new Set(fallingBoxes.map(f => f.index));
+
+  // Aplica gravidade e sincroniza platform.y a cada frame
+  for (const fb of fallingBoxes) {
+    fb.vy = Math.min(fb.vy + FALL_GRAVITY, MAX_FALL_VY);
+    fb.y += fb.vy;
+    platforms[fb.index].y = fb.y; // mantém o sistema de colisão atualizado
+  }
+
+  // Detecta pousos: processa de baixo pra cima (maior y = mais baixo = pousa primeiro)
+  const sorted = [...fallingBoxes].sort((a, b) => b.y - a.y);
+  const landedSet = new Set<number>();
+
+  for (const fb of sorted) {
+    const box = platforms[fb.index];
+    let bestSurfY = GROUND_Y; // padrão: chão
+
+    for (let j = 0; j < platforms.length; j++) {
+      if (j === fb.index) continue;
+      if (destroyedSet.has(j)) continue;
+      // Caixas ainda em queda (não pousadas neste frame): pula
+      if (fallingIndexSet.has(j) && !landedSet.has(j)) continue;
+
+      const other = platforms[j];
+      // Sobreposição em x
+      if (box.x + box.w <= other.x || box.x >= other.x + other.w) continue;
+
+      const surfY = other.type === 'ground' ? GROUND_Y : other.y;
+
+      // surfY precisa estar abaixo do topo da caixa e ser a mais rasa possível
+      if (surfY > fb.y && surfY < bestSurfY) {
+        bestSurfY = surfY;
+      }
+    }
+
+    const targetY = bestSurfY - box.h;
+    if (fb.y + box.h >= bestSurfY) {
+      fb.y = targetY;
+      platforms[fb.index].y = targetY;
+      fb.vy = 0;
+      landedSet.add(fb.index);
+    }
+  }
+
+  // Remove caixas que pousaram
+  for (let i = fallingBoxes.length - 1; i >= 0; i--) {
+    if (landedSet.has(fallingBoxes[i].index)) {
+      fallingBoxes.splice(i, 1);
+    }
+  }
+}
+
 export function updateBullets(
   bullets: Bullet[],
   player: Player,
@@ -1176,7 +1296,8 @@ export function updateBullets(
   dt: number,
   onHit: () => void,
   destroyedBoxIndices: number[],
-  particles: Particle[]
+  particles: Particle[],
+  fallingBoxes: FallingBox[]
 ): Bullet[] {
   const ph = player.isRolling ? PLAYER_ROLL_H : PLAYER_H;
   const surviving: Bullet[] = [];
@@ -1199,6 +1320,7 @@ export function updateBullets(
         if (plat.type === 'box') {
           destroyedBoxIndices.push(pi);
           spawnBoxShatter(particles, plat);
+          triggerBoxFall(pi, platforms, fallingBoxes, destroyedBoxIndices);
         }
         hitPlatform = true;
         break;
