@@ -452,11 +452,13 @@ export function updatePlayer(
       // During dive jump: maintain boosted speed with minimal deceleration
       p.vx *= 0.995;
     } else if (!p.isRolling) {
+      // Velocidade máxima reduzida após escalar parede alta (penalidade de esforço)
+      const effectiveSpeed = PLAYER_SPEED * p.wallClimbJumpPenalty;
       if (keys.left) {
-        p.vx = -PLAYER_SPEED;
+        p.vx = -effectiveSpeed;
         p.facingRight = false;
       } else if (keys.right) {
-        p.vx = PLAYER_SPEED;
+        p.vx = effectiveSpeed;
         p.facingRight = true;
       } else {
         p.vx *= 0.7;
