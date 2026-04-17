@@ -868,7 +868,7 @@ function droneComputeWaypoint(
   let closestDist = Infinity;
 
   for (const p of platforms) {
-    if (p.type === 'ground') continue;
+    if (p.type !== 'wall') continue;
     // Only consider obstacles that lie between drone and target horizontally
     const lo = Math.min(dCx, targetX) - 10;
     const hi = Math.max(dCx, targetX) + 10;
@@ -974,7 +974,7 @@ function droneRepulsion(
   const dCy = drone.y + DRONE_H / 2;
 
   for (const p of platforms) {
-    if (p.type === 'ground') continue;
+    if (p.type !== 'wall') continue;
     // Quick distance cull
     if (Math.abs((p.x + p.w / 2) - dCx) > SENSE + p.w / 2 + 40) continue;
 
@@ -1003,7 +1003,7 @@ function droneRepulsion(
 /** Hard pushout: resolve any current overlap between drone AABB and solid platforms. */
 function dronePushOut(drone: Drone, platforms: Platform[]): void {
   for (const p of platforms) {
-    if (p.type === 'ground') continue;
+    if (p.type !== 'wall') continue;
     // AABB overlap test
     if (
       drone.x < p.x + p.w && drone.x + DRONE_W > p.x &&
