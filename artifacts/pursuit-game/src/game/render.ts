@@ -1433,6 +1433,13 @@ export function drawPlatforms(
         ctx.fillStyle = '#2e1608';
         ctx.fillRect(bx, wy, fw, WIN_H);
 
+        // ── Variação determinística (seed = posição world da plataforma) ──
+        const rngB  = (seed: number) => { const v = Math.sin(seed * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+        const ws    = plat.x * 0.013;
+        const lit        = rngB(ws + 1) > 0.35;   // 65% iluminada, 35% fria/escura
+        const hasCurtain = lit && rngB(ws + 2) > 0.50; // 50% das lit têm cortinas
+        const openLeft   = lit && rngB(ws + 3) > 0.80; // 20% das lit têm painel esq. aberto
+
         const panelW = Math.floor((fw - 5) / 2);
         const leftX  = bx + 2;
         const rightX = bx + fw - 2 - panelW;
@@ -1440,18 +1447,59 @@ export function drawPlatforms(
         const paneH  = Math.floor((WIN_H - 7) / 2);
 
         for (let panel = 0; panel < 2; panel++) {
-          const px2 = panel === 0 ? leftX : rightX;
+          const isLeft = panel === 0;
+          // painel aberto desloca levemente para dentro
+          const openShift = (isLeft && openLeft) ? 4 : 0;
+          const px2 = (isLeft ? leftX : rightX) + openShift;
+
+          // Moldura interna do painel
           ctx.fillStyle = '#3e2010';
           ctx.fillRect(px2, wy + 2, panelW, WIN_H - 4);
-          ctx.fillStyle = '#182030';
-          ctx.fillRect(px2 + 1,         wy + 3,          paneW, paneH);
-          ctx.fillRect(px2 + paneW + 2,  wy + 3,          paneW, paneH);
-          ctx.fillRect(px2 + 1,         wy + paneH + 4,   paneW, paneH);
-          ctx.fillRect(px2 + paneW + 2,  wy + paneH + 4,  paneW, paneH);
-          ctx.fillStyle = 'rgba(255,160,50,0.22)';
-          ctx.fillRect(px2 + 1, wy + 3, panelW - 2, WIN_H - 6);
-          ctx.fillStyle = 'rgba(255,255,255,0.12)';
-          ctx.fillRect(px2 + 2, wy + 4, 3, 3);
+
+          if (lit) {
+            // ── Interior quente ───────────────────────────────────────
+            ctx.fillStyle = '#1e1608';
+            ctx.fillRect(px2 + 1,         wy + 3,         paneW, paneH);
+            ctx.fillRect(px2 + paneW + 2,  wy + 3,         paneW, paneH);
+            ctx.fillRect(px2 + 1,         wy + paneH + 4,  paneW, paneH);
+            ctx.fillRect(px2 + paneW + 2,  wy + paneH + 4, paneW, paneH);
+            // Glow âmbar
+            ctx.fillStyle = 'rgba(255,148,38,0.26)';
+            ctx.fillRect(px2 + 1, wy + 3, panelW - 2, WIN_H - 6);
+            // Glint topo
+            ctx.fillStyle = 'rgba(255,230,160,0.18)';
+            ctx.fillRect(px2 + 2, wy + 4, 4, 2);
+            // Cortinas
+            if (hasCurtain) {
+              const cCol = rngB(ws + 4) > 0.5 ? '#6e2c1a' : '#2a3858'; // vermelha ou azul
+              ctx.fillStyle = cCol;
+              ctx.fillRect(px2 + 1,              wy + 3, 5, WIN_H - 6); // esquerda
+              ctx.fillRect(px2 + panelW - 6, wy + 3, 5, WIN_H - 6); // direita
+              // dobra da cortina
+              ctx.fillStyle = 'rgba(0,0,0,0.20)';
+              ctx.fillRect(px2 + 5,              wy + 3, 1, WIN_H - 6);
+              ctx.fillRect(px2 + panelW - 7, wy + 3, 1, WIN_H - 6);
+            }
+            // Linha de separação do painel aberto
+            if (isLeft && openLeft) {
+              ctx.fillStyle = 'rgba(0,0,0,0.55)';
+              ctx.fillRect(leftX, wy + 2, 2, WIN_H - 4);
+            }
+          } else {
+            // ── Vidro frio / escuro ───────────────────────────────────
+            ctx.fillStyle = '#08101a';
+            ctx.fillRect(px2 + 1,         wy + 3,         paneW, paneH);
+            ctx.fillRect(px2 + paneW + 2,  wy + 3,         paneW, paneH);
+            ctx.fillRect(px2 + 1,         wy + paneH + 4,  paneW, paneH);
+            ctx.fillRect(px2 + paneW + 2,  wy + paneH + 4, paneW, paneH);
+            // Reflexo lunar frio (canto superior direito de cada vidro)
+            ctx.fillStyle = 'rgba(140,200,240,0.14)';
+            ctx.fillRect(px2 + paneW - 1,  wy + 4,         3, 2);
+            ctx.fillRect(px2 + panelW - 3, wy + 4,         3, 2);
+            // Brilho difuso azulado
+            ctx.fillStyle = 'rgba(100,160,210,0.07)';
+            ctx.fillRect(px2 + 1, wy + 3, panelW - 2, WIN_H - 6);
+          }
         }
 
         ctx.fillStyle = '#2e1608';
