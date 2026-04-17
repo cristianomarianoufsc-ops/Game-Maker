@@ -823,6 +823,91 @@ export function updatePlayer(
   }
 }
 
+// ── Drone pathfinding helpers ────────────────────────────────────────────────
+
+/** Liang-Barsky line vs AABB intersection test. */
+function lineIntersectsAABB(
+  x1: number, y1: number, x2: number, y2: number,
+  rx: number, ry: number, rw: number, rh: number
+): boolean {
+  const dx = x2 - x1, dy = y2 - y1;
+  let tmin = 0, tmax = 1;
+  const checks = [
+    { p: -dx, q: x1 - rx },
+    { p:  dx, q: rx + rw - x1 },
+    { p: -dy, q: y1 - ry },
+    { p:  dy, q: ry + rh - y1 },
+  ];
+  for (const { p, q } of checks) {
+    if (p === 0) { if (q < 0) return false; }
+    else {
+      const t = q / p;
+      if (p < 0) tmin = Math.max(tmin, t);
+      else       tmax = Math.min(tmax, t);
+      if (tmin > tmax) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Returns the best intermediate waypoint for the drone to steer toward.
+ * If the straight path to (targetX, targetY) is blocked, returns a bypass
+ * waypoint above (or below) the closest blocking obstacle.
+ */
+function droneComputeWaypoint(
+  drone: Drone,
+  targetX: number,
+  targetY: number,
+  platforms: Platform[]
+): { tx: number; ty: number } {
+  const dCx = drone.x + DRONE_W / 2;
+  const dCy = drone.y + DRONE_H / 2;
+
+  let closestObstacle: Platform | null = null;
+  let closestDist = Infinity;
+
+  for (const p of platforms) {
+    if (p.type === 'ground') continue;
+    // Only consider obstacles that lie between drone and target horizontally
+    const lo = Math.min(dCx, targetX) - 10;
+    const hi = Math.max(dCx, targetX) + 10;
+    if (p.x + p.w < lo || p.x > hi) continue;
+    if (!lineIntersectsAABB(dCx, dCy, targetX, targetY, p.x, p.y, p.w, p.h)) continue;
+    const d = Math.abs((p.x + p.w / 2) - dCx);
+    if (d < closestDist) { closestDist = d; closestObstacle = p; }
+  }
+
+  if (!closestObstacle) return { tx: targetX, ty: targetY };
+
+  const p = closestObstacle;
+  // Drone can fly over if its minimum reachable bottom (30 + DRONE_H) clears the wall top
+  const DRONE_MIN_Y    = 32;
+  const canOver        = DRONE_MIN_Y + DRONE_H < p.y;   // e.g. 70 < wall.y
+  const overY          = canOver ? p.y - DRONE_H - 20 : DRONE_MIN_Y;
+
+  const underY         = p.y + p.h + 30;
+  const canUnder       = underY <= GROUND_Y - DRONE_H - 20;
+
+  let bypassY: number;
+  if (canOver && canUnder) {
+    bypassY = Math.abs(dCy - overY) <= Math.abs(dCy - underY) ? overY : underY;
+  } else if (canOver) {
+    bypassY = overY;
+  } else if (canUnder) {
+    bypassY = underY;
+  } else {
+    // Truly impassable (full-height wall): aim as high as possible — stuck detection will teleport
+    bypassY = DRONE_MIN_Y;
+  }
+
+  // Waypoint X: just past the obstacle edge in the direction of travel
+  const goingRight = targetX > dCx;
+  const bypassX = goingRight ? p.x + p.w + DRONE_W + 10 : p.x - DRONE_W - 10;
+
+  return { tx: bypassX, ty: bypassY };
+}
+
 // ── Drone obstacle avoidance helpers ────────────────────────────────────────
 
 /** Repulsion force vector from all nearby solid platforms. */
@@ -914,8 +999,13 @@ export function updateDrone(
   const targetX = player.x + DRONE_TARGET_OFFSET_X + Math.sin(Date.now() * 0.0007) * 30;
   const targetY = player.y + DRONE_TARGET_OFFSET_Y + Math.cos(Date.now() * 0.0009) * 20;
 
-  const dx = targetX - drone.x;
-  const dy = targetY - drone.y;
+  // Pathfinding: compute bypass waypoint if something blocks the direct path
+  const { tx, ty } = platforms.length > 0
+    ? droneComputeWaypoint(drone, targetX, targetY, platforms)
+    : { tx: targetX, ty: targetY };
+
+  const dx = tx - drone.x;
+  const dy = ty - drone.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
 
   const speed = DRONE_BASE_SPEED;
@@ -925,7 +1015,7 @@ export function updateDrone(
     drone.vy += (dy / dist) * speed * 0.25;
   }
 
-  // Obstacle repulsion (steering away from platforms/walls)
+  // Obstacle repulsion (fine-grained — prevents grazing/sticking to surfaces)
   if (platforms.length > 0) {
     const { fx, fy } = droneRepulsion(drone, platforms);
     drone.vx += fx;
@@ -947,6 +1037,22 @@ export function updateDrone(
   // Keep drone on screen y (roughly)
   if (drone.y < 30) { drone.y = 30; drone.vy = Math.abs(drone.vy); }
   if (drone.y > GROUND_Y - 60) { drone.y = GROUND_Y - 60; drone.vy = -Math.abs(drone.vy); }
+
+  // ── Stuck detection: se o drone não avançou em ~2s, teleporta atrás do player ──
+  drone.stuckTimer++;
+  if (drone.stuckTimer >= 120) {
+    const traveled = Math.abs(drone.x - drone.stuckLastX);
+    const distToPlayer = Math.abs(drone.x - (player.x + DRONE_TARGET_OFFSET_X));
+    // Preso: pouco deslocamento E ainda longe do player
+    if (traveled < 10 && distToPlayer > 200) {
+      drone.x = player.x + DRONE_TARGET_OFFSET_X;
+      drone.y = Math.max(30, player.y + DRONE_TARGET_OFFSET_Y);
+      drone.vx = 0;
+      drone.vy = 0;
+    }
+    drone.stuckTimer = 0;
+    drone.stuckLastX = drone.x;
+  }
 
   // Prop spin
   drone.propAngle += 0.4;

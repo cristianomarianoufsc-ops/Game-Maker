@@ -114,6 +114,8 @@ function makeDrone(): Drone {
     propAngle: 0,
     wobble: 0,
     wobbleDir: 1,
+    stuckTimer: 0,
+    stuckLastX: -80,
   };
 }
 

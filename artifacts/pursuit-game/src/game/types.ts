@@ -123,6 +123,8 @@ export interface Drone {
   propAngle: number;
   wobble: number;
   wobbleDir: number;
+  stuckTimer: number;   // frames sem progresso significativo (para teleporte)
+  stuckLastX: number;  // referência de X para detectar estagnação
 }
 
 export interface Camera {
