@@ -1436,9 +1436,9 @@ export function drawPlatforms(
         // ── Variação determinística (seed = posição world da plataforma) ──
         const rngB  = (seed: number) => { const v = Math.sin(seed * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
         const ws    = plat.x * 0.013;
-        const lit        = rngB(ws + 1) > 0.35;   // 65% iluminada, 35% fria/escura
-        const hasCurtain = lit && rngB(ws + 2) > 0.50; // 50% das lit têm cortinas
-        const openLeft   = lit && rngB(ws + 3) > 0.80; // 20% das lit têm painel esq. aberto
+        const lit        = false; // todas escuras
+        const hasCurtain = false;
+        const openLeft   = false;
 
         const panelW = Math.floor((fw - 5) / 2);
         const leftX  = bx + 2;
