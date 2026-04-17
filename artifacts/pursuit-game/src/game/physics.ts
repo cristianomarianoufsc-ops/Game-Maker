@@ -390,7 +390,7 @@ export function updatePlayer(
           p.vx = side === 'right' ? -WALLFLIP_BACK_VX : WALLFLIP_BACK_VX;
           p.vy = WALLFLIP_JUMP_VY * p.wallClimbJumpPenalty;
           p.jumpedFromWall = true;
-          p.wallClimbJumpPenalty = 1.0;
+          // Penalidade persiste até pousar (reseta em onGround)
         } else {
           // Forward + jump (or just jump) → pull up onto wall top
           // coyoteTime = 3 permite um pulo curto; penalidade será aplicada nesse pulo
@@ -491,8 +491,8 @@ export function updatePlayer(
     // Normal jump
     } else if ((keys.space || (keys.up && !p.touchingWall)) && (p.coyoteTime > 0)) {
       // Aplica penalidade de pulo se o personagem acabou de escalar uma parede alta
+      // Não reseta a penalidade aqui — ela persiste até o pouso para limitar vx no ar também
       p.vy = JUMP_FORCE * p.wallClimbJumpPenalty;
-      p.wallClimbJumpPenalty = 1.0;
       p.onGround = false;
       p.coyoteTime = 0;
       p.jumpCount = 1;
