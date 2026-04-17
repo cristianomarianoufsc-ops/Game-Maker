@@ -119,6 +119,17 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
     return false;
   }
 
+  // ── Roll/crouch pass-under check ─────────────────────────────────────────
+  // When rolling or forcedCrouch, a phantom horizontal collision can occur because
+  // forcedCrouch does not adjust p.y (unlike manual roll). If the platform's
+  // collision bottom leaves enough clearance at ground level for a rolling player,
+  // and the resolver picked a horizontal axis, skip the push so the player can slide under.
+  if ((p.isRolling || p.forcedCrouch) &&
+      (minOverlap === overlapLeft || minOverlap === overlapRight)) {
+    const clearance = GROUND_Y - (hit.y + hit.h);
+    if (clearance >= PLAYER_ROLL_H) return false;
+  }
+
   if (minOverlap === overlapTop && p.vy >= 0) {
     p.y = hit.y - ph;
     p.vy = 0;
