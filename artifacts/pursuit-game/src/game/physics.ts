@@ -226,6 +226,23 @@ export function updatePlayer(
     }
   }
 
+  // Detecção de teto baixo: se o jogador está em pé com pouco espaço acima, força agachamento
+  // Ativa quando há plataforma a menos de CEILING_CLEARANCE px acima da cabeça
+  if (p.onGround && !p.isRolling && !p.forcedCrouch && p.state !== 'hurt' && p.state !== 'dead') {
+    const CEILING_CLEARANCE = 18; // px de folga acima da cabeça que aciona forcedCrouch
+    const headY = p.y; // topo do personagem em pé
+    const lowCeiling = platforms.some(plat => {
+      if (plat.type === 'ground') return false;
+      return getPlatformCollisionRects(plat).some(hit =>
+        rectOverlap(p.x + 2, headY - CEILING_CLEARANCE, p.w - 4, CEILING_CLEARANCE, hit.x, hit.y, hit.w, hit.h)
+      );
+    });
+    if (lowCeiling) {
+      p.forcedCrouch = true;
+      p.state = 'idle';
+    }
+  }
+
   // Landing crouch timer
   if (p.landingCrouch) {
     p.landingCrouchTimer -= dt;
