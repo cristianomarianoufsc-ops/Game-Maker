@@ -2694,6 +2694,26 @@ export function drawEditorUI(
       ctx.fillText(collisionMode ? '✓ HITBOX' : '▣ HITBOX', hitBtnX + hitBtnW / 2, hitBtnY + 15);
       ctx.textAlign = 'left';
 
+      // ── Botão DELETAR (só fora do collision mode) ──────────────
+      if (!collisionMode) {
+        const delBtnX = hitBtnX;
+        const delBtnY = hitBtnY + 26;
+        const delBtnW = 82;
+        const delBtnH = 22;
+        ctx.fillStyle = 'rgba(65,15,15,0.94)';
+        ctx.strokeStyle = 'rgba(255,70,70,0.9)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(delBtnX, delBtnY, delBtnW, delBtnH, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,150,150,1)';
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('x DELETAR', delBtnX + delBtnW / 2, delBtnY + 15);
+        ctx.textAlign = 'left';
+      }
+
       if (collisionMode) {
         const addBtnX = hitBtnX;
         const addBtnY = hitBtnY + 26;
@@ -2835,6 +2855,49 @@ export function drawEditorUI(
   ctx.textAlign = 'center';
   ctx.fillText('UPLOAD SPRITE', uploadBtnX + 52, histBtnY + 12);
   ctx.restore();
+
+  // ── Chave de exportação da fase ─────────────────────────────
+  {
+    const expX = uploadBtnX + 108;
+    const expY = histBtnY;
+    const expW = CANVAS_W - expX - 8;
+    const expH = histBtnH;
+
+    // Calcula a chave compacta da fase (todas as plataformas não-ground)
+    const GY_VAL = GROUND_Y;
+    const exportItems = platforms
+      .filter(p => p.type !== 'ground')
+      .map(p => ({ t: p.type[0], x: p.x, y: Math.round(p.y - GY_VAL), w: p.w, h: p.h }));
+    const exportStr = JSON.stringify(exportItems);
+
+    // Fundo pulsante esverdeado
+    const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 600);
+    ctx.save();
+    ctx.fillStyle = `rgba(15,50,30,0.93)`;
+    ctx.strokeStyle = `rgba(50,${Math.round(180 * pulse)},90,0.88)`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(expX, expY, expW, expH, 3);
+    ctx.fill();
+    ctx.stroke();
+
+    // Rótulo fixo
+    ctx.fillStyle = 'rgba(80,220,130,0.95)';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('CHAVE:', expX + 5, expY + 12);
+
+    // String truncada
+    ctx.fillStyle = 'rgba(160,255,200,0.85)';
+    ctx.font = '9px monospace';
+    const maxStrW = expW - 52;
+    let truncated = exportStr;
+    while (truncated.length > 4 && ctx.measureText(truncated).width > maxStrW) {
+      truncated = truncated.slice(0, -4) + '…';
+    }
+    ctx.fillText(truncated, expX + 50, expY + 12);
+    ctx.restore();
+  }
 
   ctx.fillStyle = 'rgba(180,175,210,0.75)';
   ctx.font = '10px monospace';

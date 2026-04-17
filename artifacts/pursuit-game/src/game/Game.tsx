@@ -1138,12 +1138,25 @@ export default function Game() {
       if (!coords) return;
       const { wx, wy } = coords;
 
-      // Undo/Redo buttons (tela fixa no header do editor)
+      // Undo/Redo/Upload + Chave de exportação (barra topo — screen space)
       const screenX = wx - editorCamXRef.current;
       if (wy >= 5 && wy <= 23) {
         if (screenX >= 166 && screenX <= 220) { editorUndo(); return; }
         if (screenX >= 224 && screenX <= 278) { editorRedo(); return; }
         if (screenX >= 286 && screenX <= 390) { spriteUploadInputRef.current?.click(); return; }
+        // Área da CHAVE DE FASE (clique copia JSON para clipboard)
+        if (screenX >= 398 && screenX <= CANVAS_W - 8) {
+          const exportItems = platformsRef.current
+            .filter(p => p.type !== 'ground')
+            .map(p => ({ t: p.type[0], x: p.x, y: Math.round(p.y - GROUND_Y), w: p.w, h: p.h }));
+          const exportStr = JSON.stringify(exportItems);
+          navigator.clipboard.writeText(exportStr).then(() => {
+            editorCopiedMsgRef.current = { text: '✓ CHAVE COPIADA — cole no chat para eu aplicar as mudanças', until: Date.now() + 3500 };
+          }).catch(() => {
+            editorCopiedMsgRef.current = { text: 'Erro ao copiar — tente Ctrl+C no campo de texto', until: Date.now() + 3000 };
+          });
+          return;
+        }
       }
 
       const selIdx = editorSelectedIdxRef.current;
@@ -1270,6 +1283,27 @@ export default function Game() {
             copyPlatText(platCoordText(p), '✓ SLOPE ADICIONADO — arraste os losangos laranja');
           }
           return;
+        }
+
+        // ── Botão DELETAR objeto selecionado (fora do collision mode) ───
+        {
+          const delBtnX = dupBtnX;
+          const delBtnY = dupBtnY + 52; // = hitBtnY + 26
+          const delBtnW = 82;
+          const delBtnH = 22;
+          if (!editorCollisionModeRef.current && wx >= delBtnX && wx <= delBtnX + delBtnW && wy >= delBtnY && wy <= delBtnY + delBtnH) {
+            if (p.type !== 'ground') {
+              pushEditorHistory();
+              platforms.splice(selIdx, 1);
+              saveCustomSpritePlatforms(platforms);
+              if (gsRef.current) gsRef.current.platforms = platforms;
+              editorSelectedIdxRef.current = -1;
+              editorSelectedIndicesRef.current = new Set();
+              editorCollisionModeRef.current = false;
+              editorCopiedMsgRef.current = { text: '× OBJETO DELETADO (Ctrl+Z para desfazer)', until: Date.now() + 2500 };
+            }
+            return;
+          }
         }
 
         // Slope handles (diamond, laranja) — somente em modo colisão
