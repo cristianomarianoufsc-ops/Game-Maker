@@ -1038,13 +1038,14 @@ export function updateDrone(
   if (drone.y < 30) { drone.y = 30; drone.vy = Math.abs(drone.vy); }
   if (drone.y > GROUND_Y - 60) { drone.y = GROUND_Y - 60; drone.vy = -Math.abs(drone.vy); }
 
-  // ── Stuck detection: se o drone não avançou em ~2s, teleporta atrás do player ──
+  // ── Stuck detection: só teleporta se completamente imóvel por ~5s contra parede ──
   drone.stuckTimer++;
-  if (drone.stuckTimer >= 120) {
+  if (drone.stuckTimer >= 300) {
     const traveled = Math.abs(drone.x - drone.stuckLastX);
     const distToPlayer = Math.abs(drone.x - (player.x + DRONE_TARGET_OFFSET_X));
-    // Preso: pouco deslocamento E ainda longe do player
-    if (traveled < 10 && distToPlayer > 200) {
+    const almostStill  = Math.abs(drone.vx) < 0.4 && Math.abs(drone.vy) < 0.4;
+    // Preso: quase sem deslocamento, quase parado E longe do player
+    if (traveled < 4 && almostStill && distToPlayer > 350) {
       drone.x = player.x + DRONE_TARGET_OFFSET_X;
       drone.y = Math.max(30, player.y + DRONE_TARGET_OFFSET_Y);
       drone.vx = 0;
