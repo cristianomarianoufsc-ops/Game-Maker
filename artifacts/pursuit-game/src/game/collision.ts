@@ -1,4 +1,5 @@
 import type { CollisionBox, Platform, Rect } from './types';
+import { GROUND_Y } from './constants';
 
 export interface SlopedRect extends Rect {
   slopeTop?: { left: number; right: number };
@@ -12,6 +13,17 @@ export function getSlopeSurfaceY(hit: SlopedRect, worldX: number): number {
 
 const CAR_COLLISION_W_RATIO = 0.82;
 const CAR_COLLISION_H_RATIO = 0.68;
+
+function isEditableLowBalcony(platform: Platform): boolean {
+  return platform.type === 'platform' && platform.w === 115 && platform.h === 62;
+}
+
+export function getPlatformCollisionMaxBottom(platform: Platform): number {
+  if (isEditableLowBalcony(platform)) {
+    return Math.max(platform.h, Math.min(200, Math.round(GROUND_Y - platform.y)));
+  }
+  return platform.h;
+}
 
 export function getDefaultPlatformCollisionRect(platform: Platform): Rect {
   if (platform.type === 'car') {
@@ -46,10 +58,11 @@ function rectToBox(platform: Platform, rect: SlopedRect): CollisionBox {
 
 function clampBox(platform: Platform, box: CollisionBox): CollisionBox {
   const minSize = 6;
+  const maxBottom = getPlatformCollisionMaxBottom(platform);
   const w = Math.max(minSize, Math.min(Math.round(box.w), platform.w));
-  const h = Math.max(minSize, Math.min(Math.round(box.h), platform.h));
+  const h = Math.max(minSize, Math.min(Math.round(box.h), maxBottom));
   const x = Math.max(0, Math.min(Math.round(box.x), platform.w - w));
-  const y = Math.max(0, Math.min(Math.round(box.y), platform.h - h));
+  const y = Math.max(0, Math.min(Math.round(box.y), maxBottom - h));
   const result: CollisionBox = { x, y, w, h };
   if (box.slopeTop) {
     result.slopeTop = {
@@ -178,10 +191,11 @@ export function clampPlatformCollisionOverrides(platform: Platform): void {
 
   ensurePlatformCollisionOverrides(platform);
   const minSize = 6;
+  const maxBottom = getPlatformCollisionMaxBottom(platform);
   const w = Math.max(minSize, Math.min(platform.collisionW ?? platform.w, platform.w));
-  const h = Math.max(minSize, Math.min(platform.collisionH ?? platform.h, platform.h));
+  const h = Math.max(minSize, Math.min(platform.collisionH ?? platform.h, maxBottom));
   const ox = Math.max(0, Math.min(platform.collisionOffsetX ?? 0, platform.w - w));
-  const oy = Math.max(0, Math.min(platform.collisionOffsetY ?? 0, platform.h - h));
+  const oy = Math.max(0, Math.min(platform.collisionOffsetY ?? 0, maxBottom - h));
   platform.collisionW = Math.round(w);
   platform.collisionH = Math.round(h);
   platform.collisionOffsetX = Math.round(ox);

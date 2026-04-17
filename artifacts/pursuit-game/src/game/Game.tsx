@@ -35,6 +35,7 @@ import {
   ensurePlatformCollisionBoxes,
   getPlatformCollisionRect,
   getPlatformCollisionRects,
+  getPlatformCollisionMaxBottom,
   getPlatformCollisionSummary,
   getPlatformGroundClampOffset,
   hasCustomPlatformCollision,
@@ -867,9 +868,10 @@ export default function Game() {
             clampCrop();
           } else if (drag.editingCollision) {
             const box = ensurePlatformCollisionBox(p, editorCollisionBoxIdxRef.current);
+            const maxCollisionBottom = getPlatformCollisionMaxBottom(p);
             if (drag.mode === 'move') {
               box.x = Math.round(Math.max(0, Math.min(drag.origCollisionOffsetX + dx, p.w - drag.origCollisionW)));
-              box.y = Math.round(Math.max(0, Math.min(drag.origCollisionOffsetY + dy, p.h - drag.origCollisionH)));
+              box.y = Math.round(Math.max(0, Math.min(drag.origCollisionOffsetY + dy, maxCollisionBottom - drag.origCollisionH)));
             } else if (drag.mode === 'resize-right') {
               box.w = Math.round(Math.max(6, Math.min(drag.origCollisionW + dx, p.w - drag.origCollisionOffsetX)));
             } else if (drag.mode === 'resize-left') {
@@ -883,11 +885,11 @@ export default function Game() {
               box.y = Math.round(drag.origCollisionOffsetY + drag.origCollisionH - newH);
               box.h = newH;
             } else if (drag.mode === 'resize-bottom') {
-              box.h = Math.round(Math.max(6, Math.min(drag.origCollisionH + dy, p.h - drag.origCollisionOffsetY)));
+              box.h = Math.round(Math.max(6, Math.min(drag.origCollisionH + dy, maxCollisionBottom - drag.origCollisionOffsetY)));
             } else if (drag.mode === 'resize-corner') {
               const scale = Math.max(0.05, (drag.origCollisionW + dx) / drag.origCollisionW);
               box.w = Math.round(Math.max(6, Math.min(drag.origCollisionW * scale, p.w - drag.origCollisionOffsetX)));
-              box.h = Math.round(Math.max(6, Math.min(drag.origCollisionH * scale, p.h - drag.origCollisionOffsetY)));
+              box.h = Math.round(Math.max(6, Math.min(drag.origCollisionH * scale, maxCollisionBottom - drag.origCollisionOffsetY)));
             } else if (drag.mode === 'slope-left') {
               if (!box.slopeTop) box.slopeTop = { left: 0, right: 0 };
               box.slopeTop.left = Math.max(0, Math.min(box.h, drag.origSlopeLeft + dy));
