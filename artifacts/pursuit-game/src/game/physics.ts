@@ -570,6 +570,25 @@ export function updatePlayer(
       p.state = 'roll';
       spawnParticle(p.x + p.w / 2, p.y + PLAYER_ROLL_H, '#444055');
     }
+
+    // Roll via baixo+frente — inicia ANTES da colisão (usa prevOnGround)
+    // para que a hitbox reduzida já esteja ativa ao resolver colisões com sacadas
+    if (keys.down && prevOnGround && !p.isRolling && !p.isClimbing &&
+        p.state !== 'hurt' && p.state !== 'dead' &&
+        (keys.left || keys.right || Math.abs(p.vx) > 1)) {
+      p.forcedCrouch = false;
+      p.y += PLAYER_H - PLAYER_ROLL_H;
+      p.isRolling = true;
+      p.autoRoll = true;
+      p.rollTimer = LANDING_ROLL_DURATION;
+      p.landingRollFrame = 0;
+      p.landingCrouch = false;
+      p.landingCrouchTimer = 0;
+      p.state = 'roll';
+      for (let i = 0; i < 8; i++) {
+        spawnParticle(p.x + p.w / 2, p.y + PLAYER_ROLL_H, i % 2 === 0 ? '#606070' : '#404555');
+      }
+    }
   }
 
   // Gravity — não aplica durante climb ou wall run
