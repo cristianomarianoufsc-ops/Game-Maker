@@ -318,11 +318,10 @@ export function updatePlayer(
           Math.random() < 0.5 ? '#ffcc44' : '#ff8822',
         );
       }
-      // canClimbWall: permite wall climb up — liberado em pilhas curtas (≤3 caixas = 165px) e em paredes normais
-      // canJumpOffWall: permite flip e pulo lateral — nunca em caixas (escorregadias)
-      const _isShortBox = p.wallRunOnBox && p.wallTopY >= GROUND_Y - 165;
+      // canClimbWall: wall climb up (montar) — funciona em caixas E paredes normais
+      // canJumpOffWall: flip e pulo lateral — bloqueado em caixas (escorregadias)
       const _timerWindow = p.wallRunTimer < WALLRUN_DURATION - 160;
-      const canClimbWall  = (!p.wallRunOnBox || _isShortBox) && _timerWindow;
+      const canClimbWall   = _timerWindow;
       const canJumpOffWall = !p.wallRunOnBox && _timerWindow;
       const pressingForwardIntoWall =
         (wallSide === 'right' && keys.right) ||
