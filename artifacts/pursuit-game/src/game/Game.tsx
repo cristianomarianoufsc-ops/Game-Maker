@@ -390,6 +390,7 @@ export default function Game() {
   const EDITOR_CHECKPOINTS = [
     { label: 'CP1', x: 6500 },
     { label: 'CP2', x: 12100 },
+    { label: 'CP3', x: 16400 },
   ];
   const editorCheckpointIdxRef = useRef(-1);
   const lastTime = useRef<number>(0);
