@@ -779,7 +779,7 @@ export default function Game() {
       if (bestDx !== 0) platform.x = Math.round(platform.x + bestDx);
       if (bestDy !== 0) platform.y = Math.round(platform.y + bestDy);
       platform.y = Math.round(Math.min(platform.y, EDITOR_GROUND_Y - getPlatformGroundClampOffset(platform)));
-      platform.y = Math.max(60, platform.y);
+      platform.y = Math.max(-4000, platform.y);
     };
 
     const makeEditorDrag = (p: Platform, mode: EditorDrag['mode'], wx: number, wy: number, origText: string, editingCrop = false): EditorDrag => {
@@ -938,7 +938,7 @@ export default function Game() {
           } else if (drag.mode === 'move') {
             p.x = Math.round(drag.origX + dx);
             p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
-            p.y = Math.max(-2000, p.y);
+            p.y = Math.max(-4000, p.y);
             const preSnapX = p.x;
             const preSnapY = p.y;
             snapEditorPlatform(p, editorSelectedIdxRef.current);
@@ -950,7 +950,7 @@ export default function Game() {
                 if (gp) {
                   gp.x = Math.round(origX + dx) + snapDx;
                   gp.y = Math.round(Math.min(origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(gp))) + snapDy;
-                  gp.y = Math.max(-2000, gp.y);
+                  gp.y = Math.max(-4000, gp.y);
                 }
               });
             }
