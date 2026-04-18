@@ -141,7 +141,15 @@ export function generateLevel(): Platform[] {
     { x: 15521, type: 'car',  w: 445, h: 164, yOffset: 186, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     { x: 15705, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     { x: 16400, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:80,y:10,w:69,h:43,slopeTop:{left:43,right:0}},{x:149,y:10,w:219,h:16},{x:368,y:10,w:69,h:43,slopeTop:{left:0,right:43}}] },
-    // Zona x:16900-21700 vazia (segunda metade do ferro velho dobrado)
+    // Pilhas de pneus — zona x:16900-21700 (ativadas pelo drone)
+    { x: 17180, y: GROUND_Y - 180, w: 60, h: 180, type: 'tire' as const },
+    { x: 17620, y: GROUND_Y - 240, w: 60, h: 240, type: 'tire' as const },
+    { x: 18150, y: GROUND_Y - 180, w: 60, h: 180, type: 'tire' as const },
+    { x: 18700, y: GROUND_Y - 300, w: 60, h: 300, type: 'tire' as const },
+    { x: 19280, y: GROUND_Y - 180, w: 60, h: 180, type: 'tire' as const },
+    { x: 19860, y: GROUND_Y - 240, w: 60, h: 240, type: 'tire' as const },
+    { x: 20540, y: GROUND_Y - 180, w: 60, h: 180, type: 'tire' as const },
+    { x: 21150, y: GROUND_Y - 300, w: 60, h: 300, type: 'tire' as const },
   ];
 
   junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY, collisionBoxes, cropLeft, cropTop, cropRight, cropBottom, yOffset }) => {

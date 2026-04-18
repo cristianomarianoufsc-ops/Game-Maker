@@ -45,6 +45,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Fase: carro x:14858 yOffset:283 substituído por x:14889 yOffset:283; adicionados carros em x:15148 yOffset:375, x:15334 yOffset:283, x:15521 yOffset:186, x:15705 yOffset:102; removidas caixas em x:16150 y:-55 e y:-110 da pilha 4.
 - Editor de fase: aviso de copiado/selecionado deixou de usar tarja central grande e agora aparece como notificação discreta no canto inferior esquerdo para não cobrir botões como DUP, HITBOX e DELETAR.
 - Editor de fase: clicar diretamente em um objeto diferente do atualmente selecionado agora o seleciona imediatamente (com cópia dos parâmetros), sem precisar clicar no vazio primeiro; os botões/alças do objeto anterior não interceptam mais o clique.
+- Fase: sistema de pneus voadores implementado — 8 pilhas de pneus (3–5 pneus cada) posicionadas na zona x:17180–21150; quando o drone acerta uma pilha, ela some e os pneus são lançados individualmente com física de queda (gravidade, quique amortecido, atrito, rolamento) e renderização rotacionada com raios visíveis; após 7 quiques e velocidade mínima, cada pneu desaparece da cena; pilhas destruídas não reaparecem após resetar o teste do editor.
 - Fase: área do ferro velho dobrada — muro final movido de x:16900 para x:21700; chão contínuo estendido de x:12250 até x:21720; zona x:16900–21700 vazia (sem objetos, paredes, lixeiras ou plataformas); muros removidos de x:17600 e x:20900; conteúdo antigo da FREE ZONE 3 e início da WALL ZONE 3 nessa faixa eliminados.
 
 ## Key Commands

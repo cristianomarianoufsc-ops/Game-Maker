@@ -19,11 +19,11 @@ import {
 import { generateLevel, generateBuildings, generateWallTestLevel } from './level';
 import {
   updatePlayer, updateDrone, updateBullets, updateParticles, spawnParticleHelper,
-  updateFallingBoxes,
+  updateFallingBoxes, updateFlyingTires,
 } from './physics';
 import {
   drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawGround,
-  drawStreetBuildings, drawPlatforms,
+  drawStreetBuildings, drawPlatforms, drawFlyingTires,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
   drawEditorUI,
@@ -435,6 +435,8 @@ export default function Game() {
     screenShake: 0,
     destroyedBoxIndices: [],
     fallingBoxes: [],
+    flyingTires: [],
+    destroyedTireIndices: [],
   }), []);
 
   const registerCustomSpriteImage = useCallback((platform: Platform) => {
@@ -939,6 +941,8 @@ export default function Game() {
       gsRef.current.platforms = restored;
       gsRef.current.destroyedBoxIndices = [];
       gsRef.current.fallingBoxes = [];
+      gsRef.current.flyingTires = [];
+      gsRef.current.destroyedTireIndices = [];
       gsRef.current.bullets = [];
       gsRef.current.particles = [];
       editorSelectedIdxRef.current = -1;
@@ -1976,9 +1980,10 @@ export default function Game() {
           gs.bullets = updateBullets(gs.bullets, gs.player, gs.platforms, dt, () => {
             gs.screenShake = 6;
             for (let i = 0; i < 8; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
-          }, gs.destroyedBoxIndices, gs.particles, gs.fallingBoxes);
+          }, gs.destroyedBoxIndices, gs.particles, gs.fallingBoxes, gs.flyingTires, gs.destroyedTireIndices);
 
           updateFallingBoxes(gs.fallingBoxes, gs.platforms, gs.destroyedBoxIndices);
+          updateFlyingTires(gs.flyingTires);
         }
 
         gs.particles = updateParticles(gs.particles, dt);
@@ -2087,7 +2092,8 @@ export default function Game() {
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);
-      drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current, gs.destroyedBoxIndices, customSpriteImagesRef.current);
+      drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current, gs.destroyedBoxIndices, customSpriteImagesRef.current, gs.destroyedTireIndices);
+      drawFlyingTires(ctx, gs.flyingTires, gs.camera.x);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
       if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {

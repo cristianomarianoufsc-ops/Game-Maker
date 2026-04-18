@@ -1,4 +1,4 @@
-import type { Player, Drone, Bullet, Platform, Particle, GameState, Keys, FallingBox } from './types';
+import type { Player, Drone, Bullet, Platform, Particle, GameState, Keys, FallingBox, FlyingTire } from './types';
 import {
   GRAVITY, JUMP_FORCE, PLAYER_SPEED, ROLL_SPEED, ROLL_DURATION, CLIMB_SPEED,
   MAX_FALL_SPEED, PLAYER_W, PLAYER_H, PLAYER_ROLL_H, DRONE_W, DRONE_H,
@@ -1323,6 +1323,59 @@ export function updateFallingBoxes(
   }
 }
 
+function spawnFlyingTireFromStack(
+  plat: Platform,
+  tireIndex: number,
+  numTires: number,
+  bulletVx: number,
+  flyingTires: FlyingTire[]
+): void {
+  const TIRE_D = plat.w;
+  const radius = TIRE_D / 2;
+  const cx = plat.x + plat.w / 2;
+  const bottomY = plat.y + plat.h;
+  const cy = bottomY - TIRE_D * tireIndex - radius;
+
+  const dir = bulletVx >= 0 ? 1 : -1;
+  const spread = (tireIndex / Math.max(numTires - 1, 1) - 0.5) * 2;
+  const vx = dir * (3 + Math.random() * 5) + spread * 2;
+  const vy = -(6 + Math.random() * 6 + tireIndex * 1.5);
+  const angularVel = (vx / radius) * (0.8 + Math.random() * 0.4);
+
+  flyingTires.push({ x: cx, y: cy, vx, vy, radius, angle: 0, angularVel, bounces: 0 });
+}
+
+export function updateFlyingTires(tires: FlyingTire[]): void {
+  const TIRE_GRAVITY   = 0.55;
+  const MAX_VY         = 22;
+  const BOUNCE_DECAY   = 0.50;
+  const FRICTION       = 0.84;
+  const ROLL_FRICTION  = 0.97;
+  const MAX_BOUNCES    = 7;
+
+  for (let i = tires.length - 1; i >= 0; i--) {
+    const t = tires[i];
+    t.vy = Math.min(t.vy + TIRE_GRAVITY, MAX_VY);
+    t.x += t.vx;
+    t.y += t.vy;
+    t.angle += t.angularVel;
+
+    if (t.y + t.radius >= GROUND_Y) {
+      t.y = GROUND_Y - t.radius;
+      t.vy = -Math.abs(t.vy) * BOUNCE_DECAY;
+      t.vx *= FRICTION;
+      t.angularVel = t.vx * 0.05;
+      t.bounces++;
+      if (Math.abs(t.vy) < 0.8) { t.vy = 0; }
+    } else {
+      t.angularVel *= ROLL_FRICTION;
+    }
+
+    const settled = t.bounces >= MAX_BOUNCES && Math.abs(t.vy) < 1.0 && Math.abs(t.vx) < 0.5;
+    if (settled) { tires.splice(i, 1); }
+  }
+}
+
 export function updateBullets(
   bullets: Bullet[],
   player: Player,
@@ -1331,7 +1384,9 @@ export function updateBullets(
   onHit: () => void,
   destroyedBoxIndices: number[],
   particles: Particle[],
-  fallingBoxes: FallingBox[]
+  fallingBoxes: FallingBox[],
+  flyingTires: FlyingTire[],
+  destroyedTireIndices: number[]
 ): Bullet[] {
   const ph = player.isRolling ? PLAYER_ROLL_H : PLAYER_H;
   const surviving: Bullet[] = [];
@@ -1349,12 +1404,19 @@ export function updateBullets(
     let hitPlatform = false;
     for (let pi = 0; pi < platforms.length; pi++) {
       const plat = platforms[pi];
-      if (plat.type === 'box' && destroyedBoxIndices.includes(pi)) continue;
+      if (plat.type === 'box'  && destroyedBoxIndices.includes(pi)) continue;
+      if (plat.type === 'tire' && destroyedTireIndices.includes(pi)) continue;
       if (getPlatformCollisionRects(plat).some((hit) => rectOverlap(b.x - 4, b.y - 4, 8, 8, hit.x, hit.y, hit.w, hit.h))) {
         if (plat.type === 'box') {
           destroyedBoxIndices.push(pi);
           spawnBoxShatter(particles, plat);
           triggerBoxFall(pi, platforms, fallingBoxes, destroyedBoxIndices);
+        } else if (plat.type === 'tire') {
+          destroyedTireIndices.push(pi);
+          const numTires = Math.max(1, Math.round(plat.h / plat.w));
+          for (let ti = 0; ti < numTires; ti++) {
+            spawnFlyingTireFromStack(plat, ti, numTires, b.vx, flyingTires);
+          }
         }
         hitPlatform = true;
         break;

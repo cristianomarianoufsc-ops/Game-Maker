@@ -158,6 +158,17 @@ export interface FallingBox {
   y: number;     // y atual (atualizado a cada frame)
 }
 
+export interface FlyingTire {
+  x: number;          // centro X (world)
+  y: number;          // centro Y (world)
+  vx: number;
+  vy: number;
+  radius: number;
+  angle: number;      // rotação atual (radianos)
+  angularVel: number; // velocidade angular (rad/frame)
+  bounces: number;    // quantas vezes quicou no chão
+}
+
 export interface GameState {
   player: Player;
   drone: Drone;
@@ -175,6 +186,8 @@ export interface GameState {
   victoryTimer: number;
   destroyedBoxIndices: number[];
   fallingBoxes: FallingBox[];
+  flyingTires: FlyingTire[];
+  destroyedTireIndices: number[];
 }
 
 export interface Keys {

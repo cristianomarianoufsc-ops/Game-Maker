@@ -1,4 +1,4 @@
-import type { GameState, Platform } from './types';
+import type { GameState, Platform, FlyingTire } from './types';
 import type { BuildingDef } from './level';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, COLORS,
@@ -773,6 +773,60 @@ export function drawStreetBuildings(
   }
 }
 
+export function drawFlyingTires(
+  ctx: CanvasRenderingContext2D,
+  flyingTires: FlyingTire[],
+  camX: number
+): void {
+  for (const t of flyingTires) {
+    const sx = t.x - camX;
+    if (sx + t.radius < -20 || sx - t.radius > CANVAS_W + 20) continue;
+    const r = t.radius;
+
+    ctx.save();
+    ctx.translate(sx, t.y);
+    ctx.rotate(t.angle);
+
+    ctx.fillStyle = '#181818';
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#2a2a2a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, r - 3, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.48, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#111';
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1.5;
+    for (let s = 0; s < 4; s++) {
+      const a = (s / 4) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r * 0.22, Math.sin(a) * r * 0.22);
+      ctx.lineTo(Math.cos(a) * r * 0.45, Math.sin(a) * r * 0.45);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    ctx.beginPath();
+    ctx.arc(-r * 0.3, -r * 0.3, r * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+}
+
 export function drawPlatforms(
   ctx: CanvasRenderingContext2D,
   platforms: Platform[],
@@ -781,11 +835,13 @@ export function drawPlatforms(
   carroImg?: HTMLImageElement | null,
   destroyedBoxIndices?: number[],
   customSpriteImages?: Map<string, HTMLImageElement>,
+  destroyedTireIndices?: number[],
 ): void {
   for (let pi = 0; pi < platforms.length; pi++) {
     const plat = platforms[pi];
     if (plat.type === 'ground') continue; // drawn separately
-    if (plat.type === 'box' && destroyedBoxIndices?.includes(pi)) continue;
+    if (plat.type === 'box'  && destroyedBoxIndices?.includes(pi)) continue;
+    if (plat.type === 'tire' && destroyedTireIndices?.includes(pi)) continue;
     const sx = plat.x - camX;
     if (sx + plat.w < -20 || sx > CANVAS_W + 20) continue;
 
@@ -1126,7 +1182,7 @@ export function drawPlatforms(
       const w = plat.w;
       const h = plat.h;
       const cx2 = x + w / 2;
-      const numTires = 3;
+      const numTires = Math.max(1, Math.round(h / Math.max(w, 1)));
       const tireH = h / numTires;
 
       for (let i = 0; i < numTires; i++) {
