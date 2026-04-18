@@ -14,9 +14,9 @@ const WALL_CLEAR_AFTER = 180;
 //  FREE ZONE 1   x: -400  →  3000   sprint livre, zero paredes
 //  WALL ZONE 1   x: 3000  →  7200   paredes (≥3), buracos, lixeiras, plataformas
 //  FREE ZONE 2   x: 7200  → 11500   ZERO paredes — buracos + lixeiras + plataformas
-//  WALL ZONE 2   x:11500  → 16000   paredes (≥3), mais buracos, plataformas altas
-//  FREE ZONE 3   x:16000  → 20000   ZERO paredes — buracos + lixeiras + plataformas
-//  WALL ZONE 3   x:20000  → 25000   paredes (≥4), buracos grandes, parkour difícil
+//  WALL ZONE 2   x:11500  → 21700   paredes (≥3), ferro velho (x:12100-21700, dobrado)
+//  FREE ZONE 3   x:21700  → 22100   terreno livre entre os muros
+//  WALL ZONE 3   x:22100  → 25000   paredes (≥4), buracos grandes, parkour difícil
 // ──────────────────────────────────────────────────────────────────
 
 export function generateLevel(): Platform[] {
@@ -28,10 +28,8 @@ export function generateLevel(): Platform[] {
     { x: 6500, y: GROUND_Y - 235, h: 235 },
 
     { x: 12100, y: GROUND_Y - 400, h: 400 },
-    { x: 16900, y: GROUND_Y - 400, h: 400 },
-    { x: 17600, y: GROUND_Y - 250, h: 250 },
+    { x: 21700, y: GROUND_Y - 400, h: 400 },
 
-    { x: 20900, y: GROUND_Y - 300, h: 300 },
     { x: 22100, y: GROUND_Y - 320, h: 320 },
     { x: 23100, y: GROUND_Y - 310, h: 310 },
     { x: 24100, y: GROUND_Y - 290, h: 290 },
@@ -63,19 +61,10 @@ export function generateLevel(): Platform[] {
 
     // WALL ZONE 2 — buracos maiores + paredes
     { x: 11700, w: 550 },
-    // Ferro velho (x:12100-16900): chão contínuo, sem buracos (dobro do original)
-    { x: 12250, w: 4690 },  // 12250 → 16940 (cobre toda a zona do ferro velho)
+    // Ferro velho (x:12100-21700): chão contínuo, sem buracos
+    { x: 12250, w: 9470 },  // 12250 → 21720 (dobro do original, cobre toda a zona)
 
-    // FREE ZONE 3 — buracos moderados, ZERO paredes
-    { x: 17100, w: 550 },
-    { x: 17750, w: 600 },
-    { x: 18350, w: 700 },
-    { x: 19150, w: 600 },
-    { x: 19850, w: 500 },
-
-    // WALL ZONE 3 — buracos grandes + muitas paredes
-    { x: 20500, w: 500 },
-    { x: 21100, w: 450 },
+    // WALL ZONE 3 — buracos grandes + muitas paredes (começa após x:21700)
     { x: 21650, w: 500 },
     { x: 22250, w: 450 },
     { x: 22800, w: 550 },
@@ -105,10 +94,7 @@ export function generateLevel(): Platform[] {
     // Wall zone 2
     { x: 11900 },
 
-    // Free zone 3 — só lixeiras, sem paredes
-
-    // Wall zone 3
-    { x: 20700 },
+    // Wall zone 3 (começa após x:21700)
     { x: 22000 },
     { x: 22600 },
     { x: 23200 },
@@ -155,11 +141,7 @@ export function generateLevel(): Platform[] {
     { x: 15521, type: 'car',  w: 445, h: 164, yOffset: 186, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     { x: 15705, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     { x: 16400, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:80,y:10,w:69,h:43,slopeTop:{left:43,right:0}},{x:149,y:10,w:219,h:16},{x:368,y:10,w:69,h:43,slopeTop:{left:0,right:43}}] },
-    // Free Zone 3 (começa após muro x:16900)
-    { x: 17400, type: 'car',  w: 150, h: 65 },
-    { x: 17700, type: 'box',  w: 65,  h: 55 },
-
-    // Wall Zone 3
+    // Zona x:16900-21700 vazia (segunda metade do ferro velho dobrado)
   ];
 
   junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY, collisionBoxes, cropLeft, cropTop, cropRight, cropBottom, yOffset }) => {
@@ -268,26 +250,8 @@ export function generateLevel(): Platform[] {
     { x: 10920, y: GROUND_Y - 125, w: 115 },
     { x: 11150, y: GROUND_Y -  55, w:  90 },  // AC
 
-    // ── FREE ZONE 3 (após muro x:16900) ──
-    { x: 17800, y: GROUND_Y - 125, w: 115 },
-    { x: 17900, y: GROUND_Y -  55, w: 115 },  // AC (w largo)
-    { x: 18000, y: GROUND_Y -  55, w:  90 },  // AC
-    { x: 18200, y: GROUND_Y -  55, w:  90 },  // AC
-    { x: 18400, y: GROUND_Y -  55, w:  90 },  // AC
-    { x: 18600, y: GROUND_Y - 125, w: 115 },
-
-    { x: 18900, y: GROUND_Y - 125, w: 115 },
-    { x: 19100, y: GROUND_Y -  55, w:  90 },  // AC
-    { x: 19200, y: GROUND_Y -  55, w: 115 },  // AC (w largo)
-    { x: 19320, y: GROUND_Y - 125, w: 115 },
-
-    { x: 19620, y: GROUND_Y - 125, w: 115 },
-    { x: 19840, y: GROUND_Y -  55, w:  85 },  // AC
-    { x: 20060, y: GROUND_Y - 125, w: 115 },
-
-    // ── WALL ZONE 3 ──
-    { x: 21300, y: GROUND_Y - 125, w: 115 },
-    { x: 21520, y: GROUND_Y -  55, w:  85 },  // AC
+    // ── WALL ZONE 3 (após muro x:21700) ──
+    // Zona x:16900-21700 vazia — sem plataformas.
 
     { x: 22490, y: GROUND_Y - 125, w: 115 },
 
