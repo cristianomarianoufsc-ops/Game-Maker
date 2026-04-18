@@ -318,7 +318,8 @@ export function updatePlayer(
           Math.random() < 0.5 ? '#ffcc44' : '#ff8822',
         );
       }
-      const canJumpOffWall = p.wallRunTimer < WALLRUN_DURATION - 160;
+      // Em caixas escorregadias nunca permite pulo/flip/escalar — só escorrega
+      const canJumpOffWall = !p.wallRunOnBox && p.wallRunTimer < WALLRUN_DURATION - 160;
       const pressingForwardIntoWall =
         (wallSide === 'right' && keys.right) ||
         (wallSide === 'left' && keys.left);
@@ -631,13 +632,11 @@ export function updatePlayer(
   }
 
   // Wall run trigger — só ativa se Horácio encostar na parede durante a subida do pulo
-  // Caixas são escorregadias: wall run nunca dispara em superfícies de box
   if (
     !p.isWallRunning &&
     !p.isClimbing &&
     !p.onGround &&
     p.touchingWall &&
-    !p.wallRunOnBox &&
     !p.isRolling &&
     !p.isDivejumping &&
     !p.isWallFlipping &&
@@ -652,7 +651,8 @@ export function updatePlayer(
     p.onGround = false;
     p.coyoteTime = 0;
     p.vy = -WALLRUN_RISE_SPEED;
-    p.wallRunTimer = WALLRUN_DURATION;
+    // Caixas escorregadias: timer curtíssimo — só 1 frame de tentativa
+    p.wallRunTimer = p.wallRunOnBox ? 120 : WALLRUN_DURATION;
     p.state = 'wallrun';
     for (let i = 0; i < 8; i++) {
       spawnParticle(
