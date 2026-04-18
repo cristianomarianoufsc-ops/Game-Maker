@@ -697,7 +697,23 @@ export default function Game() {
     };
 
     const copyPlatText = (text: string, msg: string) => {
-      navigator.clipboard.writeText(text).catch(() => {});
+      const execFallback = () => {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        } catch { /* silencioso */ }
+      };
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        navigator.clipboard.writeText(text).catch(execFallback);
+      } else {
+        execFallback();
+      }
       editorCopiedMsgRef.current = { text: msg, until: Date.now() + 3000 };
     };
 
