@@ -353,6 +353,9 @@ export default function Game() {
   const editorUndoStackRef = useRef<Platform[][]>([]);
   const editorRedoStackRef = useRef<Platform[][]>([]);
   const editorPendingHistoryRef = useRef<Platform[] | null>(null);
+  const editorBaselineKeysRef = useRef<Set<string>>(new Set());
+  const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number }) =>
+    `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}`;
   const editorCollisionModeRef = useRef(false);
   const editorCollisionBoxIdxRef = useRef(0);
   type EditorDrag = {
@@ -1144,14 +1147,18 @@ export default function Game() {
         if (screenX >= 166 && screenX <= 220) { editorUndo(); return; }
         if (screenX >= 224 && screenX <= 278) { editorRedo(); return; }
         if (screenX >= 286 && screenX <= 390) { spriteUploadInputRef.current?.click(); return; }
-        // Área da CHAVE DE FASE (clique copia JSON para clipboard)
+        // Área da CHAVE DE FASE (clique copia só novos/modificados para clipboard)
         if (screenX >= 398 && screenX <= CANVAS_W - 8) {
+          const baseline = editorBaselineKeysRef.current;
           const exportItems = platformsRef.current
-            .filter(p => p.type !== 'ground')
+            .filter(p => p.type !== 'ground' && !baseline.has(platBaseKey(p)))
             .map(p => ({ t: p.type[0], x: p.x, y: Math.round(p.y - GROUND_Y), w: p.w, h: p.h }));
           const exportStr = JSON.stringify(exportItems);
+          const countMsg = exportItems.length === 0
+            ? '(nenhuma mudança ainda)'
+            : `${exportItems.length} objeto(s) novo(s)/modificado(s)`;
           navigator.clipboard.writeText(exportStr).then(() => {
-            editorCopiedMsgRef.current = { text: '✓ CHAVE COPIADA — cole no chat para eu aplicar as mudanças', until: Date.now() + 3500 };
+            editorCopiedMsgRef.current = { text: `✓ CHAVE: ${countMsg} — cole no chat`, until: Date.now() + 3500 };
           }).catch(() => {
             editorCopiedMsgRef.current = { text: 'Erro ao copiar — tente Ctrl+C no campo de texto', until: Date.now() + 3000 };
           });
@@ -1552,6 +1559,7 @@ export default function Game() {
           testJustPressed.current = false;
           editorCamXRef.current = 0;
           editorHoveredIdxRef.current = -1;
+          editorBaselineKeysRef.current = new Set(platformsRef.current.map(platBaseKey));
           gs.gamePhase = 'editor';
         } else if (testJustPressed.current) {
           resetGame('wall-test');
@@ -1840,7 +1848,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS, editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS, editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0, editorBaselineKeysRef.current);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);

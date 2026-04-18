@@ -2453,7 +2453,10 @@ export function drawEditorUI(
   marquee: { startWX: number; startWY: number; endWX: number; endWY: number } | null = null,
   canUndo = false,
   canRedo = false,
+  baselineKeys: Set<string> = new Set(),
 ): void {
+  const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number }) =>
+    `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}`;
   const typeColor: Record<string, string> = {
     ground: 'rgba(80,200,80,0.25)',
     platform: 'rgba(80,140,255,0.30)',
@@ -2863,12 +2866,14 @@ export function drawEditorUI(
     const expW = CANVAS_W - expX - 8;
     const expH = histBtnH;
 
-    // Calcula a chave compacta da fase (todas as plataformas não-ground)
+    // Calcula a chave compacta — apenas objetos novos ou modificados (delta)
     const GY_VAL = GROUND_Y;
     const exportItems = platforms
-      .filter(p => p.type !== 'ground')
+      .filter(p => p.type !== 'ground' && !baselineKeys.has(platBaseKey(p)))
       .map(p => ({ t: p.type[0], x: p.x, y: Math.round(p.y - GY_VAL), w: p.w, h: p.h }));
-    const exportStr = JSON.stringify(exportItems);
+    const exportStr = exportItems.length === 0
+      ? '(sem mudanças — mova, redimensione ou adicione objetos)'
+      : JSON.stringify(exportItems);
 
     // Fundo pulsante esverdeado
     const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 600);
