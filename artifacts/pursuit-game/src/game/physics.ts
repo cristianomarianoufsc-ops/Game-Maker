@@ -301,8 +301,8 @@ export function updatePlayer(
     if (p.wallRunTimer <= 0 || p.onGround) {
       // Timer esgotou ou tocou no chão — sai do wall run
       p.isWallRunning = false;
-      // Caixas escorregadias: absorve o impulso horizontal ao cair
-      if (p.wallRunOnBox) p.vx *= 0.15;
+      // Caixas escorregadias altas (>3 caixas): absorve impulso horizontal ao escorregar
+      if (p.wallRunOnBox && p.wallTopY < GROUND_Y - 165) p.vx *= 0.15;
     } else {
       const wallSide = p.wallSide ?? previousWallSide;
       // Sobe pela parede enquanto o timer durar
@@ -318,13 +318,17 @@ export function updatePlayer(
           Math.random() < 0.5 ? '#ffcc44' : '#ff8822',
         );
       }
-      // Em caixas escorregadias nunca permite pulo/flip/escalar — só escorrega
-      const canJumpOffWall = !p.wallRunOnBox && p.wallRunTimer < WALLRUN_DURATION - 160;
+      // canClimbWall: permite wall climb up — liberado em pilhas curtas (≤3 caixas = 165px) e em paredes normais
+      // canJumpOffWall: permite flip e pulo lateral — nunca em caixas (escorregadias)
+      const _isShortBox = p.wallRunOnBox && p.wallTopY >= GROUND_Y - 165;
+      const _timerWindow = p.wallRunTimer < WALLRUN_DURATION - 160;
+      const canClimbWall  = (!p.wallRunOnBox || _isShortBox) && _timerWindow;
+      const canJumpOffWall = !p.wallRunOnBox && _timerWindow;
       const pressingForwardIntoWall =
         (wallSide === 'right' && keys.right) ||
         (wallSide === 'left' && keys.left);
       const neutralVerticalClimb = (keys.space || keys.up) && !keys.left && !keys.right;
-      if (canJumpOffWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide) {
+      if (canClimbWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide) {
         p.isWallRunning = false;
         p.isWallClimbUp = true;
         p.wallClimbStartX = p.x;
@@ -651,8 +655,10 @@ export function updatePlayer(
     p.onGround = false;
     p.coyoteTime = 0;
     p.vy = -WALLRUN_RISE_SPEED;
-    // Caixas escorregadias: timer curtíssimo — só 1 frame de tentativa
-    p.wallRunTimer = p.wallRunOnBox ? 120 : WALLRUN_DURATION;
+    // Caixas escorregadias: pilhas curtas (≤3 caixas = 165px) → timer normal (pode escalar)
+    // Pilhas altas → timer curto (sprite visível, depois escorrega)
+    const _boxShort = p.wallRunOnBox && p.wallTopY >= GROUND_Y - 165;
+    p.wallRunTimer = (p.wallRunOnBox && !_boxShort) ? 200 : WALLRUN_DURATION;
     p.state = 'wallrun';
     for (let i = 0; i < 8; i++) {
       spawnParticle(
