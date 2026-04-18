@@ -182,23 +182,31 @@ export function generateLevel(): Platform[] {
   const BOX_H = 55;
   const BOX_W = 65;
   const junkyardBoxStacks: Platform[] = [
-    // Pilha A — entrada (x:12375-12505)
+    // Pilha A — entrada (x:12440-12570)
     { x: 12505, y: GY - 55,            w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 110,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 165,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 220,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 277,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 332,           w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12375, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12375, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12375, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12375, y: GY - BOX_H * 4,     w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 387,           w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 442,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12440, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12440, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12440, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12440, y: GY - BOX_H * 4,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12440, y: GY - 277,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12375, y: GY - 498,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12440, y: GY - 332,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12440, y: GY - 387,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12440, y: GY - 442,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 55,             w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 110,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 165,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 220,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 277,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 332,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 387,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 442,            w: BOX_W, h: BOX_H, type: 'box' },
 
     // Pilha 2 — entre o pneu e o segundo carro
     { x: 13100, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
