@@ -344,6 +344,7 @@ export default function Game() {
   const editorCamYRef = useRef(0);
   const editorLastSpawnXRef = useRef(0);
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
+  const editorMouseCanvasRef = useRef({ x: 0, y: 0 });
   const spriteUploadInputRef = useRef<HTMLInputElement>(null);
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
@@ -676,6 +677,7 @@ export default function Game() {
       const scaleY = CANVAS_H / rect.height;
       const cx = (e.clientX - rect.left) * scaleX;
       const cy = (e.clientY - rect.top) * scaleY;
+      editorMouseCanvasRef.current = { x: cx, y: cy };
       return { wx: cx + editorCamXRef.current, wy: cy + editorCamYRef.current };
     };
 
@@ -1619,26 +1621,40 @@ export default function Game() {
           if (keys.down)  editorCamYRef.current = Math.min(300,   editorCamYRef.current + EDITOR_PAN_SPEED);
           // ── Auto-scroll de borda durante drag ──────────────────────────
           if (editorDragRef.current) {
-            const mwy = editorMouseWorldRef.current.y;
-            const screenY = mwy - editorCamYRef.current;
+            const cy = editorMouseCanvasRef.current.y;
+            const cx = editorMouseCanvasRef.current.x;
             const EDGE_ZONE = 80;
-            const EDGE_SPEED = 10;
-            if (screenY < EDGE_ZONE) {
-              const factor = 1 - screenY / EDGE_ZONE;
+            const EDGE_SPEED = 14;
+            if (cy < EDGE_ZONE) {
+              const factor = 1 - cy / EDGE_ZONE;
+              const prevCamY = editorCamYRef.current;
               editorCamYRef.current = Math.max(-4000, editorCamYRef.current - Math.ceil(EDGE_SPEED * factor));
-            } else if (screenY > CANVAS_H - EDGE_ZONE) {
-              const factor = (screenY - (CANVAS_H - EDGE_ZONE)) / EDGE_ZONE;
+              // Deslocar ponto de ancoragem do drag para o objeto seguir a câmera
+              const camDY = editorCamYRef.current - prevCamY;
+              editorDragRef.current.startWY += camDY;
+              editorDragRef.current.origY   += camDY;
+            } else if (cy > CANVAS_H - EDGE_ZONE) {
+              const factor = (cy - (CANVAS_H - EDGE_ZONE)) / EDGE_ZONE;
+              const prevCamY = editorCamYRef.current;
               editorCamYRef.current = Math.min(300, editorCamYRef.current + Math.ceil(EDGE_SPEED * factor));
+              const camDY = editorCamYRef.current - prevCamY;
+              editorDragRef.current.startWY += camDY;
+              editorDragRef.current.origY   += camDY;
             }
-            const mwx = editorMouseWorldRef.current.x;
-            const screenX = mwx - editorCamXRef.current;
-            const EDGE_ZONE_X = 80;
-            if (screenX < EDGE_ZONE_X) {
-              const factor = 1 - screenX / EDGE_ZONE_X;
+            if (cx < EDGE_ZONE) {
+              const factor = 1 - cx / EDGE_ZONE;
+              const prevCamX = editorCamXRef.current;
               editorCamXRef.current = Math.max(0, editorCamXRef.current - Math.ceil(EDGE_SPEED * factor));
-            } else if (screenX > CANVAS_W - EDGE_ZONE_X) {
-              const factor = (screenX - (CANVAS_W - EDGE_ZONE_X)) / EDGE_ZONE_X;
+              const camDX = editorCamXRef.current - prevCamX;
+              editorDragRef.current.startWX += camDX;
+              editorDragRef.current.origX   += camDX;
+            } else if (cx > CANVAS_W - EDGE_ZONE) {
+              const factor = (cx - (CANVAS_W - EDGE_ZONE)) / EDGE_ZONE;
+              const prevCamX = editorCamXRef.current;
               editorCamXRef.current = editorCamXRef.current + Math.ceil(EDGE_SPEED * factor);
+              const camDX = editorCamXRef.current - prevCamX;
+              editorDragRef.current.startWX += camDX;
+              editorDragRef.current.origX   += camDX;
             }
           }
         }
