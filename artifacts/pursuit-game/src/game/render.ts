@@ -2866,14 +2866,17 @@ export function drawEditorUI(
     const expW = CANVAS_W - expX - 8;
     const expH = histBtnH;
 
-    // Calcula a chave compacta — apenas objetos novos ou modificados (delta)
+    // Calcula a chave compacta — add (novos/movidos) e del (removidos/movidos de)
     const GY_VAL = GROUND_Y;
-    const exportItems = platforms
+    const currentKeys = new Set(platforms.map(p => platBaseKey(p)));
+    const addItems = platforms
       .filter(p => p.type !== 'ground' && !baselineKeys.has(platBaseKey(p)))
       .map(p => ({ t: p.type[0], x: p.x, y: Math.round(p.y - GY_VAL), w: p.w, h: p.h }));
-    const exportStr = exportItems.length === 0
+    const delCount = [...baselineKeys].filter(k => !currentKeys.has(k)).length;
+    const total = addItems.length + delCount;
+    const exportStr = total === 0
       ? '(sem mudanças — mova, redimensione ou adicione objetos)'
-      : JSON.stringify(exportItems);
+      : `+${addItems.length} add  −${delCount} del  [clique p/ copiar]`;
 
     // Fundo pulsante esverdeado
     const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 600);

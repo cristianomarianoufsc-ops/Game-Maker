@@ -1148,16 +1148,35 @@ export default function Game() {
         if (screenX >= 166 && screenX <= 220) { editorUndo(); return; }
         if (screenX >= 224 && screenX <= 278) { editorRedo(); return; }
         if (screenX >= 286 && screenX <= 390) { spriteUploadInputRef.current?.click(); return; }
-        // Área da CHAVE DE FASE (clique copia só novos/modificados para clipboard)
+        // Área da CHAVE DE FASE (clique copia add/del para clipboard)
         if (screenX >= 398 && screenX <= CANVAS_W - 8) {
           const baseline = editorBaselineKeysRef.current;
-          const exportItems = platformsRef.current
+          const currentKeys = new Set(platformsRef.current.map(p => platBaseKey(p)));
+          // add: estão no estado atual mas não na baseline
+          const addItems = platformsRef.current
             .filter(p => p.type !== 'ground' && !baseline.has(platBaseKey(p)))
             .map(p => ({ t: p.type[0], x: p.x, y: Math.round(p.y - GROUND_Y), w: p.w, h: p.h }));
-          const exportStr = JSON.stringify(exportItems);
-          const countMsg = exportItems.length === 0
+          // del: estavam na baseline mas não estão mais no estado atual
+          const delItems: Array<{ t: string; x: number; y: number; w: number; h: number }> = [];
+          for (const key of baseline) {
+            if (!currentKeys.has(key)) {
+              const parts = key.split(':');
+              if (parts.length === 5) {
+                delItems.push({
+                  t: parts[0][0],
+                  x: Number(parts[1]),
+                  y: Math.round(Number(parts[2]) - GROUND_Y),
+                  w: Number(parts[3]),
+                  h: Number(parts[4]),
+                });
+              }
+            }
+          }
+          const total = addItems.length + delItems.length;
+          const exportStr = total === 0 ? '{}' : JSON.stringify({ add: addItems, del: delItems });
+          const countMsg = total === 0
             ? '(nenhuma mudança ainda)'
-            : `${exportItems.length} objeto(s) novo(s)/modificado(s)`;
+            : `+${addItems.length} add  −${delItems.length} del`;
           navigator.clipboard.writeText(exportStr).then(() => {
             editorCopiedMsgRef.current = { text: `✓ CHAVE: ${countMsg} — cole no chat`, until: Date.now() + 3500 };
           }).catch(() => {

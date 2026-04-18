@@ -1185,13 +1185,15 @@ function triggerBoxFall(
   const visited = new Set<number>([destroyedIndex]);
   const queue: number[] = [];
 
+  const STACK_TOL = 5; // tolerância de empilhamento (px)
+
   // Semente: caixas imediatamente acima da destruída
   for (let i = 0; i < platforms.length; i++) {
     const p = platforms[i];
     if (p.type !== 'box') continue;
     if (destroyedSet.has(i) || alreadyFallingSet.has(i) || visited.has(i)) continue;
     if (
-      Math.abs(p.y + p.h - destroyed.y) <= 2 &&
+      Math.abs(p.y + p.h - destroyed.y) <= STACK_TOL &&
       p.x < destroyed.x + destroyed.w &&
       p.x + p.w > destroyed.x
     ) {
@@ -1211,7 +1213,7 @@ function triggerBoxFall(
       if (p.type !== 'box') continue;
       if (destroyedSet.has(i) || alreadyFallingSet.has(i)) continue;
       if (
-        Math.abs(p.y + p.h - cur.y) <= 2 &&
+        Math.abs(p.y + p.h - cur.y) <= STACK_TOL &&
         p.x < cur.x + cur.w &&
         p.x + p.w > cur.x
       ) {
