@@ -1142,8 +1142,9 @@ export default function Game() {
       const { wx, wy } = coords;
 
       // Undo/Redo/Upload + Chave de exportação (barra topo — screen space)
-      const screenX = wx - editorCamXRef.current;
-      if (wy >= 5 && wy <= 23) {
+      const screenX = wx - editorCamXRef.current;   // = cx
+      const screenY = wy - editorCamYRef.current;   // = cy
+      if (screenY >= 5 && screenY <= 23) {
         if (screenX >= 166 && screenX <= 220) { editorUndo(); return; }
         if (screenX >= 224 && screenX <= 278) { editorRedo(); return; }
         if (screenX >= 286 && screenX <= 390) { spriteUploadInputRef.current?.click(); return; }
