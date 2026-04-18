@@ -142,7 +142,7 @@ export function generateLevel(): Platform[] {
   }> = [
     // Ferro velho (x:12100-14500) — só carros e pneus
     { x: 12638, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
-    { x: 13230, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
+    { x: 13331, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     // Ferro velho — extensão (x:14600-16850)
     { x: 14900, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     { x: 15680, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
@@ -191,14 +191,6 @@ export function generateLevel(): Platform[] {
     { x: 12505, y: GY - 332,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 387,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 442,           w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12440, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12440, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12440, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12440, y: GY - BOX_H * 4,     w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12440, y: GY - 277,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12440, y: GY - 332,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12440, y: GY - 387,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12440, y: GY - 442,            w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 55,             w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 110,            w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 165,            w: BOX_W, h: BOX_H, type: 'box' },
