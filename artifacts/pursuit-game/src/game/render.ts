@@ -3007,12 +3007,26 @@ export function drawEditorUI(
     const alpha = Math.min(1, (copiedMsg.until - Date.now()) / 400);
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = 'rgba(20,180,80,0.92)';
-    ctx.fillRect(0, CANVAS_H / 2 - 22, CANVAS_W, 44);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 14px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(copiedMsg.text, CANVAS_W / 2, CANVAS_H / 2 + 5);
+    const toastX = 12;
+    const toastY = CANVAS_H - 58;
+    const toastW = Math.min(520, CANVAS_W - 24);
+    const toastH = 34;
+    ctx.fillStyle = 'rgba(12,45,28,0.90)';
+    ctx.strokeStyle = 'rgba(70,220,120,0.75)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(toastX, toastY, toastW, toastH, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(185,255,205,0.95)';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'left';
+    let toastText = copiedMsg.text;
+    const maxTextW = toastW - 22;
+    while (toastText.length > 4 && ctx.measureText(toastText).width > maxTextW) {
+      toastText = toastText.slice(0, -4) + '…';
+    }
+    ctx.fillText(toastText, toastX + 11, toastY + 21);
     ctx.textAlign = 'left';
     ctx.restore();
   }
