@@ -1335,6 +1335,30 @@ export default function Game() {
         }
       }
 
+      // Se clicar diretamente em um OUTRO objeto (não selecionado), seleciona ele
+      // imediatamente, sem passar pelos botões/alças do objeto atual.
+      if (selIdx >= 0 && !e.shiftKey) {
+        let otherIdx = -1;
+        for (let _i = platforms.length - 1; _i >= 0; _i--) {
+          if (_i === selIdx) continue;
+          const _p = platforms[_i];
+          if (_p.type === 'ground') continue;
+          if (isEditorPointInsidePlatform(wx, wy, _p)) { otherIdx = _i; break; }
+        }
+        if (otherIdx >= 0) {
+          editorSelectedIdxRef.current = otherIdx;
+          editorSelectedIndicesRef.current = new Set([otherIdx]);
+          editorCollisionModeRef.current = false;
+          editorCollisionBoxIdxRef.current = 0;
+          const op = platforms[otherIdx];
+          const ot = platCoordText(op);
+          copyPlatText(ot, `✓ SELECIONADO: ${ot}`);
+          editorPendingHistoryRef.current = snapshotPlatforms();
+          editorDragRef.current = makeEditorDrag(op, 'move', wx, wy, ot);
+          return;
+        }
+      }
+
       // Check handle hits on currently selected object first
       if (selIdx >= 0 && selIdx < platforms.length) {
         const p = platforms[selIdx];
