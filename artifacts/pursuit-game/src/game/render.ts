@@ -1770,13 +1770,14 @@ export function drawPlayer(
     return;
   }
 
-  const isWallRunVisual = p.isWallRunning || p.state === 'wallrun';
+  const isSlipperyBoxContact = p.touchingWall && p.wallRunOnBox && p.wallRunBoxStackCount >= 5 && !p.onGround && !p.isWallRunning;
+  const isWallRunVisual = p.isWallRunning || p.state === 'wallrun' || isSlipperyBoxContact;
   if (isWallRunVisual) {
     if (!wallRunSheetImg || !wallRunSheetImg.complete || wallRunSheetImg.naturalWidth <= 0) return;
 
     const frameW = wallRunSheetImg.naturalWidth / WALL_RUN_SHEET.frameCount;
     const frameH = wallRunSheetImg.naturalHeight;
-    const frame = p.animFrame % WALL_RUN_SHEET.frameCount;
+    const frame = isSlipperyBoxContact ? 0 : (p.animFrame % WALL_RUN_SHEET.frameCount);
     const dh = WALL_RUN_SHEET.displayH;
     const dw = Math.round(dh * (frameW / frameH));
     const anchorX = px + p.w / 2;
