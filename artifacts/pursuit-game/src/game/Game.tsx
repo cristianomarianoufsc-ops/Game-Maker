@@ -1619,42 +1619,43 @@ export default function Game() {
           if (keys.right) editorCamXRef.current = editorCamXRef.current + EDITOR_PAN_SPEED;
           if (keys.up)    editorCamYRef.current = Math.max(-4000, editorCamYRef.current - EDITOR_PAN_SPEED);
           if (keys.down)  editorCamYRef.current = Math.min(300,   editorCamYRef.current + EDITOR_PAN_SPEED);
-          // ── Auto-scroll de borda durante drag ──────────────────────────
-          if (editorDragRef.current) {
-            const cy = editorMouseCanvasRef.current.y;
-            const cx = editorMouseCanvasRef.current.x;
-            const EDGE_ZONE = 80;
-            const EDGE_SPEED = 14;
-            if (cy < EDGE_ZONE) {
-              const factor = 1 - cy / EDGE_ZONE;
-              const prevCamY = editorCamYRef.current;
-              editorCamYRef.current = Math.max(-4000, editorCamYRef.current - Math.ceil(EDGE_SPEED * factor));
-              // Deslocar ponto de ancoragem do drag para o objeto seguir a câmera
-              const camDY = editorCamYRef.current - prevCamY;
-              editorDragRef.current.startWY += camDY;
-              editorDragRef.current.origY   += camDY;
-            } else if (cy > CANVAS_H - EDGE_ZONE) {
-              const factor = (cy - (CANVAS_H - EDGE_ZONE)) / EDGE_ZONE;
-              const prevCamY = editorCamYRef.current;
-              editorCamYRef.current = Math.min(300, editorCamYRef.current + Math.ceil(EDGE_SPEED * factor));
-              const camDY = editorCamYRef.current - prevCamY;
-              editorDragRef.current.startWY += camDY;
-              editorDragRef.current.origY   += camDY;
-            }
-            if (cx < EDGE_ZONE) {
-              const factor = 1 - cx / EDGE_ZONE;
-              const prevCamX = editorCamXRef.current;
-              editorCamXRef.current = Math.max(0, editorCamXRef.current - Math.ceil(EDGE_SPEED * factor));
-              const camDX = editorCamXRef.current - prevCamX;
-              editorDragRef.current.startWX += camDX;
-              editorDragRef.current.origX   += camDX;
-            } else if (cx > CANVAS_W - EDGE_ZONE) {
-              const factor = (cx - (CANVAS_W - EDGE_ZONE)) / EDGE_ZONE;
-              const prevCamX = editorCamXRef.current;
-              editorCamXRef.current = editorCamXRef.current + Math.ceil(EDGE_SPEED * factor);
-              const camDX = editorCamXRef.current - prevCamX;
-              editorDragRef.current.startWX += camDX;
-              editorDragRef.current.origX   += camDX;
+          // ── Câmera segue a caixa arrastada (sem cancelar a fórmula de drag) ──
+          if (editorDragRef.current && editorDragRef.current.mode === 'move') {
+            const selIdx = editorSelectedIdxRef.current;
+            const p = platformsRef.current[selIdx];
+            if (p) {
+              const MARGIN = 60;
+              const CAM_SPEED = 14;
+              const boxTop = p.y - editorCamYRef.current;
+              const boxBot = (p.y + p.h) - editorCamYRef.current;
+              if (boxTop < MARGIN) {
+                const prevCamY = editorCamYRef.current;
+                const target = p.y - MARGIN;
+                editorCamYRef.current = Math.max(-4000, Math.max(prevCamY - CAM_SPEED, target));
+                const camDY = editorCamYRef.current - prevCamY;
+                // Compensar startWY para que a fórmula não dobre o movimento
+                editorDragRef.current.startWY += camDY;
+              } else if (boxBot > CANVAS_H - MARGIN) {
+                const prevCamY = editorCamYRef.current;
+                const target = (p.y + p.h) - (CANVAS_H - MARGIN);
+                editorCamYRef.current = Math.min(300, Math.min(prevCamY + CAM_SPEED, target));
+                const camDY = editorCamYRef.current - prevCamY;
+                editorDragRef.current.startWY += camDY;
+              }
+              // Horizontal
+              const boxLeft  = p.x - editorCamXRef.current;
+              const boxRight = (p.x + p.w) - editorCamXRef.current;
+              if (boxLeft < MARGIN) {
+                const prevCamX = editorCamXRef.current;
+                const target = p.x - MARGIN;
+                editorCamXRef.current = Math.max(0, Math.max(prevCamX - CAM_SPEED, target));
+                editorDragRef.current.startWX += editorCamXRef.current - prevCamX;
+              } else if (boxRight > CANVAS_W - MARGIN) {
+                const prevCamX = editorCamXRef.current;
+                const target = (p.x + p.w) - (CANVAS_W - MARGIN);
+                editorCamXRef.current = Math.min(prevCamX + CAM_SPEED, target);
+                editorDragRef.current.startWX += editorCamXRef.current - prevCamX;
+              }
             }
           }
         }
