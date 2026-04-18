@@ -301,8 +301,8 @@ export function updatePlayer(
     if (p.wallRunTimer <= 0 || p.onGround) {
       // Timer esgotou ou tocou no chão — sai do wall run
       p.isWallRunning = false;
-      // Caixas escorregadias altas (>3 caixas): absorve impulso horizontal ao escorregar
-      if (p.wallRunOnBox && p.wallTopY < GROUND_Y - 165) p.vx *= 0.15;
+      // Caixas escorregadias altas (5+ caixas): absorve impulso horizontal ao escorregar
+      if (p.wallRunOnBox && p.wallTopY < GROUND_Y - 220) p.vx *= 0.15;
     } else {
       const wallSide = p.wallSide ?? previousWallSide;
       // Sobe pela parede enquanto o timer durar
@@ -318,10 +318,10 @@ export function updatePlayer(
           Math.random() < 0.5 ? '#ffcc44' : '#ff8822',
         );
       }
-      // canClimbWall: wall climb up (montar) — funciona em caixas E paredes normais
-      // canJumpOffWall: flip e pulo lateral — bloqueado em caixas (escorregadias)
+      // canClimbWall: wall climb up (montar) — bloqueado em TODAS as caixas
+      // canJumpOffWall: flip e pulo lateral — bloqueado em TODAS as caixas
       const _timerWindow = p.wallRunTimer < WALLRUN_DURATION - 160;
-      const canClimbWall   = _timerWindow;
+      const canClimbWall   = !p.wallRunOnBox && _timerWindow;
       const canJumpOffWall = !p.wallRunOnBox && _timerWindow;
       const pressingForwardIntoWall =
         (wallSide === 'right' && keys.right) ||
@@ -654,10 +654,10 @@ export function updatePlayer(
     p.onGround = false;
     p.coyoteTime = 0;
     p.vy = -WALLRUN_RISE_SPEED;
-    // Caixas escorregadias: pilhas curtas (≤3 caixas = 165px) → timer normal (pode escalar)
-    // Pilhas altas → timer curto (sprite visível, depois escorrega)
-    const _boxShort = p.wallRunOnBox && p.wallTopY >= GROUND_Y - 165;
-    p.wallRunTimer = (p.wallRunOnBox && !_boxShort) ? 200 : WALLRUN_DURATION;
+    // Caixas escorregadias: ≤4 caixas (wallTopY ≥ GROUND_Y-220) → wall run completo
+    // 5+ caixas (wallTopY < GROUND_Y-220) → timer curto: sprite 200ms, depois escorrega
+    const _isTallBox = p.wallRunOnBox && p.wallTopY < GROUND_Y - 220;
+    p.wallRunTimer = _isTallBox ? 200 : WALLRUN_DURATION;
     p.state = 'wallrun';
     for (let i = 0; i < 8; i++) {
       spawnParticle(
