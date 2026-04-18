@@ -357,6 +357,7 @@ export default function Game() {
   const editorUndoStackRef = useRef<Platform[][]>([]);
   const editorRedoStackRef = useRef<Platform[][]>([]);
   const editorPendingHistoryRef = useRef<Platform[] | null>(null);
+  const editorTestSnapshotRef = useRef<Platform[] | null>(null);
   const editorBaselineKeysRef = useRef<Set<string>>(new Set());
   const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number }) =>
     `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}`;
@@ -830,6 +831,15 @@ export default function Game() {
         })) : undefined,
       })) as Platform[];
 
+    const clonePlatformSnapshot = (snapshot: Platform[]): Platform[] =>
+      snapshot.map(p => ({
+        ...p,
+        collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({
+          ...b,
+          slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
+        })) : undefined,
+      })) as Platform[];
+
     const pushEditorHistory = () => {
       editorUndoStackRef.current.push(snapshotPlatforms());
       if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
@@ -902,6 +912,30 @@ export default function Game() {
       if (editorRedoStackRef.current.length === 0) return;
       editorUndoStackRef.current.push(snapshotPlatforms());
       applyEditorSnapshot(editorRedoStackRef.current.pop()!);
+    };
+
+    const resetEditorTestSnapshot = () => {
+      const snapshot = editorTestSnapshotRef.current;
+      if (!snapshot || !gsRef.current) return false;
+      const restored = clonePlatformSnapshot(snapshot);
+      platformsRef.current = restored;
+      gsRef.current.platforms = restored;
+      gsRef.current.destroyedBoxIndices = [];
+      gsRef.current.fallingBoxes = [];
+      gsRef.current.bullets = [];
+      gsRef.current.particles = [];
+      editorSelectedIdxRef.current = -1;
+      editorSelectedIndicesRef.current = new Set();
+      editorCollisionModeRef.current = false;
+      editorCollisionBoxIdxRef.current = 0;
+      editorDragRef.current = null;
+      editorMarqueeRef.current = null;
+      editorPendingHistoryRef.current = null;
+      editorCopiedMsgRef.current = {
+        text: '↺ TESTE RESETADO — caixas restauradas para a última alteração',
+        until: Date.now() + 2800,
+      };
+      return true;
     };
 
     const onCanvasMouseMove = (e: MouseEvent) => {
@@ -1255,6 +1289,19 @@ export default function Game() {
 
       const selIdx = editorSelectedIdxRef.current;
       const platforms = platformsRef.current;
+
+      if (e.detail >= 2) {
+        let emptyIdx = -1;
+        for (let _i = platforms.length - 1; _i >= 0; _i--) {
+          const _p = platforms[_i];
+          if (_p.type === 'ground') continue;
+          if (isEditorPointInsidePlatform(wx, wy, _p)) { emptyIdx = _i; break; }
+        }
+        if (emptyIdx < 0 && resetEditorTestSnapshot()) {
+          e.preventDefault();
+          return;
+        }
+      }
 
       // Check handle hits on currently selected object first
       if (selIdx >= 0 && selIdx < platforms.length) {
@@ -1673,6 +1720,7 @@ export default function Game() {
           const spawnX = editorMouseWorldRef.current.x;
           const spawnY = GROUND_Y - PLAYER_H - 28;
           editorLastSpawnXRef.current = spawnX;
+          editorTestSnapshotRef.current = snapshotPlatforms();
           const newState = makeInitialState('story');
           // Usa gameMode wall-test para desabilitar o drone durante o teste
           newState.gameMode = 'wall-test';
