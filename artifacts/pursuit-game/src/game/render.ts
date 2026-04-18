@@ -48,7 +48,7 @@ const RUN_SHEET = {
 // --- Background & Buildings ---
 
 const JUNKYARD_X1 = 12100;
-const JUNKYARD_X2 = 16900;
+const JUNKYARD_X2 = 21700;
 
 export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number): void {
   const sx = JUNKYARD_X1 - camX;
