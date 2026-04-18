@@ -38,6 +38,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Física: pilhas conectadas de caixas com altura mínima de 3 caixas agora contam como parede escalável para wall run/subida, mas continuam com `type: 'box'`, mantendo a quebra por tiro do drone.
 - Fase: removidos permanentemente da geração do ferro velho os pneus/carros/caixas listados pelo usuário em x:13050, 14000, 14050, 14700, 15450, 16250, 17100, 18100, 18600, 19100, 19700, 20200, 20400, 21200, 21600, 22400, 22600, 23400, 24350 e 24700; também removida a lixeira x:20000.
 - Fase: carro do ferro velho movido de x:13230 para x:13331; coluna de caixas em x:12440 removida permanentemente.
+- Fase: removidas caixas em x:12505 nos níveis y:-332, -387 e -442; adicionada caixa em x:12570 y:-497.
 
 ## Key Commands
 

@@ -188,9 +188,6 @@ export function generateLevel(): Platform[] {
     { x: 12505, y: GY - 165,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 220,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 277,           w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12505, y: GY - 332,           w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12505, y: GY - 387,           w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12505, y: GY - 442,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 55,             w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 110,            w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 165,            w: BOX_W, h: BOX_H, type: 'box' },
@@ -199,6 +196,7 @@ export function generateLevel(): Platform[] {
     { x: 12570, y: GY - 332,            w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 387,            w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 442,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 497,            w: BOX_W, h: BOX_H, type: 'box' },
 
     // Pilha 2 — entre o pneu e o segundo carro
     { x: 13100, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
