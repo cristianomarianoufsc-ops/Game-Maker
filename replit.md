@@ -42,6 +42,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Editor de fase: ao iniciar um teste pelo editor, o estado atual da fase é salvo em memória; após voltar do teste com Ctrl, duplo clique em uma área vazia restaura caixas/objetos destrutíveis para esse estado e limpa caixas destruídas/caindo.
 - Editor de fase: seleção múltipla arrastada agora se comporta como grupo rígido; todas as caixas/objetos selecionados compartilham o mesmo deslocamento, respeitam o limite do chão em conjunto e não se separam durante auto-scroll ou snap magnético.
 - Fase: aplicada chave anexada com 28 adições e 32 remoções no ferro velho; carros reposicionados entre x:12795 e x:15260 e pilhas de caixas reorganizadas em x:13355/13420 e x:14107/14172/14237.
+- Fase: carro x:14858 yOffset:283 substituído por x:14889 yOffset:283; adicionados carros em x:15148 yOffset:375, x:15334 yOffset:283, x:15521 yOffset:186, x:15705 yOffset:102; removidas caixas em x:16150 y:-55 e y:-110 da pilha 4.
 - Editor de fase: aviso de copiado/selecionado deixou de usar tarja central grande e agora aparece como notificação discreta no canto inferior esquerdo para não cobrir botões como DUP, HITBOX e DELETAR.
 
 ## Key Commands
