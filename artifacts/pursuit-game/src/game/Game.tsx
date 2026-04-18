@@ -1583,6 +1583,20 @@ export default function Game() {
       editorPendingHistoryRef.current = null;
     };
 
+    const onCanvasWheel = (e: WheelEvent) => {
+      const gs = gsRef.current;
+      if (!gs || gs.gamePhase !== 'editor' || editorTestModeRef.current) return;
+      e.preventDefault();
+      const factor = e.deltaMode === 1 ? 20 : e.deltaMode === 2 ? 300 : 1;
+      if (e.shiftKey) {
+        const dx = e.deltaY * factor * 0.5;
+        editorCamXRef.current = Math.max(0, editorCamXRef.current + dx);
+      } else {
+        const dy = e.deltaY * factor * 0.5;
+        editorCamYRef.current = Math.max(-4000, Math.min(300, editorCamYRef.current + dy));
+      }
+    };
+
     const cvs = canvasRef.current;
     const onContextMenu = (e: MouseEvent) => e.preventDefault();
     if (cvs) {
@@ -1590,6 +1604,7 @@ export default function Game() {
       cvs.addEventListener('mousemove', onCanvasMiddleMove);
       cvs.addEventListener('mousedown', onCanvasMouseDown);
       cvs.addEventListener('contextmenu', onContextMenu);
+      cvs.addEventListener('wheel', onCanvasWheel, { passive: false });
     }
     window.addEventListener('mouseup', onMouseUp);
 
@@ -1971,6 +1986,7 @@ export default function Game() {
         cvs.removeEventListener('mousemove', onCanvasMiddleMove);
         cvs.removeEventListener('mousedown', onCanvasMouseDown);
         cvs.removeEventListener('contextmenu', onContextMenu);
+        cvs.removeEventListener('wheel', onCanvasWheel);
       }
       cancelAnimationFrame(animRef.current);
     };
