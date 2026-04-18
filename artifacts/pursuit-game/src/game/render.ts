@@ -2725,6 +2725,7 @@ export function drawEditorUI(
         const delBtnY = hitBtnY + 26;
         const delBtnW = 82;
         const delBtnH = 22;
+        const delLabel = selectedCount > 1 ? `x DEL ${selectedCount}` : 'x DELETAR';
         ctx.fillStyle = 'rgba(65,15,15,0.94)';
         ctx.strokeStyle = 'rgba(255,70,70,0.9)';
         ctx.lineWidth = 1.5;
@@ -2735,7 +2736,7 @@ export function drawEditorUI(
         ctx.fillStyle = 'rgba(255,150,150,1)';
         ctx.font = 'bold 11px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('x DELETAR', delBtnX + delBtnW / 2, delBtnY + 15);
+        ctx.fillText(delLabel, delBtnX + delBtnW / 2, delBtnY + 15);
         ctx.textAlign = 'left';
       }
 

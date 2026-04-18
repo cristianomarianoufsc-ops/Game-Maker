@@ -836,6 +836,40 @@ export default function Game() {
       editorRedoStackRef.current = [];
     };
 
+    const deleteEditorSelectedObjects = (): number => {
+      const platforms = platformsRef.current;
+      const selIdx = editorSelectedIdxRef.current;
+      const selectedGroup = Array.from(editorSelectedIndicesRef.current)
+        .filter((idx) => idx >= 0 && idx < platforms.length && platforms[idx].type !== 'ground');
+      const deleteIndices = (selectedGroup.includes(selIdx) && selectedGroup.length > 0 ? selectedGroup : [selIdx])
+        .filter((idx) => idx >= 0 && idx < platforms.length && platforms[idx].type !== 'ground')
+        .sort((a, b) => b - a);
+
+      if (deleteIndices.length === 0) return 0;
+
+      pushEditorHistory();
+      deleteIndices.forEach((idx) => {
+        deletedPlatformKeysRef.current.add(getPlatformKey(platforms[idx]));
+        platforms.splice(idx, 1);
+      });
+      saveDeletedPlatformKeys(deletedPlatformKeysRef.current);
+      saveCustomSpritePlatforms(platforms);
+      if (gsRef.current) gsRef.current.platforms = platforms;
+      editorSelectedIdxRef.current = -1;
+      editorSelectedIndicesRef.current = new Set();
+      editorCollisionModeRef.current = false;
+      editorCollisionBoxIdxRef.current = 0;
+      editorDragRef.current = null;
+      editorMarqueeRef.current = null;
+      editorCopiedMsgRef.current = {
+        text: deleteIndices.length === 1
+          ? '× OBJETO DELETADO (Ctrl+Z para desfazer)'
+          : `× ${deleteIndices.length} OBJETOS DELETADOS (Ctrl+Z para desfazer)`,
+        until: Date.now() + 2500,
+      };
+      return deleteIndices.length;
+    };
+
     const nudgeEditorSelectedHitbox = (dx: number, dy: number): boolean => {
       const p = platformsRef.current[editorSelectedIdxRef.current];
       if (!p || p.type === 'ground' || !editorCollisionModeRef.current) return false;
@@ -1352,16 +1386,7 @@ export default function Game() {
           const delBtnW = 82;
           const delBtnH = 22;
           if (!editorCollisionModeRef.current && wx >= delBtnX && wx <= delBtnX + delBtnW && wy >= delBtnY && wy <= delBtnY + delBtnH) {
-            if (p.type !== 'ground') {
-              pushEditorHistory();
-              platforms.splice(selIdx, 1);
-              saveCustomSpritePlatforms(platforms);
-              if (gsRef.current) gsRef.current.platforms = platforms;
-              editorSelectedIdxRef.current = -1;
-              editorSelectedIndicesRef.current = new Set();
-              editorCollisionModeRef.current = false;
-              editorCopiedMsgRef.current = { text: '× OBJETO DELETADO (Ctrl+Z para desfazer)', until: Date.now() + 2500 };
-            }
+            deleteEditorSelectedObjects();
             return;
           }
         }
@@ -1727,6 +1752,8 @@ export default function Game() {
             const hasBoxes = (p.collisionBoxes?.length ?? 0) > 0;
             if (!hasBoxes) editorCollisionModeRef.current = false;
             copyPlatText(platCoordText(p), hasBoxes ? `✓ BOX REMOVIDA` : `✓ COLISÃO RESETADA`);
+          } else {
+            deleteEditorSelectedObjects();
           }
         }
         gs.camera.x = editorCamXRef.current;
