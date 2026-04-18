@@ -584,7 +584,7 @@ export function updatePlayer(
     }
 
     // Wall climb initiate
-    if (p.touchingWall && keys.up && !p.onGround) {
+    if (p.touchingWall && keys.up && !p.onGround && !(p.wallRunOnBox && p.wallRunBoxStackCount >= 5)) {
       p.isClimbing = true;
       p.vy = -CLIMB_SPEED;
     }
@@ -666,7 +666,8 @@ export function updatePlayer(
     Math.abs(incomingVx) > 3 &&
     ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
       (p.wallSide === 'left' && (keys.left || incomingVx < 0))) &&
-    p.vy < -2.5
+    p.vy < -2.5 &&
+    !(p.wallRunOnBox && p.wallRunBoxStackCount >= 5)
   ) {
     p.isWallRunning = true;
     p.onGround = false;
