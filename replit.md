@@ -48,6 +48,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Fase: sistema de pneus voadores implementado — 8 pilhas de pneus (3–5 pneus cada) posicionadas na zona x:17180–21150; quando o drone acerta uma pilha, ela some e os pneus são lançados individualmente com física de queda (gravidade, quique amortecido, atrito, rolamento) e renderização rotacionada com raios visíveis; após 7 quiques e velocidade mínima, cada pneu desaparece da cena; pilhas destruídas não reaparecem após resetar o teste do editor.
 - Fase: área do ferro velho dobrada — muro final movido de x:16900 para x:21700; chão contínuo estendido de x:12250 até x:21720; zona x:16900–21700 vazia (sem objetos, paredes, lixeiras ou plataformas); muros removidos de x:17600 e x:20900; conteúdo antigo da FREE ZONE 3 e início da WALL ZONE 3 nessa faixa eliminados.
 - Editor de fase: adicionado CP3 na navegação por `.`/`,` e Numpad 6/4 apontando para o carro em x:16400 (`w:445`, `h:168`, hitboxes customizadas), antes da zona de pneus voadores.
+- Fase: removidas permanentemente as 8 pilhas de pneus voadores em x:17180, 17620, 18150, 18700, 19280, 19860, 20540 e 21150.
 
 ## Key Commands
 
