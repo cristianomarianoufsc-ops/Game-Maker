@@ -52,6 +52,9 @@ function getStackedBoxWall(platforms: Platform[], box: Platform): BoxStackWall |
     }
   }
 
+  const MIN_CLIMBABLE_BOXES = 3;
+  if (stack.length < MIN_CLIMBABLE_BOXES) return null;
+
   const left = Math.min(...stack.map((plat) => plat.x));
   const right = Math.max(...stack.map((plat) => plat.x + plat.w));
   const top = Math.min(...stack.map((plat) => plat.y));
