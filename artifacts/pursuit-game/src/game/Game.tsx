@@ -729,7 +729,7 @@ export default function Game() {
       };
     };
 
-    const snapEditorPlatform = (platform: Platform, platformIdx: number) => {
+    const snapEditorPlatform = (platform: Platform, platformIdx: number, ignoredIndices: Set<number> = new Set()) => {
       const SNAP = 8;
       const movingHit = getPlatformCollisionRect(platform);
       const movingCenterX = movingHit.x + movingHit.w / 2;
@@ -760,6 +760,7 @@ export default function Game() {
       considerY(movingHit.y + movingHit.h, EDITOR_GROUND_Y);
 
       platformsRef.current.forEach((target, targetIdx) => {
+        if (ignoredIndices.has(targetIdx)) return;
         if (targetIdx === platformIdx || target.type === 'ground') return;
         const targetRects = getPlatformCollisionRects(target);
         targetRects.forEach((targetHit) => {
@@ -1007,23 +1008,54 @@ export default function Game() {
             }
             clampPlatformCollisionOverrides(p);
           } else if (drag.mode === 'move') {
-            p.x = Math.round(drag.origX + dx);
-            p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
-            p.y = Math.max(-4000, p.y);
-            const preSnapX = p.x;
-            const preSnapY = p.y;
-            snapEditorPlatform(p, editorSelectedIdxRef.current);
-            const snapDx = p.x - preSnapX;
-            const snapDy = p.y - preSnapY;
             if (drag.origGroupPositions.length > 0) {
-              drag.origGroupPositions.forEach(({ idx, origX, origY }) => {
+              const groupEntries = [
+                { idx: editorSelectedIdxRef.current, origX: drag.origX, origY: drag.origY },
+                ...drag.origGroupPositions,
+              ].filter(({ idx }) => idx >= 0 && idx < platformsRef.current.length && platformsRef.current[idx]?.type !== 'ground');
+              const ignored = new Set(groupEntries.map(({ idx }) => idx));
+              const requestedDx = Math.round(dx);
+              let requestedDy = Math.round(dy);
+              const maxDy = Math.min(...groupEntries.map(({ idx, origY }) => {
                 const gp = platformsRef.current[idx];
-                if (gp) {
-                  gp.x = Math.round(origX + dx) + snapDx;
-                  gp.y = Math.round(Math.min(origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(gp))) + snapDy;
-                  gp.y = Math.max(-4000, gp.y);
-                }
+                return gp ? EDITOR_GROUND_Y - getPlatformGroundClampOffset(gp) - origY : requestedDy;
+              }));
+              const minDy = Math.max(...groupEntries.map(({ origY }) => -4000 - origY));
+              requestedDy = Math.max(minDy, Math.min(requestedDy, maxDy));
+              groupEntries.forEach(({ idx, origX, origY }) => {
+                const gp = platformsRef.current[idx];
+                if (!gp) return;
+                gp.x = Math.round(origX + requestedDx);
+                gp.y = Math.round(origY + requestedDy);
               });
+              const groupBasePositions = groupEntries.map(({ idx }) => {
+                const gp = platformsRef.current[idx];
+                return { idx, x: gp?.x ?? 0, y: gp?.y ?? 0 };
+              });
+              const preSnapX = p.x;
+              const preSnapY = p.y;
+              snapEditorPlatform(p, editorSelectedIdxRef.current, ignored);
+              const snapDx = p.x - preSnapX;
+              let snapDy = p.y - preSnapY;
+              if (snapDx !== 0 || snapDy !== 0) {
+                const maxSnapDy = Math.min(...groupBasePositions.map(({ idx, y }) => {
+                  const gp = platformsRef.current[idx];
+                  return gp ? EDITOR_GROUND_Y - getPlatformGroundClampOffset(gp) - y : snapDy;
+                }));
+                const minSnapDy = Math.max(...groupBasePositions.map(({ y }) => -4000 - y));
+                snapDy = Math.max(minSnapDy, Math.min(snapDy, maxSnapDy));
+                groupBasePositions.forEach(({ idx, x, y }) => {
+                  const gp = platformsRef.current[idx];
+                  if (!gp) return;
+                  gp.x = Math.round(x + snapDx);
+                  gp.y = Math.round(y + snapDy);
+                });
+              }
+            } else {
+              p.x = Math.round(drag.origX + dx);
+              p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
+              p.y = Math.max(-4000, p.y);
+              snapEditorPlatform(p, editorSelectedIdxRef.current);
             }
           } else if (drag.mode === 'resize-right') {
             p.w = Math.round(Math.max(10, drag.origW + dx));
@@ -1755,11 +1787,10 @@ export default function Game() {
                 p.y += delta;
                 editorDragRef.current!.origY   += delta;
                 editorDragRef.current!.startWY += delta;
-                // Mover grupo
-                editorSelectedIndicesRef.current.forEach(i => {
-                  if (i === selIdx) return;
-                  const gp = platformsRef.current[i];
+                editorDragRef.current!.origGroupPositions = editorDragRef.current!.origGroupPositions.map((entry) => {
+                  const gp = platformsRef.current[entry.idx];
                   if (gp) gp.y += delta;
+                  return { ...entry, origY: entry.origY + delta };
                 });
               };
 
@@ -1770,10 +1801,10 @@ export default function Game() {
                 p.x += actual;
                 editorDragRef.current!.origX   += actual;
                 editorDragRef.current!.startWX += actual;
-                editorSelectedIndicesRef.current.forEach(i => {
-                  if (i === selIdx) return;
-                  const gp = platformsRef.current[i];
+                editorDragRef.current!.origGroupPositions = editorDragRef.current!.origGroupPositions.map((entry) => {
+                  const gp = platformsRef.current[entry.idx];
                   if (gp) gp.x += actual;
+                  return { ...entry, origX: entry.origX + actual };
                 });
               };
 
