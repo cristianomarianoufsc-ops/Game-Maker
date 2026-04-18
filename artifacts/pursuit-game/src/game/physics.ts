@@ -13,17 +13,30 @@ import {
 import { getPlatformCollisionRects, getSlopeSurfaceY } from './collision';
 import type { SlopedRect } from './collision';
 
+interface BoxStackWall extends SlopedRect {
+  boxCount: number;
+}
+
 function rectOverlap(ax: number, ay: number, aw: number, ah: number,
   bx: number, by: number, bw: number, bh: number): boolean {
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 
-function getStackedBoxWall(platforms: Platform[], box: Platform): SlopedRect | null {
+function getStackedBoxWall(platforms: Platform[], box: Platform): BoxStackWall | null {
   if (box.type !== 'box') return null;
+  const STACK_TOL = 6;
+  const MIN_X_OVERLAP_RATIO = 0.55;
   const boxes = platforms.filter((plat) => plat.type === 'box');
   const stack: Platform[] = [];
   const queue: Platform[] = [box];
   const seen = new Set<Platform>();
+
+  const verticalStackTouch = (a: Platform, b: Platform) => {
+    const overlapX = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+    const minRequiredOverlap = Math.min(a.w, b.w) * MIN_X_OVERLAP_RATIO;
+    const touchesVertically = Math.abs(a.y + a.h - b.y) <= STACK_TOL || Math.abs(b.y + b.h - a.y) <= STACK_TOL;
+    return touchesVertically && overlapX >= minRequiredOverlap;
+  };
 
   while (queue.length > 0) {
     const current = queue.shift();
@@ -33,34 +46,25 @@ function getStackedBoxWall(platforms: Platform[], box: Platform): SlopedRect | n
 
     for (const other of boxes) {
       if (seen.has(other)) continue;
-      const touchesHorizontally = Math.abs(current.x + current.w - other.x) <= 3 || Math.abs(other.x + other.w - current.x) <= 3;
-      const overlapsHorizontally = current.x < other.x + other.w - 3 && current.x + current.w > other.x + 3;
-      const touchesVertically = Math.abs(current.y + current.h - other.y) <= 3 || Math.abs(other.y + other.h - current.y) <= 3;
-      const overlapsVertically = current.y < other.y + other.h - 3 && current.y + current.h > other.y + 3;
-
-      if ((touchesHorizontally && overlapsVertically) || (touchesVertically && overlapsHorizontally)) {
+      if (verticalStackTouch(current, other)) {
         queue.push(other);
       }
     }
   }
-
-  if (stack.length < 3) return null;
 
   const left = Math.min(...stack.map((plat) => plat.x));
   const right = Math.max(...stack.map((plat) => plat.x + plat.w));
   const top = Math.min(...stack.map((plat) => plat.y));
   const bottom = Math.max(...stack.map((plat) => plat.y + plat.h));
   const columnHeight = bottom - top;
-  const minStackHeight = box.h * 3 - 2;
 
-  if (columnHeight < minStackHeight) return null;
-
-  return { x: left, y: top, w: right - left, h: columnHeight };
+  return { x: left, y: top, w: right - left, h: columnHeight, boxCount: stack.length };
 }
 
-function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, isBox = false): void {
+function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, boxWall: BoxStackWall | null = null): void {
   const overlapLeft = p.x + p.w - hit.x;
   const overlapRight = hit.x + hit.w - p.x;
+  const isBox = !!boxWall;
 
   if (overlapLeft < overlapRight && vx >= 0) {
     p.x = hit.x - p.w;
@@ -69,7 +73,11 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, isB
     p.wallX = hit.x;
     p.wallTopY = hit.y;
     if (p.vx > 0) p.vx = 0;
-    if (!p.isWallRunning) p.wallRunOnBox = isBox;
+    if (!p.isWallRunning) {
+      p.wallRunOnBox = isBox;
+      p.wallRunBoxStackCount = boxWall?.boxCount ?? 0;
+      p.wallRunBoxStackHeight = boxWall?.h ?? 0;
+    }
   } else if (overlapRight <= overlapLeft && vx <= 0) {
     p.x = hit.x + hit.w;
     p.touchingWall = true;
@@ -77,11 +85,15 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, isB
     p.wallX = hit.x + hit.w;
     p.wallTopY = hit.y;
     if (p.vx < 0) p.vx = 0;
-    if (!p.isWallRunning) p.wallRunOnBox = isBox;
+    if (!p.isWallRunning) {
+      p.wallRunOnBox = isBox;
+      p.wallRunBoxStackCount = boxWall?.boxCount ?? 0;
+      p.wallRunBoxStackHeight = boxWall?.h ?? 0;
+    }
   }
 }
 
-function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climbableBoxWall?: SlopedRect | null): boolean {
+function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climbableBoxWall?: BoxStackWall | null): boolean {
   const ph = (p.isRolling || p.forcedCrouch) ? PLAYER_ROLL_H : PLAYER_H;
   if (!rectOverlap(p.x, p.y, p.w, ph, hit.x, hit.y, hit.w, hit.h)) return false;
 
@@ -112,12 +124,16 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
   const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
 
   if (plat.type === 'wall' && plat.climbable) {
-    resolveClimbableWallContact(p, hit, p.vx, false);
+    resolveClimbableWallContact(p, hit, p.vx);
     return false;
   }
 
   if (climbableBoxWall && (minOverlap === overlapLeft || minOverlap === overlapRight)) {
-    resolveClimbableWallContact(p, climbableBoxWall, p.vx, true);
+    resolveClimbableWallContact(p, climbableBoxWall, p.vx, climbableBoxWall);
+    return false;
+  }
+
+  if (climbableBoxWall && plat.type === 'box' && minOverlap === overlapTop && plat.y > climbableBoxWall.y + 3) {
     return false;
   }
 
@@ -167,6 +183,11 @@ export function updatePlayer(
   p.wallSide = null;
   p.wallX = previousWallX;
   p.wallTopY = previousWallTopY;
+  if (!p.isWallRunning) {
+    p.wallRunOnBox = false;
+    p.wallRunBoxStackCount = 0;
+    p.wallRunBoxStackHeight = 0;
+  }
   p.isCrouching = false;
 
   if (p.state === 'dead') return;
@@ -318,10 +339,10 @@ export function updatePlayer(
           Math.random() < 0.5 ? '#ffcc44' : '#ff8822',
         );
       }
-      // canClimbWall: wall climb up (montar) — bloqueado em TODAS as caixas
+      const isTallBoxStack = p.wallRunOnBox && p.wallRunBoxStackCount >= 5;
       // canJumpOffWall: flip e pulo lateral — bloqueado em TODAS as caixas
       const _timerWindow = p.wallRunTimer < WALLRUN_DURATION - 160;
-      const canClimbWall   = !p.wallRunOnBox && _timerWindow;
+      const canClimbWall   = (!p.wallRunOnBox || !isTallBoxStack) && _timerWindow;
       const canJumpOffWall = !p.wallRunOnBox && _timerWindow;
       const pressingForwardIntoWall =
         (wallSide === 'right' && keys.right) ||
@@ -654,9 +675,7 @@ export function updatePlayer(
     p.onGround = false;
     p.coyoteTime = 0;
     p.vy = -WALLRUN_RISE_SPEED;
-    // Caixas escorregadias: ≤4 caixas (wallTopY ≥ GROUND_Y-220) → wall run completo
-    // 5+ caixas (wallTopY < GROUND_Y-220) → timer curto: sprite 200ms, depois escorrega
-    const _isTallBox = p.wallRunOnBox && p.wallTopY < GROUND_Y - 220;
+    const _isTallBox = p.wallRunOnBox && p.wallRunBoxStackCount >= 5;
     p.wallRunTimer = _isTallBox ? 200 : WALLRUN_DURATION;
     p.state = 'wallrun';
     for (let i = 0; i < 8; i++) {

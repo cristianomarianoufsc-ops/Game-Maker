@@ -81,6 +81,8 @@ function makePlayer(): Player {
     isWallRunning: false,
     wallRunTimer: 0,
     wallRunOnBox: false,
+    wallRunBoxStackCount: 0,
+    wallRunBoxStackHeight: 0,
     isWallFlipping: false,
     wallFlipTimer: 0,
     isWallClimbUp: false,

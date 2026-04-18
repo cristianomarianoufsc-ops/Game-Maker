@@ -83,6 +83,8 @@ export interface Player {
   isWallRunning: boolean;
   wallRunTimer: number;
   wallRunOnBox: boolean;
+  wallRunBoxStackCount: number;
+  wallRunBoxStackHeight: number;
   isWallFlipping: boolean;
   wallFlipTimer: number;
   isWallClimbUp: boolean;
