@@ -1777,7 +1777,7 @@ export function drawPlayer(
 
     const frameW = wallRunSheetImg.naturalWidth / WALL_RUN_SHEET.frameCount;
     const frameH = wallRunSheetImg.naturalHeight;
-    const frame = isSlipperyBoxContact ? 0 : (p.animFrame % WALL_RUN_SHEET.frameCount);
+    const frame = isSlipperyBoxContact ? 1 : (p.animFrame % WALL_RUN_SHEET.frameCount);
     const dh = WALL_RUN_SHEET.displayH;
     const dw = Math.round(dh * (frameW / frameH));
     const anchorX = px + p.w / 2;
