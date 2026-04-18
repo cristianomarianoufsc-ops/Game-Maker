@@ -908,7 +908,7 @@ export default function Game() {
           } else if (drag.mode === 'move') {
             p.x = Math.round(drag.origX + dx);
             p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
-            p.y = Math.max(60, p.y);
+            p.y = Math.max(-2000, p.y);
             const preSnapX = p.x;
             const preSnapY = p.y;
             snapEditorPlatform(p, editorSelectedIdxRef.current);
@@ -920,7 +920,7 @@ export default function Game() {
                 if (gp) {
                   gp.x = Math.round(origX + dx) + snapDx;
                   gp.y = Math.round(Math.min(origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(gp))) + snapDy;
-                  gp.y = Math.max(60, gp.y);
+                  gp.y = Math.max(-2000, gp.y);
                 }
               });
             }
@@ -1615,8 +1615,8 @@ export default function Game() {
           const keys = keysRef.current;
           if (keys.left)  editorCamXRef.current = Math.max(0, editorCamXRef.current - EDITOR_PAN_SPEED);
           if (keys.right) editorCamXRef.current = editorCamXRef.current + EDITOR_PAN_SPEED;
-          if (keys.up)    editorCamYRef.current = Math.max(-300, editorCamYRef.current - EDITOR_PAN_SPEED);
-          if (keys.down)  editorCamYRef.current = Math.min(300,  editorCamYRef.current + EDITOR_PAN_SPEED);
+          if (keys.up)    editorCamYRef.current = Math.max(-2000, editorCamYRef.current - EDITOR_PAN_SPEED);
+          if (keys.down)  editorCamYRef.current = Math.min(300,   editorCamYRef.current + EDITOR_PAN_SPEED);
         }
         // Delete key: remove hitbox selecionada em modo colisão
         if (editorDeleteBoxJustPressed.current) {
