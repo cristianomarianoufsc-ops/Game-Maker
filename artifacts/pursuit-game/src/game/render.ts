@@ -1771,13 +1771,34 @@ export function drawPlayer(
   }
 
   const isSlipperyBoxContact = p.touchingWall && p.wallRunOnBox && p.wallRunBoxStackCount >= 5 && !p.onGround && !p.isWallRunning;
-  const isWallRunVisual = p.isWallRunning || p.state === 'wallrun' || isSlipperyBoxContact;
+  if (isSlipperyBoxContact && subidaSheetImg && subidaSheetImg.complete && subidaSheetImg.naturalWidth > 0) {
+    const frameW = subidaSheetImg.naturalWidth / WALL_CLIMB_SHEET.frameCount;
+    const frameH = subidaSheetImg.naturalHeight;
+    const dh = WALL_CLIMB_SHEET.displayH * 1.05;
+    const dw = Math.round(dh * (frameW / frameH));
+    const anchorX = px + p.w / 2;
+    const anchorY = py + ph + WALL_CLIMB_SHEET.offsetY;
+    const destX = anchorX - dw / 2 + WALL_CLIMB_SHEET.firstFrameOffsetX;
+    const rawDestY = anchorY - dh;
+    const destY = Math.max(p.wallTopY, rawDestY);
+    ctx.save();
+    if (!p.facingRight) {
+      ctx.translate(anchorX, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-anchorX, 0);
+    }
+    ctx.drawImage(subidaSheetImg, 0, 0, frameW, frameH, destX, destY, dw, dh);
+    ctx.restore();
+    return;
+  }
+
+  const isWallRunVisual = p.isWallRunning || p.state === 'wallrun';
   if (isWallRunVisual) {
     if (!wallRunSheetImg || !wallRunSheetImg.complete || wallRunSheetImg.naturalWidth <= 0) return;
 
     const frameW = wallRunSheetImg.naturalWidth / WALL_RUN_SHEET.frameCount;
     const frameH = wallRunSheetImg.naturalHeight;
-    const frame = isSlipperyBoxContact ? 1 : (p.animFrame % WALL_RUN_SHEET.frameCount);
+    const frame = p.animFrame % WALL_RUN_SHEET.frameCount;
     const dh = WALL_RUN_SHEET.displayH;
     const dw = Math.round(dh * (frameW / frameH));
     const anchorX = px + p.w / 2;
