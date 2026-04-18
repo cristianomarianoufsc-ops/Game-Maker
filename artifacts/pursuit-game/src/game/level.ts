@@ -142,6 +142,7 @@ export function generateLevel(): Platform[] {
   }> = [
     // Ferro velho (x:12100-14500) — só carros e pneus
     { x: 12548, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
+    { x: 12638, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     { x: 13330, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     // Ferro velho — extensão (x:14600-16850)
     { x: 14900, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
@@ -182,7 +183,13 @@ export function generateLevel(): Platform[] {
   const BOX_H = 55;
   const BOX_W = 65;
   const junkyardBoxStacks: Platform[] = [
-    // Pilha A — entrada (x:12375-12440)
+    // Pilha A — entrada (x:12375-12505)
+    { x: 12505, y: GY - 55,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 110,           w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 165,           w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 220,           w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 277,           w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 332,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12375, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12375, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12375, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
