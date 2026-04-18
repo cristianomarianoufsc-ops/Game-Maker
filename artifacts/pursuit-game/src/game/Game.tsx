@@ -80,6 +80,7 @@ function makePlayer(): Player {
     isDivejumping: false,
     isWallRunning: false,
     wallRunTimer: 0,
+    wallRunOnBox: false,
     isWallFlipping: false,
     wallFlipTimer: 0,
     isWallClimbUp: false,

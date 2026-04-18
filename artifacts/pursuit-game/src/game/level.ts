@@ -198,7 +198,7 @@ export function generateLevel(): Platform[] {
     { x: 12440, y: GY - BOX_H * 3,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12440, y: GY - BOX_H * 4,     w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12440, y: GY - 277,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12440, y: GY - 332,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12375, y: GY - 498,            w: BOX_W, h: BOX_H, type: 'box' },
 
     // Pilha 2 — entre o pneu e o segundo carro
     { x: 13100, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },

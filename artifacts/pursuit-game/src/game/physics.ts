@@ -58,7 +58,7 @@ function getStackedBoxWall(platforms: Platform[], box: Platform): SlopedRect | n
   return { x: left, y: top, w: right - left, h: columnHeight };
 }
 
-function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number): void {
+function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, isBox = false): void {
   const overlapLeft = p.x + p.w - hit.x;
   const overlapRight = hit.x + hit.w - p.x;
 
@@ -69,6 +69,7 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number): vo
     p.wallX = hit.x;
     p.wallTopY = hit.y;
     if (p.vx > 0) p.vx = 0;
+    if (!p.isWallRunning) p.wallRunOnBox = isBox;
   } else if (overlapRight <= overlapLeft && vx <= 0) {
     p.x = hit.x + hit.w;
     p.touchingWall = true;
@@ -76,6 +77,7 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number): vo
     p.wallX = hit.x + hit.w;
     p.wallTopY = hit.y;
     if (p.vx < 0) p.vx = 0;
+    if (!p.isWallRunning) p.wallRunOnBox = isBox;
   }
 }
 
@@ -110,12 +112,12 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
   const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
 
   if (plat.type === 'wall' && plat.climbable) {
-    resolveClimbableWallContact(p, hit, p.vx);
+    resolveClimbableWallContact(p, hit, p.vx, false);
     return false;
   }
 
   if (climbableBoxWall && (minOverlap === overlapLeft || minOverlap === overlapRight)) {
-    resolveClimbableWallContact(p, climbableBoxWall, p.vx);
+    resolveClimbableWallContact(p, climbableBoxWall, p.vx, true);
     return false;
   }
 
@@ -299,6 +301,8 @@ export function updatePlayer(
     if (p.wallRunTimer <= 0 || p.onGround) {
       // Timer esgotou ou tocou no chão — sai do wall run
       p.isWallRunning = false;
+      // Caixas escorregadias: absorve o impulso horizontal ao cair
+      if (p.wallRunOnBox) p.vx *= 0.15;
     } else {
       const wallSide = p.wallSide ?? previousWallSide;
       // Sobe pela parede enquanto o timer durar
@@ -363,7 +367,8 @@ export function updatePlayer(
         p.wallFlipTimer = WALLFLIP_DURATION;
         p.coyoteTime = 0;
         p.vy = WALLFLIP_JUMP_VY;
-        p.vx = wallSide === 'right' ? -WALLFLIP_BACK_VX : WALLFLIP_BACK_VX;
+        const flipVx = p.wallRunOnBox ? WALLFLIP_BACK_VX * 0.28 : WALLFLIP_BACK_VX;
+        p.vx = wallSide === 'right' ? -flipVx : flipVx;
         p.facingRight = wallSide === 'right';
         p.state = 'wallflip';
         p.animFrame = 0;
@@ -379,7 +384,8 @@ export function updatePlayer(
         p.isWallRunning = false;
         p.coyoteTime = 0;
         p.vy = WALLRUN_JUMP_VY;
-        p.vx = wallSide === 'right' ? -WALLRUN_JUMP_VX : WALLRUN_JUMP_VX;
+        const jumpVx = p.wallRunOnBox ? WALLRUN_JUMP_VX * 0.28 : WALLRUN_JUMP_VX;
+        p.vx = wallSide === 'right' ? -jumpVx : jumpVx;
         p.facingRight = wallSide !== 'right';
         for (let i = 0; i < 14; i++) {
           spawnParticle(

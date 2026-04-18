@@ -82,6 +82,7 @@ export interface Player {
   isDivejumping: boolean;
   isWallRunning: boolean;
   wallRunTimer: number;
+  wallRunOnBox: boolean;
   isWallFlipping: boolean;
   wallFlipTimer: number;
   isWallClimbUp: boolean;
