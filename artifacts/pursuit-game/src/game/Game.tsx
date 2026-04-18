@@ -1615,8 +1615,32 @@ export default function Game() {
           const keys = keysRef.current;
           if (keys.left)  editorCamXRef.current = Math.max(0, editorCamXRef.current - EDITOR_PAN_SPEED);
           if (keys.right) editorCamXRef.current = editorCamXRef.current + EDITOR_PAN_SPEED;
-          if (keys.up)    editorCamYRef.current = Math.max(-2000, editorCamYRef.current - EDITOR_PAN_SPEED);
+          if (keys.up)    editorCamYRef.current = Math.max(-4000, editorCamYRef.current - EDITOR_PAN_SPEED);
           if (keys.down)  editorCamYRef.current = Math.min(300,   editorCamYRef.current + EDITOR_PAN_SPEED);
+          // ── Auto-scroll de borda durante drag ──────────────────────────
+          if (editorDragRef.current) {
+            const mwy = editorMouseWorldRef.current.y;
+            const screenY = mwy - editorCamYRef.current;
+            const EDGE_ZONE = 80;
+            const EDGE_SPEED = 10;
+            if (screenY < EDGE_ZONE) {
+              const factor = 1 - screenY / EDGE_ZONE;
+              editorCamYRef.current = Math.max(-4000, editorCamYRef.current - Math.ceil(EDGE_SPEED * factor));
+            } else if (screenY > CANVAS_H - EDGE_ZONE) {
+              const factor = (screenY - (CANVAS_H - EDGE_ZONE)) / EDGE_ZONE;
+              editorCamYRef.current = Math.min(300, editorCamYRef.current + Math.ceil(EDGE_SPEED * factor));
+            }
+            const mwx = editorMouseWorldRef.current.x;
+            const screenX = mwx - editorCamXRef.current;
+            const EDGE_ZONE_X = 80;
+            if (screenX < EDGE_ZONE_X) {
+              const factor = 1 - screenX / EDGE_ZONE_X;
+              editorCamXRef.current = Math.max(0, editorCamXRef.current - Math.ceil(EDGE_SPEED * factor));
+            } else if (screenX > CANVAS_W - EDGE_ZONE_X) {
+              const factor = (screenX - (CANVAS_W - EDGE_ZONE_X)) / EDGE_ZONE_X;
+              editorCamXRef.current = editorCamXRef.current + Math.ceil(EDGE_SPEED * factor);
+            }
+          }
         }
         // Delete key: remove hitbox selecionada em modo colisão
         if (editorDeleteBoxJustPressed.current) {
