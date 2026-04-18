@@ -631,11 +631,13 @@ export function updatePlayer(
   }
 
   // Wall run trigger — só ativa se Horácio encostar na parede durante a subida do pulo
+  // Caixas são escorregadias: wall run nunca dispara em superfícies de box
   if (
     !p.isWallRunning &&
     !p.isClimbing &&
     !p.onGround &&
     p.touchingWall &&
+    !p.wallRunOnBox &&
     !p.isRolling &&
     !p.isDivejumping &&
     !p.isWallFlipping &&
