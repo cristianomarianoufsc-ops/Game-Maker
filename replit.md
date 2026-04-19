@@ -49,6 +49,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Fase: área do ferro velho dobrada — muro final movido de x:16900 para x:21700; chão contínuo estendido de x:12250 até x:21720; zona x:16900–21700 vazia (sem objetos, paredes, lixeiras ou plataformas); muros removidos de x:17600 e x:20900; conteúdo antigo da FREE ZONE 3 e início da WALL ZONE 3 nessa faixa eliminados.
 - Editor de fase: adicionado CP3 na navegação por `.`/`,` e Numpad 6/4 apontando para o carro em x:16400 (`w:445`, `h:168`, hitboxes customizadas), antes da zona de pneus voadores.
 - Fase: removidas permanentemente as 8 pilhas de pneus voadores em x:17180, 17620, 18150, 18700, 19280, 19860, 20540 e 21150.
+- Editor de fase: checkpoint ativo agora aparece em uma tarja destacada no topo, com contador CP atual/total e linha vertical mais forte no mundo para facilitar a navegação por `.`/`,` e Numpad 6/4.
 
 ## Key Commands
 

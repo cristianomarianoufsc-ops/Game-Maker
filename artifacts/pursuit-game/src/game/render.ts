@@ -3000,15 +3000,27 @@ export function drawEditorUI(
     const sx = cp.x - camX;
     if (sx < -40 || sx > CANVAS_W + 40) continue;
     const isActive = ci === checkpointIdx;
-    ctx.strokeStyle = isActive ? 'rgba(80,230,255,0.95)' : 'rgba(80,180,255,0.45)';
-    ctx.lineWidth = isActive ? 2 : 1;
-    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = isActive ? 'rgba(80,245,255,1)' : 'rgba(80,180,255,0.45)';
+    ctx.lineWidth = isActive ? 3 : 1;
+    ctx.setLineDash(isActive ? [] : [6, 4]);
     ctx.beginPath();
     ctx.moveTo(sx, 44);
     ctx.lineTo(sx, CANVAS_H);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = isActive ? 'rgba(0,200,255,0.95)' : 'rgba(80,160,255,0.75)';
+    if (isActive) {
+      const pulse = 0.75 + 0.25 * Math.sin(Date.now() / 160);
+      ctx.fillStyle = `rgba(0,210,255,${0.18 + pulse * 0.22})`;
+      ctx.fillRect(sx - 9, 44, 18, CANVAS_H - 44);
+      ctx.fillStyle = 'rgba(0,245,255,0.98)';
+      ctx.beginPath();
+      ctx.moveTo(sx, 62);
+      ctx.lineTo(sx - 8, 48);
+      ctx.lineTo(sx + 8, 48);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.fillStyle = isActive ? 'rgba(0,245,255,0.98)' : 'rgba(80,160,255,0.75)';
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
     ctx.fillText(cp.label, sx, 58);
@@ -3019,10 +3031,24 @@ export function drawEditorUI(
   // Current checkpoint info row
   if (checkpointIdx >= 0 && checkpointIdx < checkpoints.length) {
     const cp = checkpoints[checkpointIdx];
-    ctx.fillStyle = 'rgba(0,200,255,0.9)';
+    const label = `▶ CHECKPOINT ATIVO: ${cp.label}  ${checkpointIdx + 1}/${checkpoints.length}  x:${cp.x}`;
+    const badgeX = 12;
+    const badgeY = 38;
+    const badgeW = Math.min(290, ctx.measureText(label).width + 14);
+    const badgeH = 15;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,45,70,0.92)';
+    ctx.strokeStyle = 'rgba(0,230,255,0.95)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(0,245,255,0.98)';
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText('\u25b6 ' + cp.label + '  x:' + cp.x, 12, 49);
+    ctx.fillText(label, badgeX + 7, 49);
+    ctx.restore();
   } else {
     ctx.fillStyle = 'rgba(130,130,160,0.6)';
     ctx.font = '10px monospace';
