@@ -392,6 +392,11 @@ export default function Game() {
     { label: 'CP2', x: 12100 },
     { label: 'CP3', x: 16400 },
   ];
+  const editorCustomCheckpointsRef = useRef<{ label: string; x: number }[]>([]);
+  const getEditorCheckpoints = () => [
+    ...EDITOR_CHECKPOINTS,
+    ...editorCustomCheckpointsRef.current,
+  ];
   const editorCheckpointIdxRef = useRef(-1);
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
@@ -657,17 +662,19 @@ export default function Game() {
         case 'Period':
         case 'Numpad6':
           if (down && gsRef.current?.gamePhase === 'editor') {
-            const next = Math.min(editorCheckpointIdxRef.current + 1, EDITOR_CHECKPOINTS.length - 1);
+            const checkpoints = getEditorCheckpoints();
+            const next = Math.min(editorCheckpointIdxRef.current + 1, checkpoints.length - 1);
             editorCheckpointIdxRef.current = next;
-            editorCamXRef.current = Math.max(0, EDITOR_CHECKPOINTS[next].x - CANVAS_W / 2);
+            editorCamXRef.current = Math.max(0, checkpoints[next].x - CANVAS_W / 2);
           }
           break;
         case 'Comma':
         case 'Numpad4':
           if (down && gsRef.current?.gamePhase === 'editor') {
+            const checkpoints = getEditorCheckpoints();
             const prev = Math.max(editorCheckpointIdxRef.current - 1, 0);
             editorCheckpointIdxRef.current = prev;
-            editorCamXRef.current = Math.max(0, EDITOR_CHECKPOINTS[prev].x - CANVAS_W / 2);
+            editorCamXRef.current = Math.max(0, checkpoints[prev].x - CANVAS_W / 2);
           }
           break;
         case 'Enter':
@@ -1305,21 +1312,51 @@ export default function Game() {
         const checkpointBtnX = 394;
         const checkpointBtnW = 30;
         const checkpointBtnGap = 4;
-        for (let ci = 0; ci < EDITOR_CHECKPOINTS.length; ci++) {
+        const checkpoints = getEditorCheckpoints();
+        for (let ci = 0; ci < checkpoints.length; ci++) {
           const btnX = checkpointBtnX + ci * (checkpointBtnW + checkpointBtnGap);
           if (screenX >= btnX && screenX <= btnX + checkpointBtnW) {
             editorCheckpointIdxRef.current = ci;
-            editorCamXRef.current = Math.max(0, EDITOR_CHECKPOINTS[ci].x - CANVAS_W / 2);
+            editorCamXRef.current = Math.max(0, checkpoints[ci].x - CANVAS_W / 2);
             editorCopiedMsgRef.current = {
-              text: `✓ ${EDITOR_CHECKPOINTS[ci].label} ATIVO — x:${EDITOR_CHECKPOINTS[ci].x}`,
+              text: `✓ ${checkpoints[ci].label} ATIVO — x:${checkpoints[ci].x}`,
               until: Date.now() + 1800,
             };
             e.preventDefault();
             return;
           }
         }
+        const addCheckpointBtnX = checkpointBtnX + checkpoints.length * (checkpointBtnW + checkpointBtnGap) + 4;
+        if (screenX >= addCheckpointBtnX && screenX <= addCheckpointBtnX + 36) {
+          const label = `CP${checkpoints.length + 1}`;
+          const x = Math.round(editorCamXRef.current + CANVAS_W / 2);
+          editorCustomCheckpointsRef.current.push({ label, x });
+          editorCheckpointIdxRef.current = getEditorCheckpoints().length - 1;
+          editorCopiedMsgRef.current = {
+            text: `✓ ${label} CRIADO EM x:${x} — use CP JSON para copiar`,
+            until: Date.now() + 3000,
+          };
+          e.preventDefault();
+          return;
+        }
+        const checkpointExportBtnX = addCheckpointBtnX + 40;
+        if (screenX >= checkpointExportBtnX && screenX <= checkpointExportBtnX + 56) {
+          const exportStr = JSON.stringify({ checkpoints: editorCustomCheckpointsRef.current });
+          navigator.clipboard.writeText(exportStr).then(() => {
+            editorCopiedMsgRef.current = {
+              text: editorCustomCheckpointsRef.current.length === 0
+                ? 'CP JSON: nenhum checkpoint novo criado ainda'
+                : `✓ CP JSON COPIADO: ${editorCustomCheckpointsRef.current.length} checkpoint(s) novo(s)`,
+              until: Date.now() + 3500,
+            };
+          }).catch(() => {
+            editorCopiedMsgRef.current = { text: 'Erro ao copiar CP JSON', until: Date.now() + 3000 };
+          });
+          e.preventDefault();
+          return;
+        }
         // Área da CHAVE DE FASE (clique copia add/del para clipboard)
-        const exportKeyX = checkpointBtnX + EDITOR_CHECKPOINTS.length * (checkpointBtnW + checkpointBtnGap) + 4;
+        const exportKeyX = checkpointExportBtnX + 60;
         if (screenX >= exportKeyX && screenX <= CANVAS_W - 8) {
           const baseline = editorBaselineKeysRef.current;
           const currentKeys = new Set(platformsRef.current.map(p => platBaseKey(p)));
@@ -2137,7 +2174,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, EDITOR_CHECKPOINTS, editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0, editorBaselineKeysRef.current);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, getEditorCheckpoints(), editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0, editorBaselineKeysRef.current);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);

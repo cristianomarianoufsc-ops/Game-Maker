@@ -2960,10 +2960,33 @@ export function drawEditorUI(
     ctx.fillText(cp.label, btnX + checkpointBtnW / 2, checkpointBtnY + 12);
     ctx.restore();
   });
+  const addCheckpointBtnX = checkpointBtnX + checkpoints.length * (checkpointBtnW + checkpointBtnGap) + 4;
+  const checkpointExportBtnX = addCheckpointBtnX + 40;
+  ctx.save();
+  ctx.fillStyle = 'rgba(30,55,35,0.92)';
+  ctx.strokeStyle = 'rgba(100,255,150,0.85)';
+  ctx.lineWidth = 1.25;
+  ctx.beginPath();
+  ctx.roundRect(addCheckpointBtnX, checkpointBtnY, 36, checkpointBtnH, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(150,255,180,1)';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('+ CP', addCheckpointBtnX + 18, checkpointBtnY + 12);
+  ctx.fillStyle = 'rgba(45,35,70,0.92)';
+  ctx.strokeStyle = 'rgba(190,150,255,0.85)';
+  ctx.beginPath();
+  ctx.roundRect(checkpointExportBtnX, checkpointBtnY, 56, checkpointBtnH, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(220,195,255,1)';
+  ctx.fillText('CP JSON', checkpointExportBtnX + 28, checkpointBtnY + 12);
+  ctx.restore();
 
   // ── Chave de exportação da fase ─────────────────────────────
   {
-    const expX = checkpointBtnX + checkpoints.length * (checkpointBtnW + checkpointBtnGap) + 4;
+    const expX = checkpointExportBtnX + 60;
     const expY = histBtnY;
     const expW = CANVAS_W - expX - 8;
     const expH = histBtnH;
@@ -3013,7 +3036,7 @@ export function drawEditorUI(
   ctx.font = '10px monospace';
   const helpText = collisionMode
     ? 'HITBOX: clique numa caixa para escolher  |  setas movem 1px (Shift=5px)  |  +BOX / −HITBOX  |  S ou ◥ +SLOPE'
-    : '← → MOVER  |  ARRASTAR: SNAP MAGNÉTICO  |  CLIQUE: SELECIONAR  |  botão HITBOX configura colisão/slope  |  ESC: MENU';
+    : '← → MOVER  |  +CP cria checkpoint  |  CP JSON copia checkpoints novos  |  botão HITBOX configura colisão/slope  |  ESC: MENU';
   ctx.fillText(helpText, 12, 32);
 
   // Checkpoint markers in world space
