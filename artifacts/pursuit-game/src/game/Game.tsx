@@ -1302,8 +1302,25 @@ export default function Game() {
         if (screenX >= 166 && screenX <= 220) { editorUndo(); return; }
         if (screenX >= 224 && screenX <= 278) { editorRedo(); return; }
         if (screenX >= 286 && screenX <= 390) { spriteUploadInputRef.current?.click(); return; }
+        const checkpointBtnX = 394;
+        const checkpointBtnW = 30;
+        const checkpointBtnGap = 4;
+        for (let ci = 0; ci < EDITOR_CHECKPOINTS.length; ci++) {
+          const btnX = checkpointBtnX + ci * (checkpointBtnW + checkpointBtnGap);
+          if (screenX >= btnX && screenX <= btnX + checkpointBtnW) {
+            editorCheckpointIdxRef.current = ci;
+            editorCamXRef.current = Math.max(0, EDITOR_CHECKPOINTS[ci].x - CANVAS_W / 2);
+            editorCopiedMsgRef.current = {
+              text: `✓ ${EDITOR_CHECKPOINTS[ci].label} ATIVO — x:${EDITOR_CHECKPOINTS[ci].x}`,
+              until: Date.now() + 1800,
+            };
+            e.preventDefault();
+            return;
+          }
+        }
         // Área da CHAVE DE FASE (clique copia add/del para clipboard)
-        if (screenX >= 398 && screenX <= CANVAS_W - 8) {
+        const exportKeyX = checkpointBtnX + EDITOR_CHECKPOINTS.length * (checkpointBtnW + checkpointBtnGap) + 4;
+        if (screenX >= exportKeyX && screenX <= CANVAS_W - 8) {
           const baseline = editorBaselineKeysRef.current;
           const currentKeys = new Set(platformsRef.current.map(p => platBaseKey(p)));
           // add: estão no estado atual mas não na baseline

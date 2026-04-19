@@ -50,6 +50,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Editor de fase: adicionado CP3 na navegação por `.`/`,` e Numpad 6/4 apontando para o carro em x:16400 (`w:445`, `h:168`, hitboxes customizadas), antes da zona de pneus voadores.
 - Fase: removidas permanentemente as 8 pilhas de pneus voadores em x:17180, 17620, 18150, 18700, 19280, 19860, 20540 e 21150.
 - Editor de fase: checkpoint ativo agora aparece em uma tarja destacada no topo, com contador CP atual/total e linha vertical mais forte no mundo para facilitar a navegação por `.`/`,` e Numpad 6/4.
+- Editor de fase: adicionados botões clicáveis CP1/CP2/CP3 na barra superior para navegar diretamente entre checkpoints sem usar teclado.
 
 ## Key Commands
 

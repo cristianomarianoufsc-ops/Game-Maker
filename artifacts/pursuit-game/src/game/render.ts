@@ -2938,9 +2938,32 @@ export function drawEditorUI(
   ctx.fillText('UPLOAD SPRITE', uploadBtnX + 52, histBtnY + 12);
   ctx.restore();
 
+  const checkpointBtnX = uploadBtnX + 108;
+  const checkpointBtnY = histBtnY;
+  const checkpointBtnW = 30;
+  const checkpointBtnH = histBtnH;
+  const checkpointBtnGap = 4;
+  checkpoints.forEach((cp, ci) => {
+    const btnX = checkpointBtnX + ci * (checkpointBtnW + checkpointBtnGap);
+    const active = ci === checkpointIdx;
+    ctx.save();
+    ctx.fillStyle = active ? 'rgba(0,60,80,0.96)' : 'rgba(25,35,55,0.88)';
+    ctx.strokeStyle = active ? 'rgba(0,240,255,1)' : 'rgba(100,160,220,0.7)';
+    ctx.lineWidth = active ? 2 : 1.25;
+    ctx.beginPath();
+    ctx.roundRect(btnX, checkpointBtnY, checkpointBtnW, checkpointBtnH, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = active ? 'rgba(0,245,255,1)' : 'rgba(160,200,255,0.9)';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(cp.label, btnX + checkpointBtnW / 2, checkpointBtnY + 12);
+    ctx.restore();
+  });
+
   // ── Chave de exportação da fase ─────────────────────────────
   {
-    const expX = uploadBtnX + 108;
+    const expX = checkpointBtnX + checkpoints.length * (checkpointBtnW + checkpointBtnGap) + 4;
     const expY = histBtnY;
     const expW = CANVAS_W - expX - 8;
     const expH = histBtnH;
