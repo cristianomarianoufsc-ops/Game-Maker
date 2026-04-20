@@ -2611,6 +2611,7 @@ export function drawEditorUI(
   canRedo = false,
   baselineKeys: Set<string> = new Set(),
   galleryServerNames: Set<string> = new Set(),
+  galleryObjectTypes: Set<string> = new Set(),
 ): void {
   const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number; rotation?: number }) =>
     `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}:${Math.round(p.rotation ?? 0)}`;
@@ -2898,10 +2899,12 @@ export function drawEditorUI(
         ctx.fillText(delLabel, delBtnX + delBtnW / 2, delBtnY + 15);
         ctx.textAlign = 'left';
 
-        // ── Botão SALVAR NA GALERIA (sprite não salvo no servidor) ──
+        // ── Botão SALVAR NA GALERIA (para todos os tipos não-ground) ──
         const isSprite = p.type === 'sprite' && !!p.customSpriteName;
-        const alreadyInGallery = isSprite && galleryServerNames.has(p.customSpriteName!);
-        if (isSprite && !alreadyInGallery) {
+        const spriteAlreadyInGallery = isSprite && galleryServerNames.has(p.customSpriteName!);
+        const typeAlreadyInGallery = !isSprite && galleryObjectTypes.has(p.type);
+        const alreadyInGallery = isSprite ? spriteAlreadyInGallery : typeAlreadyInGallery;
+        if (p.type !== 'ground' && !alreadyInGallery) {
           const galBtnX = delBtnX;
           const galBtnY = delBtnY + 26;
           const galBtnW = 82;

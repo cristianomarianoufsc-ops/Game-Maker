@@ -434,6 +434,9 @@ export default function Game() {
   const editorMouseCanvasRef = useRef({ x: 0, y: 0 });
   const spriteUploadInputRef = useRef<HTMLInputElement>(null);
   const galleryServerNamesRef = useRef<Set<string>>(new Set());
+  const galleryObjectTypesRef = useRef<Set<string>>(
+    new Set(JSON.parse(localStorage.getItem('galleryObjectTypes') ?? '[]') as string[])
+  );
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
   const editorSelectedIdxRef = useRef(-1);
@@ -533,6 +536,7 @@ export default function Game() {
   // Galeria de sprites
   const [showGallery, setShowGallery] = useState(false);
   const [gallerySprites, setGallerySprites] = useState<{ name: string; url: string; onServer: boolean }[]>([]);
+  const [galleryTypes, setGalleryTypes] = useState<string[]>([]);
 
   const openGallery = useCallback(async () => {
     // Sprites salvos no servidor
@@ -566,6 +570,7 @@ export default function Game() {
     }
 
     setGallerySprites([...serverSprites, ...levelSprites]);
+    setGalleryTypes([...galleryObjectTypesRef.current]);
     setShowGallery(true);
   }, []);
 
@@ -587,19 +592,34 @@ export default function Game() {
     setGallerySprites(prev => prev.filter(s => s.name !== spriteName));
   }, []);
 
-  const saveToGallery = useCallback(async (spriteName: string, dataUrl: string) => {
-    try {
-      const resp = await fetch('/api/upload-sprite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: spriteName, dataUrl }),
-      });
-      if (resp.ok) {
-        galleryServerNamesRef.current.add(spriteName);
-        editorCopiedMsgRef.current = { text: `✓ SALVO NA GALERIA: ${spriteName}`, until: Date.now() + 3000 };
+  const removeObjectTypeFromGallery = useCallback((type: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    galleryObjectTypesRef.current.delete(type);
+    localStorage.setItem('galleryObjectTypes', JSON.stringify([...galleryObjectTypesRef.current]));
+    setGalleryTypes(prev => prev.filter(t => t !== type));
+  }, []);
+
+  const saveToGallery = useCallback(async (p: Platform) => {
+    if (p.type === 'sprite' && p.customSpriteName && p.customSpriteDataUrl) {
+      try {
+        const resp = await fetch('/api/upload-sprite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: p.customSpriteName, dataUrl: p.customSpriteDataUrl }),
+        });
+        if (resp.ok) {
+          galleryServerNamesRef.current.add(p.customSpriteName);
+          editorCopiedMsgRef.current = { text: `✓ SALVO NA GALERIA: ${p.customSpriteName}`, until: Date.now() + 3000 };
+        } else {
+          editorCopiedMsgRef.current = { text: `✗ ERRO AO SALVAR SPRITE`, until: Date.now() + 3000 };
+        }
+      } catch {
+        editorCopiedMsgRef.current = { text: `✗ ERRO AO SALVAR NA GALERIA`, until: Date.now() + 3000 };
       }
-    } catch {
-      editorCopiedMsgRef.current = { text: `✗ ERRO AO SALVAR NA GALERIA`, until: Date.now() + 3000 };
+    } else if (p.type !== 'ground') {
+      galleryObjectTypesRef.current.add(p.type);
+      localStorage.setItem('galleryObjectTypes', JSON.stringify([...galleryObjectTypesRef.current]));
+      editorCopiedMsgRef.current = { text: `✓ [${p.type.toUpperCase()}] SALVO NA GALERIA`, until: Date.now() + 3000 };
     }
   }, []);
 
@@ -1911,14 +1931,16 @@ export default function Game() {
 
           // ── Botão SALVAR NA GALERIA ──
           const isSprite = p.type === 'sprite' && !!p.customSpriteName;
-          const alreadyInGallery = isSprite && galleryServerNamesRef.current.has(p.customSpriteName!);
-          if (!editorCollisionModeRef.current && isSprite && !alreadyInGallery) {
+          const spriteAlreadyInGallery = isSprite && galleryServerNamesRef.current.has(p.customSpriteName!);
+          const typeAlreadyInGallery = !isSprite && galleryObjectTypesRef.current.has(p.type);
+          const alreadyInGallery = isSprite ? spriteAlreadyInGallery : typeAlreadyInGallery;
+          if (!editorCollisionModeRef.current && p.type !== 'ground' && !alreadyInGallery) {
             const galBtnX = delBtnX;
             const galBtnY = delBtnY + 26;
             const galBtnW = 82;
             const galBtnH = 22;
             if (wx >= galBtnX && wx <= galBtnX + galBtnW && wy >= galBtnY && wy <= galBtnY + galBtnH) {
-              saveToGallery(p.customSpriteName!, p.customSpriteDataUrl ?? '');
+              saveToGallery(p);
               return;
             }
           }
@@ -2536,7 +2558,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, getEditorCheckpoints(), editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0, editorBaselineKeysRef.current, galleryServerNamesRef.current);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, getEditorCheckpoints(), editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0, editorBaselineKeysRef.current, galleryServerNamesRef.current, galleryObjectTypesRef.current);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);
@@ -2824,6 +2846,64 @@ export default function Game() {
                     >✕</button>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Seção de tipos de objeto salvos */}
+            {galleryTypes.length > 0 && (
+              <div style={{ borderTop: '1px solid rgba(200,150,255,0.2)', paddingTop: 10 }}>
+                <div style={{ color: 'rgba(180,160,220,0.8)', fontFamily: 'monospace', fontSize: 11, marginBottom: 6 }}>
+                  🧱 TIPOS DE OBJETO
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {galleryTypes.map(type => {
+                    const typeColors: Record<string, string> = {
+                      platform: '#2244aa', wall: '#aa6600', obstacle: '#aa2222',
+                      car: '#006688', tire: '#885500', box: '#664422',
+                      tireHideout: '#553300', sprite: '#334488',
+                    };
+                    const bg = typeColors[type] ?? '#333';
+                    return (
+                      <div key={type} style={{ position: 'relative' }}>
+                        <div style={{
+                          background: bg,
+                          border: '1px solid rgba(200,150,255,0.4)',
+                          borderRadius: 6,
+                          padding: '6px 10px',
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          color: '#fff',
+                          fontWeight: 'bold',
+                          letterSpacing: 1,
+                        }}>
+                          [{type.toUpperCase()}]
+                        </div>
+                        <button
+                          onClick={e => removeObjectTypeFromGallery(type, e)}
+                          title={`Remover [${type}] da galeria`}
+                          style={{
+                            position: 'absolute',
+                            top: -4,
+                            right: -4,
+                            width: 14,
+                            height: 14,
+                            background: 'rgba(180,30,30,0.9)',
+                            border: '1px solid rgba(255,80,80,0.7)',
+                            borderRadius: 3,
+                            color: '#fff',
+                            fontSize: 8,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 0,
+                            fontWeight: 'bold',
+                          }}
+                        >✕</button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
