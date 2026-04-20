@@ -1,5 +1,15 @@
 {
-  "add": [],
+  "add": [
+    {
+      "type": "sprite",
+      "x": 17333,
+      "y": 230,
+      "w": 180,
+      "h": 180,
+      "customSpriteName": "pilha_de_pneus_pixel_art.png",
+      "customSpriteDataUrl": "/sprites/pilha_de_pneus_pixel_art.png"
+    }
+  ],
   "del": [
     "sprite:17342:297:180:135:0"
   ]
