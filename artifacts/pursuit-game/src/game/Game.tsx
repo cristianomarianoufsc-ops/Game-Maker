@@ -423,6 +423,7 @@ export default function Game() {
   const editorPendingHistoryRef = useRef<Platform[] | null>(null);
   const editorTestSnapshotRef = useRef<Platform[] | null>(null);
   const editorBaselineKeysRef = useRef<Set<string>>(new Set());
+  const originalLevelPlatformsRef = useRef<Platform[]>([]);
   const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number; rotation?: number }) =>
     `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}:${Math.round(p.rotation ?? 0)}`;
   const editorCollisionModeRef = useRef(false);
@@ -540,7 +541,9 @@ export default function Game() {
   useEffect(() => {
     deletedPlatformKeysRef.current = loadDeletedPlatformKeys();
     const customSpritePlatforms = loadCustomSpritePlatforms();
-    const basePlatforms = applyDeletedPlatformKeys(generateLevel(), deletedPlatformKeysRef.current);
+    const originalPlatforms = generateLevel();
+    originalLevelPlatformsRef.current = originalPlatforms;
+    const basePlatforms = applyDeletedPlatformKeys(originalPlatforms, deletedPlatformKeysRef.current);
     customSpriteImagesRef.current = new Map();
     basePlatforms.forEach(registerCustomSpriteImage);
     customSpritePlatforms.forEach(registerCustomSpriteImage);
@@ -549,6 +552,21 @@ export default function Game() {
       ...customSpritePlatforms,
     ];
     gsRef.current = makeInitialState();
+
+    // Carrega level-patch.json do servidor e aplica as mudanças salvas
+    fetch('/level-patch.json')
+      .then(r => r.ok ? r.json() : null)
+      .then((patch: { add?: Platform[]; del?: string[] } | null) => {
+        if (!patch) return;
+        const delKeys = new Set<string>(patch.del ?? []);
+        const patchedBase = originalPlatforms.filter(p => !delKeys.has(platBaseKey(p)));
+        const addPlatforms = (patch.add ?? []) as Platform[];
+        addPlatforms.forEach(registerCustomSpriteImage);
+        const withDeleted = applyDeletedPlatformKeys(patchedBase, deletedPlatformKeysRef.current);
+        platformsRef.current = [...withDeleted, ...customSpritePlatforms, ...addPlatforms];
+        if (gsRef.current) gsRef.current.platforms = platformsRef.current;
+      })
+      .catch(() => { /* sem patch salvo ainda */ });
 
     // Load sprite images
     const img = new Image();
@@ -1554,11 +1572,38 @@ export default function Game() {
           const countMsg = total === 0
             ? '(nenhuma mudança ainda)'
             : `+${addItems.length} add  −${delItems.length} del`;
-          navigator.clipboard.writeText(exportStr).then(() => {
-            editorCopiedMsgRef.current = { text: `✓ CHAVE: ${countMsg} — cole no chat`, until: Date.now() + 3500 };
-          }).catch(() => {
-            editorCopiedMsgRef.current = { text: 'Erro ao copiar — tente Ctrl+C no campo de texto', until: Date.now() + 3000 };
-          });
+
+          // Salva patch permanente no servidor (level-patch.json)
+          if (total > 0) {
+            const originalKeys = new Set(originalLevelPlatformsRef.current.map(platBaseKey));
+            const currentPlatforms = platformsRef.current;
+            const patchAdd = currentPlatforms.filter(p =>
+              p.type !== 'ground' && !originalKeys.has(platBaseKey(p))
+            ).map(p => {
+              const clean: Platform = { ...p };
+              // Omite data URLs grandes — só mantém URLs permanentes de servidor
+              if (clean.customSpriteDataUrl && !clean.customSpriteDataUrl.startsWith('/sprites/')) {
+                delete clean.customSpriteDataUrl;
+              }
+              return clean;
+            });
+            const patchDel = originalLevelPlatformsRef.current
+              .filter(p => p.type !== 'ground' && !new Set(currentPlatforms.map(platBaseKey)).has(platBaseKey(p)))
+              .map(p => platBaseKey(p));
+            const levelPatch = { add: patchAdd, del: patchDel };
+            fetch('/api/save-level-patch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(levelPatch),
+            }).then(() => {
+              editorCopiedMsgRef.current = { text: `✓ FASE SALVA NO PROJETO: ${countMsg}`, until: Date.now() + 4000 };
+            }).catch(() => {
+              editorCopiedMsgRef.current = { text: `⚠ ERRO AO SALVAR — chave copiada: ${countMsg}`, until: Date.now() + 3500 };
+            });
+            navigator.clipboard.writeText(exportStr).catch(() => {});
+          } else {
+            editorCopiedMsgRef.current = { text: '(nenhuma mudança para salvar)', until: Date.now() + 2500 };
+          }
           return;
         }
       }

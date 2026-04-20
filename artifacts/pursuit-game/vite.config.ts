@@ -28,6 +28,7 @@ if (!basePath) {
 }
 
 const spritesDir = path.resolve(import.meta.dirname, "public/sprites");
+const levelPatchFile = path.resolve(import.meta.dirname, "public/level-patch.json");
 
 function spriteUploadPlugin() {
   return {
@@ -78,6 +79,23 @@ function spriteUploadPlugin() {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: "Erro ao listar sprites" }));
         }
+      });
+
+      server.middlewares.use("/api/save-level-patch", (req, res, next) => {
+        if (req.method !== "POST") return next();
+        const chunks: Buffer[] = [];
+        req.on("data", (chunk: Buffer) => chunks.push(chunk));
+        req.on("end", () => {
+          try {
+            const patch = JSON.parse(Buffer.concat(chunks).toString());
+            fs.writeFileSync(levelPatchFile, JSON.stringify(patch, null, 2), "utf-8");
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: "Erro ao salvar patch" }));
+          }
+        });
       });
     },
   };

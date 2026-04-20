@@ -3119,17 +3119,17 @@ export function drawEditorUI(
     ctx.fillStyle = 'rgba(80,220,130,0.95)';
     ctx.font = 'bold 9px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText('CHAVE:', expX + 5, expY + 12);
+    ctx.fillText('SALVAR:', expX + 5, expY + 12);
 
     // String truncada
     ctx.fillStyle = 'rgba(160,255,200,0.85)';
     ctx.font = '9px monospace';
-    const maxStrW = expW - 52;
+    const maxStrW = expW - 58;
     let truncated = exportStr;
     while (truncated.length > 4 && ctx.measureText(truncated).width > maxStrW) {
       truncated = truncated.slice(0, -4) + '…';
     }
-    ctx.fillText(truncated, expX + 50, expY + 12);
+    ctx.fillText(truncated, expX + 56, expY + 12);
     ctx.restore();
   }
 
