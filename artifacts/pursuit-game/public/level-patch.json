@@ -8,21 +8,11 @@
       "type": "box"
     },
     {
-      "type": "sprite",
-      "x": 17448,
-      "y": 275,
-      "w": 180,
-      "h": 180,
-      "customSpriteName": "pilha_de_pneus_pixel_art.png",
-      "customSpriteDataUrl": "/sprites/pilha_de_pneus_pixel_art.png",
-      "collisionBoxes": [
-        {
-          "x": 0,
-          "y": 4,
-          "w": 180,
-          "h": 131
-        }
-      ]
+      "x": 17126,
+      "y": 294,
+      "w": 90,
+      "h": 116,
+      "type": "tireHideout"
     },
     {
       "x": 12570,
@@ -44,6 +34,41 @@
       "w": 65,
       "h": 55,
       "type": "box"
+    },
+    {
+      "x": 17358,
+      "y": 294,
+      "w": 90,
+      "h": 116,
+      "type": "tireHideout"
+    },
+    {
+      "x": 17569,
+      "y": 294,
+      "w": 90,
+      "h": 116,
+      "type": "tireHideout"
+    },
+    {
+      "x": 17746,
+      "y": 294,
+      "w": 90,
+      "h": 116,
+      "type": "tireHideout"
+    },
+    {
+      "type": "box",
+      "x": 21635,
+      "y": 355,
+      "w": 65,
+      "h": 55
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 355,
+      "w": 65,
+      "h": 55
     }
   ],
   "del": [
@@ -51,6 +76,7 @@
     "sprite:17477:183:180:180:0",
     "box:12570:133:65:55:0",
     "box:12570:25:65:55:0",
-    "box:13355:245:65:55:0"
+    "box:13355:245:65:55:0",
+    "tireHideout:17885:294:90:116:0"
   ]
 }
