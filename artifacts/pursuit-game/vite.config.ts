@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import fs from "fs";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 const rawPort = process.env.PORT;
@@ -26,12 +27,69 @@ if (!basePath) {
   );
 }
 
+const spritesDir = path.resolve(import.meta.dirname, "public/sprites");
+
+function spriteUploadPlugin() {
+  return {
+    name: "sprite-upload",
+    configureServer(server: import("vite").ViteDevServer) {
+      server.middlewares.use("/api/upload-sprite", (req, res, next) => {
+        if (req.method !== "POST") return next();
+
+        const chunks: Buffer[] = [];
+        req.on("data", (chunk: Buffer) => chunks.push(chunk));
+        req.on("end", () => {
+          try {
+            const body = JSON.parse(Buffer.concat(chunks).toString());
+            const { name, dataUrl } = body as { name: string; dataUrl: string };
+
+            if (!name || !dataUrl) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: "name e dataUrl são obrigatórios" }));
+              return;
+            }
+
+            const safeName = path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "_");
+            const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+            const buffer = Buffer.from(base64, "base64");
+
+            fs.mkdirSync(spritesDir, { recursive: true });
+            fs.writeFileSync(path.join(spritesDir, safeName), buffer);
+
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ url: `/sprites/${safeName}` }));
+          } catch (err) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: "Erro ao salvar sprite" }));
+          }
+        });
+      });
+
+      server.middlewares.use("/api/sprites", (req, res, next) => {
+        if (req.method !== "GET") return next();
+        try {
+          fs.mkdirSync(spritesDir, { recursive: true });
+          const files = fs.readdirSync(spritesDir).filter((f) =>
+            /\.(png|webp|jpg|jpeg|gif|svg)$/i.test(f)
+          );
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ sprites: files.map((f) => ({ name: f, url: `/sprites/${f}` })) }));
+        } catch {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: "Erro ao listar sprites" }));
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
+    spriteUploadPlugin(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [

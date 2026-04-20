@@ -2384,12 +2384,15 @@ export default function Game() {
       editorCopiedMsgRef.current = { text: 'USE PNG OU WEBP — FUNDO BRANCO REMOVIDO AUTO', until: Date.now() + 3000 };
       return;
     }
+
+    editorCopiedMsgRef.current = { text: '⏳ SALVANDO SPRITE NO PROJETO...', until: Date.now() + 10000 };
+
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = typeof reader.result === 'string' ? reader.result : '';
       if (!dataUrl) return;
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         const processed = stripEditorSpriteBackground(img);
         const processedDataUrl = processed.src;
 
@@ -2397,6 +2400,23 @@ export default function Game() {
         const scale = Math.min(1, maxW / img.naturalWidth);
         const w = Math.max(12, Math.round(img.naturalWidth * scale));
         const h = Math.max(12, Math.round(img.naturalHeight * scale));
+
+        // Tenta salvar permanentemente no servidor (public/sprites/)
+        let spriteDataUrl = processedDataUrl;
+        try {
+          const resp = await fetch('/api/upload-sprite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: file.name, dataUrl: processedDataUrl }),
+          });
+          if (resp.ok) {
+            const { url } = await resp.json() as { url: string };
+            spriteDataUrl = url; // URL permanente: /sprites/nome.webp
+          }
+        } catch {
+          // Fallback silencioso: usa data URL local (não permanente)
+        }
+
         const platform: Platform = {
           type: 'sprite',
           x: Math.round(editorMouseWorldRef.current.x - w / 2),
@@ -2404,7 +2424,7 @@ export default function Game() {
           w,
           h,
           customSpriteName: file.name,
-          customSpriteDataUrl: processedDataUrl,
+          customSpriteDataUrl: spriteDataUrl,
         };
         const snapshot = platformsRef.current.map(p => ({
           ...p,
@@ -2425,7 +2445,14 @@ export default function Game() {
         editorSelectedIndicesRef.current = new Set([idx]);
         editorCollisionModeRef.current = false;
         editorCollisionBoxIdxRef.current = 0;
-        editorCopiedMsgRef.current = { text: `✓ SPRITE ADICIONADO: ${file.name}`, until: Date.now() + 3000 };
+
+        const isPermanent = spriteDataUrl.startsWith('/sprites/');
+        editorCopiedMsgRef.current = {
+          text: isPermanent
+            ? `✓ SPRITE SALVO PERMANENTEMENTE: ${file.name}`
+            : `⚠ SPRITE LOCAL (reinicie para salvar): ${file.name}`,
+          until: Date.now() + 4000,
+        };
       };
       img.src = dataUrl;
     };
