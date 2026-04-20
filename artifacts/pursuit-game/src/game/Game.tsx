@@ -623,6 +623,49 @@ export default function Game() {
     }
   }, []);
 
+  const placeObjectType = useCallback((type: Platform['type']) => {
+    setShowGallery(false);
+    type DefaultDims = { w: number; h: number };
+    const defaults: Record<string, DefaultDims> = {
+      platform:    { w: 120, h: 20 },
+      wall:        { w: 20,  h: 80 },
+      obstacle:    { w: 40,  h: 40 },
+      car:         { w: 180, h: 60 },
+      tire:        { w: 40,  h: 60 },
+      tireHideout: { w: 80,  h: 80 },
+      box:         { w: 60,  h: 40 },
+    };
+    const dims = defaults[type] ?? { w: 60, h: 40 };
+    const cx = editorCamXRef.current + CANVAS_W / 2;
+    const cy = editorCamYRef.current + CANVAS_H / 2;
+    const platform: Platform = {
+      type,
+      x: Math.round(cx - dims.w / 2),
+      y: Math.round(Math.min(cy - dims.h / 2, GROUND_Y - dims.h)),
+      w: dims.w,
+      h: dims.h,
+    };
+    const snapshot = platformsRef.current.map(p => ({
+      ...p,
+      collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({
+        ...b,
+        slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
+      })) : undefined,
+    })) as Platform[];
+    editorUndoStackRef.current.push(snapshot);
+    if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
+    editorRedoStackRef.current = [];
+    platformsRef.current.push(platform);
+    saveCustomSpritePlatforms(platformsRef.current);
+    if (gsRef.current) gsRef.current.platforms = platformsRef.current;
+    const idx = platformsRef.current.length - 1;
+    editorSelectedIdxRef.current = idx;
+    editorSelectedIndicesRef.current = new Set([idx]);
+    editorCollisionModeRef.current = false;
+    editorCollisionBoxIdxRef.current = 0;
+    editorCopiedMsgRef.current = { text: `✓ [${type.toUpperCase()}] COLOCADO`, until: Date.now() + 3000 };
+  }, []);
+
   const placeGallerySprite = useCallback((spriteName: string, spriteUrl: string) => {
     setShowGallery(false);
     const img = new Image();
@@ -2855,43 +2898,92 @@ export default function Game() {
                 <div style={{ color: 'rgba(180,160,220,0.8)', fontFamily: 'monospace', fontSize: 11, marginBottom: 6 }}>
                   🧱 TIPOS DE OBJETO
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {galleryTypes.map(type => {
-                    const typeColors: Record<string, string> = {
-                      platform: '#2244aa', wall: '#aa6600', obstacle: '#aa2222',
-                      car: '#006688', tire: '#885500', box: '#664422',
-                      tireHideout: '#553300', sprite: '#334488',
+                    // Cores e proporções visuais de cada tipo
+                    type ShapeConfig = { fill: string; stroke: string; shape: 'wide' | 'tall' | 'square' | 'car' | 'circle' };
+                    const shapes: Record<string, ShapeConfig> = {
+                      platform:    { fill: '#3a5ccc', stroke: '#6688ff', shape: 'wide' },
+                      wall:        { fill: '#996622', stroke: '#cc9944', shape: 'tall' },
+                      obstacle:    { fill: '#cc3322', stroke: '#ff6655', shape: 'square' },
+                      car:         { fill: '#cc9900', stroke: '#ffcc22', shape: 'car' },
+                      tire:        { fill: '#444444', stroke: '#777777', shape: 'circle' },
+                      tireHideout: { fill: '#553311', stroke: '#886633', shape: 'square' },
+                      box:         { fill: '#8b5a2b', stroke: '#c88844', shape: 'square' },
                     };
-                    const bg = typeColors[type] ?? '#333';
+                    const cfg = shapes[type] ?? { fill: '#333', stroke: '#888', shape: 'square' };
+
+                    const preview = (() => {
+                      const base: React.CSSProperties = {
+                        background: cfg.fill,
+                        border: `2px solid ${cfg.stroke}`,
+                        borderRadius: 3,
+                        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15)`,
+                      };
+                      if (cfg.shape === 'wide')   return { ...base, width: 54, height: 10, borderRadius: 2 };
+                      if (cfg.shape === 'tall')   return { ...base, width: 14, height: 44 };
+                      if (cfg.shape === 'car')    return { ...base, width: 60, height: 24, borderRadius: 4, position: 'relative' as const };
+                      if (cfg.shape === 'circle') return { ...base, width: 22, height: 28, borderRadius: '40% 40% 50% 50%' };
+                      return { ...base, width: 34, height: 28 };
+                    })();
+
                     return (
                       <div key={type} style={{ position: 'relative' }}>
-                        <div style={{
-                          background: bg,
-                          border: '1px solid rgba(200,150,255,0.4)',
-                          borderRadius: 6,
-                          padding: '6px 10px',
-                          fontFamily: 'monospace',
-                          fontSize: 11,
-                          color: '#fff',
-                          fontWeight: 'bold',
-                          letterSpacing: 1,
-                        }}>
-                          [{type.toUpperCase()}]
-                        </div>
+                        <button
+                          onClick={() => placeObjectType(type as Platform['type'])}
+                          title={`Colocar [${type}] na fase`}
+                          style={{
+                            width: 90,
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(200,150,255,0.3)',
+                            borderRadius: 6,
+                            padding: '6px 4px 4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 6,
+                            transition: 'border-color 0.15s, background 0.15s',
+                          }}
+                          onMouseEnter={e => {
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(200,150,255,0.9)';
+                            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(200,150,255,0.1)';
+                          }}
+                          onMouseLeave={e => {
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(200,150,255,0.3)';
+                            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+                          }}
+                        >
+                          {/* Miniatura visual */}
+                          <div style={{ width: 64, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={preview} />
+                          </div>
+                          <span style={{
+                            color: 'rgba(200,185,230,0.85)',
+                            fontFamily: 'monospace',
+                            fontSize: 9,
+                            wordBreak: 'break-all',
+                            textAlign: 'center',
+                            lineHeight: 1.3,
+                          }}>
+                            {type.toUpperCase()}
+                          </span>
+                        </button>
+                        {/* X para remover da galeria */}
                         <button
                           onClick={e => removeObjectTypeFromGallery(type, e)}
                           title={`Remover [${type}] da galeria`}
                           style={{
                             position: 'absolute',
-                            top: -4,
-                            right: -4,
-                            width: 14,
-                            height: 14,
-                            background: 'rgba(180,30,30,0.9)',
-                            border: '1px solid rgba(255,80,80,0.7)',
+                            top: 3,
+                            right: 3,
+                            width: 16,
+                            height: 16,
+                            background: 'rgba(180,30,30,0.85)',
+                            border: '1px solid rgba(255,80,80,0.6)',
                             borderRadius: 3,
                             color: '#fff',
-                            fontSize: 8,
+                            fontSize: 9,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
