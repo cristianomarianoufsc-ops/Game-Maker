@@ -221,7 +221,7 @@ export function generateLevel(): Platform[] {
   // ── PILHAS DE PNEUS REFÚGIO (CP3 em diante) ─────────────────────
   // Horácio passa por trás delas; tiros do drone quebram a pilha em 4 pneus rolando.
   const tireHideouts: Platform[] = [
-    { x: 17180, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
+    { x: 17179, y: GROUND_Y - 105, w: 90, h: 116, type: 'tireHideout' },
     { x: 17885, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
     { x: 18640, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
     { x: 19485, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
