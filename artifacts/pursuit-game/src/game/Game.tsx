@@ -327,9 +327,40 @@ function stripEditorSpriteBackground(src: HTMLImageElement): HTMLImageElement {
   const px = imageData.data;
   const w = canvas.width;
   const h = canvas.height;
-  const isDark = (idx: number) => {
-    const r = px[idx], g = px[idx + 1], b = px[idx + 2];
-    return r * 0.299 + g * 0.587 + b * 0.114 < 36;
+
+  // Se a imagem já tem transparência nas bordas/cantos, ela já tem fundo removido —
+  // retorna direto sem processar para não danificar o sprite.
+  const sampleCorners = [
+    0,
+    (w - 1) * 4,
+    (h - 1) * w * 4,
+    ((h - 1) * w + (w - 1)) * 4,
+  ];
+  const alreadyHasAlpha = sampleCorners.some(i => px[i + 3] < 200);
+
+  // Conta quantos pixels totais já são transparentes
+  let transparentCount = 0;
+  for (let i = 3; i < px.length; i += 4) {
+    if (px[i] < 200) transparentCount++;
+  }
+  const totalPixels = w * h;
+  const transparentRatio = transparentCount / totalPixels;
+
+  // Se já tem transparência significativa (>2% dos pixels), usa como está
+  if (alreadyHasAlpha || transparentRatio > 0.02) {
+    const out = new Image();
+    out.src = src.src;
+    return out;
+  }
+
+  // Caso contrário, faz flood-fill das bordas para remover fundo sólido
+  // Usa o pixel do canto superior-esquerdo como cor de referência do fundo
+  const bgR = px[0], bgG = px[1], bgB = px[2];
+  const isBg = (idx: number) => {
+    const dr = Math.abs(px[idx] - bgR);
+    const dg = Math.abs(px[idx + 1] - bgG);
+    const db = Math.abs(px[idx + 2] - bgB);
+    return dr + dg + db < 60;
   };
   const queue: number[] = [];
   const seen = new Uint8Array(w * h);
@@ -338,7 +369,7 @@ function stripEditorSpriteBackground(src: HTMLImageElement): HTMLImageElement {
     const p = y * w + x;
     if (seen[p]) return;
     const idx = p * 4;
-    if (!isDark(idx)) return;
+    if (!isBg(idx)) return;
     seen[p] = 1;
     queue.push(p);
   };
@@ -360,17 +391,6 @@ function stripEditorSpriteBackground(src: HTMLImageElement): HTMLImageElement {
     push(x - 1, y);
     push(x, y + 1);
     push(x, y - 1);
-  }
-  for (let i = 0; i < px.length; i += 4) {
-    const r = px[i], g = px[i + 1], b = px[i + 2];
-    const brightness = r * 0.299 + g * 0.587 + b * 0.114;
-    const maxC = Math.max(r, g, b);
-    const minC = Math.min(r, g, b);
-    const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
-    if (brightness > 82 && saturation < 0.28) {
-      const t = Math.min(1, (brightness - 82) / 138);
-      px[i + 3] = Math.round((1 - t) * px[i + 3]);
-    }
   }
   ctx.putImageData(imageData, 0, 0);
   const out = new Image();
