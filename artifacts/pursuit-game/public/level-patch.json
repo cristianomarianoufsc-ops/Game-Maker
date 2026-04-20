@@ -2,16 +2,24 @@
   "add": [
     {
       "type": "sprite",
-      "x": 17477,
-      "y": 183,
+      "x": 17448,
+      "y": 275,
       "w": 180,
       "h": 180,
       "customSpriteName": "pilha_de_pneus_pixel_art.png",
       "customSpriteDataUrl": "/sprites/pilha_de_pneus_pixel_art.png",
-      "rotation": 36
+      "collisionBoxes": [
+        {
+          "x": 0,
+          "y": 4,
+          "w": 180,
+          "h": 131
+        }
+      ]
     }
   ],
   "del": [
-    "sprite:17407:299:180:135:0"
+    "sprite:17407:299:180:135:0",
+    "sprite:17477:183:180:180:0"
   ]
 }
