@@ -478,6 +478,7 @@ export default function Game() {
   };
   const editorDragRef = useRef<EditorDrag | null>(null);
   const editorSnapAxesRef = useRef<{ worldX: number | null; worldY: number | null }>({ worldX: null, worldY: null });
+  const editorSnapStateRef = useRef<{ x: boolean; y: boolean }>({ x: false, y: false });
   const EDITOR_PAN_SPEED = 12;
   const EDITOR_CHECKPOINTS = [
     { label: 'CP1', x: 6500 },
@@ -1114,23 +1115,28 @@ export default function Game() {
     };
 
     const snapEditorPlatform = (platform: Platform, platformIdx: number, ignoredIndices: Set<number> = new Set()) => {
-      const SNAP_X = 18;
-      const SNAP_Y = 24;
+      const SNAP_X = 20;
+      const UNSNAP_X = 36;
+      const SNAP_Y = 26;
+      const UNSNAP_Y = 44;
+      const snapState = editorSnapStateRef.current;
+      const threshX = snapState.x ? UNSNAP_X : SNAP_X;
+      const threshY = snapState.y ? UNSNAP_Y : SNAP_Y;
       const movingHit = getPlatformCollisionRect(platform);
       const movingVisual = { x: platform.x, y: platform.y, w: platform.w, h: platform.h };
       const movingCenterX = movingHit.x + movingHit.w / 2;
       const movingCenterY = movingHit.y + movingHit.h / 2;
       let bestDx = 0;
       let bestDy = 0;
-      let bestAbsX = SNAP_X + 1;
-      let bestAbsY = SNAP_Y + 1;
+      let bestAbsX = threshX + 1;
+      let bestAbsY = threshY + 1;
       let snapWorldX: number | null = null;
       let snapWorldY: number | null = null;
 
       const considerX = (from: number, to: number) => {
         const delta = to - from;
         const abs = Math.abs(delta);
-        if (abs <= SNAP_X && abs < bestAbsX) {
+        if (abs <= threshX && abs < bestAbsX) {
           bestAbsX = abs;
           bestDx = delta;
           snapWorldX = to;
@@ -1140,7 +1146,7 @@ export default function Game() {
       const considerY = (from: number, to: number) => {
         const delta = to - from;
         const abs = Math.abs(delta);
-        if (abs <= SNAP_Y && abs < bestAbsY) {
+        if (abs <= threshY && abs < bestAbsY) {
           bestAbsY = abs;
           bestDy = delta;
           snapWorldY = to;
@@ -1193,6 +1199,8 @@ export default function Game() {
       platform.y = Math.round(Math.min(platform.y, EDITOR_GROUND_Y - getPlatformGroundClampOffset(platform)));
       platform.y = Math.max(-4000, platform.y);
 
+      snapState.x = bestDx !== 0;
+      snapState.y = bestDy !== 0;
       editorSnapAxesRef.current.worldX = bestDx !== 0 ? snapWorldX : null;
       editorSnapAxesRef.current.worldY = bestDy !== 0 ? snapWorldY : null;
     };
@@ -2718,7 +2726,12 @@ export default function Game() {
       // ── Drag-ghost: temporariamente move originais de volta pra exibição ──
       const _activeDrag = editorDragRef.current;
       const _isDragGhost = gs.gamePhase === 'editor' && _activeDrag?.mode === 'move' && _activeDrag.hasMoved;
-      if (!_isDragGhost) { editorSnapAxesRef.current.worldX = null; editorSnapAxesRef.current.worldY = null; }
+      if (!_isDragGhost) {
+        editorSnapAxesRef.current.worldX = null;
+        editorSnapAxesRef.current.worldY = null;
+        editorSnapStateRef.current.x = false;
+        editorSnapStateRef.current.y = false;
+      }
       const _ghostEntries: { idx: number; ghostX: number; ghostY: number }[] = [];
       if (_isDragGhost) {
         const _selIdx = editorSelectedIdxRef.current;
@@ -2765,27 +2778,35 @@ export default function Game() {
         if (_snapAxes.worldX !== null) {
           const _sx = Math.round(_snapAxes.worldX - gs.camera.x) + 0.5;
           ctx.save();
-          ctx.strokeStyle = 'rgba(0, 210, 255, 0.85)';
-          ctx.lineWidth = 1;
-          ctx.setLineDash([6, 4]);
+          ctx.strokeStyle = 'rgba(0, 230, 255, 1)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([8, 5]);
           ctx.beginPath();
           ctx.moveTo(_sx, 0);
           ctx.lineTo(_sx, CANVAS_H);
           ctx.stroke();
           ctx.setLineDash([]);
+          ctx.font = 'bold 9px monospace';
+          ctx.fillStyle = 'rgba(0,230,255,1)';
+          ctx.textAlign = 'left';
+          ctx.fillText('◀ SNAP X ▶', _sx + 4, 18);
           ctx.restore();
         }
         if (_snapAxes.worldY !== null) {
-          const _sy = Math.round(_snapAxes.worldY) + 0.5;
+          const _sy = Math.round(_snapAxes.worldY - gs.camera.y) + 0.5;
           ctx.save();
-          ctx.strokeStyle = 'rgba(0, 210, 255, 0.85)';
-          ctx.lineWidth = 1;
-          ctx.setLineDash([6, 4]);
+          ctx.strokeStyle = 'rgba(0, 230, 255, 1)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([8, 5]);
           ctx.beginPath();
           ctx.moveTo(0, _sy);
           ctx.lineTo(CANVAS_W, _sy);
           ctx.stroke();
           ctx.setLineDash([]);
+          ctx.font = 'bold 9px monospace';
+          ctx.fillStyle = 'rgba(0,230,255,1)';
+          ctx.textAlign = 'left';
+          ctx.fillText('▲ SNAP Y ▼', 4, _sy - 4);
           ctx.restore();
         }
 
