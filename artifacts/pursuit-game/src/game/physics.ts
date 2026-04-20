@@ -688,7 +688,61 @@ export function updatePlayer(
     p.isClimbing = false;
   }
 
-  // Wall run trigger — só ativa se Horácio encostar na parede durante a subida do pulo
+  // Box climb trigger direto — caixas ≤ 4 blocos, sem passar por wall-run
+  // Ativa quando o jogador pula em direção à caixa e pressiona up/space
+  const _boxClimbConditions =
+    !p.isWallRunning &&
+    !p.isClimbing &&
+    !p.onGround &&
+    p.touchingWall &&
+    !p.isRolling &&
+    !p.isDivejumping &&
+    !p.isWallFlipping &&
+    !p.isWallClimbUp &&
+    p.state !== 'hurt' &&
+    p.wallRunOnBox &&
+    (GROUND_Y - p.wallTopY) <= MAX_BOX_CLIMB_HEIGHT &&
+    (keys.up || keys.space) &&
+    ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
+      (p.wallSide === 'left' && (keys.left || incomingVx < 0))) &&
+    p.vy < 0;
+
+  if (_boxClimbConditions && p.wallSide) {
+    const wallSide = p.wallSide;
+    p.isWallClimbUp = true;
+    p.wallClimbStartX = p.x;
+    p.wallClimbStartY = p.y;
+    p.wallClimbTargetX = wallSide === 'right' ? p.wallX + 22 : p.wallX - p.w - 22;
+    p.wallClimbTargetY = p.wallTopY - PLAYER_H - 4;
+    p.wallClimbSide = wallSide;
+    {
+      const hangY = p.wallTopY + 35;
+      const climbDist = Math.max(1, p.wallClimbStartY - hangY);
+      const REF_DIST = 120;
+      p.wallClimbLiftAmount = Math.min(160, Math.max(86, climbDist * 0.58));
+      const speedRatio = Math.sqrt(Math.min(1, REF_DIST / climbDist));
+      p.wallClimbAdjustedDuration = Math.max(350, Math.round(WALLCLIMB_DURATION * speedRatio));
+      p.wallClimbTimer = p.wallClimbAdjustedDuration;
+      const rawPenalty = Math.pow(86 / Math.max(86, p.wallClimbLiftAmount), 2.0);
+      p.wallClimbJumpPenalty = Math.max(0.25, rawPenalty);
+    }
+    p.coyoteTime = 0;
+    p.vx = 0;
+    p.vy = 0;
+    p.facingRight = wallSide === 'right';
+    p.state = 'wallclimb';
+    p.animFrame = 0;
+    p.animTimer = 0;
+    for (let i = 0; i < 10; i++) {
+      spawnParticle(
+        p.x + (wallSide === 'right' ? p.w : 0),
+        p.y + PLAYER_H * 0.4,
+        i % 2 === 0 ? '#d8d0c8' : '#ffcc44',
+      );
+    }
+  }
+
+  // Wall run trigger — apenas em paredes normais (não-caixas)
   if (
     !p.isWallRunning &&
     !p.isClimbing &&
@@ -703,8 +757,7 @@ export function updatePlayer(
     ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
       (p.wallSide === 'left' && (keys.left || incomingVx < 0))) &&
     p.vy < -2.5 &&
-    // wall-run bloqueado em caixas altas demais (> 4 blocos ≈ 220px)
-    !(p.wallRunOnBox && (GROUND_Y - p.wallTopY) > MAX_BOX_CLIMB_HEIGHT)
+    !p.wallRunOnBox   // wall-run banido em caixas — sem sprite de corrida vertical
   ) {
     p.isWallRunning = true;
     p.onGround = false;
