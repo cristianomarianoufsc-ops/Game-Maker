@@ -225,6 +225,7 @@ export function generateLevel(): Platform[] {
     { x: 20420, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
   ];
   platforms.push(...tireHideouts.filter(({ x, w }) => !isNearWallBase(x, w)));
+  platforms.push({ x: 16528, y: GROUND_Y - 284, w: 474, h: 474, type: 'sprite', rotation: 1 });
 
   // ── PLATAFORMAS ELEVADAS (sacadas + ares-condicionados) ─────────
   // Sacadas:     y = GROUND_Y - 125, w = 115 → h=62, collisionH=85
