@@ -18,7 +18,8 @@ interface BoxStackWall extends SlopedRect {
 }
 
 // Altura máxima acima do chão (em px) que Horácio pode escalar em caixas (~4 caixas de 55px)
-const MAX_BOX_CLIMB_HEIGHT = 220;
+const MAX_BOX_CLIMB_HEIGHT = 220; // ≈ 4 caixas — acima disso climb é bloqueado
+const MIN_BOX_CLIMB_HEIGHT = 165; // ≈ 3 caixas — abaixo disso o jogador pula em cima normalmente
 
 function rectOverlap(ax: number, ay: number, aw: number, ah: number,
   bx: number, by: number, bw: number, bh: number): boolean {
@@ -618,8 +619,10 @@ export function updatePlayer(
       p.vy += SIDEFLIP_BOOST;
     }
 
-    // Wall climb initiate — bloqueado em caixas acima de MAX_BOX_CLIMB_HEIGHT
-    if (p.touchingWall && keys.up && !p.onGround && !(p.wallRunOnBox && (GROUND_Y - p.wallTopY) > MAX_BOX_CLIMB_HEIGHT)) {
+    // Wall climb simples — bloqueado em caixas (muito baixas: pula em cima; muito altas: inalcançável)
+    const _boxHeight = GROUND_Y - p.wallTopY;
+    const _climbBannedOnBox = p.wallRunOnBox && (_boxHeight <= MIN_BOX_CLIMB_HEIGHT || _boxHeight > MAX_BOX_CLIMB_HEIGHT);
+    if (p.touchingWall && keys.up && !p.onGround && !_climbBannedOnBox) {
       p.isClimbing = true;
       p.vy = -CLIMB_SPEED;
     }
@@ -701,6 +704,7 @@ export function updatePlayer(
     !p.isWallClimbUp &&
     p.state !== 'hurt' &&
     p.wallRunOnBox &&
+    (GROUND_Y - p.wallTopY) > MIN_BOX_CLIMB_HEIGHT &&   // caixas baixas: pula em cima normalmente
     (GROUND_Y - p.wallTopY) <= MAX_BOX_CLIMB_HEIGHT &&
     (keys.up || keys.space) &&
     ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
