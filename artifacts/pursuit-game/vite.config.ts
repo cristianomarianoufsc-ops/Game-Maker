@@ -87,8 +87,31 @@ function spriteUploadPlugin() {
         req.on("data", (chunk: Buffer) => chunks.push(chunk));
         req.on("end", () => {
           try {
-            const patch = JSON.parse(Buffer.concat(chunks).toString());
-            fs.writeFileSync(levelPatchFile, JSON.stringify(patch, null, 2), "utf-8");
+            const incoming = JSON.parse(Buffer.concat(chunks).toString()) as {
+              add?: unknown[];
+              del?: string[];
+            };
+
+            // Lê patch existente e acumula as deleções entre sessões
+            let existingDel: string[] = [];
+            try {
+              const existing = JSON.parse(fs.readFileSync(levelPatchFile, "utf-8")) as { del?: string[] };
+              existingDel = existing.del ?? [];
+            } catch { /* sem patch anterior */ }
+
+            // União dos del: mantém deleções passadas + novas
+            const addKeys = new Set(
+              (incoming.add ?? []).map((p: unknown) => {
+                const pl = p as { type: string; x: number; y: number; w: number; h: number; rotation?: number };
+                return `${pl.type}:${pl.x}:${pl.y}:${pl.w}:${pl.h}:${Math.round(pl.rotation ?? 0)}`;
+              })
+            );
+            const mergedDel = Array.from(
+              new Set([...existingDel, ...(incoming.del ?? [])])
+            ).filter(k => !addKeys.has(k)); // Remove da lista del se o item foi re-adicionado
+
+            const merged = { add: incoming.add ?? [], del: mergedDel };
+            fs.writeFileSync(levelPatchFile, JSON.stringify(merged, null, 2), "utf-8");
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({ ok: true }));
           } catch {
