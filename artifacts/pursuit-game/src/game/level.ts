@@ -233,6 +233,12 @@ export function generateLevel(): Platform[] {
     h: 474,
     type: 'sprite',
     rotation: 1,
+    collisionBoxes: [
+      { x: 18, y: 232, w: 430, h: 58 },
+      { x: 18, y: 198, w: 138, h: 86, slopeTop: { left: 56, right: 24 } },
+      { x: 145, y: 154, w: 220, h: 130, slopeTop: { left: 44, right: 30 } },
+      { x: 354, y: 190, w: 94, h: 94, slopeTop: { left: 24, right: 52 } },
+    ],
     customSpriteName: 'carro_abandonado_pixelart_1776652992846.png',
     customSpriteDataUrl: abandonedCarSpriteUrl,
   });

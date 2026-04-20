@@ -37,6 +37,7 @@ import {
   ensurePlatformCollisionBox,
   ensurePlatformCollisionBoxes,
   getPlatformCollisionRect,
+  getPlatformCollisionBoxes,
   getPlatformCollisionRects,
   getPlatformCollisionMaxBottom,
   getPlatformCollisionSummary,
@@ -1491,7 +1492,20 @@ export default function Game() {
           const addItems = platformsRef.current
             .filter(p => p.type !== 'ground' && !baseline.has(platBaseKey(p)))
             .map(p => {
-              const item: { t: string; x: number; y: number; w: number; h: number; r?: number; img?: string } = {
+              const item: {
+                t: string;
+                x: number;
+                y: number;
+                w: number;
+                h: number;
+                r?: number;
+                img?: string;
+                cw?: number;
+                ch?: number;
+                cox?: number;
+                coy?: number;
+                boxes?: Array<{ x: number; y: number; w: number; h: number; sl?: number; sr?: number }>;
+              } = {
                 t: p.type[0],
                 x: p.x,
                 y: Math.round(p.y - GROUND_Y),
@@ -1501,6 +1515,21 @@ export default function Game() {
               const rot = Math.round(p.rotation ?? 0);
               if (rot !== 0) item.r = rot;
               if (p.type === 'sprite' && p.customSpriteName) item.img = p.customSpriteName;
+              if (p.collisionBoxes && p.collisionBoxes.length > 0) {
+                item.boxes = getPlatformCollisionBoxes(p).map((box) => ({
+                  x: box.x,
+                  y: box.y,
+                  w: box.w,
+                  h: box.h,
+                  ...(box.slopeTop ? { sl: box.slopeTop.left, sr: box.slopeTop.right } : {}),
+                }));
+              } else if (hasCustomPlatformCollision(p)) {
+                const hit = getPlatformCollisionRect(p);
+                item.cw = Math.round(hit.w);
+                item.ch = Math.round(hit.h);
+                item.cox = Math.round(hit.x - p.x);
+                item.coy = Math.round(hit.y - p.y);
+              }
               return item;
             });
           // del: estavam na baseline mas não estão mais no estado atual
