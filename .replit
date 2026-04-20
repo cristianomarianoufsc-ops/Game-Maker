@@ -20,6 +20,10 @@ author = "agent"
 task = "workflow.run"
 args = "Start application"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Level Autosave"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -31,6 +35,17 @@ outputType = "webview"
 task = "shell.exec"
 args = "PORT=5173 BASE_PATH=/ pnpm --filter @workspace/pursuit-game run dev"
 waitForPort = 5173
+
+[[workflows.workflow]]
+name = "Level Autosave"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash scripts/level-autosave.sh"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 stack = "PNPM_WORKSPACE"
