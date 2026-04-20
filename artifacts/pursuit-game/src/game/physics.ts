@@ -620,8 +620,8 @@ export function updatePlayer(
     }
 
     // Wall climb simples — bloqueado em caixas (muito baixas: pula em cima; muito altas: inalcançável)
-    // Altura relativa: quantas caixas acima dos PÉS de Horácio está o topo da caixa alvo
-    const _boxHeight = (p.y + PLAYER_H) - p.wallTopY;
+    // Usa jumpOriginGroundY (pés na plataforma de origem) para não ser enganado pela posição aérea do pulo
+    const _boxHeight = p.jumpOriginGroundY - p.wallTopY;
     const _climbBannedOnBox = p.wallRunOnBox && (_boxHeight <= MIN_BOX_CLIMB_HEIGHT || _boxHeight > MAX_BOX_CLIMB_HEIGHT);
     if (p.touchingWall && keys.up && !p.onGround && !_climbBannedOnBox) {
       p.isClimbing = true;
@@ -705,9 +705,9 @@ export function updatePlayer(
     !p.isWallClimbUp &&
     p.state !== 'hurt' &&
     p.wallRunOnBox &&
-    // Altura relativa aos pés de Horácio — não ao chão absoluto
-    ((p.y + PLAYER_H) - p.wallTopY) > MIN_BOX_CLIMB_HEIGHT &&
-    ((p.y + PLAYER_H) - p.wallTopY) <= MAX_BOX_CLIMB_HEIGHT &&
+    // Altura relativa à plataforma de origem do pulo — não à posição aérea nem ao chão absoluto
+    (p.jumpOriginGroundY - p.wallTopY) > MIN_BOX_CLIMB_HEIGHT &&
+    (p.jumpOriginGroundY - p.wallTopY) <= MAX_BOX_CLIMB_HEIGHT &&
     (keys.up || keys.space) &&
     ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
       (p.wallSide === 'left' && (keys.left || incomingVx < 0))) &&
