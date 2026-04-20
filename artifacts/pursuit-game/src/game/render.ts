@@ -854,6 +854,17 @@ export function drawPlatforms(
     if (plat.type === 'tireHideout') continue;
     const sx = plat.x - camX;
     if (sx + plat.w < -20 || sx > CANVAS_W + 20) continue;
+    const rotationDeg = plat.rotation ?? 0;
+    const hasRotation = Math.abs(rotationDeg) > 0.01;
+    if (hasRotation) {
+      ctx.save();
+      ctx.translate(sx + plat.w / 2, plat.y + plat.h / 2);
+      ctx.rotate(rotationDeg * Math.PI / 180);
+      ctx.translate(-(sx + plat.w / 2), -(plat.y + plat.h / 2));
+    }
+    const restorePlatformRotation = () => {
+      if (hasRotation) ctx.restore();
+    };
 
     if (plat.type === 'sprite') {
       const img = plat.customSpriteName ? customSpriteImages?.get(plat.customSpriteName) : undefined;
@@ -875,6 +886,7 @@ export function drawPlatforms(
         ctx.strokeStyle = 'rgba(120,220,255,0.85)';
         ctx.strokeRect(sx, plat.y, plat.w, plat.h);
       }
+      restorePlatformRotation();
       continue;
     }
 
@@ -926,6 +938,7 @@ export function drawPlatforms(
       ctx.fillText('♻', x + w / 2, y + h - 10);
       ctx.textAlign = 'left';
 
+      restorePlatformRotation();
       continue;
     }
 
@@ -962,6 +975,7 @@ export function drawPlatforms(
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(carroImg, sx0, sy0, sw0, sh0, dx0, dy0, dw0, dh0);
         ctx.imageSmoothingEnabled = true;
+        restorePlatformRotation();
         continue;
       }
 
@@ -1183,6 +1197,7 @@ export function drawPlatforms(
       ctx.fillStyle = 'rgba(0,0,0,0.14)';
       ctx.fillRect(fx(0.17), fy(0.60), fw(0.64), fh(0.20));
 
+      restorePlatformRotation();
       continue;
     }
 
@@ -1234,10 +1249,12 @@ export function drawPlatforms(
         ctx.fill();
       }
 
+      restorePlatformRotation();
       continue;
     }
 
     if (plat.type === 'tireHideout') {
+      restorePlatformRotation();
       continue;
     }
 
@@ -1308,6 +1325,7 @@ export function drawPlatforms(
         }
       }
 
+      restorePlatformRotation();
       continue;
     }
 
@@ -1461,6 +1479,7 @@ export function drawPlatforms(
         ctx.fillRect(acX + 4, acY + acH - 1, 7, 4);
         ctx.fillRect(acX + acW - 11, acY + acH - 1, 7, 4);
 
+        restorePlatformRotation();
         continue;
 
       } else if (!isRollUnder) {
@@ -1602,6 +1621,7 @@ export function drawPlatforms(
         }
       }
     }
+    restorePlatformRotation();
   }
 }
 
@@ -1618,6 +1638,14 @@ export function drawTireHideouts(
     if (destroyedTireIndices?.includes(pi)) continue;
     const sx = plat.x - camX;
     if (sx + plat.w < -20 || sx > CANVAS_W + 20) continue;
+    const rotationDeg = plat.rotation ?? 0;
+    const hasRotation = Math.abs(rotationDeg) > 0.01;
+    if (hasRotation) {
+      ctx.save();
+      ctx.translate(sx + plat.w / 2, plat.y + plat.h / 2);
+      ctx.rotate(rotationDeg * Math.PI / 180);
+      ctx.translate(-(sx + plat.w / 2), -(plat.y + plat.h / 2));
+    }
 
     ctx.fillStyle = 'rgba(0,0,0,0.36)';
     ctx.fillRect(sx + plat.w * 0.08, plat.y + plat.h - 8, plat.w * 0.84, 10);
@@ -1626,6 +1654,7 @@ export function drawTireHideouts(
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(standingTireImg, sx, plat.y, plat.w, plat.h);
       ctx.imageSmoothingEnabled = true;
+      if (hasRotation) ctx.restore();
       continue;
     }
 
@@ -1635,6 +1664,7 @@ export function drawTireHideouts(
     for (let i = 0; i < 4; i++) {
       ctx.fillRect(sx + 4, plat.y + i * (plat.h / 4) + 3, plat.w - 8, plat.h / 4 - 6);
     }
+    if (hasRotation) ctx.restore();
   }
 }
 
@@ -2580,8 +2610,8 @@ export function drawEditorUI(
   canRedo = false,
   baselineKeys: Set<string> = new Set(),
 ): void {
-  const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number }) =>
-    `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}`;
+  const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number; rotation?: number }) =>
+    `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}:${Math.round(p.rotation ?? 0)}`;
   const typeColor: Record<string, string> = {
     ground: 'rgba(80,200,80,0.25)',
     platform: 'rgba(80,140,255,0.30)',
@@ -2710,7 +2740,8 @@ export function drawEditorUI(
       const modeLabel = collisionMode ? '  HITBOX' : '';
       const boxLabel = collisionMode && hits.length > 1 ? ` ${selectedHitIdx + 1}/${hits.length}` : '';
       const nameLabel = p.type === 'sprite' && p.customSpriteName ? ` ${p.customSpriteName}` : '';
-      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}  [${p.type}]${nameLabel}${modeLabel}${boxLabel}`, drawX + drawW / 2, drawY - 8);
+      const rotationLabel = Math.round(p.rotation ?? 0) !== 0 ? `  rot:${Math.round(p.rotation ?? 0)}°` : '';
+      ctx.fillText(`x:${p.x}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${p.w}  h:${p.h}${rotationLabel}  [${p.type}]${nameLabel}${modeLabel}${boxLabel}`, drawX + drawW / 2, drawY - 8);
       ctx.textAlign = 'left';
 
       if (hasCrop && !collisionMode) {
@@ -2741,6 +2772,29 @@ export function drawEditorUI(
       drawSquareHandle(drawX, drawY + drawH / 2, sideHandleColor);
       drawSquareHandle(drawX + drawW / 2, drawY, verticalHandleColor);
       drawSquareHandle(drawX + drawW / 2, drawY + drawH, verticalHandleColor);
+
+      if (!collisionMode) {
+        const rhx = drawX + drawW / 2;
+        const rhy = drawY - 28;
+        ctx.strokeStyle = 'rgba(0,220,255,0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(drawX + drawW / 2, drawY);
+        ctx.lineTo(rhx, rhy + 7);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(0,220,255,1)';
+        ctx.beginPath();
+        ctx.arc(rhx, rhy, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#052436';
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('↻', rhx, rhy + 3);
+        ctx.textAlign = 'left';
+      }
 
       const chx = drawX + drawW;
       const chy = drawY;

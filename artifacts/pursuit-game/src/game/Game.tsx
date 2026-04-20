@@ -130,7 +130,7 @@ const EDITOR_DELETED_PLATFORMS_STORAGE_KEY = 'pursuit-deleted-platforms-v1';
 const EDITOR_CUSTOM_SPRITES_STORAGE_KEY = 'pursuit-custom-sprites-v1';
 
 function getPlatformKey(platform: Platform): string {
-  return `${platform.type}:${platform.x}:${platform.y}:${platform.w}:${platform.h}`;
+  return `${platform.type}:${platform.x}:${platform.y}:${platform.w}:${platform.h}:${Math.round(platform.rotation ?? 0)}`;
 }
 
 function isEditorPointInsidePlatform(wx: number, wy: number, platform: Platform): boolean {
@@ -361,12 +361,12 @@ export default function Game() {
   const editorPendingHistoryRef = useRef<Platform[] | null>(null);
   const editorTestSnapshotRef = useRef<Platform[] | null>(null);
   const editorBaselineKeysRef = useRef<Set<string>>(new Set());
-  const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number }) =>
-    `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}`;
+  const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number; rotation?: number }) =>
+    `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}:${Math.round(p.rotation ?? 0)}`;
   const editorCollisionModeRef = useRef(false);
   const editorCollisionBoxIdxRef = useRef(0);
   type EditorDrag = {
-    mode: 'move' | 'resize-right' | 'resize-left' | 'resize-top' | 'resize-bottom' | 'resize-corner' | 'slope-left' | 'slope-right';
+    mode: 'move' | 'resize-right' | 'resize-left' | 'resize-top' | 'resize-bottom' | 'resize-corner' | 'slope-left' | 'slope-right' | 'rotate';
     editingCollision: boolean;
     editingCrop: boolean;
     startWX: number; startWY: number;
@@ -386,6 +386,10 @@ export default function Game() {
     origGroupPositions: { idx: number; origX: number; origY: number }[];
     origSlopeLeft: number;
     origSlopeRight: number;
+    origRotation: number;
+    startAngle: number;
+    rotationCenterX: number;
+    rotationCenterY: number;
   };
   const editorDragRef = useRef<EditorDrag | null>(null);
   const EDITOR_PAN_SPEED = 12;
@@ -742,7 +746,9 @@ export default function Game() {
       const crop = (p.cropLeft || p.cropTop || p.cropRight || p.cropBottom)
         ? `  crop:${Math.round(p.cropLeft ?? 0)},${Math.round(p.cropTop ?? 0)},${Math.round(p.cropRight ?? 0)},${Math.round(p.cropBottom ?? 0)}`
         : '';
-      return `x:${Math.round(p.x)}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${Math.round(p.w)}  h:${Math.round(p.h)}  [${p.type}]${getPlatformCollisionSummary(p)}${crop}`;
+      const rot = Math.round(p.rotation ?? 0);
+      const rotText = rot !== 0 ? `  rot:${rot}°` : '';
+      return `x:${Math.round(p.x)}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${Math.round(p.w)}  h:${Math.round(p.h)}${rotText}  [${p.type}]${getPlatformCollisionSummary(p)}${crop}`;
     };
 
     const copyPlatText = (text: string, msg: string) => {
@@ -857,6 +863,9 @@ export default function Game() {
       const hit = editorCollisionModeRef.current
         ? hits[Math.max(0, Math.min(editorCollisionBoxIdxRef.current, hits.length - 1))] ?? getPlatformCollisionRect(p)
         : getPlatformCollisionRect(p);
+      const editRect = getPlatformEditRect(p);
+      const rotationCenterX = editRect.x + editRect.w / 2;
+      const rotationCenterY = editRect.y + editRect.h / 2;
       return {
         mode,
         editingCollision: editorCollisionModeRef.current,
@@ -885,6 +894,10 @@ export default function Game() {
         origGroupPositions: [],
         origSlopeLeft: hit.slopeTop?.left ?? 0,
         origSlopeRight: hit.slopeTop?.right ?? 0,
+        origRotation: p.rotation ?? 0,
+        startAngle: Math.atan2(wy - rotationCenterY, wx - rotationCenterX),
+        rotationCenterX,
+        rotationCenterY,
       };
     };
 
@@ -1074,6 +1087,15 @@ export default function Game() {
               box.slopeTop.right = Math.max(0, Math.min(box.h, drag.origSlopeRight + dy));
             }
             clampPlatformCollisionOverrides(p);
+          } else if (drag.mode === 'rotate') {
+            const angle = Math.atan2(wy - drag.rotationCenterY, wx - drag.rotationCenterX);
+            const deltaDeg = (angle - drag.startAngle) * 180 / Math.PI;
+            let nextRotation = drag.origRotation + deltaDeg;
+            if (e.shiftKey) nextRotation = Math.round(nextRotation / 15) * 15;
+            nextRotation = ((nextRotation % 360) + 360) % 360;
+            if (nextRotation > 180) nextRotation -= 360;
+            p.rotation = Math.round(nextRotation);
+            if (Math.abs(p.rotation) < 1) delete p.rotation;
           } else if (drag.mode === 'move') {
             if (drag.origGroupPositions.length > 0) {
               const groupEntries = [
@@ -1402,13 +1424,24 @@ export default function Game() {
           // add: estão no estado atual mas não na baseline
           const addItems = platformsRef.current
             .filter(p => p.type !== 'ground' && !baseline.has(platBaseKey(p)))
-            .map(p => ({ t: p.type[0], x: p.x, y: Math.round(p.y - GROUND_Y), w: p.w, h: p.h }));
+            .map(p => {
+              const item: { t: string; x: number; y: number; w: number; h: number; r?: number } = {
+                t: p.type[0],
+                x: p.x,
+                y: Math.round(p.y - GROUND_Y),
+                w: p.w,
+                h: p.h,
+              };
+              const rot = Math.round(p.rotation ?? 0);
+              if (rot !== 0) item.r = rot;
+              return item;
+            });
           // del: estavam na baseline mas não estão mais no estado atual
           const delItems: Array<{ t: string; x: number; y: number; w: number; h: number }> = [];
           for (const key of baseline) {
             if (!currentKeys.has(key)) {
               const parts = key.split(':');
-              if (parts.length === 5) {
+              if (parts.length >= 5) {
                 delItems.push({
                   t: parts[0][0],
                   x: Number(parts[1]),
@@ -1492,6 +1525,8 @@ export default function Game() {
         const bottomHY = editRect.y + editRect.h;
         const cornerHX = editRect.x + editRect.w;
         const cornerHY = editRect.y;
+        const rotateHX = editRect.x + editRect.w / 2;
+        const rotateHY = editRect.y - 28;
         const origText = platCoordText(p);
 
         // Duplicate button hit (world-space, right side of object)
@@ -1637,6 +1672,12 @@ export default function Game() {
             copyPlatText(platCoordText(p), `✓ BOX ${boxHit.idx + 1} SELECIONADA`);
             return;
           }
+        }
+
+        if (!editorCollisionModeRef.current && hitHandle(wx, wy, rotateHX, rotateHY)) {
+          editorPendingHistoryRef.current = snapshotPlatforms();
+          editorDragRef.current = makeEditorDrag(p, 'rotate', wx, wy, origText);
+          return;
         }
 
         if (hitHandle(wx, wy, cornerHX, cornerHY)) {

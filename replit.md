@@ -57,6 +57,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Ajuste visual/físico: pneus rolantes gerados por `tireHideout` ao serem atingidos pelo drone ficaram maiores (raio baseado em 52% da largura da pilha, limitado a 50px).
 - Editor de fase: checkpoints agora podem ser acessados diretamente pelas teclas numéricas horizontais (`1` = CP1, `2` = CP2, ..., `9` = CP9, `0` = CP10), além dos botões e da navegação por `.`/`,` e Numpad 6/4.
 - Fase: aplicada chave do editor removendo o carro x:16400, três caixas em x:16215/16280 e o `tireHideout` x:17179; adicionados três `tireHideout` em x:16186, 16276 e 16366 com `h:113`.
+- Editor de fase: objetos agora têm alça circular de rotação acima da seleção; arrastar gira visualmente o objeto, `Shift` trava em incrementos de 15°, o rótulo/cópia mostra `rot:N°` e a chave de exportação inclui `r` quando a rotação é diferente de zero. A hitbox permanece separada e editável no modo `HITBOX`.
 
 ## Key Commands
 
