@@ -81,6 +81,29 @@ function spriteUploadPlugin() {
         }
       });
 
+      server.middlewares.use("/api/delete-sprite", (req, res, next) => {
+        if (req.method !== "POST") return next();
+        const chunks: Buffer[] = [];
+        req.on("data", (chunk: Buffer) => chunks.push(chunk));
+        req.on("end", () => {
+          try {
+            const { name } = JSON.parse(Buffer.concat(chunks).toString()) as { name: string };
+            if (!name) { res.statusCode = 400; res.end(JSON.stringify({ error: "name obrigatório" })); return; }
+            const safeName = path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "_");
+            if (!/\.(png|webp|jpg|jpeg|gif|svg)$/i.test(safeName)) {
+              res.statusCode = 400; res.end(JSON.stringify({ error: "Tipo de arquivo inválido" })); return;
+            }
+            const filePath = path.join(spritesDir, safeName);
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: "Erro ao deletar sprite" }));
+          }
+        });
+      });
+
       server.middlewares.use("/api/save-level-patch", (req, res, next) => {
         if (req.method !== "POST") return next();
         const chunks: Buffer[] = [];

@@ -536,6 +536,21 @@ export default function Game() {
     setShowGallery(true);
   }, []);
 
+  const deleteGallerySprite = useCallback(async (spriteName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(`Deletar "${spriteName}" permanentemente?`)) return;
+    try {
+      await fetch('/api/delete-sprite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: spriteName }),
+      });
+      setGallerySprites(prev => prev.filter(s => s.name !== spriteName));
+    } catch {
+      // silencioso
+    }
+  }, []);
+
   const placeGallerySprite = useCallback((spriteName: string, spriteUrl: string) => {
     setShowGallery(false);
     const img = new Image();
@@ -2682,47 +2697,82 @@ export default function Game() {
                 paddingRight: 4,
               }}>
                 {gallerySprites.map(sprite => (
-                  <button
+                  <div
                     key={sprite.name}
-                    onClick={() => placeGallerySprite(sprite.name, sprite.url)}
-                    title={sprite.name}
-                    style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(200,150,255,0.3)',
-                      borderRadius: 6,
-                      padding: '6px 4px 4px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 4,
-                      transition: 'border-color 0.15s, background 0.15s',
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(200,150,255,0.9)';
-                      (e.currentTarget as HTMLButtonElement).style.background = 'rgba(200,150,255,0.1)';
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(200,150,255,0.3)';
-                      (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
-                    }}
+                    style={{ position: 'relative' }}
                   >
-                    <img
-                      src={sprite.url}
-                      alt={sprite.name}
-                      style={{ width: 64, height: 64, objectFit: 'contain', imageRendering: 'pixelated' }}
-                    />
-                    <span style={{
-                      color: 'rgba(200,185,230,0.85)',
-                      fontFamily: 'monospace',
-                      fontSize: 9,
-                      wordBreak: 'break-all',
-                      textAlign: 'center',
-                      lineHeight: 1.3,
-                    }}>
-                      {sprite.name.replace(/\.[^.]+$/, '')}
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => placeGallerySprite(sprite.name, sprite.url)}
+                      title={`Usar: ${sprite.name}`}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(200,150,255,0.3)',
+                        borderRadius: 6,
+                        padding: '6px 4px 4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 4,
+                        transition: 'border-color 0.15s, background 0.15s',
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(200,150,255,0.9)';
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(200,150,255,0.1)';
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(200,150,255,0.3)';
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+                      }}
+                    >
+                      <img
+                        src={sprite.url}
+                        alt={sprite.name}
+                        style={{ width: 64, height: 64, objectFit: 'contain', imageRendering: 'pixelated' }}
+                      />
+                      <span style={{
+                        color: 'rgba(200,185,230,0.85)',
+                        fontFamily: 'monospace',
+                        fontSize: 9,
+                        wordBreak: 'break-all',
+                        textAlign: 'center',
+                        lineHeight: 1.3,
+                      }}>
+                        {sprite.name.replace(/\.[^.]+$/, '')}
+                      </span>
+                    </button>
+                    {/* Botão deletar */}
+                    <button
+                      onClick={e => deleteGallerySprite(sprite.name, e)}
+                      title={`Deletar ${sprite.name}`}
+                      style={{
+                        position: 'absolute',
+                        top: 3,
+                        right: 3,
+                        width: 16,
+                        height: 16,
+                        background: 'rgba(180,30,30,0.85)',
+                        border: '1px solid rgba(255,80,80,0.6)',
+                        borderRadius: 3,
+                        color: '#fff',
+                        fontSize: 9,
+                        lineHeight: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 0,
+                        fontWeight: 'bold',
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(230,40,40,0.95)';
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(180,30,30,0.85)';
+                      }}
+                    >✕</button>
+                  </div>
                 ))}
               </div>
             )}
