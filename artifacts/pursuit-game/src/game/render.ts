@@ -1905,7 +1905,8 @@ export function drawPlayer(
   }
 
   const RENDER_MAX_BOX_CLIMB_HEIGHT = 220;
-  const isSlipperyBoxContact = p.touchingWall && p.wallRunOnBox && (GROUND_Y - p.wallTopY) > RENDER_MAX_BOX_CLIMB_HEIGHT && !p.onGround && !p.isWallRunning;
+  // Altura relativa aos pés de Horácio (mesma lógica do physics.ts)
+  const isSlipperyBoxContact = p.touchingWall && p.wallRunOnBox && ((p.y + p.h) - p.wallTopY) > RENDER_MAX_BOX_CLIMB_HEIGHT && !p.onGround && !p.isWallRunning;
   if (isSlipperyBoxContact && subidaSheetImg && subidaSheetImg.complete && subidaSheetImg.naturalWidth > 0) {
     const frameW = subidaSheetImg.naturalWidth / WALL_CLIMB_SHEET.frameCount;
     const frameH = subidaSheetImg.naturalHeight;
