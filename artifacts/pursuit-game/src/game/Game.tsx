@@ -434,9 +434,7 @@ export default function Game() {
   const editorMouseCanvasRef = useRef({ x: 0, y: 0 });
   const spriteUploadInputRef = useRef<HTMLInputElement>(null);
   const galleryServerNamesRef = useRef<Set<string>>(new Set());
-  const galleryObjectTypesRef = useRef<Set<string>>(
-    new Set(JSON.parse(localStorage.getItem('galleryObjectTypes') ?? '[]') as string[])
-  );
+  const galleryObjectTypesRef = useRef<Set<string>>(new Set());
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
   const editorSelectedIdxRef = useRef(-1);
@@ -531,6 +529,13 @@ export default function Game() {
         galleryServerNamesRef.current = new Set(data.sprites.map(s => s.name));
       })
       .catch(() => { /* silencioso */ });
+
+    fetch('/api/gallery-types')
+      .then(r => r.ok ? r.json() : { types: [] })
+      .then((data: { types: string[] }) => {
+        galleryObjectTypesRef.current = new Set(data.types ?? []);
+      })
+      .catch(() => { /* silencioso */ });
   }, []);
 
   // Galeria de sprites
@@ -595,7 +600,12 @@ export default function Game() {
   const removeObjectTypeFromGallery = useCallback((type: string, e: React.MouseEvent) => {
     e.stopPropagation();
     galleryObjectTypesRef.current.delete(type);
-    localStorage.setItem('galleryObjectTypes', JSON.stringify([...galleryObjectTypesRef.current]));
+    const types = [...galleryObjectTypesRef.current];
+    fetch('/api/save-gallery-types', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ types }),
+    }).catch(() => { /* silencioso */ });
     setGalleryTypes(prev => prev.filter(t => t !== type));
   }, []);
 
@@ -618,7 +628,12 @@ export default function Game() {
       }
     } else if (p.type !== 'ground') {
       galleryObjectTypesRef.current.add(p.type);
-      localStorage.setItem('galleryObjectTypes', JSON.stringify([...galleryObjectTypesRef.current]));
+      const types = [...galleryObjectTypesRef.current];
+      fetch('/api/save-gallery-types', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ types }),
+      }).catch(() => { /* silencioso */ });
       editorCopiedMsgRef.current = { text: `✓ [${p.type.toUpperCase()}] SALVO NA GALERIA`, until: Date.now() + 3000 };
     }
   }, []);

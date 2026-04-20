@@ -29,6 +29,7 @@ if (!basePath) {
 
 const spritesDir = path.resolve(import.meta.dirname, "public/sprites");
 const levelPatchFile = path.resolve(import.meta.dirname, "public/level-patch.json");
+const galleryTypesFile = path.resolve(import.meta.dirname, "public/gallery-types.json");
 
 function spriteUploadPlugin() {
   return {
@@ -100,6 +101,37 @@ function spriteUploadPlugin() {
           } catch {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: "Erro ao deletar sprite" }));
+          }
+        });
+      });
+
+      server.middlewares.use("/api/gallery-types", (req, res, next) => {
+        if (req.method !== "GET") return next();
+        try {
+          const data = fs.existsSync(galleryTypesFile)
+            ? JSON.parse(fs.readFileSync(galleryTypesFile, "utf-8")) as { types?: string[] }
+            : { types: [] };
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ types: data.types ?? [] }));
+        } catch {
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ types: [] }));
+        }
+      });
+
+      server.middlewares.use("/api/save-gallery-types", (req, res, next) => {
+        if (req.method !== "POST") return next();
+        const chunks: Buffer[] = [];
+        req.on("data", (chunk: Buffer) => chunks.push(chunk));
+        req.on("end", () => {
+          try {
+            const { types } = JSON.parse(Buffer.concat(chunks).toString()) as { types: string[] };
+            fs.writeFileSync(galleryTypesFile, JSON.stringify({ types: types ?? [] }, null, 2), "utf-8");
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: "Erro ao salvar tipos da galeria" }));
           }
         });
       });
