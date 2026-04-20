@@ -140,7 +140,6 @@ export function generateLevel(): Platform[] {
     { x: 15334, type: 'car',  w: 445, h: 164, yOffset: 283, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     { x: 15521, type: 'car',  w: 445, h: 164, yOffset: 186, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
     { x: 15705, type: 'car',  w: 445, h: 164, yOffset: 102, collisionBoxes: [{x:0,y:52,w:445,h:50},{x:130,y:10,w:69,h:42,slopeTop:{left:42,right:0}},{x:207,y:5,w:104,h:13},{x:327,y:10,w:69,h:42,slopeTop:{left:0,right:42}}], cropLeft: 0, cropTop: 0, cropRight: 0, cropBottom: 62 },
-    { x: 16400, type: 'car',  w: 445, h: 168, collisionBoxes: [{x:0,y:53,w:445,h:62},{x:80,y:10,w:69,h:43,slopeTop:{left:43,right:0}},{x:149,y:10,w:219,h:16},{x:368,y:10,w:69,h:43,slopeTop:{left:0,right:43}}] },
   ];
 
   junkyardItems.filter(({ x, w }) => !isNearWallBase(x, w)).forEach(({ x, type, w, h, collisionW: customCollisionW, collisionH: customCollisionH, collisionOffsetX: customCollisionOffsetX, collisionOffsetY: customCollisionOffsetY, collisionBoxes, cropLeft, cropTop, cropRight, cropBottom, yOffset }) => {
@@ -211,17 +210,15 @@ export function generateLevel(): Platform[] {
     { x: 14172, y: GY - 277,           w: BOX_W, h: BOX_H, type: 'box' },
     { x: 14237, y: GY - 277,           w: BOX_W, h: BOX_H, type: 'box' },
 
-    // Pilha 4 — antes do 5º carro
-    { x: 16215, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 16280, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 16215, y: GY - BOX_H * 2,     w: BOX_W, h: BOX_H, type: 'box' },
   ];
   platforms.push(...junkyardBoxStacks);
 
   // ── PILHAS DE PNEUS REFÚGIO (CP3 em diante) ─────────────────────
   // Horácio passa por trás delas; tiros do drone quebram a pilha em 4 pneus rolando.
   const tireHideouts: Platform[] = [
-    { x: 17179, y: GROUND_Y - 105, w: 90, h: 116, type: 'tireHideout' },
+    { x: 16186, y: GROUND_Y - 104, w: 90, h: 113, type: 'tireHideout' },
+    { x: 16276, y: GROUND_Y - 104, w: 90, h: 113, type: 'tireHideout' },
+    { x: 16366, y: GROUND_Y - 104, w: 90, h: 113, type: 'tireHideout' },
     { x: 17885, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
     { x: 18640, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
     { x: 19485, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },

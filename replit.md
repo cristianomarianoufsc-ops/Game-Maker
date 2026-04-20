@@ -47,7 +47,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Editor de fase: clicar diretamente em um objeto diferente do atualmente selecionado agora o seleciona imediatamente (com cópia dos parâmetros), sem precisar clicar no vazio primeiro; os botões/alças do objeto anterior não interceptam mais o clique.
 - Fase: sistema de pneus voadores implementado — 8 pilhas de pneus (3–5 pneus cada) posicionadas na zona x:17180–21150; quando o drone acerta uma pilha, ela some e os pneus são lançados individualmente com física de queda (gravidade, quique amortecido, atrito, rolamento) e renderização rotacionada com raios visíveis; após 7 quiques e velocidade mínima, cada pneu desaparece da cena; pilhas destruídas não reaparecem após resetar o teste do editor.
 - Fase: área do ferro velho dobrada — muro final movido de x:16900 para x:21700; chão contínuo estendido de x:12250 até x:21720; zona x:16900–21700 vazia (sem objetos, paredes, lixeiras ou plataformas); muros removidos de x:17600 e x:20900; conteúdo antigo da FREE ZONE 3 e início da WALL ZONE 3 nessa faixa eliminados.
-- Editor de fase: adicionado CP3 na navegação por `.`/`,` e Numpad 6/4 apontando para o carro em x:16400 (`w:445`, `h:168`, hitboxes customizadas), antes da zona de pneus voadores.
+- Editor de fase: adicionado CP3 na navegação por `.`/`,` e Numpad 6/4 apontando para a região x:16400, antes da zona de pneus voadores.
 - Fase: removidas permanentemente as 8 pilhas de pneus voadores em x:17180, 17620, 18150, 18700, 19280, 19860, 20540 e 21150.
 - Editor de fase: checkpoint ativo agora aparece em uma tarja destacada no topo, com contador CP atual/total e linha vertical mais forte no mundo para facilitar a navegação por `.`/`,` e Numpad 6/4.
 - Editor de fase: adicionados botões clicáveis CP1/CP2/CP3 na barra superior para navegar diretamente entre checkpoints sem usar teclado.
@@ -56,6 +56,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Mecânica de pneus pós-CP3: adicionadas pilhas-refúgio (`tireHideout`) usando `@assets/pneu_1776643651883.png`; Horácio renderiza atrás delas, elas bloqueiam tiros do drone sem bloquear o jogador e, ao serem atingidas, viram 4 pneus rolando com `@assets/pneu2_1776643651884.png`.
 - Ajuste visual/físico: pneus rolantes gerados por `tireHideout` ao serem atingidos pelo drone ficaram maiores (raio baseado em 52% da largura da pilha, limitado a 50px).
 - Editor de fase: checkpoints agora podem ser acessados diretamente pelas teclas numéricas horizontais (`1` = CP1, `2` = CP2, ..., `9` = CP9, `0` = CP10), além dos botões e da navegação por `.`/`,` e Numpad 6/4.
+- Fase: aplicada chave do editor removendo o carro x:16400, três caixas em x:16215/16280 e o `tireHideout` x:17179; adicionados três `tireHideout` em x:16186, 16276 e 16366 com `h:113`.
 
 ## Key Commands
 
