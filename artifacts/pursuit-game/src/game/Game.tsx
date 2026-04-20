@@ -1473,11 +1473,47 @@ export default function Game() {
                 const gp = platformsRef.current[idx];
                 return { idx, x: gp?.x ?? 0, y: gp?.y ?? 0 };
               });
-              const preSnapX = p.x;
-              const preSnapY = p.y;
-              snapEditorPlatform(p, editorSelectedIdxRef.current, ignored);
-              const snapDx = p.x - preSnapX;
-              let snapDy = p.y - preSnapY;
+
+              // Testa snap em TODOS os membros do grupo e pega o melhor delta em cada eixo
+              let bestSnapDx = 0;
+              let bestSnapDy = 0;
+              let bestAbsDx = Infinity;
+              let bestAbsDy = Infinity;
+              let bestWorldX: number | null = null;
+              let bestWorldY: number | null = null;
+              const savedSnapState = { x: editorSnapStateRef.current.x, y: editorSnapStateRef.current.y };
+
+              for (const { idx } of groupBasePositions) {
+                const gp = platformsRef.current[idx];
+                if (!gp) continue;
+                editorSnapStateRef.current.x = savedSnapState.x;
+                editorSnapStateRef.current.y = savedSnapState.y;
+                const preX = gp.x;
+                const preY = gp.y;
+                snapEditorPlatform(gp, idx, ignored);
+                const mdx = gp.x - preX;
+                const mdy = gp.y - preY;
+                gp.x = preX;
+                gp.y = preY;
+                if (mdx !== 0 && Math.abs(mdx) < bestAbsDx) {
+                  bestAbsDx = Math.abs(mdx);
+                  bestSnapDx = mdx;
+                  bestWorldX = editorSnapAxesRef.current.worldX;
+                }
+                if (mdy !== 0 && Math.abs(mdy) < bestAbsDy) {
+                  bestAbsDy = Math.abs(mdy);
+                  bestSnapDy = mdy;
+                  bestWorldY = editorSnapAxesRef.current.worldY;
+                }
+              }
+
+              editorSnapStateRef.current.x = bestSnapDx !== 0;
+              editorSnapStateRef.current.y = bestSnapDy !== 0;
+              editorSnapAxesRef.current.worldX = bestWorldX;
+              editorSnapAxesRef.current.worldY = bestWorldY;
+
+              const snapDx = bestSnapDx;
+              let snapDy = bestSnapDy;
               if (snapDx !== 0 || snapDy !== 0) {
                 const maxSnapDy = Math.min(...groupBasePositions.map(({ idx, y }) => {
                   const gp = platformsRef.current[idx];
