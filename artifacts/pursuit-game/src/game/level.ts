@@ -1,5 +1,6 @@
 import type { Platform } from './types';
 import { GROUND_Y, CANVAS_H, CANVAS_W } from './constants';
+import abandonedCarSpriteUrl from '@assets/carro_abandonado_pixelart_1776652992846.png';
 
 const GH = 30;
 const CAN_W = 90;
@@ -232,6 +233,8 @@ export function generateLevel(): Platform[] {
     h: 474,
     type: 'sprite',
     rotation: 1,
+    customSpriteName: 'carro_abandonado_pixelart_1776652992846.png',
+    customSpriteDataUrl: abandonedCarSpriteUrl,
   });
 
   // ── PLATAFORMAS ELEVADAS (sacadas + ares-condicionados) ─────────

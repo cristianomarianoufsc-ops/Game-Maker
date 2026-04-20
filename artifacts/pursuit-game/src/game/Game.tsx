@@ -316,6 +316,67 @@ function stripBlackAndWhiteBackground(src: HTMLImageElement): HTMLImageElement {
   return out;
 }
 
+function stripEditorSpriteBackground(src: HTMLImageElement): HTMLImageElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = src.naturalWidth;
+  canvas.height = src.naturalHeight;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(src, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const px = imageData.data;
+  const w = canvas.width;
+  const h = canvas.height;
+  const isDark = (idx: number) => {
+    const r = px[idx], g = px[idx + 1], b = px[idx + 2];
+    return r * 0.299 + g * 0.587 + b * 0.114 < 36;
+  };
+  const queue: number[] = [];
+  const seen = new Uint8Array(w * h);
+  const push = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
+    const p = y * w + x;
+    if (seen[p]) return;
+    const idx = p * 4;
+    if (!isDark(idx)) return;
+    seen[p] = 1;
+    queue.push(p);
+  };
+  for (let x = 0; x < w; x++) {
+    push(x, 0);
+    push(x, h - 1);
+  }
+  for (let y = 0; y < h; y++) {
+    push(0, y);
+    push(w - 1, y);
+  }
+  while (queue.length) {
+    const p = queue.pop()!;
+    const idx = p * 4;
+    px[idx + 3] = 0;
+    const x = p % w;
+    const y = Math.floor(p / w);
+    push(x + 1, y);
+    push(x - 1, y);
+    push(x, y + 1);
+    push(x, y - 1);
+  }
+  for (let i = 0; i < px.length; i += 4) {
+    const r = px[i], g = px[i + 1], b = px[i + 2];
+    const brightness = r * 0.299 + g * 0.587 + b * 0.114;
+    const maxC = Math.max(r, g, b);
+    const minC = Math.min(r, g, b);
+    const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
+    if (brightness > 82 && saturation < 0.28) {
+      const t = Math.min(1, (brightness - 82) / 138);
+      px[i + 3] = Math.round((1 - t) * px[i + 3]);
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+  const out = new Image();
+  out.src = canvas.toDataURL('image/png');
+  return out;
+}
+
 const isTouchDevice = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
 function getScale() {
@@ -457,6 +518,9 @@ export default function Game() {
   const registerCustomSpriteImage = useCallback((platform: Platform) => {
     if (platform.type !== 'sprite' || !platform.customSpriteName || !platform.customSpriteDataUrl) return;
     const img = new Image();
+    img.onload = () => {
+      customSpriteImagesRef.current.set(platform.customSpriteName!, stripEditorSpriteBackground(img));
+    };
     img.src = platform.customSpriteDataUrl;
     customSpriteImagesRef.current.set(platform.customSpriteName, img);
   }, []);
@@ -1427,7 +1491,7 @@ export default function Game() {
           const addItems = platformsRef.current
             .filter(p => p.type !== 'ground' && !baseline.has(platBaseKey(p)))
             .map(p => {
-              const item: { t: string; x: number; y: number; w: number; h: number; r?: number } = {
+              const item: { t: string; x: number; y: number; w: number; h: number; r?: number; img?: string } = {
                 t: p.type[0],
                 x: p.x,
                 y: Math.round(p.y - GROUND_Y),
@@ -1436,6 +1500,7 @@ export default function Game() {
               };
               const rot = Math.round(p.rotation ?? 0);
               if (rot !== 0) item.r = rot;
+              if (p.type === 'sprite' && p.customSpriteName) item.img = p.customSpriteName;
               return item;
             });
           // del: estavam na baseline mas não estão mais no estado atual
@@ -2296,8 +2361,7 @@ export default function Game() {
       if (!dataUrl) return;
       const img = new Image();
       img.onload = () => {
-        // Strip white/near-white background automatically on upload
-        const processed = stripWhiteBackground(img);
+        const processed = stripEditorSpriteBackground(img);
         const processedDataUrl = processed.src;
 
         const maxW = 180;
