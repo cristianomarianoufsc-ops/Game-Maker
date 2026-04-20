@@ -521,18 +521,37 @@ export default function Game() {
 
   // Galeria de sprites
   const [showGallery, setShowGallery] = useState(false);
-  const [gallerySprites, setGallerySprites] = useState<{ name: string; url: string }[]>([]);
+  const [gallerySprites, setGallerySprites] = useState<{ name: string; url: string; onServer: boolean }[]>([]);
 
   const openGallery = useCallback(async () => {
+    // Sprites salvos no servidor
+    let serverSprites: { name: string; url: string; onServer: boolean }[] = [];
     try {
       const resp = await fetch('/api/sprites');
       if (resp.ok) {
         const data = await resp.json() as { sprites: { name: string; url: string }[] };
-        setGallerySprites(data.sprites);
+        serverSprites = data.sprites.map(s => ({ ...s, onServer: true }));
       }
-    } catch {
-      setGallerySprites([]);
+    } catch { /* sem sprites no servidor */ }
+
+    // Sprites usados na fase mas não no servidor
+    const serverNames = new Set(serverSprites.map(s => s.name));
+    const levelSprites: { name: string; url: string; onServer: boolean }[] = [];
+    const seenLevelNames = new Set<string>();
+    for (const p of platformsRef.current) {
+      if (
+        p.type === 'sprite' &&
+        p.customSpriteName &&
+        p.customSpriteDataUrl &&
+        !serverNames.has(p.customSpriteName) &&
+        !seenLevelNames.has(p.customSpriteName)
+      ) {
+        seenLevelNames.add(p.customSpriteName);
+        levelSprites.push({ name: p.customSpriteName, url: p.customSpriteDataUrl, onServer: false });
+      }
     }
+
+    setGallerySprites([...serverSprites, ...levelSprites]);
     setShowGallery(true);
   }, []);
 
@@ -2701,9 +2720,24 @@ export default function Game() {
                     key={sprite.name}
                     style={{ position: 'relative' }}
                   >
+                    {/* Badge "na fase" para sprites sem arquivo no servidor */}
+                    {!sprite.onServer && (
+                      <span style={{
+                        position: 'absolute',
+                        bottom: 22,
+                        left: 0,
+                        right: 0,
+                        textAlign: 'center',
+                        fontSize: 8,
+                        fontFamily: 'monospace',
+                        color: 'rgba(255,200,80,0.9)',
+                        pointerEvents: 'none',
+                        zIndex: 2,
+                      }}>na fase</span>
+                    )}
                     <button
                       onClick={() => placeGallerySprite(sprite.name, sprite.url)}
-                      title={`Usar: ${sprite.name}`}
+                      title={`Usar: ${sprite.name}${!sprite.onServer ? ' (apenas na fase)' : ''}`}
                       style={{
                         width: '100%',
                         background: 'rgba(255,255,255,0.04)',
@@ -2742,36 +2776,31 @@ export default function Game() {
                         {sprite.name.replace(/\.[^.]+$/, '')}
                       </span>
                     </button>
-                    {/* Botão deletar */}
-                    <button
-                      onClick={e => deleteGallerySprite(sprite.name, e)}
-                      title={`Deletar ${sprite.name}`}
-                      style={{
-                        position: 'absolute',
-                        top: 3,
-                        right: 3,
-                        width: 16,
-                        height: 16,
-                        background: 'rgba(180,30,30,0.85)',
-                        border: '1px solid rgba(255,80,80,0.6)',
-                        borderRadius: 3,
-                        color: '#fff',
-                        fontSize: 9,
-                        lineHeight: '14px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: 0,
-                        fontWeight: 'bold',
-                      }}
-                      onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(230,40,40,0.95)';
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(180,30,30,0.85)';
-                      }}
-                    >✕</button>
+                    {/* Botão deletar — só para sprites salvos no servidor */}
+                    {sprite.onServer ? (
+                      <button
+                        onClick={e => deleteGallerySprite(sprite.name, e)}
+                        title={`Deletar ${sprite.name}`}
+                        style={{
+                          position: 'absolute',
+                          top: 3,
+                          right: 3,
+                          width: 16,
+                          height: 16,
+                          background: 'rgba(180,30,30,0.85)',
+                          border: '1px solid rgba(255,80,80,0.6)',
+                          borderRadius: 3,
+                          color: '#fff',
+                          fontSize: 9,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 0,
+                          fontWeight: 'bold',
+                        }}
+                      >✕</button>
+                    ) : null}
                   </div>
                 ))}
               </div>
