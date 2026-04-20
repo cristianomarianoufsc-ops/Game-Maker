@@ -227,17 +227,18 @@ export function generateLevel(): Platform[] {
   ];
   platforms.push(...tireHideouts.filter(({ x, w }) => !isNearWallBase(x, w)));
   platforms.push({
-    x: 16528,
-    y: GROUND_Y - 284,
+    x: 16542,
+    y: GROUND_Y - 283,
     w: 474,
     h: 474,
     type: 'sprite',
     rotation: 1,
     collisionBoxes: [
-      { x: 18, y: 232, w: 430, h: 58 },
-      { x: 18, y: 198, w: 138, h: 86, slopeTop: { left: 56, right: 24 } },
-      { x: 145, y: 154, w: 220, h: 130, slopeTop: { left: 44, right: 30 } },
-      { x: 354, y: 190, w: 94, h: 94, slopeTop: { left: 24, right: 52 } },
+      { x: 202, y: 167, w: 132, h: 27 },
+      { x: 151, y: 139, w: 44, h: 65, slopeTop: { left: 56, right: 24 } },
+      { x: 346, y: 141, w: 55, h: 74, slopeTop: { left: 24, right: 74 } },
+      { x: 322, y: 204, w: 132, h: 71 },
+      { x: 45, y: 208, w: 132, h: 72 },
     ],
     customSpriteName: 'carro_abandonado_pixelart_1776652992846.png',
     customSpriteDataUrl: abandonedCarSpriteUrl,
