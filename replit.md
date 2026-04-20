@@ -52,6 +52,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Editor de fase: checkpoint ativo agora aparece em uma tarja destacada no topo, com contador CP atual/total e linha vertical mais forte no mundo para facilitar a navegação por `.`/`,` e Numpad 6/4.
 - Editor de fase: adicionados botões clicáveis CP1/CP2/CP3 na barra superior para navegar diretamente entre checkpoints sem usar teclado.
 - Editor de fase: botão `+ CP` cria checkpoints temporários na posição atual da câmera; botão `CP JSON` copia os checkpoints novos como JSON para colar no chat e aplicar permanentemente no código/Git.
+- Editor de fase: aplicado permanentemente o checkpoint `CP4` em x:21788 a partir do JSON exportado pelo editor.
 
 ## Key Commands
 

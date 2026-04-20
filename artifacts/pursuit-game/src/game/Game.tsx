@@ -391,6 +391,7 @@ export default function Game() {
     { label: 'CP1', x: 6500 },
     { label: 'CP2', x: 12100 },
     { label: 'CP3', x: 16400 },
+    { label: 'CP4', x: 21788 },
   ];
   const editorCustomCheckpointsRef = useRef<{ label: string; x: number }[]>([]);
   const getEditorCheckpoints = () => [
