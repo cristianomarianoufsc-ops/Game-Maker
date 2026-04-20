@@ -1351,7 +1351,7 @@ function spawnRollingTiresFromHideout(
   bulletVx: number,
   flyingTires: FlyingTire[]
 ): void {
-  const radius = Math.max(20, Math.min(32, plat.w * 0.34));
+  const radius = Math.max(24, Math.min(38, plat.w * 0.4));
   const cx = plat.x + plat.w / 2;
   const cy = Math.min(GROUND_Y - radius - 6, plat.y + plat.h * 0.68);
   const bulletDir = bulletVx >= 0 ? 1 : -1;
