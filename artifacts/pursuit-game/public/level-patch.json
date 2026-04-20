@@ -2,12 +2,13 @@
   "add": [
     {
       "type": "sprite",
-      "x": 17333,
-      "y": 230,
+      "x": 17477,
+      "y": 183,
       "w": 180,
       "h": 180,
       "customSpriteName": "pilha_de_pneus_pixel_art.png",
-      "customSpriteDataUrl": "/sprites/pilha_de_pneus_pixel_art.png"
+      "customSpriteDataUrl": "/sprites/pilha_de_pneus_pixel_art.png",
+      "rotation": 36
     }
   ],
   "del": [
