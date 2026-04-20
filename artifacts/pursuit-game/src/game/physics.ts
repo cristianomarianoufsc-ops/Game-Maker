@@ -703,7 +703,8 @@ export function updatePlayer(
     ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
       (p.wallSide === 'left' && (keys.left || incomingVx < 0))) &&
     p.vy < -2.5 &&
-    !p.wallRunOnBox   // wall-run não existe em caixas
+    // wall-run bloqueado em caixas altas demais (> 4 blocos ≈ 220px)
+    !(p.wallRunOnBox && (GROUND_Y - p.wallTopY) > MAX_BOX_CLIMB_HEIGHT)
   ) {
     p.isWallRunning = true;
     p.onGround = false;
