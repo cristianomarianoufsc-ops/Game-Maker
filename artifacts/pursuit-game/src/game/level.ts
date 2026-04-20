@@ -244,12 +244,16 @@ export function generateLevel(): Platform[] {
     customSpriteDataUrl: abandonedCarSpriteUrl,
   });
   platforms.push({
-    x: 17396,
-    y: GROUND_Y - 112,
-    w: 56,
-    h: 112,
+    x: 17407,
+    y: GROUND_Y - 111,
+    w: 180,
+    h: 135,
     type: 'sprite',
-    customSpriteName: 'homem.webp',
+    customSpriteName: 'homem.png',
+    customSpriteDataUrl: '/sprites/homem.png',
+    collisionBoxes: [
+      { x: 0, y: 0, w: 180, h: 111 },
+    ],
   });
 
   // ── PLATAFORMAS ELEVADAS (sacadas + ares-condicionados) ─────────
