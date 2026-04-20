@@ -2495,7 +2495,7 @@ export function drawHUD(
     ctx.fillStyle = `rgba(255,40,40,${alpha})`;
     ctx.font = 'bold 11px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('! DRONE CLOSE !', CANVAS_W / 2, CANVAS_H - 20);
+    ctx.fillText('! DRONE PRÓXIMO !', CANVAS_W / 2, CANVAS_H - 20);
     ctx.textAlign = 'left';
   }
 }
@@ -2508,8 +2508,8 @@ export function drawControls(ctx: CanvasRenderingContext2D): void {
   ctx.strokeRect(10, CANVAS_H - 70, 340, 60);
   ctx.fillStyle = COLORS.uiText;
   ctx.font = '10px monospace';
-  ctx.fillText('←→ CORRER  |  SPACE/↑ PULAR  |  PULO SUBINDO + PAREDE = WALL RUN', 18, CANVAS_H - 52);
-  ctx.fillText('SHIFT/Z ROLAR  |  ↓+SPACE (correndo) MERGULHO', 18, CANVAS_H - 37);
+  ctx.fillText('←→ CORRER  |  ESPAÇO/↑ PULAR  |  PULO SUBINDO + PAREDE = CORRIDA NA PAREDE', 18, CANVAS_H - 52);
+  ctx.fillText('SHIFT/Z ROLAR  |  ↓+ESPAÇO (correndo) MERGULHO', 18, CANVAS_H - 37);
   ctx.fillStyle = 'rgba(150,140,180,0.6)';
   ctx.fillText('[controles]', 18, CANVAS_H - 22);
 }
