@@ -815,7 +815,8 @@ export default function Game() {
         : '';
       const rot = Math.round(p.rotation ?? 0);
       const rotText = rot !== 0 ? `  rot:${rot}°` : '';
-      return `x:${Math.round(p.x)}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${Math.round(p.w)}  h:${Math.round(p.h)}${rotText}  [${p.type}]${getPlatformCollisionSummary(p)}${crop}`;
+      const imgTag = p.type === 'sprite' && p.customSpriteName ? `  img:${p.customSpriteName}` : '';
+      return `x:${Math.round(p.x)}  y:GY${gy >= 0 ? '+' : ''}${gy}  w:${Math.round(p.w)}  h:${Math.round(p.h)}${rotText}  [${p.type}]${imgTag}${getPlatformCollisionSummary(p)}${crop}`;
     };
 
     const copyPlatText = (text: string, msg: string) => {
