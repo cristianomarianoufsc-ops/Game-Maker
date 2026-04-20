@@ -1113,7 +1113,7 @@ export default function Game() {
     };
 
     const snapEditorPlatform = (platform: Platform, platformIdx: number, ignoredIndices: Set<number> = new Set()) => {
-      const SNAP = 8;
+      const SNAP = 18;
       const movingHit = getPlatformCollisionRect(platform);
       const movingCenterX = movingHit.x + movingHit.w / 2;
       const movingCenterY = movingHit.y + movingHit.h / 2;
@@ -1909,9 +1909,30 @@ export default function Game() {
             });
 
             editorSelectedIndicesRef.current = new Set(newIndices);
-            saveCustomSpritePlatforms(platforms);
             editorSelectedIdxRef.current = newIndices[0] ?? selIdx;
             editorCollisionBoxIdxRef.current = 0;
+
+            const leaderIdx = newIndices[0];
+            if (leaderIdx !== undefined) {
+              const leader = platforms[leaderIdx];
+              const preSnapX = leader.x;
+              const preSnapY = leader.y;
+              const ignoredForSnap = new Set(newIndices);
+              snapEditorPlatform(leader, leaderIdx, ignoredForSnap);
+              const snapDx = leader.x - preSnapX;
+              const snapDy = leader.y - preSnapY;
+              if (snapDx !== 0 || snapDy !== 0) {
+                newIndices.forEach((ni) => {
+                  if (ni === leaderIdx) return;
+                  const gp = platforms[ni];
+                  if (!gp) return;
+                  gp.x = Math.round(gp.x + snapDx);
+                  gp.y = Math.round(gp.y + snapDy);
+                });
+              }
+            }
+
+            saveCustomSpritePlatforms(platforms);
             copyPlatText(platCoordText(platforms[editorSelectedIdxRef.current]), `✓ GRUPO DUPLICADO: ${newIndices.length} OBJETOS`);
             return;
           }
