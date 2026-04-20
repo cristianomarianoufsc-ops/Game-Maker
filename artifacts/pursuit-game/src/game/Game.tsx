@@ -477,6 +477,7 @@ export default function Game() {
     rotationCenterY: number;
   };
   const editorDragRef = useRef<EditorDrag | null>(null);
+  const editorSnapAxesRef = useRef<{ worldX: number | null; worldY: number | null }>({ worldX: null, worldY: null });
   const EDITOR_PAN_SPEED = 12;
   const EDITOR_CHECKPOINTS = [
     { label: 'CP1', x: 6500 },
@@ -1113,39 +1114,62 @@ export default function Game() {
     };
 
     const snapEditorPlatform = (platform: Platform, platformIdx: number, ignoredIndices: Set<number> = new Set()) => {
-      const SNAP = 18;
+      const SNAP_X = 18;
+      const SNAP_Y = 24;
       const movingHit = getPlatformCollisionRect(platform);
+      const movingVisual = { x: platform.x, y: platform.y, w: platform.w, h: platform.h };
       const movingCenterX = movingHit.x + movingHit.w / 2;
       const movingCenterY = movingHit.y + movingHit.h / 2;
       let bestDx = 0;
       let bestDy = 0;
-      let bestAbsX = SNAP + 1;
-      let bestAbsY = SNAP + 1;
+      let bestAbsX = SNAP_X + 1;
+      let bestAbsY = SNAP_Y + 1;
+      let snapWorldX: number | null = null;
+      let snapWorldY: number | null = null;
 
       const considerX = (from: number, to: number) => {
         const delta = to - from;
         const abs = Math.abs(delta);
-        if (abs <= SNAP && abs < bestAbsX) {
+        if (abs <= SNAP_X && abs < bestAbsX) {
           bestAbsX = abs;
           bestDx = delta;
+          snapWorldX = to;
         }
       };
 
       const considerY = (from: number, to: number) => {
         const delta = to - from;
         const abs = Math.abs(delta);
-        if (abs <= SNAP && abs < bestAbsY) {
+        if (abs <= SNAP_Y && abs < bestAbsY) {
           bestAbsY = abs;
           bestDy = delta;
+          snapWorldY = to;
         }
       };
 
       considerY(movingHit.y + movingHit.h, EDITOR_GROUND_Y);
+      considerY(movingVisual.y + movingVisual.h, EDITOR_GROUND_Y);
 
       platformsRef.current.forEach((target, targetIdx) => {
         if (ignoredIndices.has(targetIdx)) return;
         if (targetIdx === platformIdx || target.type === 'ground') return;
         const targetRects = getPlatformCollisionRects(target);
+        const targetVisual = { x: target.x, y: target.y, w: target.w, h: target.h };
+        const targetVisualCenterX = target.x + target.w / 2;
+        const targetVisualCenterY = target.y + target.h / 2;
+
+        considerX(movingVisual.x, targetVisual.x);
+        considerX(movingVisual.x + movingVisual.w, targetVisual.x + targetVisual.w);
+        considerX(movingCenterX, targetVisualCenterX);
+        considerX(movingVisual.x, targetVisual.x + targetVisual.w);
+        considerX(movingVisual.x + movingVisual.w, targetVisual.x);
+
+        considerY(movingVisual.y, targetVisual.y);
+        considerY(movingVisual.y + movingVisual.h, targetVisual.y + targetVisual.h);
+        considerY(movingCenterY, targetVisualCenterY);
+        considerY(movingVisual.y, targetVisual.y + targetVisual.h);
+        considerY(movingVisual.y + movingVisual.h, targetVisual.y);
+
         targetRects.forEach((targetHit) => {
           const targetCenterX = targetHit.x + targetHit.w / 2;
           const targetCenterY = targetHit.y + targetHit.h / 2;
@@ -1168,6 +1192,9 @@ export default function Game() {
       if (bestDy !== 0) platform.y = Math.round(platform.y + bestDy);
       platform.y = Math.round(Math.min(platform.y, EDITOR_GROUND_Y - getPlatformGroundClampOffset(platform)));
       platform.y = Math.max(-4000, platform.y);
+
+      editorSnapAxesRef.current.worldX = bestDx !== 0 ? snapWorldX : null;
+      editorSnapAxesRef.current.worldY = bestDy !== 0 ? snapWorldY : null;
     };
 
     const makeEditorDrag = (p: Platform, mode: EditorDrag['mode'], wx: number, wy: number, origText: string, editingCrop = false): EditorDrag => {
@@ -2691,6 +2718,7 @@ export default function Game() {
       // ── Drag-ghost: temporariamente move originais de volta pra exibição ──
       const _activeDrag = editorDragRef.current;
       const _isDragGhost = gs.gamePhase === 'editor' && _activeDrag?.mode === 'move' && _activeDrag.hasMoved;
+      if (!_isDragGhost) { editorSnapAxesRef.current.worldX = null; editorSnapAxesRef.current.worldY = null; }
       const _ghostEntries: { idx: number; ghostX: number; ghostY: number }[] = [];
       if (_isDragGhost) {
         const _selIdx = editorSelectedIdxRef.current;
@@ -2731,6 +2759,36 @@ export default function Game() {
           if (_gp) ctx.strokeRect(_e.ghostX - gs.camera.x, _gp.y, _gp.w, _gp.h);
         }
         ctx.setLineDash([]);
+
+        // Linhas-guia de snap magnético
+        const _snapAxes = editorSnapAxesRef.current;
+        if (_snapAxes.worldX !== null) {
+          const _sx = Math.round(_snapAxes.worldX - gs.camera.x) + 0.5;
+          ctx.save();
+          ctx.strokeStyle = 'rgba(0, 210, 255, 0.85)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(_sx, 0);
+          ctx.lineTo(_sx, CANVAS_H);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+        if (_snapAxes.worldY !== null) {
+          const _sy = Math.round(_snapAxes.worldY) + 0.5;
+          ctx.save();
+          ctx.strokeStyle = 'rgba(0, 210, 255, 0.85)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(0, _sy);
+          ctx.lineTo(CANVAS_W, _sy);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+
         // Dica flutuante "CLIQUE DIREITO = DUPLICAR" acima do ghost
         if (_ghostEntries.length > 0) {
           const _firstGp = gs.platforms[_ghostEntries[0].idx];
