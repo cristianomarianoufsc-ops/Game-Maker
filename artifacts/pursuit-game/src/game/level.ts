@@ -1,6 +1,5 @@
 import type { Platform } from './types';
 import { GROUND_Y, CANVAS_H, CANVAS_W } from './constants';
-import uploadedSpriteUrl from '@assets/image_1776652732382.png';
 
 const GH = 30;
 const CAN_W = 90;
@@ -233,8 +232,6 @@ export function generateLevel(): Platform[] {
     h: 474,
     type: 'sprite',
     rotation: 1,
-    customSpriteName: 'image_1776652732382.png',
-    customSpriteDataUrl: uploadedSpriteUrl,
   });
 
   // ── PLATAFORMAS ELEVADAS (sacadas + ares-condicionados) ─────────
