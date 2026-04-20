@@ -1115,10 +1115,11 @@ export default function Game() {
     };
 
     const snapEditorPlatform = (platform: Platform, platformIdx: number, ignoredIndices: Set<number> = new Set()) => {
-      const SNAP_X = 20;
-      const UNSNAP_X = 36;
-      const SNAP_Y = 26;
-      const UNSNAP_Y = 44;
+      const SNAP_X = 30;
+      const UNSNAP_X = 52;
+      const SNAP_Y = 40;
+      const UNSNAP_Y = 64;
+      const PROXIMITY = 220;
       const snapState = editorSnapStateRef.current;
       const threshX = snapState.x ? UNSNAP_X : SNAP_X;
       const threshY = snapState.y ? UNSNAP_Y : SNAP_Y;
@@ -1159,6 +1160,10 @@ export default function Game() {
       platformsRef.current.forEach((target, targetIdx) => {
         if (ignoredIndices.has(targetIdx)) return;
         if (targetIdx === platformIdx || target.type === 'ground') return;
+        // Filtro de proximidade: ignora plataformas muito distantes
+        const proxDx = Math.max(0, target.x > movingVisual.x + movingVisual.w ? target.x - (movingVisual.x + movingVisual.w) : movingVisual.x > target.x + target.w ? movingVisual.x - (target.x + target.w) : 0);
+        const proxDy = Math.max(0, target.y > movingVisual.y + movingVisual.h ? target.y - (movingVisual.y + movingVisual.h) : movingVisual.y > target.y + target.h ? movingVisual.y - (target.y + target.h) : 0);
+        if (proxDx > PROXIMITY || proxDy > PROXIMITY) return;
         const targetRects = getPlatformCollisionRects(target);
         const targetVisual = { x: target.x, y: target.y, w: target.w, h: target.h };
         const targetVisualCenterX = target.x + target.w / 2;
@@ -2759,14 +2764,15 @@ export default function Game() {
           gs.platforms[_e.idx].y = _e.ghostY;
         }
         const _ghostPlats = _ghostEntries.map(_e => gs.platforms[_e.idx]).filter(Boolean) as Platform[];
+        const _isSnapped = editorSnapAxesRef.current.worldX !== null || editorSnapAxesRef.current.worldY !== null;
         ctx.save();
-        ctx.globalAlpha = 0.42;
+        ctx.globalAlpha = _isSnapped ? 0.82 : 0.42;
         drawPlatforms(ctx, _ghostPlats, gs.camera.x, balconyImgRef.current, carroImgRef.current, [], customSpriteImagesRef.current, []);
         ctx.restore();
         ctx.save();
-        ctx.setLineDash([5, 4]);
-        ctx.strokeStyle = 'rgba(255, 220, 60, 0.9)';
-        ctx.lineWidth = 2;
+        ctx.setLineDash(_isSnapped ? [] : [5, 4]);
+        ctx.strokeStyle = _isSnapped ? 'rgba(0, 230, 255, 1)' : 'rgba(255, 220, 60, 0.9)';
+        ctx.lineWidth = _isSnapped ? 3 : 2;
         for (const _e of _ghostEntries) {
           const _gp = gs.platforms[_e.idx];
           if (_gp) ctx.strokeRect(_e.ghostX - gs.camera.x, _gp.y, _gp.w, _gp.h);
