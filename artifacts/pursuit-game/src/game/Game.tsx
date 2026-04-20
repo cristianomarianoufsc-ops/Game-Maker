@@ -10,6 +10,8 @@ import wallRunSheetUrl from '@assets/Wall_Run_1776005817769.png';
 import mortalSheetUrl from '@assets/mortal_1776009939272.png';
 import subidaSheetUrl from '@assets/subida_1776012458574.png';
 import sideFlipSheetUrl from '@assets/SIDE_FLIP_1776053462942.png';
+import standingTireUrl from '@assets/pneu_1776643651883.png';
+import rollingTireUrl from '@assets/pneu2_1776643651884.png';
 import brickTextureUrl from '/brick_texture.png';
 import balconyUrl from '/balcony.png';
 import {
@@ -23,7 +25,7 @@ import {
 } from './physics';
 import {
   drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawGround,
-  drawStreetBuildings, drawPlatforms, drawFlyingTires,
+  drawStreetBuildings, drawPlatforms, drawFlyingTires, drawTireHideouts,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
   drawEditorUI,
@@ -418,6 +420,8 @@ export default function Game() {
   const brickTextureImgRef = useRef<HTMLImageElement | null>(null);
   const balconyImgRef = useRef<HTMLImageElement | null>(null);
   const carroImgRef = useRef<HTMLImageElement | null>(null);
+  const standingTireImgRef = useRef<HTMLImageElement | null>(null);
+  const rollingTireImgRef = useRef<HTMLImageElement | null>(null);
   const customSpriteImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   // Responsive scale: fit canvas inside available viewport
@@ -565,6 +569,22 @@ export default function Game() {
       }
     };
     carroImg.src = '/carro.png';
+
+    const standingTireImg = new Image();
+    standingTireImg.onload = () => {
+      const stripped = stripWhiteBackground(standingTireImg);
+      standingTireImgRef.current = stripped;
+      stripped.onload = () => { standingTireImgRef.current = stripped; };
+    };
+    standingTireImg.src = standingTireUrl;
+
+    const rollingTireImg = new Image();
+    rollingTireImg.onload = () => {
+      const stripped = stripWhiteBackground(rollingTireImg);
+      rollingTireImgRef.current = stripped;
+      stripped.onload = () => { rollingTireImgRef.current = stripped; };
+    };
+    rollingTireImg.src = rollingTireUrl;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       if (down && gsRef.current?.gamePhase === 'editor' && editorCollisionModeRef.current) {
@@ -2149,9 +2169,10 @@ export default function Game() {
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);
       drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current, gs.destroyedBoxIndices, customSpriteImagesRef.current, gs.destroyedTireIndices);
-      drawFlyingTires(ctx, gs.flyingTires, gs.camera.x);
+      drawFlyingTires(ctx, gs.flyingTires, gs.camera.x, rollingTireImgRef.current);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
+      drawTireHideouts(ctx, gs.platforms, gs.camera.x, standingTireImgRef.current, gs.destroyedTireIndices);
       if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
         drawDrone(ctx, gs);
         drawBullets(ctx, gs);

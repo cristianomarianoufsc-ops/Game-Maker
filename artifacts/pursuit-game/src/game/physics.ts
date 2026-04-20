@@ -229,7 +229,7 @@ export function updatePlayer(
       if (p.onGround) {
         const expandH = PLAYER_H - PLAYER_ROLL_H;
         const blockedAbove = platforms.some(plat => {
-          if (plat.type === 'ground') return false;
+          if (plat.type === 'ground' || plat.type === 'tireHideout') return false;
           return getPlatformCollisionRects(plat).some((hit) =>
             rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, hit.x, hit.y, hit.w, hit.h)
           );
@@ -250,7 +250,7 @@ export function updatePlayer(
     } else {
       const expandH = PLAYER_H - PLAYER_ROLL_H;
       const stillBlocked = platforms.some(plat => {
-        if (plat.type === 'ground') return false;
+        if (plat.type === 'ground' || plat.type === 'tireHideout') return false;
         return getPlatformCollisionRects(plat).some((hit) =>
           rectOverlap(p.x + 1, p.y - expandH, p.w - 2, PLAYER_H, hit.x, hit.y, hit.w, hit.h)
         );
@@ -269,7 +269,7 @@ export function updatePlayer(
     const CEILING_CLEARANCE = 18; // px de folga acima da cabeça que aciona forcedCrouch
     const headY = p.y; // topo do personagem em pé
     const lowCeiling = platforms.some(plat => {
-      if (plat.type === 'ground') return false;
+      if (plat.type === 'ground' || plat.type === 'tireHideout') return false;
       return getPlatformCollisionRects(plat).some(hit =>
         rectOverlap(p.x + 2, headY - CEILING_CLEARANCE, p.w - 4, CEILING_CLEARANCE, hit.x, hit.y, hit.w, hit.h)
       );
@@ -643,6 +643,7 @@ export function updatePlayer(
   // Collision
   if (!p.isWallClimbUp) {
     for (const plat of platforms) {
+      if (plat.type === 'tireHideout') continue;
       const climbableBoxWall = getStackedBoxWall(platforms, plat);
       for (const hit of getPlatformCollisionRects(plat)) {
         resolvePlayerPlatform(p, plat, hit, climbableBoxWall);
@@ -1345,6 +1346,37 @@ function spawnFlyingTireFromStack(
   flyingTires.push({ x: cx, y: cy, vx, vy, radius, angle: 0, angularVel, bounces: 0 });
 }
 
+function spawnRollingTiresFromHideout(
+  plat: Platform,
+  bulletVx: number,
+  flyingTires: FlyingTire[]
+): void {
+  const radius = Math.max(20, Math.min(32, plat.w * 0.34));
+  const cx = plat.x + plat.w / 2;
+  const cy = Math.min(GROUND_Y - radius - 6, plat.y + plat.h * 0.68);
+  const bulletDir = bulletVx >= 0 ? 1 : -1;
+
+  for (let i = 0; i < 4; i++) {
+    const side = i % 2 === 0 ? 1 : -1;
+    const dir = Math.random() < 0.55 ? bulletDir : side;
+    const speed = 4.2 + Math.random() * 5.6;
+    const vx = dir * speed + (Math.random() - 0.5) * 2.4;
+    const vy = -(3.2 + Math.random() * 6.2);
+    const angularVel = (vx / radius) * (0.9 + Math.random() * 0.45);
+    flyingTires.push({
+      x: cx + (i - 1.5) * radius * 0.42,
+      y: cy - i * 5,
+      vx,
+      vy,
+      radius,
+      angle: Math.random() * Math.PI * 2,
+      angularVel,
+      bounces: 0,
+      life: 360 + Math.random() * 140,
+    });
+  }
+}
+
 export function updateFlyingTires(tires: FlyingTire[]): void {
   const TIRE_GRAVITY   = 0.55;
   const MAX_VY         = 22;
@@ -1355,6 +1387,7 @@ export function updateFlyingTires(tires: FlyingTire[]): void {
 
   for (let i = tires.length - 1; i >= 0; i--) {
     const t = tires[i];
+    if (t.life !== undefined) t.life--;
     t.vy = Math.min(t.vy + TIRE_GRAVITY, MAX_VY);
     t.x += t.vx;
     t.y += t.vy;
@@ -1372,7 +1405,8 @@ export function updateFlyingTires(tires: FlyingTire[]): void {
     }
 
     const settled = t.bounces >= MAX_BOUNCES && Math.abs(t.vy) < 1.0 && Math.abs(t.vx) < 0.5;
-    if (settled) { tires.splice(i, 1); }
+    const expired = t.life !== undefined && t.life <= 0;
+    if (settled || expired) { tires.splice(i, 1); }
   }
 }
 
@@ -1405,7 +1439,7 @@ export function updateBullets(
     for (let pi = 0; pi < platforms.length; pi++) {
       const plat = platforms[pi];
       if (plat.type === 'box'  && destroyedBoxIndices.includes(pi)) continue;
-      if (plat.type === 'tire' && destroyedTireIndices.includes(pi)) continue;
+      if ((plat.type === 'tire' || plat.type === 'tireHideout') && destroyedTireIndices.includes(pi)) continue;
       if (getPlatformCollisionRects(plat).some((hit) => rectOverlap(b.x - 4, b.y - 4, 8, 8, hit.x, hit.y, hit.w, hit.h))) {
         if (plat.type === 'box') {
           destroyedBoxIndices.push(pi);
@@ -1417,6 +1451,9 @@ export function updateBullets(
           for (let ti = 0; ti < numTires; ti++) {
             spawnFlyingTireFromStack(plat, ti, numTires, b.vx, flyingTires);
           }
+        } else if (plat.type === 'tireHideout') {
+          destroyedTireIndices.push(pi);
+          spawnRollingTiresFromHideout(plat, b.vx, flyingTires);
         }
         hitPlatform = true;
         break;

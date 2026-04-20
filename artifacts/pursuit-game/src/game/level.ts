@@ -218,6 +218,17 @@ export function generateLevel(): Platform[] {
   ];
   platforms.push(...junkyardBoxStacks);
 
+  // ── PILHAS DE PNEUS REFÚGIO (CP3 em diante) ─────────────────────
+  // Horácio passa por trás delas; tiros do drone quebram a pilha em 4 pneus rolando.
+  const tireHideouts: Platform[] = [
+    { x: 17180, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
+    { x: 17885, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
+    { x: 18640, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
+    { x: 19485, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
+    { x: 20420, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
+  ];
+  platforms.push(...tireHideouts.filter(({ x, w }) => !isNearWallBase(x, w)));
+
   // ── PLATAFORMAS ELEVADAS (sacadas + ares-condicionados) ─────────
   // Sacadas:     y = GROUND_Y - 125, w = 115 → h=62, collisionH=85
   // ACs:         y = qualquer valor ≠ GY-125  → normalizado para AC_Y=GY-240, h=18

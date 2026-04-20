@@ -53,6 +53,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Editor de fase: adicionados botões clicáveis CP1/CP2/CP3 na barra superior para navegar diretamente entre checkpoints sem usar teclado.
 - Editor de fase: botão `+ CP` cria checkpoints temporários na posição atual da câmera; botão `CP JSON` copia os checkpoints novos como JSON para colar no chat e aplicar permanentemente no código/Git.
 - Editor de fase: aplicado permanentemente o checkpoint `CP4` em x:21788 a partir do JSON exportado pelo editor.
+- Mecânica de pneus pós-CP3: adicionadas pilhas-refúgio (`tireHideout`) usando `@assets/pneu_1776643651883.png`; Horácio renderiza atrás delas, elas bloqueiam tiros do drone sem bloquear o jogador e, ao serem atingidas, viram 4 pneus rolando com `@assets/pneu2_1776643651884.png`.
 
 ## Key Commands
 

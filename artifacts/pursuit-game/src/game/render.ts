@@ -776,7 +776,8 @@ export function drawStreetBuildings(
 export function drawFlyingTires(
   ctx: CanvasRenderingContext2D,
   flyingTires: FlyingTire[],
-  camX: number
+  camX: number,
+  rollingTireImg?: HTMLImageElement | null
 ): void {
   for (const t of flyingTires) {
     const sx = t.x - camX;
@@ -786,6 +787,14 @@ export function drawFlyingTires(
     ctx.save();
     ctx.translate(sx, t.y);
     ctx.rotate(t.angle);
+
+    if (rollingTireImg && rollingTireImg.complete && rollingTireImg.naturalWidth > 0) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(rollingTireImg, -r, -r, r * 2, r * 2);
+      ctx.imageSmoothingEnabled = true;
+      ctx.restore();
+      continue;
+    }
 
     ctx.fillStyle = '#181818';
     ctx.beginPath();
@@ -841,7 +850,8 @@ export function drawPlatforms(
     const plat = platforms[pi];
     if (plat.type === 'ground') continue; // drawn separately
     if (plat.type === 'box'  && destroyedBoxIndices?.includes(pi)) continue;
-    if (plat.type === 'tire' && destroyedTireIndices?.includes(pi)) continue;
+    if ((plat.type === 'tire' || plat.type === 'tireHideout') && destroyedTireIndices?.includes(pi)) continue;
+    if (plat.type === 'tireHideout') continue;
     const sx = plat.x - camX;
     if (sx + plat.w < -20 || sx > CANVAS_W + 20) continue;
 
@@ -1227,6 +1237,10 @@ export function drawPlatforms(
       continue;
     }
 
+    if (plat.type === 'tireHideout') {
+      continue;
+    }
+
     if (plat.type === 'box') {
       const x = sx;
       const y = plat.y;
@@ -1587,6 +1601,39 @@ export function drawPlatforms(
           ctx.fillRect(px2, railTop, 1, 10);
         }
       }
+    }
+  }
+}
+
+export function drawTireHideouts(
+  ctx: CanvasRenderingContext2D,
+  platforms: Platform[],
+  camX: number,
+  standingTireImg?: HTMLImageElement | null,
+  destroyedTireIndices?: number[],
+): void {
+  for (let pi = 0; pi < platforms.length; pi++) {
+    const plat = platforms[pi];
+    if (plat.type !== 'tireHideout') continue;
+    if (destroyedTireIndices?.includes(pi)) continue;
+    const sx = plat.x - camX;
+    if (sx + plat.w < -20 || sx > CANVAS_W + 20) continue;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.36)';
+    ctx.fillRect(sx + plat.w * 0.08, plat.y + plat.h - 8, plat.w * 0.84, 10);
+
+    if (standingTireImg && standingTireImg.complete && standingTireImg.naturalWidth > 0) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(standingTireImg, sx, plat.y, plat.w, plat.h);
+      ctx.imageSmoothingEnabled = true;
+      continue;
+    }
+
+    ctx.fillStyle = '#101216';
+    ctx.fillRect(sx, plat.y, plat.w, plat.h);
+    ctx.fillStyle = '#2a2f38';
+    for (let i = 0; i < 4; i++) {
+      ctx.fillRect(sx + 4, plat.y + i * (plat.h / 4) + 3, plat.w - 8, plat.h / 4 - 6);
     }
   }
 }

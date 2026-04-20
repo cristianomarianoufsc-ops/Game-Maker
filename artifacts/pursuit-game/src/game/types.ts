@@ -15,7 +15,7 @@ export interface CollisionBox extends Rect {
 }
 
 export interface Platform extends Rect {
-  type: 'ground' | 'platform' | 'wall' | 'obstacle' | 'car' | 'tire' | 'box' | 'sprite';
+  type: 'ground' | 'platform' | 'wall' | 'obstacle' | 'car' | 'tire' | 'tireHideout' | 'box' | 'sprite';
   climbable?: boolean;
   collisionW?: number;
   collisionH?: number;
@@ -167,6 +167,7 @@ export interface FlyingTire {
   angle: number;      // rotação atual (radianos)
   angularVel: number; // velocidade angular (rad/frame)
   bounces: number;    // quantas vezes quicou no chão
+  life?: number;      // frames restantes antes de sumir
 }
 
 export interface GameState {
