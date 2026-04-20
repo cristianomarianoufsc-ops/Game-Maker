@@ -243,6 +243,14 @@ export function generateLevel(): Platform[] {
     customSpriteName: 'carro_abandonado_pixelart_1776652992846.png',
     customSpriteDataUrl: abandonedCarSpriteUrl,
   });
+  platforms.push({
+    x: 17396,
+    y: GROUND_Y - 112,
+    w: 56,
+    h: 112,
+    type: 'sprite',
+    customSpriteName: 'homem.webp',
+  });
 
   // ── PLATAFORMAS ELEVADAS (sacadas + ares-condicionados) ─────────
   // Sacadas:     y = GROUND_Y - 125, w = 115 → h=62, collisionH=85

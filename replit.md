@@ -60,6 +60,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Editor de fase: objetos agora têm alça circular de rotação acima da seleção; arrastar gira visualmente o objeto, `Shift` trava em incrementos de 15°, o rótulo/cópia mostra `rot:N°` e a chave de exportação inclui `r` quando a rotação é diferente de zero. A hitbox permanece separada e editável no modo `HITBOX`.
 - Fase: aplicada chave do editor adicionando um objeto `sprite` em x:16528 yOffset:-284 com tamanho 474x474 e rotação 1°, vinculado ao sprite `@assets/carro_abandonado_pixelart_1776652992846.png`.
 - Fase: aplicada chave do editor substituindo o carro sprite de x:16528 yOffset:-284 por x:16542 yOffset:-283, mantendo `carro_abandonado_pixelart_1776652992846.png` e aplicando 5 hitboxes exportadas pelo editor.
+- Fase: aplicada chave do editor adicionando um sprite `homem.webp` em x:17396 yOffset:-112 com tamanho 56x112; como o arquivo ainda não está nos assets do projeto, ele depende do upload salvo no navegador até o arquivo ser anexado.
 - Editor de fase: a chave exportada agora inclui `img:"nome-do-arquivo.png"` para sprites enviados por upload, `cw/ch/cox/coy` para colisão simples e `boxes` para múltiplas hitboxes; o upload também remove fundo preto conectado às bordas, preservando detalhes internos escuros.
 
 ## Key Commands
