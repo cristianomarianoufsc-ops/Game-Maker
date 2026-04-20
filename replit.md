@@ -54,7 +54,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Editor de fase: botão `+ CP` cria checkpoints temporários na posição atual da câmera; botão `CP JSON` copia os checkpoints novos como JSON para colar no chat e aplicar permanentemente no código/Git.
 - Editor de fase: aplicado permanentemente o checkpoint `CP4` em x:21788 a partir do JSON exportado pelo editor.
 - Mecânica de pneus pós-CP3: adicionadas pilhas-refúgio (`tireHideout`) usando `@assets/pneu_1776643651883.png`; Horácio renderiza atrás delas, elas bloqueiam tiros do drone sem bloquear o jogador e, ao serem atingidas, viram 4 pneus rolando com `@assets/pneu2_1776643651884.png`.
-- Ajuste visual/físico: pneus rolantes gerados por `tireHideout` ao serem atingidos pelo drone ficaram maiores (raio baseado em 46% da largura da pilha, limitado a 44px).
+- Ajuste visual/físico: pneus rolantes gerados por `tireHideout` ao serem atingidos pelo drone ficaram maiores (raio baseado em 52% da largura da pilha, limitado a 50px).
 
 ## Key Commands
 
