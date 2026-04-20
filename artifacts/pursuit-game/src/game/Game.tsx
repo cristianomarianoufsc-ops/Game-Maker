@@ -633,7 +633,7 @@ export default function Game() {
       car:         { w: 180, h: 60 },
       tire:        { w: 40,  h: 60 },
       tireHideout: { w: 80,  h: 80 },
-      box:         { w: 60,  h: 40 },
+      box:         { w: 65,  h: 55 },
     };
     const dims = defaults[type] ?? { w: 60, h: 40 };
     const cx = editorCamXRef.current + CANVAS_W / 2;
