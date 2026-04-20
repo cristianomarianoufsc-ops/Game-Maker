@@ -877,6 +877,7 @@ export function drawPlatforms(
         const srcY = img.naturalHeight * (cropTop / plat.h);
         const srcW = img.naturalWidth * ((plat.w - cropLeft - cropRight) / plat.w);
         const srcH = img.naturalHeight * ((plat.h - cropTop - cropBottom) / plat.h);
+        ctx.globalAlpha = 1;
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(img, srcX, srcY, srcW, srcH, sx + cropLeft, plat.y + cropTop, plat.w - cropLeft - cropRight, plat.h - cropTop - cropBottom);
         ctx.imageSmoothingEnabled = true;
