@@ -2667,7 +2667,63 @@ export default function Game() {
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);
+      // ── Drag-ghost: temporariamente move originais de volta pra exibição ──
+      const _activeDrag = editorDragRef.current;
+      const _isDragGhost = gs.gamePhase === 'editor' && _activeDrag?.mode === 'move' && _activeDrag.hasMoved;
+      const _ghostEntries: { idx: number; ghostX: number; ghostY: number }[] = [];
+      if (_isDragGhost) {
+        const _selIdx = editorSelectedIdxRef.current;
+        if (_selIdx >= 0 && _selIdx < gs.platforms.length) {
+          _ghostEntries.push({ idx: _selIdx, ghostX: gs.platforms[_selIdx].x, ghostY: gs.platforms[_selIdx].y });
+          gs.platforms[_selIdx].x = _activeDrag.origX;
+          gs.platforms[_selIdx].y = _activeDrag.origY;
+        }
+        for (const _entry of _activeDrag.origGroupPositions) {
+          const _gp = gs.platforms[_entry.idx];
+          if (_gp) {
+            _ghostEntries.push({ idx: _entry.idx, ghostX: _gp.x, ghostY: _gp.y });
+            _gp.x = _entry.origX;
+            _gp.y = _entry.origY;
+          }
+        }
+      }
+
       drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current, gs.destroyedBoxIndices, customSpriteImagesRef.current, gs.destroyedTireIndices);
+
+      // ── Restaura posições e desenha ghost transparente ──
+      if (_isDragGhost && _ghostEntries.length > 0) {
+        for (const _e of _ghostEntries) {
+          gs.platforms[_e.idx].x = _e.ghostX;
+          gs.platforms[_e.idx].y = _e.ghostY;
+        }
+        const _ghostPlats = _ghostEntries.map(_e => gs.platforms[_e.idx]).filter(Boolean) as Platform[];
+        ctx.save();
+        ctx.globalAlpha = 0.42;
+        drawPlatforms(ctx, _ghostPlats, gs.camera.x, balconyImgRef.current, carroImgRef.current, [], customSpriteImagesRef.current, []);
+        ctx.restore();
+        ctx.save();
+        ctx.setLineDash([5, 4]);
+        ctx.strokeStyle = 'rgba(255, 220, 60, 0.9)';
+        ctx.lineWidth = 2;
+        for (const _e of _ghostEntries) {
+          const _gp = gs.platforms[_e.idx];
+          if (_gp) ctx.strokeRect(_e.ghostX - gs.camera.x, _gp.y, _gp.w, _gp.h);
+        }
+        ctx.setLineDash([]);
+        // Dica flutuante "CLIQUE DIREITO = DUPLICAR" acima do ghost
+        if (_ghostEntries.length > 0) {
+          const _firstGp = gs.platforms[_ghostEntries[0].idx];
+          if (_firstGp) {
+            const _tipX = _ghostEntries[0].ghostX - gs.camera.x + _firstGp.w / 2;
+            const _tipY = _ghostEntries[0].ghostY - 14;
+            ctx.font = 'bold 10px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(255,220,60,0.95)';
+            ctx.fillText('CLIQUE DIREITO = DUPLICAR', _tipX, _tipY);
+          }
+        }
+        ctx.restore();
+      }
       drawFlyingTires(ctx, gs.flyingTires, gs.camera.x, rollingTireImgRef.current);
       drawParticles(ctx, gs);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
