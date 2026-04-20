@@ -2610,6 +2610,7 @@ export function drawEditorUI(
   canUndo = false,
   canRedo = false,
   baselineKeys: Set<string> = new Set(),
+  galleryServerNames: Set<string> = new Set(),
 ): void {
   const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number; rotation?: number }) =>
     `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}:${Math.round(p.rotation ?? 0)}`;
@@ -2896,6 +2897,28 @@ export function drawEditorUI(
         ctx.textAlign = 'center';
         ctx.fillText(delLabel, delBtnX + delBtnW / 2, delBtnY + 15);
         ctx.textAlign = 'left';
+
+        // ── Botão SALVAR NA GALERIA (sprite não salvo no servidor) ──
+        const isSprite = p.type === 'sprite' && !!p.customSpriteName;
+        const alreadyInGallery = isSprite && galleryServerNames.has(p.customSpriteName!);
+        if (isSprite && !alreadyInGallery) {
+          const galBtnX = delBtnX;
+          const galBtnY = delBtnY + 26;
+          const galBtnW = 82;
+          const galBtnH = 22;
+          ctx.fillStyle = 'rgba(15,40,60,0.94)';
+          ctx.strokeStyle = 'rgba(80,200,255,0.85)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(galBtnX, galBtnY, galBtnW, galBtnH, 4);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(120,220,255,1)';
+          ctx.font = 'bold 10px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('📁 GALERIA', galBtnX + galBtnW / 2, galBtnY + 15);
+          ctx.textAlign = 'left';
+        }
       }
 
       if (collisionMode) {

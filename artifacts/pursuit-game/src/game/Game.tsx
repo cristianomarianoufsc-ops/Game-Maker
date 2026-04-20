@@ -433,6 +433,7 @@ export default function Game() {
   const editorMouseWorldRef = useRef({ x: 0, y: 0 });
   const editorMouseCanvasRef = useRef({ x: 0, y: 0 });
   const spriteUploadInputRef = useRef<HTMLInputElement>(null);
+  const galleryServerNamesRef = useRef<Set<string>>(new Set());
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
   const editorSelectedIdxRef = useRef(-1);
@@ -519,6 +520,16 @@ export default function Game() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Inicializa nomes da galeria do servidor ao montar
+  useEffect(() => {
+    fetch('/api/sprites')
+      .then(r => r.ok ? r.json() : { sprites: [] })
+      .then((data: { sprites: { name: string }[] }) => {
+        galleryServerNamesRef.current = new Set(data.sprites.map(s => s.name));
+      })
+      .catch(() => { /* silencioso */ });
+  }, []);
+
   // Galeria de sprites
   const [showGallery, setShowGallery] = useState(false);
   const [gallerySprites, setGallerySprites] = useState<{ name: string; url: string; onServer: boolean }[]>([]);
@@ -534,8 +545,11 @@ export default function Game() {
       }
     } catch { /* sem sprites no servidor */ }
 
+    // Atualiza ref de nomes do servidor
+    galleryServerNamesRef.current = new Set(serverSprites.map(s => s.name));
+
     // Sprites usados na fase mas não no servidor
-    const serverNames = new Set(serverSprites.map(s => s.name));
+    const serverNames = galleryServerNamesRef.current;
     const levelSprites: { name: string; url: string; onServer: boolean }[] = [];
     const seenLevelNames = new Set<string>();
     for (const p of platformsRef.current) {
@@ -555,18 +569,37 @@ export default function Game() {
     setShowGallery(true);
   }, []);
 
-  const deleteGallerySprite = useCallback(async (spriteName: string, e: React.MouseEvent) => {
+  const deleteGallerySprite = useCallback(async (spriteName: string, onServer: boolean, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm(`Deletar "${spriteName}" permanentemente?`)) return;
+    if (onServer) {
+      if (!window.confirm(`Deletar "${spriteName}" permanentemente?`)) return;
+      try {
+        await fetch('/api/delete-sprite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: spriteName }),
+        });
+        galleryServerNamesRef.current.delete(spriteName);
+      } catch {
+        // silencioso
+      }
+    }
+    setGallerySprites(prev => prev.filter(s => s.name !== spriteName));
+  }, []);
+
+  const saveToGallery = useCallback(async (spriteName: string, dataUrl: string) => {
     try {
-      await fetch('/api/delete-sprite', {
+      const resp = await fetch('/api/upload-sprite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: spriteName }),
+        body: JSON.stringify({ name: spriteName, dataUrl }),
       });
-      setGallerySprites(prev => prev.filter(s => s.name !== spriteName));
+      if (resp.ok) {
+        galleryServerNamesRef.current.add(spriteName);
+        editorCopiedMsgRef.current = { text: `✓ SALVO NA GALERIA: ${spriteName}`, until: Date.now() + 3000 };
+      }
     } catch {
-      // silencioso
+      editorCopiedMsgRef.current = { text: `✗ ERRO AO SALVAR NA GALERIA`, until: Date.now() + 3000 };
     }
   }, []);
 
@@ -1740,30 +1773,6 @@ export default function Game() {
         }
       }
 
-      // Se clicar diretamente em um OUTRO objeto (não selecionado), seleciona ele
-      // imediatamente, sem passar pelos botões/alças do objeto atual.
-      if (selIdx >= 0 && !e.shiftKey) {
-        let otherIdx = -1;
-        for (let _i = platforms.length - 1; _i >= 0; _i--) {
-          if (_i === selIdx) continue;
-          const _p = platforms[_i];
-          if (_p.type === 'ground') continue;
-          if (isEditorPointInsidePlatform(wx, wy, _p)) { otherIdx = _i; break; }
-        }
-        if (otherIdx >= 0) {
-          editorSelectedIdxRef.current = otherIdx;
-          editorSelectedIndicesRef.current = new Set([otherIdx]);
-          editorCollisionModeRef.current = false;
-          editorCollisionBoxIdxRef.current = 0;
-          const op = platforms[otherIdx];
-          const ot = platCoordText(op);
-          copyPlatText(ot, `✓ SELECIONADO: ${ot}`);
-          editorPendingHistoryRef.current = snapshotPlatforms();
-          editorDragRef.current = makeEditorDrag(op, 'move', wx, wy, ot);
-          return;
-        }
-      }
-
       // Check handle hits on currently selected object first
       if (selIdx >= 0 && selIdx < platforms.length) {
         const p = platforms[selIdx];
@@ -1898,6 +1907,20 @@ export default function Game() {
           if (!editorCollisionModeRef.current && wx >= delBtnX && wx <= delBtnX + delBtnW && wy >= delBtnY && wy <= delBtnY + delBtnH) {
             deleteEditorSelectedObjects();
             return;
+          }
+
+          // ── Botão SALVAR NA GALERIA ──
+          const isSprite = p.type === 'sprite' && !!p.customSpriteName;
+          const alreadyInGallery = isSprite && galleryServerNamesRef.current.has(p.customSpriteName!);
+          if (!editorCollisionModeRef.current && isSprite && !alreadyInGallery) {
+            const galBtnX = delBtnX;
+            const galBtnY = delBtnY + 26;
+            const galBtnW = 82;
+            const galBtnH = 22;
+            if (wx >= galBtnX && wx <= galBtnX + galBtnW && wy >= galBtnY && wy <= galBtnY + galBtnH) {
+              saveToGallery(p.customSpriteName!, p.customSpriteDataUrl ?? '');
+              return;
+            }
           }
         }
 
@@ -2513,7 +2536,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, getEditorCheckpoints(), editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0, editorBaselineKeysRef.current);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, getEditorCheckpoints(), editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0, editorBaselineKeysRef.current, galleryServerNamesRef.current);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);
@@ -2776,31 +2799,29 @@ export default function Game() {
                         {sprite.name.replace(/\.[^.]+$/, '')}
                       </span>
                     </button>
-                    {/* Botão deletar — só para sprites salvos no servidor */}
-                    {sprite.onServer ? (
-                      <button
-                        onClick={e => deleteGallerySprite(sprite.name, e)}
-                        title={`Deletar ${sprite.name}`}
-                        style={{
-                          position: 'absolute',
-                          top: 3,
-                          right: 3,
-                          width: 16,
-                          height: 16,
-                          background: 'rgba(180,30,30,0.85)',
-                          border: '1px solid rgba(255,80,80,0.6)',
-                          borderRadius: 3,
-                          color: '#fff',
-                          fontSize: 9,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: 0,
-                          fontWeight: 'bold',
-                        }}
-                      >✕</button>
-                    ) : null}
+                    {/* Botão deletar — aparece para todos os sprites */}
+                    <button
+                      onClick={e => deleteGallerySprite(sprite.name, sprite.onServer, e)}
+                      title={sprite.onServer ? `Deletar ${sprite.name} do servidor` : `Remover ${sprite.name} da galeria`}
+                      style={{
+                        position: 'absolute',
+                        top: 3,
+                        right: 3,
+                        width: 16,
+                        height: 16,
+                        background: 'rgba(180,30,30,0.85)',
+                        border: '1px solid rgba(255,80,80,0.6)',
+                        borderRadius: 3,
+                        color: '#fff',
+                        fontSize: 9,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 0,
+                        fontWeight: 'bold',
+                      }}
+                    >✕</button>
                   </div>
                 ))}
               </div>
