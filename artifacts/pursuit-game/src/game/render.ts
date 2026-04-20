@@ -3000,6 +3000,9 @@ export function drawEditorUI(
 
   // Botões Desfazer / Refazer
   const undoBtnX = 166, redoBtnX = 224, uploadBtnX = 286, histBtnY = 5, histBtnW = 54, histBtnH = 18;
+  const uploadBtnW = 90;
+  const galeriaBtnX = uploadBtnX + uploadBtnW + 4;
+  const galeriaBtnW = 72;
   ctx.save();
   ctx.fillStyle = canUndo ? 'rgba(40,50,80,0.92)' : 'rgba(25,25,35,0.6)';
   ctx.strokeStyle = canUndo ? 'rgba(120,170,255,0.9)' : 'rgba(80,80,110,0.45)';
@@ -3031,16 +3034,31 @@ export function drawEditorUI(
   ctx.strokeStyle = 'rgba(120,220,255,0.9)';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.roundRect(uploadBtnX, histBtnY, 104, histBtnH, 3);
+  ctx.roundRect(uploadBtnX, histBtnY, uploadBtnW, histBtnH, 3);
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = 'rgba(170,235,255,1)';
   ctx.font = 'bold 10px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('UPLOAD SPRITE', uploadBtnX + 52, histBtnY + 12);
+  ctx.fillText('UPLOAD', uploadBtnX + uploadBtnW / 2, histBtnY + 12);
   ctx.restore();
 
-  const checkpointBtnX = uploadBtnX + 108;
+  // Botão GALERIA
+  ctx.save();
+  ctx.fillStyle = 'rgba(40,30,70,0.92)';
+  ctx.strokeStyle = 'rgba(200,150,255,0.9)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(galeriaBtnX, histBtnY, galeriaBtnW, histBtnH, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(220,190,255,1)';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('🖼 GALERIA', galeriaBtnX + galeriaBtnW / 2, histBtnY + 12);
+  ctx.restore();
+
+  const checkpointBtnX = galeriaBtnX + galeriaBtnW + 4;
   const checkpointBtnY = histBtnY;
   const checkpointBtnW = 30;
   const checkpointBtnH = histBtnH;

@@ -519,6 +519,67 @@ export default function Game() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Galeria de sprites
+  const [showGallery, setShowGallery] = useState(false);
+  const [gallerySprites, setGallerySprites] = useState<{ name: string; url: string }[]>([]);
+
+  const openGallery = useCallback(async () => {
+    try {
+      const resp = await fetch('/api/sprites');
+      if (resp.ok) {
+        const data = await resp.json() as { sprites: { name: string; url: string }[] };
+        setGallerySprites(data.sprites);
+      }
+    } catch {
+      setGallerySprites([]);
+    }
+    setShowGallery(true);
+  }, []);
+
+  const placeGallerySprite = useCallback((spriteName: string, spriteUrl: string) => {
+    setShowGallery(false);
+    const img = new Image();
+    img.onload = () => {
+      const processed = stripEditorSpriteBackground(img);
+      const maxW = 180;
+      const s = Math.min(1, maxW / img.naturalWidth);
+      const w = Math.max(12, Math.round(img.naturalWidth * s));
+      const h = Math.max(12, Math.round(img.naturalHeight * s));
+      const cx = editorCamXRef.current + CANVAS_W / 2;
+      const cy = editorCamYRef.current + CANVAS_H / 2;
+      const platform: Platform = {
+        type: 'sprite',
+        x: Math.round(cx - w / 2),
+        y: Math.round(Math.min(cy - h / 2, GROUND_Y - h)),
+        w,
+        h,
+        customSpriteName: spriteName,
+        customSpriteDataUrl: spriteUrl,
+      };
+      const snapshot = platformsRef.current.map(p => ({
+        ...p,
+        collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({
+          ...b,
+          slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
+        })) : undefined,
+      })) as Platform[];
+      editorUndoStackRef.current.push(snapshot);
+      if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
+      editorRedoStackRef.current = [];
+      customSpriteImagesRef.current.set(spriteName, processed);
+      platformsRef.current.push(platform);
+      saveCustomSpritePlatforms(platformsRef.current);
+      if (gsRef.current) gsRef.current.platforms = platformsRef.current;
+      const idx = platformsRef.current.length - 1;
+      editorSelectedIdxRef.current = idx;
+      editorSelectedIndicesRef.current = new Set([idx]);
+      editorCollisionModeRef.current = false;
+      editorCollisionBoxIdxRef.current = 0;
+      editorCopiedMsgRef.current = { text: `✓ SPRITE COLOCADO: ${spriteName}`, until: Date.now() + 3000 };
+    };
+    img.src = spriteUrl;
+  }, []);
+
   const makeInitialState = useCallback((gameMode: GameState['gameMode'] = 'story'): GameState => ({
     player: makePlayer(),
     drone: makeDrone(),
@@ -1475,8 +1536,9 @@ export default function Game() {
       if (screenY >= 5 && screenY <= 23) {
         if (screenX >= 166 && screenX <= 220) { editorUndo(); return; }
         if (screenX >= 224 && screenX <= 278) { editorRedo(); return; }
-        if (screenX >= 286 && screenX <= 390) { spriteUploadInputRef.current?.click(); return; }
-        const checkpointBtnX = 394;
+        if (screenX >= 286 && screenX <= 376) { spriteUploadInputRef.current?.click(); return; }
+        if (screenX >= 380 && screenX <= 452) { openGallery(); return; }
+        const checkpointBtnX = 456;
         const checkpointBtnW = 30;
         const checkpointBtnGap = 4;
         const checkpoints = getEditorCheckpoints();
@@ -2566,6 +2628,108 @@ export default function Game() {
         onChange={handleSpriteUpload}
         style={{ display: 'none' }}
       />
+
+      {/* Painel da galeria de sprites */}
+      {showGallery && (
+        <div
+          onClick={() => setShowGallery(false)}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#12102a',
+              border: '1px solid rgba(200,150,255,0.6)',
+              borderRadius: 8,
+              padding: '14px 16px',
+              width: Math.min(cssW - 40, 520),
+              maxHeight: Math.min(cssH - 60, 400),
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ color: '#dbbfff', fontFamily: 'monospace', fontWeight: 'bold', fontSize: 13 }}>
+                🖼 GALERIA DE SPRITES
+              </span>
+              <button
+                onClick={() => setShowGallery(false)}
+                style={{
+                  background: 'none', border: 'none', color: 'rgba(220,190,255,0.7)',
+                  cursor: 'pointer', fontSize: 16, lineHeight: 1,
+                }}
+              >✕</button>
+            </div>
+            {gallerySprites.length === 0 ? (
+              <div style={{ color: 'rgba(160,150,190,0.7)', fontFamily: 'monospace', fontSize: 11, textAlign: 'center', padding: '20px 0' }}>
+                Nenhum sprite salvo ainda. Use UPLOAD para adicionar.
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
+                gap: 8,
+                overflowY: 'auto',
+                paddingRight: 4,
+              }}>
+                {gallerySprites.map(sprite => (
+                  <button
+                    key={sprite.name}
+                    onClick={() => placeGallerySprite(sprite.name, sprite.url)}
+                    title={sprite.name}
+                    style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(200,150,255,0.3)',
+                      borderRadius: 6,
+                      padding: '6px 4px 4px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 4,
+                      transition: 'border-color 0.15s, background 0.15s',
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(200,150,255,0.9)';
+                      (e.currentTarget as HTMLButtonElement).style.background = 'rgba(200,150,255,0.1)';
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(200,150,255,0.3)';
+                      (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+                    }}
+                  >
+                    <img
+                      src={sprite.url}
+                      alt={sprite.name}
+                      style={{ width: 64, height: 64, objectFit: 'contain', imageRendering: 'pixelated' }}
+                    />
+                    <span style={{
+                      color: 'rgba(200,185,230,0.85)',
+                      fontFamily: 'monospace',
+                      fontSize: 9,
+                      wordBreak: 'break-all',
+                      textAlign: 'center',
+                      lineHeight: 1.3,
+                    }}>
+                      {sprite.name.replace(/\.[^.]+$/, '')}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Mobile controls — overlay absolutely positioned */}
       <MobileControls keysRef={keysRef} spaceJustPressed={spaceJustPressed} />
     </div>
