@@ -623,6 +623,24 @@ export default function Game() {
         }
       }
       const k = keysRef.current;
+      if (down && gsRef.current?.gamePhase === 'editor') {
+        const digitMatch = /^Digit([0-9])$/.exec(e.code);
+        if (digitMatch) {
+          const checkpoints = getEditorCheckpoints();
+          const digit = Number(digitMatch[1]);
+          const checkpointIndex = digit === 0 ? 9 : digit - 1;
+          if (checkpointIndex >= 0 && checkpointIndex < checkpoints.length) {
+            editorCheckpointIdxRef.current = checkpointIndex;
+            editorCamXRef.current = Math.max(0, checkpoints[checkpointIndex].x - CANVAS_W / 2);
+            editorCopiedMsgRef.current = {
+              text: `✓ ${checkpoints[checkpointIndex].label} ATIVO — x:${checkpoints[checkpointIndex].x}`,
+              until: Date.now() + 1600,
+            };
+            e.preventDefault();
+            return;
+          }
+        }
+      }
       switch (e.code) {
         case 'ArrowLeft':  case 'KeyA': k.left  = down; break;
         case 'ArrowRight': case 'KeyD': k.right = down; break;

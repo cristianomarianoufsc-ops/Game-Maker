@@ -3083,7 +3083,7 @@ export function drawEditorUI(
   ctx.font = '10px monospace';
   const helpText = collisionMode
     ? 'HITBOX: clique numa caixa para escolher  |  setas movem 1px (Shift=5px)  |  +BOX / −HITBOX  |  S ou ◥ +SLOPE'
-    : '← → MOVER  |  +CP cria checkpoint  |  CP JSON copia checkpoints novos  |  botão HITBOX configura colisão/slope  |  ESC: MENU';
+    : '← → MOVER  |  1-9/0 acessa CP direto  |  +CP cria checkpoint  |  CP JSON copia novos  |  ESC: MENU';
   ctx.fillText(helpText, 12, 32);
 
   // Checkpoint markers in world space
