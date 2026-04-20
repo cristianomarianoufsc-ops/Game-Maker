@@ -475,10 +475,12 @@ export default function Game() {
   useEffect(() => {
     deletedPlatformKeysRef.current = loadDeletedPlatformKeys();
     const customSpritePlatforms = loadCustomSpritePlatforms();
+    const basePlatforms = applyDeletedPlatformKeys(generateLevel(), deletedPlatformKeysRef.current);
     customSpriteImagesRef.current = new Map();
+    basePlatforms.forEach(registerCustomSpriteImage);
     customSpritePlatforms.forEach(registerCustomSpriteImage);
     platformsRef.current = [
-      ...applyDeletedPlatformKeys(generateLevel(), deletedPlatformKeysRef.current),
+      ...basePlatforms,
       ...customSpritePlatforms,
     ];
     gsRef.current = makeInitialState();

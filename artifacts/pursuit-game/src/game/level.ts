@@ -1,5 +1,6 @@
 import type { Platform } from './types';
 import { GROUND_Y, CANVAS_H, CANVAS_W } from './constants';
+import uploadedSpriteUrl from '@assets/image_1776652732382.png';
 
 const GH = 30;
 const CAN_W = 90;
@@ -225,7 +226,16 @@ export function generateLevel(): Platform[] {
     { x: 20420, y: GROUND_Y - 116, w: 90, h: 116, type: 'tireHideout' },
   ];
   platforms.push(...tireHideouts.filter(({ x, w }) => !isNearWallBase(x, w)));
-  platforms.push({ x: 16528, y: GROUND_Y - 284, w: 474, h: 474, type: 'sprite', rotation: 1 });
+  platforms.push({
+    x: 16528,
+    y: GROUND_Y - 284,
+    w: 474,
+    h: 474,
+    type: 'sprite',
+    rotation: 1,
+    customSpriteName: 'image_1776652732382.png',
+    customSpriteDataUrl: uploadedSpriteUrl,
+  });
 
   // ── PLATAFORMAS ELEVADAS (sacadas + ares-condicionados) ─────────
   // Sacadas:     y = GROUND_Y - 125, w = 115 → h=62, collisionH=85
