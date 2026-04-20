@@ -2227,7 +2227,86 @@ export default function Game() {
     };
 
     const cvs = canvasRef.current;
-    const onContextMenu = (e: MouseEvent) => e.preventDefault();
+    const onContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      // ── Stamp Copy (estilo CorelDraw): clique direito durante drag de move ──
+      const drag = editorDragRef.current;
+      if (drag && drag.mode === 'move' && drag.hasMoved) {
+        const platforms = platformsRef.current;
+        const selIdx = editorSelectedIdxRef.current;
+
+        // 1. Snapshot para undo (estado antes do stamp)
+        const snapshot = platforms.map(p => ({
+          ...p,
+          collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({
+            ...b,
+            slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
+          })) : undefined,
+        })) as Platform[];
+        editorUndoStackRef.current.push(snapshot);
+        if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
+        editorRedoStackRef.current = [];
+
+        // 2. Criar cópias na posição atual (arrastada)
+        const newIndices: number[] = [];
+        // Cópia do objeto primário
+        if (selIdx >= 0 && selIdx < platforms.length) {
+          const orig = platforms[selIdx];
+          const copy: Platform = {
+            ...orig,
+            collisionBoxes: orig.collisionBoxes ? orig.collisionBoxes.map(b => ({
+              ...b,
+              slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
+            })) : undefined,
+          };
+          platforms.push(copy);
+          newIndices.push(platforms.length - 1);
+        }
+        // Cópias dos objetos do grupo
+        for (const entry of drag.origGroupPositions) {
+          const orig = platforms[entry.idx];
+          if (orig) {
+            const copy: Platform = {
+              ...orig,
+              collisionBoxes: orig.collisionBoxes ? orig.collisionBoxes.map(b => ({
+                ...b,
+                slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
+              })) : undefined,
+            };
+            platforms.push(copy);
+            newIndices.push(platforms.length - 1);
+          }
+        }
+
+        // 3. Snap dos originais de volta às posições de origem
+        if (selIdx >= 0 && selIdx < platforms.length) {
+          platforms[selIdx].x = drag.origX;
+          platforms[selIdx].y = drag.origY;
+        }
+        for (const entry of drag.origGroupPositions) {
+          if (entry.idx >= 0 && entry.idx < platforms.length) {
+            platforms[entry.idx].x = entry.origX;
+            platforms[entry.idx].y = entry.origY;
+          }
+        }
+
+        // 4. Selecionar as cópias recém-criadas
+        if (newIndices.length > 0) {
+          editorSelectedIdxRef.current = newIndices[0];
+          editorSelectedIndicesRef.current = new Set(newIndices);
+        }
+
+        // 5. Limpar drag e salvar
+        editorDragRef.current = null;
+        saveCustomSpritePlatforms(platforms);
+        if (gsRef.current) gsRef.current.platforms = platforms;
+        const count = newIndices.length;
+        editorCopiedMsgRef.current = {
+          text: `✓ ${count} CÓPIA${count !== 1 ? 'S' : ''} ESTAMPADA${count !== 1 ? 'S' : ''}`,
+          until: Date.now() + 2500,
+        };
+      }
+    };
     if (cvs) {
       cvs.addEventListener('mousemove', onCanvasMouseMove);
       cvs.addEventListener('mousemove', onCanvasMiddleMove);
