@@ -1607,10 +1607,12 @@ export function updateDogs(dogs: Dog[], player: Player, dt: number, onBite: () =
       dog.vx = 0;
       dog.animState = 'bite';
     } else if (!canDetect) {
-      // Horácio fora da zona — cachorro fica parado olhando em sua direção
+      // Horácio fora da zona — para e olha em sua direção
       dog.vx = 0;
-      dog.animState = 'idle';
-      dog.facingRight = dx >= 0;
+      if (dog.animState !== 'idle') {
+        dog.animState = 'idle';
+        dog.animTimer = 0;
+      }
     } else {
       dog.animState = 'run';
 
@@ -1645,13 +1647,19 @@ export function updateDogs(dogs: Dog[], player: Player, dt: number, onBite: () =
 
     dog.x += dog.vx;
 
+    // Clamp nas bordas — só inverte direção em modo corrida
     if (dog.x <= dog.patrolLeft) {
       dog.x = dog.patrolLeft;
-      dog.facingRight = true;
+      if (dog.animState === 'run') dog.facingRight = true;
     }
     if (dog.x + dog.w >= dog.patrolRight) {
       dog.x = dog.patrolRight - dog.w;
-      dog.facingRight = false;
+      if (dog.animState === 'run') dog.facingRight = false;
+    }
+
+    // Em idle, sempre olha na direção de Horácio (definido depois do clamp)
+    if (dog.animState === 'idle') {
+      dog.facingRight = dx >= 0;
     }
 
     dog.y = GROUND_Y - dog.h;

@@ -2424,10 +2424,12 @@ export function drawDogs(
 
   // The sprite sheet has 3 frames side by side, with label text at the bottom.
   // We crop the top 78% to exclude labels.
-  // A horizontal inset of 5px per side removes bleed from adjacent frames.
+  // Asymmetric inset: more on the left (removes bleed from previous frame),
+  // zero on the right (preserves dog's snout).
   const rawFrameW = Math.floor(imgW / 3);
-  const inset = 5;
-  const frameW = rawFrameW - inset * 2; // visible width after inset
+  const leftInset = 18;
+  const rightInset = 0;
+  const frameW = rawFrameW - leftInset - rightInset;
   const srcH = Math.floor(imgH * 0.78);
 
   const displayH = 120;
@@ -2447,7 +2449,7 @@ export function drawDogs(
       frameIdx = runFrame;
     }
 
-    const sx = frameIdx * rawFrameW + inset;
+    const sx = frameIdx * rawFrameW + leftInset;
 
     ctx.save();
     if (!dog.facingRight) {
