@@ -482,17 +482,17 @@ export default function Game() {
   const editorSnapAxesRef = useRef<{ worldX: number | null; worldY: number | null }>({ worldX: null, worldY: null });
   const editorSnapStateRef = useRef<{ x: boolean; y: boolean }>({ x: false, y: false });
   const EDITOR_PAN_SPEED = 12;
-  const EDITOR_CHECKPOINTS = [
+  const EDITOR_CHECKPOINTS_DEFAULT = [
     { label: 'CP1', x: 6500 },
     { label: 'CP2', x: 12100 },
     { label: 'CP3', x: 16400 },
     { label: 'CP4', x: 21788 },
   ];
-  const editorCustomCheckpointsRef = useRef<{ label: string; x: number }[]>([]);
-  const getEditorCheckpoints = () => [
-    ...EDITOR_CHECKPOINTS,
-    ...editorCustomCheckpointsRef.current,
-  ];
+  // Lista unificada: carrega do JSON ao iniciar; usa defaults se não houver nada salvo
+  const editorCustomCheckpointsRef = useRef<{ label: string; x: number }[]>(
+    EDITOR_CHECKPOINTS_DEFAULT.map(cp => ({ ...cp }))
+  );
+  const getEditorCheckpoints = () => editorCustomCheckpointsRef.current;
   const editorCheckpointIdxRef = useRef(-1);
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
@@ -1827,10 +1827,16 @@ export default function Game() {
         }
         const addCheckpointBtnX = checkpointBtnX + checkpoints.length * (checkpointBtnW + checkpointBtnGap) + 4;
         if (screenX >= addCheckpointBtnX && screenX <= addCheckpointBtnX + 36) {
-          const label = `CP${checkpoints.length + 1}`;
           const x = Math.round(editorCamXRef.current + CANVAS_W / 2);
-          editorCustomCheckpointsRef.current.push({ label, x });
-          editorCheckpointIdxRef.current = getEditorCheckpoints().length - 1;
+          // Adiciona, ordena por X e renumera tudo
+          const merged = [...editorCustomCheckpointsRef.current, { label: '', x }];
+          merged.sort((a, b) => a.x - b.x);
+          merged.forEach((cp, i) => { cp.label = `CP${i + 1}`; });
+          editorCustomCheckpointsRef.current = merged;
+          // Posiciona o índice no CP recém-criado
+          const newIdx = merged.findIndex(cp => cp.x === x);
+          editorCheckpointIdxRef.current = newIdx;
+          const newLabel = merged[newIdx]?.label ?? `CP${merged.length}`;
           // Salva imediatamente no JSON para persistir
           fetch('/api/save-level-patch', {
             method: 'POST',
@@ -1838,12 +1844,12 @@ export default function Game() {
             body: JSON.stringify({ checkpoints: editorCustomCheckpointsRef.current }),
           }).then(() => {
             editorCopiedMsgRef.current = {
-              text: `✓ ${label} SALVO EM x:${x}`,
+              text: `✓ ${newLabel} SALVO EM x:${x}`,
               until: Date.now() + 3000,
             };
           }).catch(() => {
             editorCopiedMsgRef.current = {
-              text: `✓ ${label} CRIADO EM x:${x} (erro ao salvar)`,
+              text: `✓ ${newLabel} CRIADO EM x:${x} (erro ao salvar)`,
               until: Date.now() + 3000,
             };
           });
