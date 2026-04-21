@@ -2430,7 +2430,7 @@ export function drawDogs(
   const frameW = rawFrameW - leftInset;
   const srcH = Math.floor(imgH * 0.78);
 
-  const displayH = 120;
+  const displayH = 100;
   const displayW = Math.round(displayH * (frameW / srcH));
 
   for (const dog of dogs) {
@@ -2445,7 +2445,7 @@ export function drawDogs(
       const idleSrcH = dogIdle.naturalHeight;
       const idleDisplayW = Math.round(displayH * (idleSrcW / idleSrcH));
       // Push idle sprite down so paws touch the ground
-      const idleScreenY = GROUND_Y - displayH + 14;
+      const idleScreenY = GROUND_Y - displayH + 24;
 
       if (!dog.facingRight) {
         ctx.translate(screenX + idleDisplayW, 0);
