@@ -10,6 +10,7 @@ import wallRunSheetUrl from '@assets/Wall_Run_1776005817769.png';
 import mortalSheetUrl from '@assets/mortal_1776009939272.png';
 import subidaSheetUrl from '@assets/subida_1776012458574.png';
 import sideFlipSheetUrl from '@assets/SIDE_FLIP_1776053462942.png';
+import dogSheetUrl from '@assets/DOG_1776735900815.png';
 import standingTireUrl from '@assets/pneu_1776643651883.png';
 import rollingTireUrl from '@assets/pneu2_1776643651884.png';
 import brickTextureUrl from '/brick_texture.png';
@@ -21,14 +22,14 @@ import {
 import { generateLevel, generateBuildings, generateWallTestLevel } from './level';
 import {
   updatePlayer, updateDrone, updateBullets, updateParticles, spawnParticleHelper,
-  updateFallingBoxes, updateFlyingTires,
+  updateFallingBoxes, updateFlyingTires, updateDogs,
 } from './physics';
 import {
   drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawGround,
   drawStreetBuildings, drawPlatforms, drawFlyingTires, drawTireHideouts,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
-  drawEditorUI,
+  drawEditorUI, drawDogs,
 } from './render';
 import {
   addPlatformCollisionBox,
@@ -513,6 +514,7 @@ export default function Game() {
   const carroImgRef = useRef<HTMLImageElement | null>(null);
   const standingTireImgRef = useRef<HTMLImageElement | null>(null);
   const rollingTireImgRef = useRef<HTMLImageElement | null>(null);
+  const dogSheetImgRef = useRef<HTMLImageElement | null>(null);
   const customSpriteImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   // Responsive scale: fit canvas inside available viewport
@@ -743,6 +745,22 @@ export default function Game() {
     fallingBoxes: [],
     flyingTires: [],
     destroyedTireIndices: [],
+    dogs: gameMode === 'story' ? [
+      {
+        x: 19500,
+        y: GROUND_Y - 50,
+        w: 70,
+        h: 50,
+        vx: 3.0,
+        facingRight: true,
+        animState: 'run' as const,
+        animTimer: 0,
+        biteTimer: 0,
+        biteCooldown: 0,
+        patrolLeft: 19211,
+        patrolRight: 20578,
+      },
+    ] : [],
   }), []);
 
   const registerCustomSpriteImage = useCallback((platform: Platform) => {
@@ -902,6 +920,17 @@ export default function Game() {
       stripped.onload = () => { rollingTireImgRef.current = stripped; };
     };
     rollingTireImg.src = rollingTireUrl;
+
+    const dogImg = new Image();
+    dogImg.onload = () => {
+      const stripped = stripBlackBackground(dogImg);
+      if (stripped.complete && stripped.naturalWidth > 0) {
+        dogSheetImgRef.current = stripped;
+      } else {
+        stripped.onload = () => { dogSheetImgRef.current = stripped; };
+      }
+    };
+    dogImg.src = dogSheetUrl;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       if (down && gsRef.current?.gamePhase === 'editor' && editorCollisionModeRef.current) {
@@ -2666,6 +2695,11 @@ export default function Game() {
           updateFlyingTires(gs.flyingTires);
         }
 
+        updateDogs(gs.dogs, gs.player, dt, () => {
+          gs.screenShake = 5;
+          for (let i = 0; i < 6; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
+        });
+
         gs.particles = updateParticles(gs.particles, dt);
 
         if (gs.screenShake > 0) gs.screenShake = Math.max(0, gs.screenShake - 0.4);
@@ -2876,6 +2910,7 @@ export default function Game() {
       }
       drawFlyingTires(ctx, gs.flyingTires, gs.camera.x, rollingTireImgRef.current);
       drawParticles(ctx, gs);
+      drawDogs(ctx, gs.dogs, gs.camera.x, dogSheetImgRef.current);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current);
       drawTireHideouts(ctx, gs.platforms, gs.camera.x, standingTireImgRef.current, gs.destroyedTireIndices);
       if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {

@@ -1,4 +1,4 @@
-import type { GameState, Platform, FlyingTire } from './types';
+import type { GameState, Platform, FlyingTire, Dog } from './types';
 import type { BuildingDef } from './level';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, COLORS,
@@ -2404,6 +2404,55 @@ export function drawBullets(
     ctx.beginPath();
     ctx.arc(sx, sy, 2, 0, Math.PI * 2);
     ctx.fill();
+  }
+}
+
+// --- Dogs ---
+
+const DOG_RUN_FRAME_INTERVAL = 170; // ms per run frame
+
+export function drawDogs(
+  ctx: CanvasRenderingContext2D,
+  dogs: Dog[],
+  camX: number,
+  dogSheet: HTMLImageElement | null
+): void {
+  if (!dogSheet || !dogSheet.complete || dogSheet.naturalWidth === 0) return;
+
+  const imgW = dogSheet.naturalWidth;
+  const imgH = dogSheet.naturalHeight;
+
+  // The sprite sheet has 3 frames side by side, with label text at the bottom
+  // We crop the top 78% to exclude the labels
+  const frameW = Math.floor(imgW / 3);
+  const srcH = Math.floor(imgH * 0.78);
+
+  const displayH = 68;
+  const displayW = Math.round(displayH * (frameW / srcH));
+
+  for (const dog of dogs) {
+    const screenX = dog.x - camX;
+    const screenY = GROUND_Y - displayH;
+
+    let frameIdx = 0;
+    if (dog.animState === 'bite') {
+      frameIdx = 2;
+    } else {
+      const runFrame = Math.floor(dog.animTimer / DOG_RUN_FRAME_INTERVAL) % 2;
+      frameIdx = runFrame;
+    }
+
+    const sx = frameIdx * frameW;
+
+    ctx.save();
+    if (!dog.facingRight) {
+      ctx.translate(screenX + displayW, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(dogSheet, sx, 0, frameW, srcH, 0, screenY, displayW, displayH);
+    } else {
+      ctx.drawImage(dogSheet, sx, 0, frameW, srcH, screenX, screenY, displayW, displayH);
+    }
+    ctx.restore();
   }
 }
 

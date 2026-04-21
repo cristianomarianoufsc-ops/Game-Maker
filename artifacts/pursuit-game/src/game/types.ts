@@ -171,6 +171,23 @@ export interface FlyingTire {
   life?: number;      // frames restantes antes de sumir
 }
 
+export type DogAnimState = 'run' | 'bite';
+
+export interface Dog {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vx: number;
+  facingRight: boolean;
+  animState: DogAnimState;
+  animTimer: number;
+  biteTimer: number;
+  biteCooldown: number;
+  patrolLeft: number;
+  patrolRight: number;
+}
+
 export interface GameState {
   player: Player;
   drone: Drone;
@@ -190,6 +207,7 @@ export interface GameState {
   fallingBoxes: FallingBox[];
   flyingTires: FlyingTire[];
   destroyedTireIndices: number[];
+  dogs: Dog[];
 }
 
 export interface Keys {

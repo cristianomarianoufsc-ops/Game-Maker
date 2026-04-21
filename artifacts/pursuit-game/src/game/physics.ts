@@ -1,4 +1,4 @@
-import type { Player, Drone, Bullet, Platform, Particle, GameState, Keys, FallingBox, FlyingTire } from './types';
+import type { Player, Drone, Bullet, Platform, Particle, GameState, Keys, FallingBox, FlyingTire, Dog } from './types';
 import {
   GRAVITY, JUMP_FORCE, PLAYER_SPEED, ROLL_SPEED, ROLL_DURATION, CLIMB_SPEED,
   MAX_FALL_SPEED, PLAYER_W, PLAYER_H, PLAYER_ROLL_H, DRONE_W, DRONE_H,
@@ -1574,6 +1574,88 @@ export function updateBullets(
   }
 
   return surviving;
+}
+
+export function updateDogs(dogs: Dog[], player: Player, dt: number, onBite: () => void): void {
+  const RUN_SPEED = 3.0;
+  const CHASE_SPEED = 4.6;
+  const BITE_RANGE_X = 58;
+  const BITE_RANGE_Y = 64;
+  const BITE_DURATION = 420;
+  const BITE_COOLDOWN = 1400;
+  const DETECT_RANGE = 560;
+
+  for (const dog of dogs) {
+    dog.biteCooldown = Math.max(0, dog.biteCooldown - dt);
+    dog.animTimer += dt;
+
+    const playerCX = player.x + player.w / 2;
+    const playerCY = player.y + (player.isRolling ? PLAYER_ROLL_H : PLAYER_H) / 2;
+    const dogCX = dog.x + dog.w / 2;
+    const dogCY = dog.y + dog.h / 2;
+    const dx = playerCX - dogCX;
+    const dy = playerCY - dogCY;
+    const distX = Math.abs(dx);
+    const distY = Math.abs(dy);
+
+    const playerInZone = player.x + player.w > dog.patrolLeft - 120 &&
+                         player.x < dog.patrolRight + 120;
+    const canDetect = distX < DETECT_RANGE && playerInZone && player.state !== 'dead';
+
+    if (dog.biteTimer > 0) {
+      dog.biteTimer = Math.max(0, dog.biteTimer - dt);
+      dog.vx = 0;
+      dog.animState = 'bite';
+    } else {
+      dog.animState = 'run';
+
+      if (canDetect) {
+        const speed = CHASE_SPEED;
+        if (dx > 0) {
+          dog.vx = speed;
+          dog.facingRight = true;
+        } else {
+          dog.vx = -speed;
+          dog.facingRight = false;
+        }
+
+        if (distX < BITE_RANGE_X && distY < BITE_RANGE_Y && dog.biteCooldown <= 0) {
+          dog.animState = 'bite';
+          dog.biteTimer = BITE_DURATION;
+          dog.biteCooldown = BITE_COOLDOWN;
+          dog.vx = 0;
+
+          if (!player.invincible && !player.sideFlipImmune && player.state !== 'dead') {
+            player.health--;
+            player.invincible = true;
+            player.invincibleTimer = HIT_INVINCIBILITY;
+            player.hurtStunTimer = HIT_STUN_DURATION;
+            player.vx = 0;
+            player.isRolling = false;
+            player.autoRoll = false;
+            player.state = 'hurt';
+            if (player.health <= 0) player.state = 'dead';
+            onBite();
+          }
+        }
+      } else {
+        dog.vx = dog.facingRight ? RUN_SPEED : -RUN_SPEED;
+      }
+    }
+
+    dog.x += dog.vx;
+
+    if (dog.x <= dog.patrolLeft) {
+      dog.x = dog.patrolLeft;
+      dog.facingRight = true;
+    }
+    if (dog.x + dog.w >= dog.patrolRight) {
+      dog.x = dog.patrolRight - dog.w;
+      dog.facingRight = false;
+    }
+
+    dog.y = GROUND_Y - dog.h;
+  }
 }
 
 export function updateParticles(particles: Particle[], dt: number): Particle[] {
