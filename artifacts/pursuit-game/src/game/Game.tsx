@@ -1515,6 +1515,10 @@ export default function Game() {
               editorSnapStateRef.current.y = bestSnapDy !== 0;
               editorSnapAxesRef.current.worldX = bestWorldX;
               editorSnapAxesRef.current.worldY = bestWorldY;
+              // DEBUG TEMPORÁRIO — remover depois
+              if (groupBasePositions.length >= 4) {
+                console.log(`[SNAP-DBG] grupo=${groupBasePositions.length} ignorados=${ignored.size} bestDx=${bestSnapDx} bestDy=${bestSnapDy} externals=${platformsRef.current.filter((_,i)=>!ignored.has(i)&&platformsRef.current[i]?.type!=='ground').length}`);
+              }
 
               const snapDx = bestSnapDx;
               let snapDy = bestSnapDy;
