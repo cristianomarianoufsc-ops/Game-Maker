@@ -170,10 +170,10 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
 // ── PRÉDIO COM ESCADA DE INCÊNDIO (estilo NY) ─────────────────────
 const FE_BUILDING_X = 21740;
 const FE_BUILDING_W = 360;
-const FE_BUILDING_TOP_Y_OFFSET = 820;   // altura do prédio acima do chão
+const FE_BUILDING_TOP_Y_OFFSET = 1380;  // altura do prédio acima do chão
 const FE_PLAT_X_RENDER = 21770;
 const FE_PLAT_W_RENDER = 220;
-const FE_FLOORS_Y = [110, 240, 370, 500, 630, 760]; // mesma lista do level.ts
+const FE_FLOORS_Y = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320]; // mesma lista do level.ts
 
 export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: number): void {
   const screenLeft = FE_BUILDING_X - camX;

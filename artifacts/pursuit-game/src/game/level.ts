@@ -324,8 +324,8 @@ export function generateLevel(): Platform[] {
   const FE_PLAT_W = 220;          // larguras amplas — Horácio anda com folga
   const FE_PLAT_H = 18;
   const FE_WALL_X = 21990;        // parede escalável (na borda direita das landings)
-  // Espaçamento entre andares: 130px (≈ 2.5x altura do Horácio)
-  const FE_FLOOR_HEIGHTS = [110, 240, 370, 500, 630, 760];
+  // Espaçamento entre andares: 150px (≈ 3x altura do Horácio)
+  const FE_FLOOR_HEIGHTS = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320];
   const FE_TOP_H = FE_FLOOR_HEIGHTS[FE_FLOOR_HEIGHTS.length - 1];
 
   // Parede escalável encostada na fachada do prédio
