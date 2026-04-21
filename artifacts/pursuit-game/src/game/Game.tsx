@@ -1485,13 +1485,13 @@ export default function Game() {
               let bestAbsDy = Infinity;
               let bestWorldX: number | null = null;
               let bestWorldY: number | null = null;
-              const savedSnapState = { x: editorSnapStateRef.current.x, y: editorSnapStateRef.current.y };
-
               for (const { idx } of groupBasePositions) {
                 const gp = platformsRef.current[idx];
                 if (!gp) continue;
-                editorSnapStateRef.current.x = savedSnapState.x;
-                editorSnapStateRef.current.y = savedSnapState.y;
+                // Grupos sempre usam o threshold maior (UNSNAP) para evitar que o snap
+                // trave em 0 após soltar: sem isso, grupos ficam no limbo entre SNAP e UNSNAP.
+                editorSnapStateRef.current.x = true;
+                editorSnapStateRef.current.y = true;
                 const preX = gp.x;
                 const preY = gp.y;
                 snapEditorPlatform(gp, idx, ignored);
@@ -1515,11 +1515,6 @@ export default function Game() {
               editorSnapStateRef.current.y = bestSnapDy !== 0;
               editorSnapAxesRef.current.worldX = bestWorldX;
               editorSnapAxesRef.current.worldY = bestWorldY;
-              // DEBUG TEMPORÁRIO — remover depois
-              if (groupBasePositions.length >= 4) {
-                console.log(`[SNAP-DBG] grupo=${groupBasePositions.length} ignorados=${ignored.size} bestDx=${bestSnapDx} bestDy=${bestSnapDy} externals=${platformsRef.current.filter((_,i)=>!ignored.has(i)&&platformsRef.current[i]?.type!=='ground').length}`);
-              }
-
               const snapDx = bestSnapDx;
               let snapDy = bestSnapDy;
               if (snapDx !== 0 || snapDy !== 0) {
