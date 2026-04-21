@@ -62,50 +62,106 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
 
   const w = ex - sx;
 
-  // Dark earthy backdrop — terra batida / céu fechado
-  ctx.fillStyle = '#120b04';
-  ctx.fillRect(sx, 0, w, GROUND_Y);
+  // ── MURO PERIMETRAL DO FERRO VELHO ─────────────────────────────────
+  // Concreto industrial alto, mostrando que a área é cercada.
+  // Os prédios em paralax continuam visíveis acima e atrás do muro.
+  const wallTopY = GROUND_Y - 230;
+  const wallH = 230;
 
-  // Atmosfera suja — degradê vertical
-  ctx.fillStyle = 'rgba(38,18,6,0.50)';
-  ctx.fillRect(sx, GROUND_Y * 0.3, w, GROUND_Y * 0.7);
-  ctx.fillStyle = 'rgba(50,24,8,0.40)';
-  ctx.fillRect(sx, GROUND_Y * 0.62, w, GROUND_Y * 0.38);
+  // Sombra projetada no chão (atrás do muro)
+  const shadowGrad = ctx.createLinearGradient(0, wallTopY - 40, 0, wallTopY);
+  shadowGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  shadowGrad.addColorStop(1, 'rgba(0,0,0,0.45)');
+  ctx.fillStyle = shadowGrad;
+  ctx.fillRect(sx, wallTopY - 40, w, 40);
 
-  // Silhuetas de pilhas de carcaças ao fundo (escuras, distantes)
-  // Dobro de pilhas para manter a densidade visual na área ampliada
-  const piles = [
-    { ox: 0.02, pw: 0.09, ph: 0.22 },
-    { ox: 0.12, pw: 0.10, ph: 0.28 },
-    { ox: 0.24, pw: 0.07, ph: 0.17 },
-    { ox: 0.33, pw: 0.09, ph: 0.25 },
-    { ox: 0.44, pw: 0.07, ph: 0.19 },
-    { ox: 0.53, pw: 0.09, ph: 0.22 },
-    { ox: 0.63, pw: 0.10, ph: 0.26 },
-    { ox: 0.74, pw: 0.07, ph: 0.18 },
-    { ox: 0.83, pw: 0.09, ph: 0.24 },
-    { ox: 0.93, pw: 0.06, ph: 0.20 },
-  ];
-  for (const p of piles) {
-    const px = sx + p.ox * w;
-    const pw = p.pw * w;
-    const ph = p.ph * GROUND_Y;
-    const py = GROUND_Y - ph;
-    ctx.fillStyle = '#0b0705';
-    ctx.fillRect(px, py, pw, ph);
-    // Borda superior enferrujada (linha de carros amassados)
-    ctx.fillStyle = 'rgba(60,28,10,0.38)';
-    ctx.fillRect(px, py, pw, 5);
-    ctx.fillStyle = 'rgba(40,18,6,0.22)';
-    ctx.fillRect(px + pw * 0.1, py - 4, pw * 0.8, 4);
+  // Corpo do muro — concreto sujo
+  const wallGrad = ctx.createLinearGradient(0, wallTopY, 0, wallTopY + wallH);
+  wallGrad.addColorStop(0,   '#2a241f');
+  wallGrad.addColorStop(0.25,'#34281f');
+  wallGrad.addColorStop(0.6, '#2a1f17');
+  wallGrad.addColorStop(1,   '#1a120c');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(sx, wallTopY, w, wallH);
+
+  // Faixa superior mais clara (topo do muro batendo a luz)
+  ctx.fillStyle = 'rgba(120,90,60,0.35)';
+  ctx.fillRect(sx, wallTopY, w, 4);
+  ctx.fillStyle = 'rgba(60,40,25,0.55)';
+  ctx.fillRect(sx, wallTopY + 4, w, 3);
+
+  // Painéis verticais (placas de concreto pré-moldado de 4m)
+  const panelW = 180;
+  ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+  ctx.lineWidth = 1;
+  const firstPanel = Math.ceil((JUNKYARD_X1) / panelW) * panelW;
+  for (let wx = firstPanel; wx < JUNKYARD_X2; wx += panelW) {
+    const lineX = wx - camX;
+    ctx.beginPath();
+    ctx.moveTo(lineX, wallTopY + 6);
+    ctx.lineTo(lineX, wallTopY + wallH);
+    ctx.stroke();
   }
 
-  // Névoa de poeira no nível do solo
-  ctx.fillStyle = 'rgba(28,14,5,0.55)';
-  ctx.fillRect(sx, GROUND_Y - 80, w, 80);
+  // Manchas de ferrugem e desgaste pseudo-aleatórias
+  for (let wx = JUNKYARD_X1 + 30; wx < JUNKYARD_X2; wx += 73) {
+    const seed = ((wx * 2654435761) >>> 0);
+    const offY = (seed % 90);
+    const sw = 30 + (seed % 50);
+    const sh = 14 + ((seed >> 8) % 22);
+    ctx.fillStyle = 'rgba(85,38,12,0.22)';
+    ctx.fillRect(wx - camX, wallTopY + 18 + offY, sw, sh);
+  }
+  for (let wx = JUNKYARD_X1 + 55; wx < JUNKYARD_X2; wx += 119) {
+    const seed = ((wx * 40503) >>> 0);
+    const offY = (seed % 140);
+    ctx.fillStyle = 'rgba(20,12,8,0.35)';
+    ctx.fillRect(wx - camX, wallTopY + 30 + offY, 4 + (seed % 8), 2);
+  }
 
-  // Haze enferrujado horizontal (fumaça baixa)
-  ctx.fillStyle = 'rgba(75,32,8,0.10)';
+  // Pichações vermelhas (pequenas, escassas)
+  ctx.fillStyle = 'rgba(180,28,18,0.55)';
+  ctx.font = 'bold 18px monospace';
+  const tags = ['ORDEM', 'CALA', '157', 'X'];
+  for (let i = 0; i < 6; i++) {
+    const tagX = JUNKYARD_X1 + 240 + i * 1480;
+    if (tagX > JUNKYARD_X2 - 80) break;
+    ctx.fillText(tags[i % tags.length], tagX - camX, wallTopY + 80 + (i % 3) * 30);
+  }
+
+  // ── ARAME FARPADO NO TOPO ──────────────────────────────────────────
+  ctx.strokeStyle = '#0a0806';
+  ctx.lineWidth = 1.5;
+  // Linha base do arame
+  ctx.beginPath();
+  ctx.moveTo(sx, wallTopY - 2);
+  ctx.lineTo(sx + w, wallTopY - 2);
+  ctx.stroke();
+  // Espirais
+  ctx.strokeStyle = 'rgba(40,30,22,0.9)';
+  ctx.lineWidth = 1;
+  const coilStep = 26;
+  for (let wx = JUNKYARD_X1; wx < JUNKYARD_X2; wx += coilStep) {
+    const cx = wx - camX;
+    ctx.beginPath();
+    ctx.arc(cx, wallTopY - 8, 6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, wallTopY - 8);
+    ctx.lineTo(cx + 6, wallTopY - 8);
+    ctx.stroke();
+  }
+
+  // ── ATMOSFERA NO CHÃO ──────────────────────────────────────────────
+  // Névoa baixa de poeira para integrar o muro ao solo
+  const dustGrad = ctx.createLinearGradient(0, GROUND_Y - 70, 0, GROUND_Y);
+  dustGrad.addColorStop(0, 'rgba(30,16,8,0)');
+  dustGrad.addColorStop(1, 'rgba(35,18,8,0.45)');
+  ctx.fillStyle = dustGrad;
+  ctx.fillRect(sx, GROUND_Y - 70, w, 70);
+
+  // Haze enferrujado horizontal sutil
+  ctx.fillStyle = 'rgba(75,32,8,0.06)';
   ctx.fillRect(sx, GROUND_Y * 0.50, w, GROUND_Y * 0.22);
 
   ctx.restore();
