@@ -1850,24 +1850,8 @@ export default function Game() {
           e.preventDefault();
           return;
         }
-        const checkpointExportBtnX = addCheckpointBtnX + 40;
-        if (screenX >= checkpointExportBtnX && screenX <= checkpointExportBtnX + 56) {
-          const exportStr = JSON.stringify({ checkpoints: editorCustomCheckpointsRef.current });
-          navigator.clipboard.writeText(exportStr).then(() => {
-            editorCopiedMsgRef.current = {
-              text: editorCustomCheckpointsRef.current.length === 0
-                ? 'CP JSON: nenhum checkpoint novo criado ainda'
-                : `✓ CP JSON COPIADO: ${editorCustomCheckpointsRef.current.length} checkpoint(s) novo(s)`,
-              until: Date.now() + 3500,
-            };
-          }).catch(() => {
-            editorCopiedMsgRef.current = { text: 'Erro ao copiar CP JSON', until: Date.now() + 3000 };
-          });
-          e.preventDefault();
-          return;
-        }
         // Área da CHAVE DE FASE (clique copia add/del para clipboard)
-        const exportKeyX = checkpointExportBtnX + 60;
+        const exportKeyX = addCheckpointBtnX + 44;
         if (screenX >= exportKeyX && screenX <= CANVAS_W - 8) {
           const baseline = editorBaselineKeysRef.current;
           const currentKeys = new Set(platformsRef.current.map(p => platBaseKey(p)));

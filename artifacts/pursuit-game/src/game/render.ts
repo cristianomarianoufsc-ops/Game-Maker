@@ -3185,7 +3185,6 @@ export function drawEditorUI(
     ctx.restore();
   });
   const addCheckpointBtnX = checkpointBtnX + checkpoints.length * (checkpointBtnW + checkpointBtnGap) + 4;
-  const checkpointExportBtnX = addCheckpointBtnX + 40;
   ctx.save();
   ctx.fillStyle = 'rgba(30,55,35,0.92)';
   ctx.strokeStyle = 'rgba(100,255,150,0.85)';
@@ -3198,19 +3197,11 @@ export function drawEditorUI(
   ctx.font = 'bold 10px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('+ CP', addCheckpointBtnX + 18, checkpointBtnY + 12);
-  ctx.fillStyle = 'rgba(45,35,70,0.92)';
-  ctx.strokeStyle = 'rgba(190,150,255,0.85)';
-  ctx.beginPath();
-  ctx.roundRect(checkpointExportBtnX, checkpointBtnY, 56, checkpointBtnH, 3);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = 'rgba(220,195,255,1)';
-  ctx.fillText('CP JSON', checkpointExportBtnX + 28, checkpointBtnY + 12);
   ctx.restore();
 
   // ── Chave de exportação da fase ─────────────────────────────
   {
-    const expX = checkpointExportBtnX + 60;
+    const expX = addCheckpointBtnX + 44;
     const expY = histBtnY;
     const expW = CANVAS_W - expX - 8;
     const expH = histBtnH;
@@ -3260,7 +3251,7 @@ export function drawEditorUI(
   ctx.font = '10px monospace';
   const helpText = collisionMode
     ? 'HITBOX: clique numa caixa para escolher  |  setas movem 1px (Shift=5px)  |  +BOX / −HITBOX  |  S ou ◥ +SLOPE'
-    : '← → MOVER  |  1-9/0 acessa CP direto  |  +CP cria checkpoint  |  CP JSON copia novos  |  ESC: MENU';
+    : '← → MOVER  |  1-9/0 acessa CP direto  |  +CP cria e salva checkpoint  |  ESC: MENU';
   ctx.fillText(helpText, 12, 32);
 
   // Checkpoint markers in world space
