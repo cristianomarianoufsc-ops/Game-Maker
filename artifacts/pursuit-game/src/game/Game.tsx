@@ -760,7 +760,7 @@ export default function Game() {
         biteTimer: 0,
         biteCooldown: 0,
         patrolLeft: 19211,
-        patrolRight: 20640,
+        patrolRight: 20745,
       },
     ] : [],
   }), []);
