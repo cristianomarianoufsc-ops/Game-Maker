@@ -316,6 +316,30 @@ export function generateLevel(): Platform[] {
     platforms.push({ x, y, w: 20, h, type: 'wall', climbable: true });
   });
 
+  // ── PRÉDIO COM ESCADA DE INCÊNDIO (estilo NY) ───────────────────
+  // Localizado na FREE ZONE 3, logo após o muro do ferro velho.
+  // Horácio sobe pela parede escalável e usa as plataformas (landings)
+  // de cada andar como descansos. 5 andares.
+  const FE_WALL_X = 21950;        // parede escalável (lateral do prédio)
+  const FE_PLAT_X = 21850;        // landings projetadas pra esquerda
+  const FE_PLAT_W = 100;
+  const FE_PLAT_H = 14;
+  const FE_FLOOR_HEIGHTS = [90, 170, 250, 330, 400];
+
+  // Parede escalável (a estrutura vertical da escada)
+  platforms.push({
+    x: FE_WALL_X, y: GROUND_Y - 400, w: 20, h: 400,
+    type: 'wall', climbable: true,
+  });
+
+  // Landings de cada andar (plataformas finas estilo grade metálica)
+  FE_FLOOR_HEIGHTS.forEach((floorH) => {
+    platforms.push({
+      x: FE_PLAT_X, y: GROUND_Y - floorH, w: FE_PLAT_W, h: FE_PLAT_H,
+      type: 'platform',
+    });
+  });
+
   return platforms;
 }
 

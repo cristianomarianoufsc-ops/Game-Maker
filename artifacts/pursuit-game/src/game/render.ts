@@ -167,6 +167,222 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
   ctx.restore();
 }
 
+// ── PRÉDIO COM ESCADA DE INCÊNDIO (estilo NY) ─────────────────────
+const FE_BUILDING_X = 21820;
+const FE_BUILDING_W = 230;
+const FE_BUILDING_TOP_Y_OFFSET = 440;   // altura do prédio acima do chão
+const FE_WALL_X_RENDER = 21950;
+const FE_PLAT_X_RENDER = 21850;
+const FE_PLAT_W_RENDER = 100;
+const FE_FLOORS_Y = [90, 170, 250, 330, 400]; // mesma lista do level.ts
+
+export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: number): void {
+  const screenLeft = FE_BUILDING_X - camX;
+  if (screenLeft + FE_BUILDING_W < -50 || screenLeft > CANVAS_W + 50) return;
+
+  const buildingTop = GROUND_Y - FE_BUILDING_TOP_Y_OFFSET;
+  const buildingH = FE_BUILDING_TOP_Y_OFFSET;
+
+  ctx.save();
+
+  // ── FACHADA DO PRÉDIO (tijolo escuro tipo brownstone) ───────────
+  const facadeGrad = ctx.createLinearGradient(0, buildingTop, 0, GROUND_Y);
+  facadeGrad.addColorStop(0,   '#2a1612');
+  facadeGrad.addColorStop(0.5, '#3a1c14');
+  facadeGrad.addColorStop(1,   '#1a0e0a');
+  ctx.fillStyle = facadeGrad;
+  ctx.fillRect(screenLeft, buildingTop, FE_BUILDING_W, buildingH);
+
+  // Linhas de tijolos (horizontais)
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  for (let by = buildingTop + 8; by < GROUND_Y; by += 10) {
+    ctx.fillRect(screenLeft, by, FE_BUILDING_W, 1);
+  }
+  // Junções verticais alternadas (dá textura de tijolo)
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  for (let by = buildingTop; by < GROUND_Y; by += 10) {
+    const offset = ((by / 10) % 2 === 0) ? 0 : 14;
+    for (let bx = screenLeft + offset; bx < screenLeft + FE_BUILDING_W; bx += 28) {
+      ctx.fillRect(bx, by, 1, 10);
+    }
+  }
+
+  // Borda lateral esquerda (sombra do canto)
+  const edgeShadow = ctx.createLinearGradient(screenLeft, 0, screenLeft + 6, 0);
+  edgeShadow.addColorStop(0, 'rgba(0,0,0,0.55)');
+  edgeShadow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = edgeShadow;
+  ctx.fillRect(screenLeft, buildingTop, 6, buildingH);
+
+  // Cornija no topo
+  ctx.fillStyle = '#0e0806';
+  ctx.fillRect(screenLeft - 4, buildingTop - 8, FE_BUILDING_W + 8, 8);
+  ctx.fillStyle = 'rgba(80,55,40,0.4)';
+  ctx.fillRect(screenLeft - 4, buildingTop - 8, FE_BUILDING_W + 8, 2);
+
+  // ── JANELAS de cada andar ───────────────────────────────────────
+  const winW = 32;
+  const winH = 46;
+  for (const floorH of FE_FLOORS_Y) {
+    const winY = GROUND_Y - floorH - winH - 8; // janela acima do landing
+    // Janela à esquerda (acessível pela escada)
+    const winX1 = screenLeft + 30;
+    // Janela à direita
+    const winX2 = screenLeft + FE_BUILDING_W - 30 - winW;
+
+    [winX1, winX2].forEach((wx, idx) => {
+      // Moldura
+      ctx.fillStyle = '#0a0604';
+      ctx.fillRect(wx - 3, winY - 3, winW + 6, winH + 6);
+      // Vidro escuro
+      const glassGrad = ctx.createLinearGradient(0, winY, 0, winY + winH);
+      glassGrad.addColorStop(0, '#241a14');
+      glassGrad.addColorStop(1, '#100a08');
+      ctx.fillStyle = glassGrad;
+      ctx.fillRect(wx, winY, winW, winH);
+      // Cruzeta (caixilho)
+      ctx.fillStyle = 'rgba(40,30,22,0.9)';
+      ctx.fillRect(wx, winY + winH / 2 - 1, winW, 2);
+      ctx.fillRect(wx + winW / 2 - 1, winY, 2, winH);
+      // Algumas janelas com luz quente
+      const seed = ((wx * 16777619) ^ Math.floor(floorH)) >>> 0;
+      const lit = (seed % 5) === idx % 3;
+      if (lit) {
+        ctx.fillStyle = 'rgba(255,160,60,0.55)';
+        ctx.fillRect(wx + 2, winY + 2, winW - 4, winH - 4);
+        const glow = ctx.createRadialGradient(wx + winW/2, winY + winH/2, 0, wx + winW/2, winY + winH/2, 40);
+        glow.addColorStop(0, 'rgba(255,160,60,0.35)');
+        glow.addColorStop(1, 'rgba(255,160,60,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(wx - 20, winY - 20, winW + 40, winH + 40);
+      }
+    });
+  }
+
+  // ── ESCADA DE INCÊNDIO (estrutura metálica preta) ──────────────
+  const wallScreenX = FE_WALL_X_RENDER - camX;
+  const platScreenX = FE_PLAT_X_RENDER - camX;
+  const platTopOffset = 0; // landings são desenhadas como platforms já
+
+  // Pilar vertical principal (subindo do chão até o telhado)
+  ctx.fillStyle = '#0a0806';
+  ctx.fillRect(wallScreenX - 2, GROUND_Y - 400, 6, 400);
+  ctx.fillStyle = 'rgba(140,100,60,0.25)';
+  ctx.fillRect(wallScreenX - 2, GROUND_Y - 400, 6, 2);
+
+  // Pilar de canto esquerdo da escada (linha vertical fina)
+  ctx.fillStyle = '#0a0806';
+  ctx.fillRect(platScreenX - 2, GROUND_Y - 400, 4, 400);
+
+  // Cada landing: grade metálica + corrimão + escada para o próximo andar
+  FE_FLOORS_Y.forEach((floorH, idx) => {
+    const platY = GROUND_Y - floorH + platTopOffset;
+    const platLeft = platScreenX;
+    const platRight = platScreenX + FE_PLAT_W_RENDER;
+
+    // Grade metálica do piso (textura riscada)
+    ctx.fillStyle = '#181210';
+    ctx.fillRect(platLeft - 2, platY, FE_PLAT_W_RENDER + 4, 14);
+    ctx.fillStyle = 'rgba(70,50,38,0.45)';
+    for (let gx = platLeft; gx < platRight; gx += 4) {
+      ctx.fillRect(gx, platY + 2, 1, 10);
+    }
+    // Borda inferior do landing (chapa de apoio)
+    ctx.fillStyle = '#050302';
+    ctx.fillRect(platLeft - 4, platY + 14, FE_PLAT_W_RENDER + 8, 3);
+
+    // Corrimão (guarda-corpo) — aprox. 32px de altura
+    const railTop = platY - 32;
+    ctx.strokeStyle = '#0a0806';
+    ctx.lineWidth = 2;
+    // Barra superior
+    ctx.beginPath();
+    ctx.moveTo(platLeft, railTop);
+    ctx.lineTo(platRight, railTop);
+    ctx.stroke();
+    // Barra meio
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(platLeft, railTop + 16);
+    ctx.lineTo(platRight, railTop + 16);
+    ctx.stroke();
+    // Postes verticais
+    ctx.lineWidth = 1.5;
+    for (let rx = platLeft; rx <= platRight; rx += 18) {
+      ctx.beginPath();
+      ctx.moveTo(rx, railTop);
+      ctx.lineTo(rx, platY);
+      ctx.stroke();
+    }
+    // Cantoneira de apoio (suporte diagonal embaixo)
+    ctx.strokeStyle = '#0a0806';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(platLeft - 1, platY + 14);
+    ctx.lineTo(platLeft - 14, platY + 36);
+    ctx.lineTo(platLeft - 14, platY + 14);
+    ctx.stroke();
+
+    // Escada inclinada para o próximo andar (entre landings)
+    if (idx < FE_FLOORS_Y.length - 1) {
+      const nextH = FE_FLOORS_Y[idx + 1];
+      const nextY = GROUND_Y - nextH;
+      // Escada diagonal indo do landing atual até o próximo (dentro da largura do landing)
+      const x1 = platLeft + 12;
+      const y1 = platY;
+      const x2 = platLeft + 70;
+      const y2 = nextY + 14;
+      ctx.strokeStyle = '#0a0806';
+      ctx.lineWidth = 2;
+      // Trilhos da escada
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x1 + 14, y1);
+      ctx.lineTo(x2 + 14, y2);
+      ctx.stroke();
+      // Degraus (perpendiculares aos trilhos)
+      const steps = 7;
+      ctx.lineWidth = 1.5;
+      for (let s = 1; s < steps; s++) {
+        const t = s / steps;
+        const sx1 = x1 + (x2 - x1) * t;
+        const sy1 = y1 + (y2 - y1) * t;
+        const sx2 = sx1 + 14;
+        const sy2 = sy1;
+        ctx.beginPath();
+        ctx.moveTo(sx1, sy1);
+        ctx.lineTo(sx2, sy2);
+        ctx.stroke();
+      }
+    }
+  });
+
+  // Escada do primeiro landing até o chão (escada retrátil)
+  const firstY = GROUND_Y - FE_FLOORS_Y[0];
+  ctx.strokeStyle = '#0a0806';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(platScreenX + 18, firstY + 14);
+  ctx.lineTo(platScreenX + 18, GROUND_Y - 6);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(platScreenX + 32, firstY + 14);
+  ctx.lineTo(platScreenX + 32, GROUND_Y - 6);
+  ctx.stroke();
+  ctx.lineWidth = 1.5;
+  for (let sy = firstY + 24; sy < GROUND_Y - 6; sy += 12) {
+    ctx.beginPath();
+    ctx.moveTo(platScreenX + 18, sy);
+    ctx.lineTo(platScreenX + 32, sy);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 export function drawSky(ctx: CanvasRenderingContext2D): void {
   // Bravuna sky: near-black with authoritarian red bleeding up from below
   const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);

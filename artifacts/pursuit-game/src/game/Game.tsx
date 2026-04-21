@@ -26,7 +26,7 @@ import {
   updateFallingBoxes, updateFlyingTires, updateDogs,
 } from './physics';
 import {
-  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawGround,
+  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawFireEscapeBuilding, drawGround,
   drawStreetBuildings, drawPlatforms, drawFlyingTires, drawTireHideouts,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
@@ -2829,6 +2829,7 @@ export default function Game() {
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);
+      drawFireEscapeBuilding(ctx, gs.camera.x);
       // ── Drag-ghost: temporariamente move originais de volta pra exibição ──
       const _activeDrag = editorDragRef.current;
       const _isDragGhost = gs.gamePhase === 'editor' && _activeDrag?.mode === 'move' && _activeDrag.hasMoved;
