@@ -259,98 +259,133 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
     });
   }
 
-  // ── ESCADA DE INCÊNDIO (estrutura metálica preta) ──────────────
+  // ── ESCADA DE INCÊNDIO (estrutura metálica) ────────────────────
   const wallScreenX = FE_WALL_X_RENDER - camX;
   const platScreenX = FE_PLAT_X_RENDER - camX;
-  const platTopOffset = 0; // landings são desenhadas como platforms já
 
-  // Pilar vertical principal (subindo do chão até o telhado)
-  ctx.fillStyle = '#0a0806';
-  ctx.fillRect(wallScreenX - 2, GROUND_Y - 400, 6, 400);
-  ctx.fillStyle = 'rgba(140,100,60,0.25)';
-  ctx.fillRect(wallScreenX - 2, GROUND_Y - 400, 6, 2);
+  // Cores metálicas (cinza-grafite, bem mais visíveis contra o tijolo)
+  const METAL_DARK   = '#3a3a3e';
+  const METAL_MID    = '#5a5a60';
+  const METAL_LIGHT  = '#888890';
+  const METAL_HIGHLIGHT = 'rgba(200,200,210,0.55)';
 
-  // Pilar de canto esquerdo da escada (linha vertical fina)
-  ctx.fillStyle = '#0a0806';
-  ctx.fillRect(platScreenX - 2, GROUND_Y - 400, 4, 400);
+  // Pilar vertical principal (estrutura colada no prédio)
+  ctx.fillStyle = METAL_DARK;
+  ctx.fillRect(wallScreenX - 4, GROUND_Y - 400, 8, 400);
+  ctx.fillStyle = METAL_HIGHLIGHT;
+  ctx.fillRect(wallScreenX - 4, GROUND_Y - 400, 1, 400);
+
+  // Pilar de canto esquerdo da escada (estrutura externa)
+  ctx.fillStyle = METAL_DARK;
+  ctx.fillRect(platScreenX - 4, GROUND_Y - 400, 6, 400);
+  ctx.fillStyle = METAL_HIGHLIGHT;
+  ctx.fillRect(platScreenX - 4, GROUND_Y - 400, 1, 400);
 
   // Cada landing: grade metálica + corrimão + escada para o próximo andar
   FE_FLOORS_Y.forEach((floorH, idx) => {
-    const platY = GROUND_Y - floorH + platTopOffset;
+    const platY = GROUND_Y - floorH;
     const platLeft = platScreenX;
     const platRight = platScreenX + FE_PLAT_W_RENDER;
 
-    // Grade metálica do piso (textura riscada)
-    ctx.fillStyle = '#181210';
-    ctx.fillRect(platLeft - 2, platY, FE_PLAT_W_RENDER + 4, 14);
-    ctx.fillStyle = 'rgba(70,50,38,0.45)';
+    // Grade metálica do piso
+    ctx.fillStyle = METAL_DARK;
+    ctx.fillRect(platLeft - 4, platY, FE_PLAT_W_RENDER + 8, 14);
+    // Highlight superior (borda iluminada)
+    ctx.fillStyle = METAL_HIGHLIGHT;
+    ctx.fillRect(platLeft - 4, platY, FE_PLAT_W_RENDER + 8, 1);
+    // Textura riscada da grade
+    ctx.fillStyle = METAL_MID;
     for (let gx = platLeft; gx < platRight; gx += 4) {
-      ctx.fillRect(gx, platY + 2, 1, 10);
+      ctx.fillRect(gx, platY + 3, 1, 9);
     }
-    // Borda inferior do landing (chapa de apoio)
-    ctx.fillStyle = '#050302';
-    ctx.fillRect(platLeft - 4, platY + 14, FE_PLAT_W_RENDER + 8, 3);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    for (let gx = platLeft + 2; gx < platRight; gx += 4) {
+      ctx.fillRect(gx, platY + 3, 1, 9);
+    }
+    // Borda inferior do landing (chapa estrutural)
+    ctx.fillStyle = '#1c1c20';
+    ctx.fillRect(platLeft - 6, platY + 14, FE_PLAT_W_RENDER + 12, 4);
 
-    // Corrimão (guarda-corpo) — aprox. 32px de altura
-    const railTop = platY - 32;
-    ctx.strokeStyle = '#0a0806';
-    ctx.lineWidth = 2;
+    // Corrimão (guarda-corpo) — 36px de altura
+    const railTop = platY - 36;
+    ctx.strokeStyle = METAL_DARK;
+    ctx.lineWidth = 3;
     // Barra superior
     ctx.beginPath();
     ctx.moveTo(platLeft, railTop);
     ctx.lineTo(platRight, railTop);
     ctx.stroke();
-    // Barra meio
+    // Highlight no corrimão
+    ctx.strokeStyle = METAL_LIGHT;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(platLeft, railTop + 16);
-    ctx.lineTo(platRight, railTop + 16);
+    ctx.moveTo(platLeft, railTop - 1);
+    ctx.lineTo(platRight, railTop - 1);
+    ctx.stroke();
+    // Barra do meio
+    ctx.strokeStyle = METAL_DARK;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(platLeft, railTop + 18);
+    ctx.lineTo(platRight, railTop + 18);
     ctx.stroke();
     // Postes verticais
-    ctx.lineWidth = 1.5;
-    for (let rx = platLeft; rx <= platRight; rx += 18) {
+    ctx.lineWidth = 2;
+    for (let rx = platLeft; rx <= platRight; rx += 16) {
       ctx.beginPath();
       ctx.moveTo(rx, railTop);
       ctx.lineTo(rx, platY);
       ctx.stroke();
     }
-    // Cantoneira de apoio (suporte diagonal embaixo)
-    ctx.strokeStyle = '#0a0806';
-    ctx.lineWidth = 2;
+    // Suporte diagonal embaixo (cantoneira)
+    ctx.strokeStyle = METAL_DARK;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(platLeft - 1, platY + 14);
-    ctx.lineTo(platLeft - 14, platY + 36);
-    ctx.lineTo(platLeft - 14, platY + 14);
+    ctx.moveTo(platLeft - 2, platY + 16);
+    ctx.lineTo(platLeft - 18, platY + 44);
+    ctx.lineTo(platLeft - 18, platY + 16);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(platRight + 2, platY + 16);
+    ctx.lineTo(platRight + 18, platY + 44);
+    ctx.lineTo(platRight + 18, platY + 16);
     ctx.stroke();
 
-    // Escada inclinada para o próximo andar (entre landings)
+    // Escada inclinada para o próximo andar
     if (idx < FE_FLOORS_Y.length - 1) {
       const nextH = FE_FLOORS_Y[idx + 1];
       const nextY = GROUND_Y - nextH;
-      // Escada diagonal indo do landing atual até o próximo (dentro da largura do landing)
-      const x1 = platLeft + 12;
+      const x1 = platLeft + 14;
       const y1 = platY;
-      const x2 = platLeft + 70;
+      const x2 = platLeft + 78;
       const y2 = nextY + 14;
-      ctx.strokeStyle = '#0a0806';
-      ctx.lineWidth = 2;
       // Trilhos da escada
+      ctx.strokeStyle = METAL_DARK;
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(x1 + 14, y1);
-      ctx.lineTo(x2 + 14, y2);
+      ctx.moveTo(x1 + 18, y1);
+      ctx.lineTo(x2 + 18, y2);
       ctx.stroke();
-      // Degraus (perpendiculares aos trilhos)
-      const steps = 7;
-      ctx.lineWidth = 1.5;
+      // Highlight nos trilhos
+      ctx.strokeStyle = METAL_HIGHLIGHT;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x1 - 1, y1);
+      ctx.lineTo(x2 - 1, y2);
+      ctx.stroke();
+      // Degraus
+      const steps = 8;
+      ctx.strokeStyle = METAL_MID;
+      ctx.lineWidth = 2;
       for (let s = 1; s < steps; s++) {
         const t = s / steps;
         const sx1 = x1 + (x2 - x1) * t;
         const sy1 = y1 + (y2 - y1) * t;
-        const sx2 = sx1 + 14;
+        const sx2 = sx1 + 18;
         const sy2 = sy1;
         ctx.beginPath();
         ctx.moveTo(sx1, sy1);
@@ -360,23 +395,31 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
     }
   });
 
-  // Escada do primeiro landing até o chão (escada retrátil)
+  // Escada retrátil do primeiro landing até o chão
   const firstY = GROUND_Y - FE_FLOORS_Y[0];
-  ctx.strokeStyle = '#0a0806';
+  ctx.strokeStyle = METAL_DARK;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(platScreenX + 22, firstY + 18);
+  ctx.lineTo(platScreenX + 22, GROUND_Y - 4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(platScreenX + 40, firstY + 18);
+  ctx.lineTo(platScreenX + 40, GROUND_Y - 4);
+  ctx.stroke();
+  ctx.strokeStyle = METAL_HIGHLIGHT;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(platScreenX + 21, firstY + 18);
+  ctx.lineTo(platScreenX + 21, GROUND_Y - 4);
+  ctx.stroke();
+  // Degraus da escada vertical
+  ctx.strokeStyle = METAL_MID;
   ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(platScreenX + 18, firstY + 14);
-  ctx.lineTo(platScreenX + 18, GROUND_Y - 6);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(platScreenX + 32, firstY + 14);
-  ctx.lineTo(platScreenX + 32, GROUND_Y - 6);
-  ctx.stroke();
-  ctx.lineWidth = 1.5;
-  for (let sy = firstY + 24; sy < GROUND_Y - 6; sy += 12) {
+  for (let sy = firstY + 28; sy < GROUND_Y - 4; sy += 12) {
     ctx.beginPath();
-    ctx.moveTo(platScreenX + 18, sy);
-    ctx.lineTo(platScreenX + 32, sy);
+    ctx.moveTo(platScreenX + 22, sy);
+    ctx.lineTo(platScreenX + 40, sy);
     ctx.stroke();
   }
 
