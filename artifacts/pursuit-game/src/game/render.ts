@@ -2415,7 +2415,8 @@ export function drawDogs(
   ctx: CanvasRenderingContext2D,
   dogs: Dog[],
   camX: number,
-  dogSheet: HTMLImageElement | null
+  dogSheet: HTMLImageElement | null,
+  dogIdle: HTMLImageElement | null
 ): void {
   if (!dogSheet || !dogSheet.complete || dogSheet.naturalWidth === 0) return;
 
@@ -2423,13 +2424,10 @@ export function drawDogs(
   const imgH = dogSheet.naturalHeight;
 
   // The sprite sheet has 3 frames side by side, with label text at the bottom.
-  // We crop the top 78% to exclude labels.
-  // Asymmetric inset: more on the left (removes bleed from previous frame),
-  // zero on the right (preserves dog's snout).
+  // Asymmetric inset removes bleed from the previous frame on the left side.
   const rawFrameW = Math.floor(imgW / 3);
   const leftInset = 18;
-  const rightInset = 0;
-  const frameW = rawFrameW - leftInset - rightInset;
+  const frameW = rawFrameW - leftInset;
   const srcH = Math.floor(imgH * 0.78);
 
   const displayH = 120;
@@ -2439,26 +2437,42 @@ export function drawDogs(
     const screenX = dog.x - camX;
     const screenY = GROUND_Y - displayH;
 
-    let frameIdx = 0;
-    if (dog.animState === 'bite') {
-      frameIdx = 2;
-    } else if (dog.animState === 'idle') {
-      frameIdx = 0;
-    } else {
-      const runFrame = Math.floor(dog.animTimer / DOG_RUN_FRAME_INTERVAL) % 2;
-      frameIdx = runFrame;
-    }
-
-    const sx = frameIdx * rawFrameW + leftInset;
-
     ctx.save();
-    if (!dog.facingRight) {
-      ctx.translate(screenX + displayW, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(dogSheet, sx, 0, frameW, srcH, 0, screenY, displayW, displayH);
+
+    if (dog.animState === 'idle' && dogIdle && dogIdle.complete && dogIdle.naturalWidth > 0) {
+      // Standalone idle image — faces RIGHT by default
+      const idleSrcW = dogIdle.naturalWidth;
+      const idleSrcH = dogIdle.naturalHeight;
+      const idleDisplayW = Math.round(displayH * (idleSrcW / idleSrcH));
+
+      if (!dog.facingRight) {
+        ctx.translate(screenX + idleDisplayW, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(dogIdle, 0, 0, idleSrcW, idleSrcH, 0, screenY, idleDisplayW, displayH);
+      } else {
+        ctx.drawImage(dogIdle, 0, 0, idleSrcW, idleSrcH, screenX, screenY, idleDisplayW, displayH);
+      }
     } else {
-      ctx.drawImage(dogSheet, sx, 0, frameW, srcH, screenX, screenY, displayW, displayH);
+      // Spritesheet frames (run + bite) — faces LEFT by default
+      let frameIdx = 0;
+      if (dog.animState === 'bite') {
+        frameIdx = 2;
+      } else {
+        const runFrame = Math.floor(dog.animTimer / DOG_RUN_FRAME_INTERVAL) % 2;
+        frameIdx = runFrame;
+      }
+
+      const sx = frameIdx * rawFrameW + leftInset;
+
+      if (!dog.facingRight) {
+        ctx.drawImage(dogSheet, sx, 0, frameW, srcH, screenX, screenY, displayW, displayH);
+      } else {
+        ctx.translate(screenX + displayW, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(dogSheet, sx, 0, frameW, srcH, 0, screenY, displayW, displayH);
+      }
     }
+
     ctx.restore();
   }
 }
