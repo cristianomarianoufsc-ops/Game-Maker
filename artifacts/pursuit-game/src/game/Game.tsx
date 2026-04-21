@@ -804,7 +804,7 @@ export default function Game() {
     // Carrega level-patch.json do servidor e aplica as mudanças salvas
     fetch('/level-patch.json')
       .then(r => r.ok ? r.json() : null)
-      .then((patch: { add?: Platform[]; del?: string[] } | null) => {
+      .then((patch: { add?: Platform[]; del?: string[]; checkpoints?: { label: string; x: number }[] } | null) => {
         if (!patch) return;
         const delKeys = new Set<string>(patch.del ?? []);
         const patchedBase = originalPlatforms.filter(p => !delKeys.has(platBaseKey(p)));
@@ -813,6 +813,10 @@ export default function Game() {
         const withDeleted = applyDeletedPlatformKeys(patchedBase, deletedPlatformKeysRef.current);
         platformsRef.current = [...withDeleted, ...customSpritePlatforms, ...addPlatforms];
         if (gsRef.current) gsRef.current.platforms = platformsRef.current;
+        // Restaura checkpoints personalizados salvos
+        if (patch.checkpoints && patch.checkpoints.length > 0) {
+          editorCustomCheckpointsRef.current = patch.checkpoints;
+        }
       })
       .catch(() => { /* sem patch salvo ainda */ });
 
@@ -1827,10 +1831,22 @@ export default function Game() {
           const x = Math.round(editorCamXRef.current + CANVAS_W / 2);
           editorCustomCheckpointsRef.current.push({ label, x });
           editorCheckpointIdxRef.current = getEditorCheckpoints().length - 1;
-          editorCopiedMsgRef.current = {
-            text: `✓ ${label} CRIADO EM x:${x} — use CP JSON para copiar`,
-            until: Date.now() + 3000,
-          };
+          // Salva imediatamente no JSON para persistir
+          fetch('/api/save-level-patch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checkpoints: editorCustomCheckpointsRef.current }),
+          }).then(() => {
+            editorCopiedMsgRef.current = {
+              text: `✓ ${label} SALVO EM x:${x}`,
+              until: Date.now() + 3000,
+            };
+          }).catch(() => {
+            editorCopiedMsgRef.current = {
+              text: `✓ ${label} CRIADO EM x:${x} (erro ao salvar)`,
+              until: Date.now() + 3000,
+            };
+          });
           e.preventDefault();
           return;
         }
@@ -1943,7 +1959,11 @@ export default function Game() {
                 patchAddKeys.has(platBaseKey(p))       // também em patchAdd → evita duplicata no reload
               ))
               .map(p => platBaseKey(p));
-            const levelPatch = { add: patchAdd, del: patchDel };
+            const levelPatch = {
+              add: patchAdd,
+              del: patchDel,
+              checkpoints: editorCustomCheckpointsRef.current,
+            };
             fetch('/api/save-level-patch', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },

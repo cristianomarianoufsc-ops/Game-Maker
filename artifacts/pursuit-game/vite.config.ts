@@ -145,27 +145,51 @@ function spriteUploadPlugin() {
             const incoming = JSON.parse(Buffer.concat(chunks).toString()) as {
               add?: unknown[];
               del?: string[];
+              checkpoints?: { label: string; x: number }[];
             };
 
-            // Lê patch existente e acumula as deleções entre sessões
+            // Lê patch existente para preservar campos não incluídos neste POST
             let existingDel: string[] = [];
+            let existingAdd: unknown[] = [];
+            let existingCheckpoints: { label: string; x: number }[] = [];
             try {
-              const existing = JSON.parse(fs.readFileSync(levelPatchFile, "utf-8")) as { del?: string[] };
+              const existing = JSON.parse(fs.readFileSync(levelPatchFile, "utf-8")) as {
+                del?: string[];
+                add?: unknown[];
+                checkpoints?: { label: string; x: number }[];
+              };
               existingDel = existing.del ?? [];
+              existingAdd = existing.add ?? [];
+              existingCheckpoints = existing.checkpoints ?? [];
             } catch { /* sem patch anterior */ }
 
-            // União dos del: mantém deleções passadas + novas
-            const addKeys = new Set(
-              (incoming.add ?? []).map((p: unknown) => {
-                const pl = p as { type: string; x: number; y: number; w: number; h: number; rotation?: number };
-                return `${pl.type}:${pl.x}:${pl.y}:${pl.w}:${pl.h}:${Math.round(pl.rotation ?? 0)}`;
-              })
-            );
-            const mergedDel = Array.from(
-              new Set([...existingDel, ...(incoming.del ?? [])])
-            ).filter(k => !addKeys.has(k)); // Remove da lista del se o item foi re-adicionado
+            // Se o POST inclui add/del, processa plataformas; caso contrário preserva existentes
+            let finalAdd: unknown[];
+            let finalDel: string[];
+            if (incoming.add !== undefined || incoming.del !== undefined) {
+              const addKeys = new Set(
+                (incoming.add ?? []).map((p: unknown) => {
+                  const pl = p as { type: string; x: number; y: number; w: number; h: number; rotation?: number };
+                  return `${pl.type}:${pl.x}:${pl.y}:${pl.w}:${pl.h}:${Math.round(pl.rotation ?? 0)}`;
+                })
+              );
+              finalAdd = incoming.add ?? [];
+              finalDel = Array.from(
+                new Set([...existingDel, ...(incoming.del ?? [])])
+              ).filter(k => !addKeys.has(k));
+            } else {
+              finalAdd = existingAdd;
+              finalDel = existingDel;
+            }
 
-            const merged = { add: incoming.add ?? [], del: mergedDel };
+            // Checkpoints: se vieram no POST, substitui; senão preserva existentes
+            const finalCheckpoints = incoming.checkpoints !== undefined
+              ? incoming.checkpoints
+              : existingCheckpoints;
+
+            const merged: Record<string, unknown> = { add: finalAdd, del: finalDel };
+            if (finalCheckpoints.length > 0) merged.checkpoints = finalCheckpoints;
+
             fs.writeFileSync(levelPatchFile, JSON.stringify(merged, null, 2), "utf-8");
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({ ok: true }));
