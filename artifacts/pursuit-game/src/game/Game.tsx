@@ -1136,6 +1136,7 @@ export default function Game() {
 
       const considerX = (from: number, to: number) => {
         const delta = to - from;
+        if (delta === 0) return;
         const abs = Math.abs(delta);
         if (abs <= threshX && abs < bestAbsX) {
           bestAbsX = abs;
@@ -1146,6 +1147,7 @@ export default function Game() {
 
       const considerY = (from: number, to: number) => {
         const delta = to - from;
+        if (delta === 0) return;
         const abs = Math.abs(delta);
         if (abs <= threshY && abs < bestAbsY) {
           bestAbsY = abs;
@@ -1474,22 +1476,45 @@ export default function Game() {
                 return { idx, x: gp?.x ?? 0, y: gp?.y ?? 0 };
               });
 
-              // Snap usando o bounding box do grupo inteiro como unidade
-              // Isso evita conflitos entre membros e garante que as bordas EXTERNAS do grupo
-              // sejam usadas como referência — independente do número de objetos selecionados
-              const bboxX = Math.min(...groupBasePositions.map(({ idx }) => platformsRef.current[idx]?.x ?? 0));
-              const bboxY = Math.min(...groupBasePositions.map(({ idx }) => platformsRef.current[idx]?.y ?? 0));
-              const bboxRight = Math.max(...groupBasePositions.map(({ idx }) => { const gp = platformsRef.current[idx]; return (gp?.x ?? 0) + (gp?.w ?? 0); }));
-              const bboxBottom = Math.max(...groupBasePositions.map(({ idx }) => { const gp = platformsRef.current[idx]; return (gp?.y ?? 0) + (gp?.h ?? 0); }));
-              const bboxProxy: Platform = { x: bboxX, y: bboxY, w: bboxRight - bboxX, h: bboxBottom - bboxY, type: 'box' };
-              const preProxyX = bboxProxy.x;
-              const preProxyY = bboxProxy.y;
-              snapEditorPlatform(bboxProxy, -1, ignored);
-              const bestSnapDx = bboxProxy.x - preProxyX;
-              const bestSnapDy = bboxProxy.y - preProxyY;
-              // Restaura para não contaminar o estado (snapEditorPlatform já atualizou os refs)
-              bboxProxy.x = preProxyX;
-              bboxProxy.y = preProxyY;
+              // Testa snap em TODOS os membros do grupo e pega o melhor delta em cada eixo.
+              // considerX/Y ignoram delta=0 (já alinhado), evitando que alinhar perfeitamente
+              // bloqueie snaps legítimos de outros membros ou alvos nessa mesma chamada.
+              let bestSnapDx = 0;
+              let bestSnapDy = 0;
+              let bestAbsDx = Infinity;
+              let bestAbsDy = Infinity;
+              let bestWorldX: number | null = null;
+              let bestWorldY: number | null = null;
+              const savedSnapState = { x: editorSnapStateRef.current.x, y: editorSnapStateRef.current.y };
+
+              for (const { idx } of groupBasePositions) {
+                const gp = platformsRef.current[idx];
+                if (!gp) continue;
+                editorSnapStateRef.current.x = savedSnapState.x;
+                editorSnapStateRef.current.y = savedSnapState.y;
+                const preX = gp.x;
+                const preY = gp.y;
+                snapEditorPlatform(gp, idx, ignored);
+                const mdx = gp.x - preX;
+                const mdy = gp.y - preY;
+                gp.x = preX;
+                gp.y = preY;
+                if (mdx !== 0 && Math.abs(mdx) < bestAbsDx) {
+                  bestAbsDx = Math.abs(mdx);
+                  bestSnapDx = mdx;
+                  bestWorldX = editorSnapAxesRef.current.worldX;
+                }
+                if (mdy !== 0 && Math.abs(mdy) < bestAbsDy) {
+                  bestAbsDy = Math.abs(mdy);
+                  bestSnapDy = mdy;
+                  bestWorldY = editorSnapAxesRef.current.worldY;
+                }
+              }
+
+              editorSnapStateRef.current.x = bestSnapDx !== 0;
+              editorSnapStateRef.current.y = bestSnapDy !== 0;
+              editorSnapAxesRef.current.worldX = bestWorldX;
+              editorSnapAxesRef.current.worldY = bestWorldY;
 
               const snapDx = bestSnapDx;
               let snapDy = bestSnapDy;
