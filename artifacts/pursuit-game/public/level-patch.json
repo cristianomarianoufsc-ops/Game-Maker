@@ -531,7 +531,19 @@
   ],
   "checkpoints": [
     {
-      "label": "CP5",
+      "label": "CP1",
+      "x": 4269
+    },
+    {
+      "label": "CP2",
+      "x": 11973
+    },
+    {
+      "label": "CP3",
+      "x": 16844
+    },
+    {
+      "label": "CP4",
       "x": 19184
     }
   ]
