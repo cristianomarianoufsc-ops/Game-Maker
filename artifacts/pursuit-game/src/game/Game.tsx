@@ -1114,11 +1114,11 @@ export default function Game() {
       };
     };
 
-    const snapEditorPlatform = (platform: Platform, platformIdx: number, ignoredIndices: Set<number> = new Set()) => {
-      const SNAP_X = 30;
-      const UNSNAP_X = 52;
-      const SNAP_Y = 40;
-      const UNSNAP_Y = 64;
+    const snapEditorPlatform = (platform: Platform, platformIdx: number, ignoredIndices: Set<number> = new Set(), snapXOverride?: number, snapYOverride?: number) => {
+      const SNAP_X = snapXOverride ?? 30;
+      const UNSNAP_X = snapXOverride ? snapXOverride * 2 : 52;
+      const SNAP_Y = snapYOverride ?? 40;
+      const UNSNAP_Y = snapYOverride ? snapYOverride * 2 : 64;
       const PROXIMITY = 220;
       const snapState = editorSnapStateRef.current;
       const threshX = snapState.x ? UNSNAP_X : SNAP_X;
@@ -1475,6 +1475,11 @@ export default function Game() {
               });
 
               // Testa snap em TODOS os membros do grupo e pega o melhor delta em cada eixo
+              // Limiar adaptativo: pelo menos o tamanho de um bloco para grupos maiores
+              const minMemberW = Math.min(...groupBasePositions.map(({ idx }) => platformsRef.current[idx]?.w ?? 30));
+              const minMemberH = Math.min(...groupBasePositions.map(({ idx }) => platformsRef.current[idx]?.h ?? 40));
+              const groupSnapX = Math.max(30, minMemberW);
+              const groupSnapY = Math.max(40, minMemberH);
               let bestSnapDx = 0;
               let bestSnapDy = 0;
               let bestAbsDx = Infinity;
@@ -1490,7 +1495,7 @@ export default function Game() {
                 editorSnapStateRef.current.y = savedSnapState.y;
                 const preX = gp.x;
                 const preY = gp.y;
-                snapEditorPlatform(gp, idx, ignored);
+                snapEditorPlatform(gp, idx, ignored, groupSnapX, groupSnapY);
                 const mdx = gp.x - preX;
                 const mdy = gp.y - preY;
                 gp.x = preX;
