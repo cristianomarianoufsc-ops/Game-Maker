@@ -168,13 +168,12 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
 }
 
 // ── PRÉDIO COM ESCADA DE INCÊNDIO (estilo NY) ─────────────────────
-const FE_BUILDING_X = 21820;
-const FE_BUILDING_W = 230;
-const FE_BUILDING_TOP_Y_OFFSET = 440;   // altura do prédio acima do chão
-const FE_WALL_X_RENDER = 21950;
-const FE_PLAT_X_RENDER = 21850;
-const FE_PLAT_W_RENDER = 100;
-const FE_FLOORS_Y = [90, 170, 250, 330, 400]; // mesma lista do level.ts
+const FE_BUILDING_X = 21800;
+const FE_BUILDING_W = 280;
+const FE_BUILDING_TOP_Y_OFFSET = 540;   // altura do prédio acima do chão
+const FE_PLAT_X_RENDER = 21830;
+const FE_PLAT_W_RENDER = 130;
+const FE_FLOORS_Y = [62, 124, 186, 248, 310, 372, 434, 496]; // mesma lista do level.ts
 
 export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: number): void {
   const screenLeft = FE_BUILDING_X - camX;
@@ -260,8 +259,9 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
   }
 
   // ── ESCADA DE INCÊNDIO (estrutura metálica) ────────────────────
-  const wallScreenX = FE_WALL_X_RENDER - camX;
   const platScreenX = FE_PLAT_X_RENDER - camX;
+  const buildingWallX = screenLeft + FE_BUILDING_W - 4;
+  const topFloorH = FE_FLOORS_Y[FE_FLOORS_Y.length - 1];
 
   // Cores metálicas (cinza-grafite, bem mais visíveis contra o tijolo)
   const METAL_DARK   = '#3a3a3e';
@@ -269,17 +269,17 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
   const METAL_LIGHT  = '#888890';
   const METAL_HIGHLIGHT = 'rgba(200,200,210,0.55)';
 
-  // Pilar vertical principal (estrutura colada no prédio)
+  // Pilar vertical principal (encostado no prédio)
   ctx.fillStyle = METAL_DARK;
-  ctx.fillRect(wallScreenX - 4, GROUND_Y - 400, 8, 400);
+  ctx.fillRect(buildingWallX - 4, GROUND_Y - topFloorH, 8, topFloorH);
   ctx.fillStyle = METAL_HIGHLIGHT;
-  ctx.fillRect(wallScreenX - 4, GROUND_Y - 400, 1, 400);
+  ctx.fillRect(buildingWallX - 4, GROUND_Y - topFloorH, 1, topFloorH);
 
   // Pilar de canto esquerdo da escada (estrutura externa)
   ctx.fillStyle = METAL_DARK;
-  ctx.fillRect(platScreenX - 4, GROUND_Y - 400, 6, 400);
+  ctx.fillRect(platScreenX - 4, GROUND_Y - topFloorH, 6, topFloorH);
   ctx.fillStyle = METAL_HIGHLIGHT;
-  ctx.fillRect(platScreenX - 4, GROUND_Y - 400, 1, 400);
+  ctx.fillRect(platScreenX - 4, GROUND_Y - topFloorH, 1, topFloorH);
 
   // Cada landing: grade metálica + corrimão + escada para o próximo andar
   FE_FLOORS_Y.forEach((floorH, idx) => {
@@ -1164,6 +1164,7 @@ export function drawPlatforms(
   for (let pi = 0; pi < platforms.length; pi++) {
     const plat = platforms[pi];
     if (plat.type === 'ground') continue; // drawn separately
+    if (plat.hideRender) continue; // desenhada por outro renderizador (ex.: escada de incêndio)
     if (plat.type === 'box'  && destroyedBoxIndices?.includes(pi)) continue;
     if ((plat.type === 'tire' || plat.type === 'tireHideout') && destroyedTireIndices?.includes(pi)) continue;
     if (plat.type === 'tireHideout') continue;

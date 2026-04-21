@@ -29,6 +29,7 @@ export interface Platform extends Rect {
   cropBottom?: number;
   customSpriteName?: string;
   customSpriteDataUrl?: string;
+  hideRender?: boolean;
 }
 
 export type PlayerState =

@@ -318,25 +318,30 @@ export function generateLevel(): Platform[] {
 
   // ── PRÉDIO COM ESCADA DE INCÊNDIO (estilo NY) ───────────────────
   // Localizado na FREE ZONE 3, logo após o muro do ferro velho.
-  // Horácio sobe pela parede escalável e usa as plataformas (landings)
-  // de cada andar como descansos. 5 andares.
-  const FE_WALL_X = 21950;        // parede escalável (lateral do prédio)
-  const FE_PLAT_X = 21850;        // landings projetadas pra esquerda
-  const FE_PLAT_W = 100;
+  // Estrutura: parede escalável encostada no prédio + landings em zig-zag.
+  // Horácio escala a parede e descansa nas landings de cada andar.
+  // 8 andares — bem alto, mas com andares próximos pra facilitar.
+  const FE_PLAT_X = 21830;        // landings projetadas pra esquerda
+  const FE_PLAT_W = 130;          // largas pra dar espaço de pouso
   const FE_PLAT_H = 14;
-  const FE_FLOOR_HEIGHTS = [90, 170, 250, 330, 400];
+  const FE_WALL_X = 21960;        // parede escalável (encostada na borda direita das landings)
+  const FE_FLOOR_HEIGHTS = [62, 124, 186, 248, 310, 372, 434, 496];
+  const FE_TOP_H = FE_FLOOR_HEIGHTS[FE_FLOOR_HEIGHTS.length - 1];
 
-  // Parede escalável (a estrutura vertical da escada)
+  // Parede escalável encostada na fachada do prédio
   platforms.push({
-    x: FE_WALL_X, y: GROUND_Y - 400, w: 20, h: 400,
+    x: FE_WALL_X, y: GROUND_Y - FE_TOP_H, w: 20, h: FE_TOP_H,
     type: 'wall', climbable: true,
+    hideRender: true,
   });
 
   // Landings de cada andar (plataformas finas estilo grade metálica)
+  // Marcadas com hideRender — desenhadas por drawFireEscapeBuilding
   FE_FLOOR_HEIGHTS.forEach((floorH) => {
     platforms.push({
       x: FE_PLAT_X, y: GROUND_Y - floorH, w: FE_PLAT_W, h: FE_PLAT_H,
       type: 'platform',
+      hideRender: true,
     });
   });
 
