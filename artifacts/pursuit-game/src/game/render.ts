@@ -2444,16 +2444,22 @@ export function drawDogs(
       const idleSrcW = dogIdle.naturalWidth;
       const idleSrcH = dogIdle.naturalHeight;
       const idleDisplayW = Math.round(displayH * (idleSrcW / idleSrcH));
+      // Push idle sprite down so paws touch the ground
+      const idleScreenY = GROUND_Y - displayH + 14;
 
       if (!dog.facingRight) {
         ctx.translate(screenX + idleDisplayW, 0);
         ctx.scale(-1, 1);
-        ctx.drawImage(dogIdle, 0, 0, idleSrcW, idleSrcH, 0, screenY, idleDisplayW, displayH);
+        ctx.drawImage(dogIdle, 0, 0, idleSrcW, idleSrcH, 0, idleScreenY, idleDisplayW, displayH);
       } else {
-        ctx.drawImage(dogIdle, 0, 0, idleSrcW, idleSrcH, screenX, screenY, idleDisplayW, displayH);
+        ctx.drawImage(dogIdle, 0, 0, idleSrcW, idleSrcH, screenX, idleScreenY, idleDisplayW, displayH);
       }
     } else {
-      // Spritesheet frames (run + bite) — faces LEFT by default
+      // Spritesheet frames (run + bite) — faces RIGHT by default
+      const runDisplayH = 138;
+      const runDisplayW = Math.round(runDisplayH * (frameW / srcH));
+      const runScreenY = GROUND_Y - runDisplayH;
+
       let frameIdx = 0;
       if (dog.animState === 'bite') {
         frameIdx = 2;
@@ -2465,11 +2471,11 @@ export function drawDogs(
       const sx = frameIdx * rawFrameW + leftInset;
 
       if (!dog.facingRight) {
-        ctx.drawImage(dogSheet, sx, 0, frameW, srcH, screenX, screenY, displayW, displayH);
-      } else {
-        ctx.translate(screenX + displayW, 0);
+        ctx.translate(screenX + runDisplayW, 0);
         ctx.scale(-1, 1);
-        ctx.drawImage(dogSheet, sx, 0, frameW, srcH, 0, screenY, displayW, displayH);
+        ctx.drawImage(dogSheet, sx, 0, frameW, srcH, 0, runScreenY, runDisplayW, runDisplayH);
+      } else {
+        ctx.drawImage(dogSheet, sx, 0, frameW, srcH, screenX, runScreenY, runDisplayW, runDisplayH);
       }
     }
 
