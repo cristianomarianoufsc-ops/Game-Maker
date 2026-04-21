@@ -2456,9 +2456,9 @@ export function drawDogs(
       }
     } else {
       // Spritesheet frames (run + bite) — faces RIGHT by default
-      const runDisplayH = 138;
+      const runDisplayH = 116;
       const runDisplayW = Math.round(runDisplayH * (frameW / srcH));
-      const runScreenY = GROUND_Y - runDisplayH;
+      const runScreenY = GROUND_Y - runDisplayH + 10;
 
       let frameIdx = 0;
       if (dog.animState === 'bite') {
