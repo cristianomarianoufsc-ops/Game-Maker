@@ -1606,40 +1606,40 @@ export function updateDogs(dogs: Dog[], player: Player, dt: number, onBite: () =
       dog.biteTimer = Math.max(0, dog.biteTimer - dt);
       dog.vx = 0;
       dog.animState = 'bite';
+    } else if (!canDetect) {
+      // Horácio fora da zona — cachorro fica parado olhando em sua direção
+      dog.vx = 0;
+      dog.animState = 'idle';
+      dog.facingRight = dx >= 0;
     } else {
       dog.animState = 'run';
 
-      if (canDetect) {
-        const speed = CHASE_SPEED;
-        if (dx > 0) {
-          dog.vx = speed;
-          dog.facingRight = true;
-        } else {
-          dog.vx = -speed;
-          dog.facingRight = false;
-        }
-
-        if (distX < BITE_RANGE_X && distY < BITE_RANGE_Y && dog.biteCooldown <= 0) {
-          dog.animState = 'bite';
-          dog.biteTimer = BITE_DURATION;
-          dog.biteCooldown = BITE_COOLDOWN;
-          dog.vx = 0;
-
-          if (!player.invincible && !player.sideFlipImmune && player.state !== 'dead') {
-            player.health--;
-            player.invincible = true;
-            player.invincibleTimer = HIT_INVINCIBILITY;
-            player.hurtStunTimer = HIT_STUN_DURATION;
-            player.vx = 0;
-            player.isRolling = false;
-            player.autoRoll = false;
-            player.state = 'hurt';
-            if (player.health <= 0) player.state = 'dead';
-            onBite();
-          }
-        }
+      if (dx > 0) {
+        dog.vx = CHASE_SPEED;
+        dog.facingRight = true;
       } else {
-        dog.vx = dog.facingRight ? RUN_SPEED : -RUN_SPEED;
+        dog.vx = -CHASE_SPEED;
+        dog.facingRight = false;
+      }
+
+      if (distX < BITE_RANGE_X && distY < BITE_RANGE_Y && dog.biteCooldown <= 0) {
+        dog.animState = 'bite';
+        dog.biteTimer = BITE_DURATION;
+        dog.biteCooldown = BITE_COOLDOWN;
+        dog.vx = 0;
+
+        if (!player.invincible && !player.sideFlipImmune && player.state !== 'dead') {
+          player.health--;
+          player.invincible = true;
+          player.invincibleTimer = HIT_INVINCIBILITY;
+          player.hurtStunTimer = HIT_STUN_DURATION;
+          player.vx = 0;
+          player.isRolling = false;
+          player.autoRoll = false;
+          player.state = 'hurt';
+          if (player.health <= 0) player.state = 'dead';
+          onBite();
+        }
       }
     }
 

@@ -2422,12 +2422,15 @@ export function drawDogs(
   const imgW = dogSheet.naturalWidth;
   const imgH = dogSheet.naturalHeight;
 
-  // The sprite sheet has 3 frames side by side, with label text at the bottom
-  // We crop the top 78% to exclude the labels
-  const frameW = Math.floor(imgW / 3);
+  // The sprite sheet has 3 frames side by side, with label text at the bottom.
+  // We crop the top 78% to exclude labels.
+  // A horizontal inset of 5px per side removes bleed from adjacent frames.
+  const rawFrameW = Math.floor(imgW / 3);
+  const inset = 5;
+  const frameW = rawFrameW - inset * 2; // visible width after inset
   const srcH = Math.floor(imgH * 0.78);
 
-  const displayH = 102;
+  const displayH = 120;
   const displayW = Math.round(displayH * (frameW / srcH));
 
   for (const dog of dogs) {
@@ -2437,12 +2440,14 @@ export function drawDogs(
     let frameIdx = 0;
     if (dog.animState === 'bite') {
       frameIdx = 2;
+    } else if (dog.animState === 'idle') {
+      frameIdx = 0;
     } else {
       const runFrame = Math.floor(dog.animTimer / DOG_RUN_FRAME_INTERVAL) % 2;
       frameIdx = runFrame;
     }
 
-    const sx = frameIdx * frameW;
+    const sx = frameIdx * rawFrameW + inset;
 
     ctx.save();
     if (!dog.facingRight) {

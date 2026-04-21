@@ -171,7 +171,7 @@ export interface FlyingTire {
   life?: number;      // frames restantes antes de sumir
 }
 
-export type DogAnimState = 'run' | 'bite';
+export type DogAnimState = 'idle' | 'run' | 'bite';
 
 export interface Dog {
   x: number;
