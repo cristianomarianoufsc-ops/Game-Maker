@@ -1898,8 +1898,13 @@ export default function Game() {
               }
               return clean;
             });
+            const patchAddKeys = new Set(patchAdd.map(platBaseKey));
+            const currentKeys = new Set(currentPlatforms.map(platBaseKey));
             const patchDel = originalLevelPlatformsRef.current
-              .filter(p => p.type !== 'ground' && !new Set(currentPlatforms.map(platBaseKey)).has(platBaseKey(p)))
+              .filter(p => p.type !== 'ground' && (
+                !currentKeys.has(platBaseKey(p)) ||   // removido do estado atual
+                patchAddKeys.has(platBaseKey(p))       // também em patchAdd → evita duplicata no reload
+              ))
               .map(p => platBaseKey(p));
             const levelPatch = { add: patchAdd, del: patchDel };
             fetch('/api/save-level-patch', {
