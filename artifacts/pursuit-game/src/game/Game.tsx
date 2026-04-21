@@ -748,9 +748,9 @@ export default function Game() {
     dogs: gameMode === 'story' ? [
       {
         x: 19500,
-        y: GROUND_Y - 50,
-        w: 70,
-        h: 50,
+        y: GROUND_Y - 75,
+        w: 105,
+        h: 75,
         vx: 3.0,
         facingRight: true,
         animState: 'run' as const,
@@ -758,7 +758,7 @@ export default function Game() {
         biteTimer: 0,
         biteCooldown: 0,
         patrolLeft: 19211,
-        patrolRight: 20578,
+        patrolRight: 20543,
       },
     ] : [],
   }), []);

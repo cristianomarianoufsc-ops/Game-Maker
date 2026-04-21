@@ -2427,7 +2427,7 @@ export function drawDogs(
   const frameW = Math.floor(imgW / 3);
   const srcH = Math.floor(imgH * 0.78);
 
-  const displayH = 68;
+  const displayH = 102;
   const displayW = Math.round(displayH * (frameW / srcH));
 
   for (const dog of dogs) {
