@@ -10,7 +10,7 @@ import wallRunSheetUrl from '@assets/Wall_Run_1776005817769.png';
 import mortalSheetUrl from '@assets/mortal_1776009939272.png';
 import subidaSheetUrl from '@assets/subida_1776012458574.png';
 import sideFlipSheetUrl from '@assets/SIDE_FLIP_1776053462942.png';
-import dogSheetUrl from '@assets/DOG_1776735900815.png';
+import dogSheetUrl from '@assets/DOG_1776795245228.png';
 import dogIdleUrl from '@assets/image_1776737992484.png';
 import standingTireUrl from '@assets/pneu_1776643651883.png';
 import rollingTireUrl from '@assets/pneu2_1776643651884.png';
