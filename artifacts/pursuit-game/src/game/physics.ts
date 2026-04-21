@@ -1598,8 +1598,8 @@ export function updateDogs(dogs: Dog[], player: Player, dt: number, onBite: () =
     const distX = Math.abs(dx);
     const distY = Math.abs(dy);
 
-    const playerInZone = player.x + player.w > dog.patrolLeft - 120 &&
-                         player.x < dog.patrolRight + 120;
+    const playerInZone = player.x + player.w > dog.patrolLeft &&
+                         player.x < dog.patrolRight;
     const canDetect = distX < DETECT_RANGE && playerInZone && player.state !== 'dead';
 
     if (dog.biteTimer > 0) {
