@@ -749,7 +749,7 @@ export default function Game() {
     destroyedTireIndices: [],
     dogs: gameMode === 'story' ? [
       {
-        x: 19500,
+        x: 19250,
         y: GROUND_Y - 75,
         w: 105,
         h: 75,
