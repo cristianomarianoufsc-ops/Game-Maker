@@ -1600,7 +1600,18 @@ export function updateDogs(dogs: Dog[], player: Player, dt: number, onBite: () =
 
     const playerInZone = player.x + player.w > dog.patrolLeft &&
                          player.x < dog.patrolRight;
-    const canDetect = distX < DETECT_RANGE && playerInZone && player.state !== 'dead';
+
+    // Horácio em cima dos obstáculos verdes específicos — cão fica parado olhando
+    const SAFE_OBSTACLE_TOP_Y = GROUND_Y - 102;
+    const SAFE_OBSTACLES_X: Array<[number, number]> = [
+      [18972, 18972 + 239],
+      [20648, 20648 + 239],
+    ];
+    const playerBottom = player.y + (player.isRolling ? PLAYER_ROLL_H : PLAYER_H);
+    const playerOnSafeObstacle = Math.abs(playerBottom - SAFE_OBSTACLE_TOP_Y) < 4 &&
+      SAFE_OBSTACLES_X.some(([x1, x2]) => player.x + player.w > x1 && player.x < x2);
+
+    const canDetect = distX < DETECT_RANGE && playerInZone && player.state !== 'dead' && !playerOnSafeObstacle;
 
     if (dog.biteTimer > 0) {
       dog.biteTimer = Math.max(0, dog.biteTimer - dt);

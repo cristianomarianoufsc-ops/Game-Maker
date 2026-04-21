@@ -929,7 +929,7 @@ export default function Game() {
 
     const dogImg = new Image();
     dogImg.onload = () => {
-      const stripped = stripBlackBackground(dogImg);
+      const stripped = stripWhiteBackground(dogImg);
       if (stripped.complete && stripped.naturalWidth > 0) {
         dogSheetImgRef.current = stripped;
       } else {
