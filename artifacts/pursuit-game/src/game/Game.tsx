@@ -1474,48 +1474,22 @@ export default function Game() {
                 return { idx, x: gp?.x ?? 0, y: gp?.y ?? 0 };
               });
 
-              // Testa snap em TODOS os membros do grupo e pega o melhor delta em cada eixo
-              // Limiar adaptativo: pelo menos o tamanho de um bloco para grupos maiores
-              const minMemberW = Math.min(...groupBasePositions.map(({ idx }) => platformsRef.current[idx]?.w ?? 30));
-              const minMemberH = Math.min(...groupBasePositions.map(({ idx }) => platformsRef.current[idx]?.h ?? 40));
-              const groupSnapX = Math.max(30, minMemberW);
-              const groupSnapY = Math.max(40, minMemberH);
-              let bestSnapDx = 0;
-              let bestSnapDy = 0;
-              let bestAbsDx = Infinity;
-              let bestAbsDy = Infinity;
-              let bestWorldX: number | null = null;
-              let bestWorldY: number | null = null;
-              const savedSnapState = { x: editorSnapStateRef.current.x, y: editorSnapStateRef.current.y };
-
-              for (const { idx } of groupBasePositions) {
-                const gp = platformsRef.current[idx];
-                if (!gp) continue;
-                editorSnapStateRef.current.x = savedSnapState.x;
-                editorSnapStateRef.current.y = savedSnapState.y;
-                const preX = gp.x;
-                const preY = gp.y;
-                snapEditorPlatform(gp, idx, ignored, groupSnapX, groupSnapY);
-                const mdx = gp.x - preX;
-                const mdy = gp.y - preY;
-                gp.x = preX;
-                gp.y = preY;
-                if (mdx !== 0 && Math.abs(mdx) < bestAbsDx) {
-                  bestAbsDx = Math.abs(mdx);
-                  bestSnapDx = mdx;
-                  bestWorldX = editorSnapAxesRef.current.worldX;
-                }
-                if (mdy !== 0 && Math.abs(mdy) < bestAbsDy) {
-                  bestAbsDy = Math.abs(mdy);
-                  bestSnapDy = mdy;
-                  bestWorldY = editorSnapAxesRef.current.worldY;
-                }
-              }
-
-              editorSnapStateRef.current.x = bestSnapDx !== 0;
-              editorSnapStateRef.current.y = bestSnapDy !== 0;
-              editorSnapAxesRef.current.worldX = bestWorldX;
-              editorSnapAxesRef.current.worldY = bestWorldY;
+              // Snap usando o bounding box do grupo inteiro como unidade
+              // Isso evita conflitos entre membros e garante que as bordas EXTERNAS do grupo
+              // sejam usadas como referência — independente do número de objetos selecionados
+              const bboxX = Math.min(...groupBasePositions.map(({ idx }) => platformsRef.current[idx]?.x ?? 0));
+              const bboxY = Math.min(...groupBasePositions.map(({ idx }) => platformsRef.current[idx]?.y ?? 0));
+              const bboxRight = Math.max(...groupBasePositions.map(({ idx }) => { const gp = platformsRef.current[idx]; return (gp?.x ?? 0) + (gp?.w ?? 0); }));
+              const bboxBottom = Math.max(...groupBasePositions.map(({ idx }) => { const gp = platformsRef.current[idx]; return (gp?.y ?? 0) + (gp?.h ?? 0); }));
+              const bboxProxy: Platform = { x: bboxX, y: bboxY, w: bboxRight - bboxX, h: bboxBottom - bboxY, type: 'box' };
+              const preProxyX = bboxProxy.x;
+              const preProxyY = bboxProxy.y;
+              snapEditorPlatform(bboxProxy, -1, ignored);
+              const bestSnapDx = bboxProxy.x - preProxyX;
+              const bestSnapDy = bboxProxy.y - preProxyY;
+              // Restaura para não contaminar o estado (snapEditorPlatform já atualizou os refs)
+              bboxProxy.x = preProxyX;
+              bboxProxy.y = preProxyY;
 
               const snapDx = bestSnapDx;
               let snapDy = bestSnapDy;
