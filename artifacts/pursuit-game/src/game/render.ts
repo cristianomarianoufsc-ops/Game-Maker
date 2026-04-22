@@ -168,9 +168,9 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
 }
 
 // ── PRÉDIO COM ESCADA DE INCÊNDIO (estilo NY) ─────────────────────
-const FE_BUILDING_X = 21640;
-const FE_BUILDING_W = 560;
-const FE_BUILDING_TOP_Y_OFFSET = 1480;  // altura do prédio acima do chão
+const FE_BUILDING_X = 21500;
+const FE_BUILDING_W = 820;
+const FE_BUILDING_TOP_Y_OFFSET = 1560;  // altura do prédio acima do chão
 const FE_PLAT_X_RENDER = 21770;
 const FE_PLAT_W_RENDER = 220;
 const FE_FLOORS_Y = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320]; // mesma lista do level.ts
@@ -220,14 +220,14 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
   ctx.fillRect(screenLeft - 4, buildingTop - 8, FE_BUILDING_W + 8, 2);
 
   // ── JANELAS de cada andar ───────────────────────────────────────
-  const winW = 64;
-  const winH = 100;
+  const winW = 110;
+  const winH = 130;
   for (const floorH of FE_FLOORS_Y) {
     const winY = GROUND_Y - floorH - winH - 12; // janela acima do landing
     // Janela à esquerda (acessível pela escada)
-    const winX1 = screenLeft + 40;
+    const winX1 = screenLeft + 50;
     // Janela à direita
-    const winX2 = screenLeft + FE_BUILDING_W - 40 - winW;
+    const winX2 = screenLeft + FE_BUILDING_W - 50 - winW;
 
     [winX1, winX2].forEach((wx, idx) => {
       // Moldura
