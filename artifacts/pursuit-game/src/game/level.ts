@@ -318,17 +318,18 @@ export function generateLevel(): Platform[] {
   // Localizado na FREE ZONE 3, logo após o muro do ferro velho.
   // Proporcional ao Horácio — andares bem espaçados (130px) e landings amplas.
   // 6 andares + telhado, bem alto (passa do topo da câmera, ela sobe junto).
-  const FE_PLAT_X = 21800;        // landings começam DEPOIS do muro x:21700
+  const FE_PLAT_X = 21945;        // landings centradas entre as janelas do prédio
   const FE_PLAT_W = 370;          // larguras amplas — Horácio anda com folga
   const FE_PLAT_H = 18;
-  const FE_WALL_X = 22170;        // parede escalável (na borda direita das landings)
+  const FE_WALL_X = 22110;        // escada climbable no MEIO da landing (entra ↑ pra subir)
+  const FE_WALL_W = 40;
   // Espaçamento entre andares: 150px (≈ 3x altura do Horácio)
   const FE_FLOOR_HEIGHTS = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320];
   const FE_TOP_H = FE_FLOOR_HEIGHTS[FE_FLOOR_HEIGHTS.length - 1];
 
-  // Parede escalável encostada na fachada do prédio
+  // Escada climbable no centro das landings — Horácio para nela e ↑ pra subir
   platforms.push({
-    x: FE_WALL_X, y: GROUND_Y - FE_TOP_H, w: 20, h: FE_TOP_H,
+    x: FE_WALL_X, y: GROUND_Y - FE_TOP_H, w: FE_WALL_W, h: FE_TOP_H,
     type: 'wall', climbable: true,
     hideRender: true,
   });

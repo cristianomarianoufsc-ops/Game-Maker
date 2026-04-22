@@ -171,8 +171,9 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
 const FE_BUILDING_X = 21720;             // prédio começa DEPOIS do muro x:21700
 const FE_BUILDING_W = 820;
 const FE_BUILDING_TOP_Y_OFFSET = 1560;  // altura do prédio acima do chão
-const FE_PLAT_X_RENDER = 21800;
+const FE_PLAT_X_RENDER = 21945;          // landings centradas entre as janelas
 const FE_PLAT_W_RENDER = 370;
+const FE_LADDER_W = 56;                   // escada larga, no meio da landing
 const FE_FLOORS_Y = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320]; // mesma lista do level.ts
 
 export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: number): void {
@@ -351,38 +352,42 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
     ctx.lineTo(platRight + 18, platY + 16);
     ctx.stroke();
 
-    // Escada vertical (reta) encostada no prédio para o próximo andar
+    // Escada vertical (reta) no MEIO da landing — dá acesso ao andar de cima
     if (idx < FE_FLOORS_Y.length - 1) {
       const nextH = FE_FLOORS_Y[idx + 1];
       const nextY = GROUND_Y - nextH;
-      const ladderX = platRight;        // alinhado com o muro escalável (borda direita do landing)
+      const ladderX = platLeft + FE_PLAT_W_RENDER / 2 - FE_LADDER_W / 2;
       const ladderTop = nextY + 18;     // encosta no piso do landing de cima
       const ladderBottom = platY;        // sai do landing atual
       // Trilhos verticais
       ctx.strokeStyle = METAL_DARK;
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.moveTo(ladderX, ladderTop);
       ctx.lineTo(ladderX, ladderBottom);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(ladderX + 20, ladderTop);
-      ctx.lineTo(ladderX + 20, ladderBottom);
+      ctx.moveTo(ladderX + FE_LADDER_W, ladderTop);
+      ctx.lineTo(ladderX + FE_LADDER_W, ladderBottom);
       ctx.stroke();
-      // Highlight no trilho esquerdo
+      // Highlight nos trilhos
       ctx.strokeStyle = METAL_HIGHLIGHT;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(ladderX - 1, ladderTop);
       ctx.lineTo(ladderX - 1, ladderBottom);
       ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(ladderX + FE_LADDER_W + 1, ladderTop);
+      ctx.lineTo(ladderX + FE_LADDER_W + 1, ladderBottom);
+      ctx.stroke();
       // Degraus horizontais
       ctx.strokeStyle = METAL_MID;
-      ctx.lineWidth = 2;
-      for (let sy = ladderTop + 12; sy < ladderBottom - 4; sy += 14) {
+      ctx.lineWidth = 3;
+      for (let sy = ladderTop + 14; sy < ladderBottom - 4; sy += 16) {
         ctx.beginPath();
         ctx.moveTo(ladderX, sy);
-        ctx.lineTo(ladderX + 20, sy);
+        ctx.lineTo(ladderX + FE_LADDER_W, sy);
         ctx.stroke();
       }
     }
@@ -391,28 +396,30 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
   // Escada retrátil do primeiro landing até o chão
   const firstY = GROUND_Y - FE_FLOORS_Y[0];
   ctx.strokeStyle = METAL_DARK;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 5;
+  const retLadderL = platScreenX + FE_PLAT_W_RENDER / 2 - FE_LADDER_W / 2;
+  const retLadderR = retLadderL + FE_LADDER_W;
   ctx.beginPath();
-  ctx.moveTo(platScreenX + 22, firstY + 18);
-  ctx.lineTo(platScreenX + 22, GROUND_Y - 4);
+  ctx.moveTo(retLadderL, firstY + 18);
+  ctx.lineTo(retLadderL, GROUND_Y - 4);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(platScreenX + 40, firstY + 18);
-  ctx.lineTo(platScreenX + 40, GROUND_Y - 4);
+  ctx.moveTo(retLadderR, firstY + 18);
+  ctx.lineTo(retLadderR, GROUND_Y - 4);
   ctx.stroke();
   ctx.strokeStyle = METAL_HIGHLIGHT;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(platScreenX + 21, firstY + 18);
-  ctx.lineTo(platScreenX + 21, GROUND_Y - 4);
+  ctx.moveTo(retLadderL - 1, firstY + 18);
+  ctx.lineTo(retLadderL - 1, GROUND_Y - 4);
   ctx.stroke();
   // Degraus da escada vertical
   ctx.strokeStyle = METAL_MID;
-  ctx.lineWidth = 2;
-  for (let sy = firstY + 28; sy < GROUND_Y - 4; sy += 12) {
+  ctx.lineWidth = 3;
+  for (let sy = firstY + 28; sy < GROUND_Y - 4; sy += 16) {
     ctx.beginPath();
-    ctx.moveTo(platScreenX + 22, sy);
-    ctx.lineTo(platScreenX + 40, sy);
+    ctx.moveTo(retLadderL, sy);
+    ctx.lineTo(retLadderR, sy);
     ctx.stroke();
   }
 
