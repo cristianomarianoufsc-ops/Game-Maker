@@ -171,8 +171,8 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
 const FE_BUILDING_X = 21500;
 const FE_BUILDING_W = 820;
 const FE_BUILDING_TOP_Y_OFFSET = 1560;  // altura do prédio acima do chão
-const FE_PLAT_X_RENDER = 21770;
-const FE_PLAT_W_RENDER = 220;
+const FE_PLAT_X_RENDER = 21620;
+const FE_PLAT_W_RENDER = 370;
 const FE_FLOORS_Y = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320]; // mesma lista do level.ts
 
 export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: number): void {
@@ -351,45 +351,38 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
     ctx.lineTo(platRight + 18, platY + 16);
     ctx.stroke();
 
-    // Escada inclinada para o próximo andar
+    // Escada vertical (reta) encostada no prédio para o próximo andar
     if (idx < FE_FLOORS_Y.length - 1) {
       const nextH = FE_FLOORS_Y[idx + 1];
       const nextY = GROUND_Y - nextH;
-      const x1 = platLeft + 14;
-      const y1 = platY;
-      const x2 = platLeft + 78;
-      const y2 = nextY + 14;
-      // Trilhos da escada
+      const ladderX = platRight - 28;   // perto da parede do prédio (lado direito)
+      const ladderTop = nextY + 18;     // encosta no piso do landing de cima
+      const ladderBottom = platY;        // sai do landing atual
+      // Trilhos verticais
       ctx.strokeStyle = METAL_DARK;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
+      ctx.moveTo(ladderX, ladderTop);
+      ctx.lineTo(ladderX, ladderBottom);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(x1 + 18, y1);
-      ctx.lineTo(x2 + 18, y2);
+      ctx.moveTo(ladderX + 20, ladderTop);
+      ctx.lineTo(ladderX + 20, ladderBottom);
       ctx.stroke();
-      // Highlight nos trilhos
+      // Highlight no trilho esquerdo
       ctx.strokeStyle = METAL_HIGHLIGHT;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(x1 - 1, y1);
-      ctx.lineTo(x2 - 1, y2);
+      ctx.moveTo(ladderX - 1, ladderTop);
+      ctx.lineTo(ladderX - 1, ladderBottom);
       ctx.stroke();
-      // Degraus
-      const steps = 8;
+      // Degraus horizontais
       ctx.strokeStyle = METAL_MID;
       ctx.lineWidth = 2;
-      for (let s = 1; s < steps; s++) {
-        const t = s / steps;
-        const sx1 = x1 + (x2 - x1) * t;
-        const sy1 = y1 + (y2 - y1) * t;
-        const sx2 = sx1 + 18;
-        const sy2 = sy1;
+      for (let sy = ladderTop + 12; sy < ladderBottom - 4; sy += 14) {
         ctx.beginPath();
-        ctx.moveTo(sx1, sy1);
-        ctx.lineTo(sx2, sy2);
+        ctx.moveTo(ladderX, sy);
+        ctx.lineTo(ladderX + 20, sy);
         ctx.stroke();
       }
     }

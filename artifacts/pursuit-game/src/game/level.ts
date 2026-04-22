@@ -318,8 +318,8 @@ export function generateLevel(): Platform[] {
   // Localizado na FREE ZONE 3, logo após o muro do ferro velho.
   // Proporcional ao Horácio — andares bem espaçados (130px) e landings amplas.
   // 6 andares + telhado, bem alto (passa do topo da câmera, ela sobe junto).
-  const FE_PLAT_X = 21770;        // landings projetadas pra esquerda
-  const FE_PLAT_W = 220;          // larguras amplas — Horácio anda com folga
+  const FE_PLAT_X = 21620;        // landings projetadas pra esquerda
+  const FE_PLAT_W = 370;          // larguras amplas — Horácio anda com folga
   const FE_PLAT_H = 18;
   const FE_WALL_X = 21990;        // parede escalável (na borda direita das landings)
   // Espaçamento entre andares: 150px (≈ 3x altura do Horácio)

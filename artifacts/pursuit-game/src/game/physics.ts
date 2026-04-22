@@ -993,7 +993,7 @@ function droneComputeWaypoint(
   let closestDist = Infinity;
 
   for (const p of platforms) {
-    if (p.type !== 'wall') continue;
+    if (!isDroneSolid(p)) continue;
     // Only consider obstacles that lie between drone and target horizontally
     const lo = Math.min(dCx, targetX) - 10;
     const hi = Math.max(dCx, targetX) + 10;
@@ -1053,7 +1053,7 @@ function droneWallScan(
   let bestDist = Infinity;
 
   for (const p of platforms) {
-    if (p.type !== 'wall') continue;
+    if (!isDroneSolid(p)) continue;
     // Is this wall in front of the drone in the direction of travel?
     const wallFront = goingRight ? p.x : p.x + p.w;
     const ahead = goingRight
@@ -1099,7 +1099,7 @@ function droneRepulsion(
   const dCy = drone.y + DRONE_H / 2;
 
   for (const p of platforms) {
-    if (p.type !== 'wall') continue;
+    if (!isDroneSolid(p)) continue;
     // Quick distance cull
     if (Math.abs((p.x + p.w / 2) - dCx) > SENSE + p.w / 2 + 40) continue;
 
@@ -1125,10 +1125,15 @@ function droneRepulsion(
   return { fx, fy };
 }
 
+/** Drone só colide com 2 paredes específicas — atravessa todo o resto. */
+function isDroneSolid(p: Platform): boolean {
+  return p.type === 'wall' && (p.x === 12100 || p.x === 21700);
+}
+
 /** Hard pushout: resolve any current overlap between drone AABB and solid platforms. */
 function dronePushOut(drone: Drone, platforms: Platform[]): void {
   for (const p of platforms) {
-    if (p.type !== 'wall') continue;
+    if (!isDroneSolid(p)) continue;
     // AABB overlap test
     if (
       drone.x < p.x + p.w && drone.x + DRONE_W > p.x &&
