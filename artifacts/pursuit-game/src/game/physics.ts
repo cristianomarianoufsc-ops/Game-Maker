@@ -603,7 +603,7 @@ export function updatePlayer(
         spawnParticle(p.x + p.w / 2, p.y + ph, i % 2 === 0 ? '#808090' : '#555060');
       }
     // Normal jump
-    } else if ((keys.space || (keys.up && !p.touchingWall)) && (p.coyoteTime > 0)) {
+    } else if ((keys.space || (keys.up && !p.touchingWall && !p.touchingLadder)) && (p.coyoteTime > 0)) {
       // Aplica penalidade de pulo se o personagem acabou de escalar uma parede alta
       // Não reseta a penalidade aqui — ela persiste até o pouso para limitar vx no ar também
       p.vy = JUMP_FORCE * p.wallClimbJumpPenalty;
