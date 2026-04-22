@@ -271,15 +271,15 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
 
   // Pilar vertical principal (encostado no prédio)
   ctx.fillStyle = METAL_DARK;
-  ctx.fillRect(buildingWallX - 4, GROUND_Y - topFloorH, 8, topFloorH);
+  ctx.fillRect(buildingWallX - 6, GROUND_Y - topFloorH, 14, topFloorH);
   ctx.fillStyle = METAL_HIGHLIGHT;
-  ctx.fillRect(buildingWallX - 4, GROUND_Y - topFloorH, 1, topFloorH);
+  ctx.fillRect(buildingWallX - 6, GROUND_Y - topFloorH, 2, topFloorH);
 
   // Pilar de canto esquerdo da escada (estrutura externa)
   ctx.fillStyle = METAL_DARK;
-  ctx.fillRect(platScreenX - 4, GROUND_Y - topFloorH, 6, topFloorH);
+  ctx.fillRect(platScreenX - 6, GROUND_Y - topFloorH, 11, topFloorH);
   ctx.fillStyle = METAL_HIGHLIGHT;
-  ctx.fillRect(platScreenX - 4, GROUND_Y - topFloorH, 1, topFloorH);
+  ctx.fillRect(platScreenX - 6, GROUND_Y - topFloorH, 2, topFloorH);
 
   // Cada landing: grade metálica + corrimão + escada para o próximo andar
   FE_FLOORS_Y.forEach((floorH, idx) => {
@@ -289,27 +289,27 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
 
     // Grade metálica do piso
     ctx.fillStyle = METAL_DARK;
-    ctx.fillRect(platLeft - 4, platY, FE_PLAT_W_RENDER + 8, 14);
+    ctx.fillRect(platLeft - 6, platY, FE_PLAT_W_RENDER + 12, 18);
     // Highlight superior (borda iluminada)
     ctx.fillStyle = METAL_HIGHLIGHT;
-    ctx.fillRect(platLeft - 4, platY, FE_PLAT_W_RENDER + 8, 1);
+    ctx.fillRect(platLeft - 6, platY, FE_PLAT_W_RENDER + 12, 2);
     // Textura riscada da grade
     ctx.fillStyle = METAL_MID;
     for (let gx = platLeft; gx < platRight; gx += 4) {
-      ctx.fillRect(gx, platY + 3, 1, 9);
+      ctx.fillRect(gx, platY + 4, 1, 12);
     }
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     for (let gx = platLeft + 2; gx < platRight; gx += 4) {
-      ctx.fillRect(gx, platY + 3, 1, 9);
+      ctx.fillRect(gx, platY + 4, 1, 12);
     }
     // Borda inferior do landing (chapa estrutural)
     ctx.fillStyle = '#1c1c20';
-    ctx.fillRect(platLeft - 6, platY + 14, FE_PLAT_W_RENDER + 12, 4);
+    ctx.fillRect(platLeft - 8, platY + 18, FE_PLAT_W_RENDER + 16, 6);
 
     // Corrimão (guarda-corpo) — 36px de altura
     const railTop = platY - 36;
     ctx.strokeStyle = METAL_DARK;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     // Barra superior
     ctx.beginPath();
     ctx.moveTo(platLeft, railTop);

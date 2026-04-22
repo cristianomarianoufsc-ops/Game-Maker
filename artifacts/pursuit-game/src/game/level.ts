@@ -31,7 +31,6 @@ export function generateLevel(): Platform[] {
     { x: 12100, y: GROUND_Y - 400, h: 400 },
     { x: 21700, y: GROUND_Y - 400, h: 400 },
 
-    { x: 22100, y: GROUND_Y - 320, h: 320 },
     { x: 23100, y: GROUND_Y - 310, h: 310 },
     { x: 24100, y: GROUND_Y - 290, h: 290 },
   ];
@@ -66,8 +65,7 @@ export function generateLevel(): Platform[] {
     { x: 12250, w: 9470 },  // 12250 → 21720 (dobro do original, cobre toda a zona)
 
     // WALL ZONE 3 — buracos grandes + muitas paredes (começa após x:21700)
-    { x: 21650, w: 500 },
-    { x: 22250, w: 450 },
+    { x: 21650, w: 1050 },
     { x: 22800, w: 550 },
     { x: 23450, w: 500 },
     { x: 24050, w: 550 },
