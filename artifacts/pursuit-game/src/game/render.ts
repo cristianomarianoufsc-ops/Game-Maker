@@ -168,10 +168,10 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
 }
 
 // ── PRÉDIO COM ESCADA DE INCÊNDIO (estilo NY) ─────────────────────
-const FE_BUILDING_X = 21500;
+const FE_BUILDING_X = 21720;             // prédio começa DEPOIS do muro x:21700
 const FE_BUILDING_W = 820;
 const FE_BUILDING_TOP_Y_OFFSET = 1560;  // altura do prédio acima do chão
-const FE_PLAT_X_RENDER = 21620;
+const FE_PLAT_X_RENDER = 21800;
 const FE_PLAT_W_RENDER = 370;
 const FE_FLOORS_Y = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320]; // mesma lista do level.ts
 
@@ -355,7 +355,7 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
     if (idx < FE_FLOORS_Y.length - 1) {
       const nextH = FE_FLOORS_Y[idx + 1];
       const nextY = GROUND_Y - nextH;
-      const ladderX = platRight - 28;   // perto da parede do prédio (lado direito)
+      const ladderX = platRight;        // alinhado com o muro escalável (borda direita do landing)
       const ladderTop = nextY + 18;     // encosta no piso do landing de cima
       const ladderBottom = platY;        // sai do landing atual
       // Trilhos verticais

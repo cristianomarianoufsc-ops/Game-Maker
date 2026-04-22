@@ -59,6 +59,7 @@ function makePlayer(): Player {
     facingRight: true,
     onGround: false,
     touchingWall: false,
+    touchingLadder: false,
     wallX: 0,
     wallTopY: GROUND_Y,
     wallSide: null,

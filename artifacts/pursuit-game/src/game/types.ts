@@ -58,6 +58,7 @@ export interface Player {
   facingRight: boolean;
   onGround: boolean;
   touchingWall: boolean;
+  touchingLadder: boolean;
   wallX: number;
   wallTopY: number;
   wallSide: 'left' | 'right' | null;

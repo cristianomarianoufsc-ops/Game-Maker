@@ -132,6 +132,7 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
 
   if (plat.type === 'wall' && plat.climbable) {
     resolveClimbableWallContact(p, hit, p.vx);
+    p.touchingLadder = true;
     return false;
   }
 
@@ -216,6 +217,7 @@ export function updatePlayer(
   const previousWallTopY = p.wallTopY;
   p.onGround = false;
   p.touchingWall = false;
+  p.touchingLadder = false;
   p.wallSide = null;
   p.wallX = previousWallX;
   p.wallTopY = previousWallTopY;
@@ -626,6 +628,13 @@ export function updatePlayer(
     if (p.touchingWall && keys.up && !p.onGround && !_climbBannedOnBox) {
       p.isClimbing = true;
       p.vy = -CLIMB_SPEED;
+    }
+    // Escada: subir parado no chão apenas pressionando para cima
+    if (p.touchingLadder && keys.up && !p.isClimbing && !p.isWallRunning) {
+      p.isClimbing = true;
+      p.onGround = false;
+      p.vy = -CLIMB_SPEED;
+      p.coyoteTime = 0;
     }
 
     // Roll — também sai do forcedCrouch ao pressionar shift+direção
@@ -1305,11 +1314,14 @@ function triggerBoxFall(
   destroyedIndex: number,
   platforms: Platform[],
   fallingBoxes: FallingBox[],
-  destroyedBoxIndices: number[]
+  destroyedBoxIndices: number[],
+  destroyedTireIndices: number[] = []
 ): void {
   const destroyed = platforms[destroyedIndex];
   const alreadyFallingSet = new Set(fallingBoxes.map(f => f.index));
-  const destroyedSet = new Set(destroyedBoxIndices);
+  const destroyedSet = new Set([...destroyedBoxIndices, ...destroyedTireIndices]);
+
+  const isStackable = (p: Platform) => p.type === 'box' || p.type === 'tireHideout';
 
   const toFall: number[] = [];
   const visited = new Set<number>([destroyedIndex]);
@@ -1317,10 +1329,10 @@ function triggerBoxFall(
 
   const STACK_TOL = 5; // tolerância de empilhamento (px)
 
-  // Semente: caixas imediatamente acima da destruída
+  // Semente: stacks imediatamente acima do destruído
   for (let i = 0; i < platforms.length; i++) {
     const p = platforms[i];
-    if (p.type !== 'box') continue;
+    if (!isStackable(p)) continue;
     if (destroyedSet.has(i) || alreadyFallingSet.has(i) || visited.has(i)) continue;
     if (
       Math.abs(p.y + p.h - destroyed.y) <= STACK_TOL &&
@@ -1333,14 +1345,14 @@ function triggerBoxFall(
     }
   }
 
-  // BFS para caixas acima dessas
+  // BFS para stacks acima desses
   while (queue.length > 0) {
     const curIdx = queue.shift()!;
     const cur = platforms[curIdx];
     for (let i = 0; i < platforms.length; i++) {
       if (visited.has(i)) continue;
       const p = platforms[i];
-      if (p.type !== 'box') continue;
+      if (!isStackable(p)) continue;
       if (destroyedSet.has(i) || alreadyFallingSet.has(i)) continue;
       if (
         Math.abs(p.y + p.h - cur.y) <= STACK_TOL &&
@@ -1541,7 +1553,7 @@ export function updateBullets(
         if (plat.type === 'box') {
           destroyedBoxIndices.push(pi);
           spawnBoxShatter(particles, plat);
-          triggerBoxFall(pi, platforms, fallingBoxes, destroyedBoxIndices);
+          triggerBoxFall(pi, platforms, fallingBoxes, destroyedBoxIndices, destroyedTireIndices);
         } else if (plat.type === 'tire') {
           destroyedTireIndices.push(pi);
           const numTires = Math.max(1, Math.round(plat.h / plat.w));
@@ -1551,6 +1563,8 @@ export function updateBullets(
         } else if (plat.type === 'tireHideout') {
           destroyedTireIndices.push(pi);
           spawnRollingTiresFromHideout(plat, b.vx, flyingTires);
+          // Pneus empilhados acima também caem (mesma física da caixa)
+          triggerBoxFall(pi, platforms, fallingBoxes, destroyedBoxIndices, destroyedTireIndices);
         }
         hitPlatform = true;
         break;
