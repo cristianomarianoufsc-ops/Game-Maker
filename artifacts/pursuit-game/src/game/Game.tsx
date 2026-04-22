@@ -2811,7 +2811,7 @@ export default function Game() {
             for (let i = 0; i < 8; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
           }, gs.destroyedBoxIndices, gs.particles, gs.fallingBoxes, gs.flyingTires, gs.destroyedTireIndices);
 
-          updateFallingBoxes(gs.fallingBoxes, gs.platforms, gs.destroyedBoxIndices);
+          updateFallingBoxes(gs.fallingBoxes, gs.platforms, gs.destroyedBoxIndices, gs.destroyedTireIndices);
           updateFlyingTires(gs.flyingTires);
         }
 

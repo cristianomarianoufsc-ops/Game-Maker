@@ -327,10 +327,10 @@ export function generateLevel(): Platform[] {
   const FE_FLOOR_HEIGHTS = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320];
   const FE_TOP_H = FE_FLOOR_HEIGHTS[FE_FLOOR_HEIGHTS.length - 1];
 
-  // Escada climbable no centro das landings — Horácio para nela e ↑ pra subir
+  // Escada (atravessável) no centro das landings — Horácio fica em cima e ↑ pra subir
   platforms.push({
     x: FE_WALL_X, y: GROUND_Y - FE_TOP_H, w: FE_WALL_W, h: FE_TOP_H,
-    type: 'wall', climbable: true,
+    type: 'wall', isLadder: true,
     hideRender: true,
   });
 

@@ -130,6 +130,17 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
 
   const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
 
+  // Escada (ladder): atravessável, só seta touchingLadder pra subir com ↑
+  if (plat.isLadder) {
+    p.touchingLadder = true;
+    return false;
+  }
+
+  // Quando estiver subindo escada, plataformas finas viram one-way (passa por baixo)
+  if (p.isClimbing && plat.type === 'platform' && minOverlap === overlapBottom) {
+    return false;
+  }
+
   if (plat.type === 'wall' && plat.climbable) {
     resolveClimbableWallContact(p, hit, p.vx);
     p.touchingLadder = true;
@@ -333,14 +344,23 @@ export function updatePlayer(
 
   // --- Climbing ---
   if (p.isClimbing) {
-    p.vx = 0;
     p.vy = 0;
     if (keys.up) {
       p.vy = -CLIMB_SPEED;
     } else if (keys.down) {
       p.vy = CLIMB_SPEED;
     }
-    if (!p.touchingWall && !keys.up && !keys.down) {
+    if (p.touchingLadder) {
+      // Escada atravessável: permite andar pra sair lateralmente
+      if (keys.left) p.vx = -PLAYER_SPEED * 0.6;
+      else if (keys.right) p.vx = PLAYER_SPEED * 0.6;
+      else p.vx = 0;
+    } else {
+      p.vx = 0;
+    }
+    if (!p.touchingWall && !p.touchingLadder) {
+      p.isClimbing = false;
+    } else if (!p.touchingLadder && !p.touchingWall && !keys.up && !keys.down) {
       p.isClimbing = false;
     }
     if ((keys.space || keys.up) && !keys.left && !keys.right && !p.isClimbing) {
@@ -1374,13 +1394,14 @@ function triggerBoxFall(
 export function updateFallingBoxes(
   fallingBoxes: FallingBox[],
   platforms: Platform[],
-  destroyedBoxIndices: number[]
+  destroyedBoxIndices: number[],
+  destroyedTireIndices: number[] = []
 ): void {
   if (fallingBoxes.length === 0) return;
 
   const FALL_GRAVITY = 0.6;
   const MAX_FALL_VY = 20;
-  const destroyedSet = new Set(destroyedBoxIndices);
+  const destroyedSet = new Set([...destroyedBoxIndices, ...destroyedTireIndices]);
   const fallingIndexSet = new Set(fallingBoxes.map(f => f.index));
 
   // Aplica gravidade e sincroniza platform.y a cada frame
