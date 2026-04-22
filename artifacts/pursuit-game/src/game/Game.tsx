@@ -1079,6 +1079,43 @@ export default function Game() {
             editorCamXRef.current = Math.max(0, checkpoints[prev].x - CANVAS_W / 2);
           }
           break;
+        case 'Delete':
+        case 'Backspace':
+        case 'Minus':
+        case 'NumpadSubtract':
+          if (down && gsRef.current?.gamePhase === 'editor') {
+            const idx = editorCheckpointIdxRef.current;
+            const cps = editorCustomCheckpointsRef.current;
+            if (idx < 0 || idx >= cps.length) {
+              editorCopiedMsgRef.current = {
+                text: '⚠ Selecione um CP antes de excluir',
+                until: Date.now() + 2500,
+              };
+              break;
+            }
+            const removedLabel = cps[idx].label;
+            const merged = cps.filter((_, i) => i !== idx);
+            merged.forEach((cp, i) => { cp.label = `CP${i + 1}`; });
+            editorCustomCheckpointsRef.current = merged;
+            editorCheckpointIdxRef.current = -1;
+            fetch('/api/save-level-patch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ checkpoints: editorCustomCheckpointsRef.current }),
+            }).then(() => {
+              editorCopiedMsgRef.current = {
+                text: `✓ ${removedLabel} REMOVIDO (restaram ${merged.length})`,
+                until: Date.now() + 3000,
+              };
+            }).catch(() => {
+              editorCopiedMsgRef.current = {
+                text: `⚠ ${removedLabel} removido localmente (erro ao salvar)`,
+                until: Date.now() + 3000,
+              };
+            });
+            e.preventDefault();
+          }
+          break;
         case 'Enter':
           if (down) enterJustPressed.current = true;
           break;
