@@ -1856,8 +1856,44 @@ export default function Game() {
           e.preventDefault();
           return;
         }
+        // Botão "− CP" (remove o checkpoint ativo)
+        const delCheckpointBtnX = addCheckpointBtnX + 40;
+        if (screenX >= delCheckpointBtnX && screenX <= delCheckpointBtnX + 36) {
+          const idx = editorCheckpointIdxRef.current;
+          const cps = editorCustomCheckpointsRef.current;
+          if (idx < 0 || idx >= cps.length) {
+            editorCopiedMsgRef.current = {
+              text: '⚠ Selecione um CP antes de excluir',
+              until: Date.now() + 2500,
+            };
+            e.preventDefault();
+            return;
+          }
+          const removedLabel = cps[idx].label;
+          const merged = cps.filter((_, i) => i !== idx);
+          merged.forEach((cp, i) => { cp.label = `CP${i + 1}`; });
+          editorCustomCheckpointsRef.current = merged;
+          editorCheckpointIdxRef.current = -1;
+          fetch('/api/save-level-patch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checkpoints: editorCustomCheckpointsRef.current }),
+          }).then(() => {
+            editorCopiedMsgRef.current = {
+              text: `✓ ${removedLabel} REMOVIDO (restaram ${merged.length})`,
+              until: Date.now() + 3000,
+            };
+          }).catch(() => {
+            editorCopiedMsgRef.current = {
+              text: `⚠ ${removedLabel} removido localmente (erro ao salvar)`,
+              until: Date.now() + 3000,
+            };
+          });
+          e.preventDefault();
+          return;
+        }
         // Área da CHAVE DE FASE (clique copia add/del para clipboard)
-        const exportKeyX = addCheckpointBtnX + 44;
+        const exportKeyX = delCheckpointBtnX + 44;
         if (screenX >= exportKeyX && screenX <= CANVAS_W - 8) {
           const baseline = editorBaselineKeysRef.current;
           const currentKeys = new Set(platformsRef.current.map(p => platBaseKey(p)));

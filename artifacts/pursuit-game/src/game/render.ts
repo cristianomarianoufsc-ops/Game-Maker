@@ -3515,9 +3515,25 @@ export function drawEditorUI(
   ctx.fillText('+ CP', addCheckpointBtnX + 18, checkpointBtnY + 12);
   ctx.restore();
 
+  const delCheckpointBtnX = addCheckpointBtnX + 40;
+  const delEnabled = checkpointIdx >= 0 && checkpointIdx < checkpoints.length;
+  ctx.save();
+  ctx.fillStyle = delEnabled ? 'rgba(70,25,30,0.92)' : 'rgba(40,40,45,0.6)';
+  ctx.strokeStyle = delEnabled ? 'rgba(255,120,140,0.85)' : 'rgba(120,120,130,0.5)';
+  ctx.lineWidth = 1.25;
+  ctx.beginPath();
+  ctx.roundRect(delCheckpointBtnX, checkpointBtnY, 36, checkpointBtnH, 3);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = delEnabled ? 'rgba(255,170,180,1)' : 'rgba(160,160,170,0.7)';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('− CP', delCheckpointBtnX + 18, checkpointBtnY + 12);
+  ctx.restore();
+
   // ── Chave de exportação da fase ─────────────────────────────
   {
-    const expX = addCheckpointBtnX + 44;
+    const expX = delCheckpointBtnX + 44;
     const expY = histBtnY;
     const expW = CANVAS_W - expX - 8;
     const expH = histBtnH;
