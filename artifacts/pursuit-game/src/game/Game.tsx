@@ -494,6 +494,7 @@ export default function Game() {
   );
   const getEditorCheckpoints = () => editorCustomCheckpointsRef.current;
   const editorCheckpointIdxRef = useRef(-1);
+  const editorCheckpointDeleteConfirmRef = useRef<{ idx: number; until: number } | null>(null);
   const lastTime = useRef<number>(0);
   const animRef = useRef<number>(0);
   const buildingsRef = useRef(generateBuildings());
@@ -1093,6 +1094,17 @@ export default function Game() {
               };
               break;
             }
+            const pending = editorCheckpointDeleteConfirmRef.current;
+            if (!pending || pending.idx !== idx || pending.until < Date.now()) {
+              editorCheckpointDeleteConfirmRef.current = { idx, until: Date.now() + 3000 };
+              editorCopiedMsgRef.current = {
+                text: `⚠ Aperte de novo para excluir ${cps[idx].label}`,
+                until: Date.now() + 3000,
+              };
+              e.preventDefault();
+              break;
+            }
+            editorCheckpointDeleteConfirmRef.current = null;
             const removedLabel = cps[idx].label;
             const merged = cps.filter((_, i) => i !== idx);
             merged.forEach((cp, i) => { cp.label = `CP${i + 1}`; });
@@ -1906,6 +1918,17 @@ export default function Game() {
             e.preventDefault();
             return;
           }
+          const pending = editorCheckpointDeleteConfirmRef.current;
+          if (!pending || pending.idx !== idx || pending.until < Date.now()) {
+            editorCheckpointDeleteConfirmRef.current = { idx, until: Date.now() + 3000 };
+            editorCopiedMsgRef.current = {
+              text: `⚠ Clique de novo em − CP para excluir ${cps[idx].label}`,
+              until: Date.now() + 3000,
+            };
+            e.preventDefault();
+            return;
+          }
+          editorCheckpointDeleteConfirmRef.current = null;
           const removedLabel = cps[idx].label;
           const merged = cps.filter((_, i) => i !== idx);
           merged.forEach((cp, i) => { cp.label = `CP${i + 1}`; });
