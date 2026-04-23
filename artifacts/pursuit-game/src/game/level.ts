@@ -335,10 +335,20 @@ export function generateLevel(): Platform[] {
   });
 
   // Landings de cada andar (plataformas finas estilo grade metálica)
-  // Marcadas com hideRender — desenhadas por drawFireEscapeBuilding
+  // Divididas em 2 partes (esquerda e direita) deixando um buraco no centro
+  // exatamente onde está a escada — Horácio sobe livre sem bater na grade.
+  // Marcadas com hideRender — desenhadas por drawFireEscapeBuilding como peça única.
+  const FE_PLAT_LEFT_W = FE_WALL_X - FE_PLAT_X;                 // até a borda esquerda da escada
+  const FE_PLAT_RIGHT_X = FE_WALL_X + FE_WALL_W;                // depois da borda direita
+  const FE_PLAT_RIGHT_W = (FE_PLAT_X + FE_PLAT_W) - FE_PLAT_RIGHT_X;
   FE_FLOOR_HEIGHTS.forEach((floorH) => {
     platforms.push({
-      x: FE_PLAT_X, y: GROUND_Y - floorH, w: FE_PLAT_W, h: FE_PLAT_H,
+      x: FE_PLAT_X, y: GROUND_Y - floorH, w: FE_PLAT_LEFT_W, h: FE_PLAT_H,
+      type: 'platform',
+      hideRender: true,
+    });
+    platforms.push({
+      x: FE_PLAT_RIGHT_X, y: GROUND_Y - floorH, w: FE_PLAT_RIGHT_W, h: FE_PLAT_H,
       type: 'platform',
       hideRender: true,
     });
