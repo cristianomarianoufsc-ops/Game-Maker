@@ -460,7 +460,7 @@ export function updatePlayer(
             i % 2 === 0 ? '#ffcc44' : '#ff8822',
           );
         }
-      } else if (canJumpOffWall && (keys.space || keys.up) && wallSide) {
+      } else if (canJumpOffWall && keys.space && wallSide) {
         p.isWallRunning = false;
         p.coyoteTime = 0;
         p.vy = WALLRUN_JUMP_VY;
@@ -491,9 +491,9 @@ export function updatePlayer(
       p.state = 'wallclimb';
 
       // Allow new input only after jump is released
-      if (!keys.space && !keys.up) p.wallHangJumpConsumed = false;
+      if (!keys.space) p.wallHangJumpConsumed = false;
 
-      if ((keys.space || keys.up) && !p.wallHangJumpConsumed) {
+      if (keys.space && !p.wallHangJumpConsumed) {
         const pressingAway = (side === 'right' && keys.left) || (side === 'left' && keys.right);
         p.isWallHanging = false;
         p.isWallClimbUp = false;
@@ -537,7 +537,7 @@ export function updatePlayer(
         // If still holding forward+jump, don't consume the key so the hang
         // logic fires on the very next frame (shows hang frame for 1 tick then auto-jumps)
         const stillPressingForward = side === 'right' ? keys.right : (side === 'left' ? keys.left : false);
-        p.wallHangJumpConsumed = (keys.space || keys.up) && !stillPressingForward;
+        p.wallHangJumpConsumed = keys.space && !stillPressingForward;
       }
 
       p.vx = 0;
@@ -590,7 +590,7 @@ export function updatePlayer(
     }
 
     // Dive jump: running + down + space/jump simultaneously
-    const diveTriggered = (keys.dive || (keys.down && (keys.space || keys.up)));
+    const diveTriggered = (keys.dive || (keys.down && keys.space));
     const canDiveFromGround = p.coyoteTime > 0;
     if (diveTriggered && !p.touchingWall && canDiveFromGround && !p.isRolling && !p.isDivejumping && Math.abs(p.vx) > 3) {
       p.isDivejumping = true;
@@ -603,7 +603,7 @@ export function updatePlayer(
         spawnParticle(p.x + p.w / 2, p.y + ph, i % 2 === 0 ? '#808090' : '#555060');
       }
     // Normal jump
-    } else if ((keys.space || (keys.up && !p.touchingWall && !p.touchingLadder)) && (p.coyoteTime > 0)) {
+    } else if (keys.space && (p.coyoteTime > 0)) {
       // Aplica penalidade de pulo se o personagem acabou de escalar uma parede alta
       // Não reseta a penalidade aqui — ela persiste até o pouso para limitar vx no ar também
       p.vy = JUMP_FORCE * p.wallClimbJumpPenalty;
@@ -615,14 +615,14 @@ export function updatePlayer(
     }
 
     // Track key release after first jump (enables double jump)
-    if (!keys.space && !keys.up && !p.onGround && p.jumpCount === 1) {
+    if (!keys.space && !p.onGround && p.jumpCount === 1) {
       p.doubleJumpReady = true;
     }
 
     // Double jump → side flip
     if (
       p.doubleJumpReady &&
-      (keys.space || keys.up) &&
+      keys.space &&
       !p.onGround &&
       p.jumpCount === 1 &&
       !p.isSideFlipping &&

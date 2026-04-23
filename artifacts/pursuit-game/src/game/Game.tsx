@@ -2767,7 +2767,7 @@ export default function Game() {
         const now = performance.now();
         const windowDive =
           (keys.down && (now - lastJumpPressTime.current) < DIVE_COMBO_WINDOW) ||
-          ((keys.space || keys.up) && (now - lastDownPressTime.current) < DIVE_COMBO_WINDOW);
+          (keys.space && (now - lastDownPressTime.current) < DIVE_COMBO_WINDOW);
         const effectiveKeys = windowDive ? { ...keys, dive: true } : keys;
 
         const activePlatforms = gs.platforms.filter((p, i) =>
