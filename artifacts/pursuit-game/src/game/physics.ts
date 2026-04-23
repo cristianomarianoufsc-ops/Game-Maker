@@ -227,6 +227,8 @@ export function updatePlayer(
   const previousWallSide = p.wallSide;
   const previousWallX = p.wallX;
   const previousWallTopY = p.wallTopY;
+  const prevTouchingLadder = p.touchingLadder;
+  const prevTouchingWall = p.touchingWall;
   p.onGround = false;
   p.touchingWall = false;
   p.touchingLadder = false;
@@ -349,9 +351,10 @@ export function updatePlayer(
     if (keys.up) {
       p.vy = -CLIMB_SPEED;
     } else if (keys.down) {
-      p.vy = CLIMB_SPEED;
+      // descer é o dobro mais rápido que subir
+      p.vy = CLIMB_SPEED * 2;
     }
-    if (p.touchingLadder) {
+    if (prevTouchingLadder) {
       // Escada atravessável: permite andar pra sair lateralmente
       if (keys.left) p.vx = -PLAYER_SPEED * 0.6;
       else if (keys.right) p.vx = PLAYER_SPEED * 0.6;
@@ -359,16 +362,11 @@ export function updatePlayer(
     } else {
       p.vx = 0;
     }
-    if (!p.touchingWall && !p.touchingLadder) {
-      p.isClimbing = false;
-    } else if (!p.touchingLadder && !p.touchingWall && !keys.up && !keys.down) {
+    if (!prevTouchingWall && !prevTouchingLadder) {
       p.isClimbing = false;
     }
-    if ((keys.space || keys.up) && !keys.left && !keys.right && !p.isClimbing) {
-      // fall off
-    }
-    // Allow jump off wall
-    if (keys.space && p.touchingWall) {
+    // Allow jump off wall (não escada)
+    if (keys.space && prevTouchingWall && !prevTouchingLadder) {
       p.isClimbing = false;
       p.vy = JUMP_FORCE * 0.9;
       p.vx = p.wallSide === 'right' ? -5 : 5;
@@ -1576,6 +1574,8 @@ export function updateBullets(
       const plat = platforms[pi];
       if (plat.type === 'box'  && destroyedBoxIndices.includes(pi)) continue;
       if ((plat.type === 'tire' || plat.type === 'tireHideout') && destroyedTireIndices.includes(pi)) continue;
+      // Tiros do drone atravessam plataformas finas (grades das escadas)
+      if (plat.type === 'platform') continue;
       if (getPlatformCollisionRects(plat).some((hit) => rectOverlap(b.x - 4, b.y - 4, 8, 8, hit.x, hit.y, hit.w, hit.h))) {
         if (plat.type === 'box') {
           destroyedBoxIndices.push(pi);
