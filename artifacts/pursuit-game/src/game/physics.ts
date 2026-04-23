@@ -1211,8 +1211,10 @@ export function updateDrone(
   let shakeAmount = 0;
 
   // Target position: behind and above player
+  // Quando o jogador escala (escada/parede), o drone fica MAIS alto pra atirar de cima
+  const verticalOffset = player.isClimbing ? -180 : DRONE_TARGET_OFFSET_Y;
   const targetX = player.x + DRONE_TARGET_OFFSET_X + Math.sin(Date.now() * 0.0007) * 30;
-  const targetY = player.y + DRONE_TARGET_OFFSET_Y + Math.cos(Date.now() * 0.0009) * 20;
+  const targetY = player.y + verticalOffset + Math.cos(Date.now() * 0.0009) * 20;
 
   // Pathfinding: proactive wall scan first (sees wall 280px ahead),
   // then fall back to general obstacle waypoint if no wall detected.
@@ -1256,8 +1258,12 @@ export function updateDrone(
   }
 
   // Keep drone on screen y — durante overfly de parede alta, permite sair pelo topo
-  const dronMinY = isOverflying ? -(DRONE_H + 10) : 30;
-  if (drone.y < dronMinY) { drone.y = dronMinY; if (!isOverflying) drone.vy = Math.abs(drone.vy); }
+  // Quando o jogador escala, libera o teto pra acompanhar a subida no prédio
+  const climbingCeiling = Math.min(30, player.y - 50);
+  const dronMinY = isOverflying
+    ? -(DRONE_H + 10)
+    : (player.isClimbing ? climbingCeiling : 30);
+  if (drone.y < dronMinY) { drone.y = dronMinY; if (!isOverflying && !player.isClimbing) drone.vy = Math.abs(drone.vy); }
   if (drone.y > GROUND_Y - 60) { drone.y = GROUND_Y - 60; drone.vy = -Math.abs(drone.vy); }
 
   // ── Stuck detection: só teleporta se completamente imóvel por ~5s contra parede ──
@@ -1574,8 +1580,9 @@ export function updateBullets(
       const plat = platforms[pi];
       if (plat.type === 'box'  && destroyedBoxIndices.includes(pi)) continue;
       if ((plat.type === 'tire' || plat.type === 'tireHideout') && destroyedTireIndices.includes(pi)) continue;
-      // Tiros do drone atravessam plataformas finas (grades das escadas)
+      // Tiros do drone atravessam plataformas finas (grades das escadas) e a própria escada
       if (plat.type === 'platform') continue;
+      if (plat.isLadder) continue;
       if (getPlatformCollisionRects(plat).some((hit) => rectOverlap(b.x - 4, b.y - 4, 8, 8, hit.x, hit.y, hit.w, hit.h))) {
         if (plat.type === 'box') {
           destroyedBoxIndices.push(pi);
