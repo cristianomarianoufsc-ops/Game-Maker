@@ -649,13 +649,6 @@ export function updatePlayer(
       p.isClimbing = true;
       p.vy = -CLIMB_SPEED;
     }
-    // Escada: subir parado no chão apenas pressionando para cima
-    if (p.touchingLadder && keys.up && !p.isClimbing && !p.isWallRunning) {
-      p.isClimbing = true;
-      p.onGround = false;
-      p.vy = -CLIMB_SPEED;
-      p.coyoteTime = 0;
-    }
 
     // Roll — também sai do forcedCrouch ao pressionar shift+direção
     if ((keys.shift || keys.z) && p.onGround && !p.isRolling && (keys.left || keys.right || Math.abs(p.vx) > 1 || p.forcedCrouch)) {
@@ -716,8 +709,17 @@ export function updatePlayer(
     }
   }
 
-  // If climbing, check still touching a wall
-  if (p.isClimbing && !p.touchingWall) {
+  // Escada: subir parado no chão apenas pressionando para cima
+  // (rodado APÓS a colisão pra garantir que p.touchingLadder esteja atualizado)
+  if (p.touchingLadder && keys.up && !p.isClimbing && !p.isWallRunning && !p.isWallClimbUp) {
+    p.isClimbing = true;
+    p.onGround = false;
+    p.vy = -CLIMB_SPEED;
+    p.coyoteTime = 0;
+  }
+
+  // If climbing, check still touching a wall ou escada
+  if (p.isClimbing && !p.touchingWall && !p.touchingLadder) {
     p.isClimbing = false;
   }
 
