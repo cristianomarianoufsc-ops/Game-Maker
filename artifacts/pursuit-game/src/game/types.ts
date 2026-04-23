@@ -60,6 +60,7 @@ export interface Player {
   onGround: boolean;
   touchingWall: boolean;
   touchingLadder: boolean;
+  ladderCenterX: number;
   wallX: number;
   wallTopY: number;
   wallSide: 'left' | 'right' | null;

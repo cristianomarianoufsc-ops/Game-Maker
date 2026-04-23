@@ -60,6 +60,7 @@ function makePlayer(): Player {
     onGround: false,
     touchingWall: false,
     touchingLadder: false,
+    ladderCenterX: 0,
     wallX: 0,
     wallTopY: GROUND_Y,
     wallSide: null,

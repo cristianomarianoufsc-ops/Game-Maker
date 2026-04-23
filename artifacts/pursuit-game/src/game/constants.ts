@@ -8,7 +8,7 @@ export const ROLL_SPEED = 12;
 export const ROLL_DURATION = 380;
 export const LANDING_ROLL_THRESHOLD = 10.5; // vy ≈ sqrt(2 * GRAVITY * 100px) — 2× player height
 export const LANDING_ROLL_DURATION = 300;
-export const CLIMB_SPEED = 3.2;
+export const CLIMB_SPEED = 6.4;
 export const MAX_FALL_SPEED = 18;
 
 export const WALLRUN_DURATION   = 750;   // ms que o wall run dura

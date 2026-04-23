@@ -133,6 +133,7 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
   // Escada (ladder): atravessável, só seta touchingLadder pra subir com ↑
   if (plat.isLadder) {
     p.touchingLadder = true;
+    p.ladderCenterX = plat.x + plat.w / 2;
     return false;
   }
 
@@ -716,6 +717,9 @@ export function updatePlayer(
     p.onGround = false;
     p.vy = -CLIMB_SPEED;
     p.coyoteTime = 0;
+    // Ancora no centro da escada
+    p.x = p.ladderCenterX - p.w / 2;
+    p.vx = 0;
   }
 
   // If climbing, check still touching a wall ou escada

@@ -342,15 +342,19 @@ export function generateLevel(): Platform[] {
   const FE_PLAT_RIGHT_X = FE_WALL_X + FE_WALL_W;                // depois da borda direita
   const FE_PLAT_RIGHT_W = (FE_PLAT_X + FE_PLAT_W) - FE_PLAT_RIGHT_X;
   FE_FLOOR_HEIGHTS.forEach((floorH) => {
+    // Esquerda: hitbox encurtada do lado direito (perto da escada) pra Horácio passar sem entalar
     platforms.push({
       x: FE_PLAT_X, y: GROUND_Y - floorH, w: FE_PLAT_LEFT_W, h: FE_PLAT_H,
       type: 'platform',
       hideRender: true,
+      collisionBoxes: [{ x: 0, y: 0, w: 143, h: 18 }],
     });
+    // Direita: hitbox encurtada do lado esquerdo (perto da escada)
     platforms.push({
       x: FE_PLAT_RIGHT_X, y: GROUND_Y - floorH, w: FE_PLAT_RIGHT_W, h: FE_PLAT_H,
       type: 'platform',
       hideRender: true,
+      collisionBoxes: [{ x: 20, y: 0, w: 145, h: 18 }],
     });
   });
 
