@@ -11,6 +11,7 @@ import {
   SIDEFLIP_DURATION, SIDEFLIP_BOOST,
 } from './constants';
 import { getPlatformCollisionRects, getSlopeSurfaceY } from './collision';
+import { FIRE_ESCAPE, FIRE_ESCAPE_TOP_FLOOR_H } from './level';
 import type { SlopedRect } from './collision';
 
 interface BoxStackWall extends SlopedRect {
@@ -139,6 +140,15 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
 
   // Quando estiver subindo escada, plataformas finas viram one-way (passa por baixo)
   if (p.isClimbing && plat.type === 'platform' && minOverlap === overlapBottom) {
+    // Topo da escada: pousa em cima em vez de continuar subindo pelo vão
+    if (plat.isLadderTopFloor) {
+      p.y = hit.y - ph;
+      p.vy = 0;
+      p.onGround = true;
+      p.coyoteTime = 6;
+      p.isClimbing = false;
+      return true;
+    }
     return false;
   }
 
@@ -348,7 +358,7 @@ export function updatePlayer(
   // --- Climbing ---
   if (p.isClimbing) {
     p.vy = 0;
-    const ladderSpeedMul = prevTouchingLadder ? 0.72 : 1;
+    const ladderSpeedMul = prevTouchingLadder ? 0.55 : 1;
     if (keys.up) {
       p.vy = -CLIMB_SPEED * ladderSpeedMul;
     } else if (keys.down) {
@@ -706,6 +716,30 @@ export function updatePlayer(
       for (const hit of getPlatformCollisionRects(plat)) {
         resolvePlayerPlatform(p, plat, hit, climbableBoxWall);
       }
+    }
+  }
+
+  // Topo da escada: descer apertando ↓ se está em cima da landing do topo,
+  // dentro do range X da escada — entra no climb pra descer pelo vão.
+  {
+    const TOP_FLOOR_Y = GROUND_Y - FIRE_ESCAPE_TOP_FLOOR_H;
+    const LADDER_X_MIN = FIRE_ESCAPE.WALL_X;
+    const LADDER_X_MAX = FIRE_ESCAPE.WALL_X + FIRE_ESCAPE.WALL_W;
+    const playerCenterX = p.x + p.w / 2;
+    if (
+      keys.down && p.onGround && !p.isClimbing && !p.isRolling &&
+      Math.abs((p.y + ph) - TOP_FLOOR_Y) < 4 &&
+      playerCenterX >= LADDER_X_MIN - 4 && playerCenterX <= LADDER_X_MAX + 4
+    ) {
+      p.ladderCenterX = (LADDER_X_MIN + LADDER_X_MAX) / 2;
+      p.x = p.ladderCenterX - p.w / 2;
+      p.y = TOP_FLOOR_Y + 4;
+      p.onGround = false;
+      p.coyoteTime = 0;
+      p.isClimbing = true;
+      p.touchingLadder = true;
+      p.vy = CLIMB_SPEED * 2 * 0.55;
+      p.vx = 0;
     }
   }
 
@@ -1220,7 +1254,7 @@ export function updateDrone(
   // Quando o jogador está escalando a escada do prédio, ignoramos as grades
   // dos andares pra que o drone consiga subir junto pelo vão da escada.
   const dronePlatforms = (player.isClimbing && player.touchingLadder)
-    ? platforms.filter(p => !p.isFireEscapeFloor)
+    ? platforms.filter(p => !p.isFireEscapeFloor && !p.isLadder)
     : platforms;
 
   // Pathfinding: proactive wall scan first (sees wall 280px ahead),

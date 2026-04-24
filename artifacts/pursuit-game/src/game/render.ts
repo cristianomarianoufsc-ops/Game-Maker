@@ -2138,7 +2138,7 @@ export function drawPlayer(
       const destX = anchorX - dw / 2;
       const destY = py + ph - dh;
       // Espelha apenas a subida — descida usa só o sprite frontal
-      const mirror = !goingDown && Math.floor(Math.abs(p.y) / 16) % 2 === 1;
+      const mirror = !goingDown && Math.floor(Math.abs(p.y) / 28) % 2 === 1;
       ctx.save();
       if (mirror) {
         ctx.translate(anchorX, 0);
