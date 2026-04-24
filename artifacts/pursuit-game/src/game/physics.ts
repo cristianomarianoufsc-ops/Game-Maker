@@ -348,7 +348,7 @@ export function updatePlayer(
   // --- Climbing ---
   if (p.isClimbing) {
     p.vy = 0;
-    const ladderSpeedMul = prevTouchingLadder ? 0.55 : 1;
+    const ladderSpeedMul = prevTouchingLadder ? 0.72 : 1;
     if (keys.up) {
       p.vy = -CLIMB_SPEED * ladderSpeedMul;
     } else if (keys.down) {
@@ -1217,12 +1217,18 @@ export function updateDrone(
   const targetX = player.x + DRONE_TARGET_OFFSET_X + Math.sin(Date.now() * 0.0007) * 30;
   const targetY = player.y + verticalOffset + Math.cos(Date.now() * 0.0009) * 20;
 
+  // Quando o jogador está escalando a escada do prédio, ignoramos as grades
+  // dos andares pra que o drone consiga subir junto pelo vão da escada.
+  const dronePlatforms = (player.isClimbing && player.touchingLadder)
+    ? platforms.filter(p => !p.isFireEscapeFloor)
+    : platforms;
+
   // Pathfinding: proactive wall scan first (sees wall 280px ahead),
   // then fall back to general obstacle waypoint if no wall detected.
-  const wallAhead = platforms.length > 0 ? droneWallScan(drone, targetX, platforms) : null;
+  const wallAhead = dronePlatforms.length > 0 ? droneWallScan(drone, targetX, dronePlatforms) : null;
   const { tx, ty } = wallAhead
-    ?? (platforms.length > 0
-      ? droneComputeWaypoint(drone, targetX, targetY, platforms)
+    ?? (dronePlatforms.length > 0
+      ? droneComputeWaypoint(drone, targetX, targetY, dronePlatforms)
       : { tx: targetX, ty: targetY });
 
   // Se o waypoint está acima do canvas (ty < 0), o drone está em manobra de overfly
@@ -1240,8 +1246,8 @@ export function updateDrone(
   }
 
   // Obstacle repulsion (fine-grained — prevents grazing/sticking to surfaces)
-  if (platforms.length > 0) {
-    const { fx, fy } = droneRepulsion(drone, platforms);
+  if (dronePlatforms.length > 0) {
+    const { fx, fy } = droneRepulsion(drone, dronePlatforms);
     drone.vx += fx;
     drone.vy += fy;
   }
@@ -1254,8 +1260,8 @@ export function updateDrone(
   drone.y += drone.vy;
 
   // Hard pushout — resolve any remaining overlap
-  if (platforms.length > 0) {
-    dronePushOut(drone, platforms);
+  if (dronePlatforms.length > 0) {
+    dronePushOut(drone, dronePlatforms);
   }
 
   // Keep drone on screen y — durante overfly de parede alta, permite sair pelo topo

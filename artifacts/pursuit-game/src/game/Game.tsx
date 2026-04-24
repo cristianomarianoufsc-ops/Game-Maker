@@ -12,6 +12,7 @@ import subidaSheetUrl from '@assets/subida_1776012458574.png';
 import sideFlipSheetUrl from '@assets/SIDE_FLIP_1776053462942.png';
 import ladderClimbUrl from '@assets/image_1776998047300.png';
 import ladderDescendUrl from '@assets/image_1776998292447.png';
+import fireEscapeFloorUrl from '@assets/image_1776998525637.png';
 import dogSheetUrl from '@assets/DOG_1776795245228.png';
 import dogIdleUrl from '@assets/image_1776737992484.png';
 import standingTireUrl from '@assets/pneu_1776643651883.png';
@@ -28,7 +29,7 @@ import {
   updateFallingBoxes, updateFlyingTires, updateDogs,
 } from './physics';
 import {
-  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawFireEscapeBuilding, drawGround,
+  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawFireEscapeBuilding, drawFireEscapeFloors, drawGround,
   drawStreetBuildings, drawPlatforms, drawFlyingTires, drawTireHideouts,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
@@ -517,6 +518,7 @@ export default function Game() {
   const sideFlipSheetImgRef = useRef<HTMLImageElement | null>(null);
   const ladderClimbImgRef = useRef<HTMLImageElement | null>(null);
   const ladderDescendImgRef = useRef<HTMLImageElement | null>(null);
+  const fireEscapeFloorImgRef = useRef<HTMLImageElement | null>(null);
   const brickTextureImgRef = useRef<HTMLImageElement | null>(null);
   const balconyImgRef = useRef<HTMLImageElement | null>(null);
   const carroImgRef = useRef<HTMLImageElement | null>(null);
@@ -910,6 +912,12 @@ export default function Game() {
       ladderDescendImgRef.current = stripWhiteBackground(ladderDownImg);
     };
     ladderDownImg.src = ladderDescendUrl;
+
+    const feFloorImg = new Image();
+    feFloorImg.onload = () => {
+      fireEscapeFloorImgRef.current = feFloorImg;
+    };
+    feFloorImg.src = fireEscapeFloorUrl;
 
     const brickImg = new Image();
     brickImg.src = brickTextureUrl;
@@ -2943,7 +2951,7 @@ export default function Game() {
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);
-      drawFireEscapeBuilding(ctx, gs.camera.x);
+      drawFireEscapeBuilding(ctx, gs.camera.x, false);
       // ── Drag-ghost: temporariamente move originais de volta pra exibição ──
       const _activeDrag = editorDragRef.current;
       const _isDragGhost = gs.gamePhase === 'editor' && _activeDrag?.mode === 'move' && _activeDrag.hasMoved;
@@ -3050,6 +3058,7 @@ export default function Game() {
       drawParticles(ctx, gs);
       drawDogs(ctx, gs.dogs, gs.camera.x, dogSheetImgRef.current, dogIdleImgRef.current);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current, ladderClimbImgRef.current, ladderDescendImgRef.current);
+      drawFireEscapeFloors(ctx, gs.camera.x, fireEscapeFloorImgRef.current);
       drawTireHideouts(ctx, gs.platforms, gs.camera.x, standingTireImgRef.current, gs.destroyedTireIndices);
       if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
         drawDrone(ctx, gs);

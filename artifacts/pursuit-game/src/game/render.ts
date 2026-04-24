@@ -176,7 +176,7 @@ const FE_PLAT_W_RENDER = 370;
 const FE_LADDER_W = 56;                   // escada larga, no meio da landing
 const FE_FLOORS_Y = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320]; // mesma lista do level.ts
 
-export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: number): void {
+export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: number, withFloors: boolean = true): void {
   const screenLeft = FE_BUILDING_X - camX;
   if (screenLeft + FE_BUILDING_W < -50 || screenLeft > CANVAS_W + 50) return;
 
@@ -288,24 +288,26 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
     const platLeft = platScreenX;
     const platRight = platScreenX + FE_PLAT_W_RENDER;
 
-    // Grade metálica do piso
-    ctx.fillStyle = METAL_DARK;
-    ctx.fillRect(platLeft - 6, platY, FE_PLAT_W_RENDER + 12, 18);
-    // Highlight superior (borda iluminada)
-    ctx.fillStyle = METAL_HIGHLIGHT;
-    ctx.fillRect(platLeft - 6, platY, FE_PLAT_W_RENDER + 12, 2);
-    // Textura riscada da grade
-    ctx.fillStyle = METAL_MID;
-    for (let gx = platLeft; gx < platRight; gx += 4) {
-      ctx.fillRect(gx, platY + 4, 1, 12);
+    if (withFloors) {
+      // Grade metálica do piso
+      ctx.fillStyle = METAL_DARK;
+      ctx.fillRect(platLeft - 6, platY, FE_PLAT_W_RENDER + 12, 18);
+      // Highlight superior (borda iluminada)
+      ctx.fillStyle = METAL_HIGHLIGHT;
+      ctx.fillRect(platLeft - 6, platY, FE_PLAT_W_RENDER + 12, 2);
+      // Textura riscada da grade
+      ctx.fillStyle = METAL_MID;
+      for (let gx = platLeft; gx < platRight; gx += 4) {
+        ctx.fillRect(gx, platY + 4, 1, 12);
+      }
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      for (let gx = platLeft + 2; gx < platRight; gx += 4) {
+        ctx.fillRect(gx, platY + 4, 1, 12);
+      }
+      // Borda inferior do landing (chapa estrutural)
+      ctx.fillStyle = '#1c1c20';
+      ctx.fillRect(platLeft - 8, platY + 18, FE_PLAT_W_RENDER + 16, 6);
     }
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    for (let gx = platLeft + 2; gx < platRight; gx += 4) {
-      ctx.fillRect(gx, platY + 4, 1, 12);
-    }
-    // Borda inferior do landing (chapa estrutural)
-    ctx.fillStyle = '#1c1c20';
-    ctx.fillRect(platLeft - 8, platY + 18, FE_PLAT_W_RENDER + 16, 6);
 
     // Corrimão (guarda-corpo) — 36px de altura
     const railTop = platY - 36;
@@ -423,6 +425,48 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
     ctx.stroke();
   }
 
+  ctx.restore();
+}
+
+export function drawFireEscapeFloors(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  textureImg: HTMLImageElement | null,
+): void {
+  const screenLeft = FE_BUILDING_X - camX;
+  if (screenLeft + FE_BUILDING_W < -50 || screenLeft > CANVAS_W + 50) return;
+
+  const platScreenX = FE_PLAT_X_RENDER - camX;
+  const platLeft = platScreenX;
+  const platRight = platScreenX + FE_PLAT_W_RENDER;
+  const FLOOR_H = 24;
+
+  ctx.save();
+  for (const floorH of FE_FLOORS_Y) {
+    const platY = GROUND_Y - floorH;
+    if (textureImg && textureImg.complete && textureImg.naturalWidth > 0) {
+      ctx.drawImage(
+        textureImg,
+        0, 0, textureImg.naturalWidth, textureImg.naturalHeight,
+        platLeft - 6, platY - 2, FE_PLAT_W_RENDER + 12, FLOOR_H,
+      );
+    } else {
+      ctx.fillStyle = '#3a3a3e';
+      ctx.fillRect(platLeft - 6, platY, FE_PLAT_W_RENDER + 12, 18);
+      ctx.fillStyle = 'rgba(200,200,210,0.55)';
+      ctx.fillRect(platLeft - 6, platY, FE_PLAT_W_RENDER + 12, 2);
+      ctx.fillStyle = '#5a5a60';
+      for (let gx = platLeft; gx < platRight; gx += 4) {
+        ctx.fillRect(gx, platY + 4, 1, 12);
+      }
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      for (let gx = platLeft + 2; gx < platRight; gx += 4) {
+        ctx.fillRect(gx, platY + 4, 1, 12);
+      }
+      ctx.fillStyle = '#1c1c20';
+      ctx.fillRect(platLeft - 8, platY + 18, FE_PLAT_W_RENDER + 16, 6);
+    }
+  }
   ctx.restore();
 }
 
@@ -2088,7 +2132,7 @@ export function drawPlayer(
     if (sprite && sprite.complete && sprite.naturalWidth > 0) {
       const iw = sprite.naturalWidth;
       const ih = sprite.naturalHeight;
-      const dh = PLAYER_H + 56;
+      const dh = PLAYER_H + 92;
       const dw = Math.round(dh * (iw / ih));
       const anchorX = px + p.w / 2;
       const destX = anchorX - dw / 2;

@@ -31,6 +31,7 @@ export interface Platform extends Rect {
   customSpriteName?: string;
   customSpriteDataUrl?: string;
   hideRender?: boolean;
+  isFireEscapeFloor?: boolean;
 }
 
 export type PlayerState =

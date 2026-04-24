@@ -347,6 +347,7 @@ export function generateLevel(): Platform[] {
       x: FE_PLAT_X, y: GROUND_Y - floorH, w: FE_PLAT_LEFT_W, h: FE_PLAT_H,
       type: 'platform',
       hideRender: true,
+      isFireEscapeFloor: true,
       collisionBoxes: [{ x: 0, y: 0, w: 143, h: 18 }],
     });
     // Direita: hitbox encurtada do lado esquerdo (perto da escada)
@@ -354,6 +355,7 @@ export function generateLevel(): Platform[] {
       x: FE_PLAT_RIGHT_X, y: GROUND_Y - floorH, w: FE_PLAT_RIGHT_W, h: FE_PLAT_H,
       type: 'platform',
       hideRender: true,
+      isFireEscapeFloor: true,
       collisionBoxes: [{ x: 20, y: 0, w: 145, h: 18 }],
     });
   });
