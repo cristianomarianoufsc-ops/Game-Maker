@@ -8,6 +8,9 @@ out-tsc
 .expo
 .expo-shared
 
+# snapshots de histórico do editor de fase (rotativo, não versionado)
+artifacts/pursuit-game/public/level-patch.history/
+
 # dependencies
 node_modules
 

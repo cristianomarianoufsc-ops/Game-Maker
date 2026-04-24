@@ -566,6 +566,57 @@ export default function Game() {
   const [gallerySprites, setGallerySprites] = useState<{ name: string; url: string; onServer: boolean }[]>([]);
   const [galleryTypes, setGalleryTypes] = useState<string[]>([]);
 
+  // Histórico de versões do level-patch
+  type HistorySnapshot = { file: string; size: number; addCount: number; delCount: number };
+  const [showHistory, setShowHistory] = useState(false);
+  const [historySnapshots, setHistorySnapshots] = useState<HistorySnapshot[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyMsg, setHistoryMsg] = useState<string | null>(null);
+
+  const openHistory = useCallback(async () => {
+    setShowHistory(true);
+    setHistoryLoading(true);
+    setHistoryMsg(null);
+    try {
+      const r = await fetch('/api/list-level-patch-history');
+      if (r.ok) {
+        const data = await r.json() as { snapshots: HistorySnapshot[] };
+        setHistorySnapshots(data.snapshots ?? []);
+      } else {
+        setHistoryMsg(`Erro ${r.status} ao listar histórico`);
+      }
+    } catch (err) {
+      setHistoryMsg(`Erro de rede ao listar histórico`);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  const restoreHistorySnapshot = useCallback(async (file: string) => {
+    if (!window.confirm(`Restaurar este snapshot? O estado atual será salvo no histórico antes da troca.`)) return;
+    setHistoryLoading(true);
+    setHistoryMsg(null);
+    try {
+      const r = await fetch('/api/restore-level-patch-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file }),
+      });
+      if (r.ok) {
+        setHistoryMsg('Restaurado! Recarregando página...');
+        // Recarrega para que a aplicação leia o novo level-patch.json desde o início.
+        setTimeout(() => window.location.reload(), 700);
+      } else {
+        const txt = await r.text();
+        setHistoryMsg(`Erro ${r.status} ao restaurar: ${txt.slice(0, 80)}`);
+      }
+    } catch (err) {
+      setHistoryMsg(`Erro de rede ao restaurar`);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
   const openGallery = useCallback(async () => {
     // Sprites salvos no servidor
     let serverSprites: { name: string; url: string; onServer: boolean }[] = [];
@@ -3615,6 +3666,158 @@ export default function Game() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Botão fixo HISTÓRICO — abre painel de versões salvas */}
+      <button
+        onClick={openHistory}
+        title="Histórico de versões salvas (level-patch.json)"
+        style={{
+          position: 'absolute',
+          left: 12,
+          bottom: 12,
+          background: 'rgba(20,30,50,0.85)',
+          color: 'rgba(180,210,255,0.9)',
+          border: '1px solid rgba(120,160,220,0.5)',
+          borderRadius: 4,
+          padding: '5px 10px',
+          fontSize: 11,
+          fontFamily: 'monospace',
+          cursor: 'pointer',
+          zIndex: 50,
+        }}
+      >
+        ⟲ HISTÓRICO
+      </button>
+
+      {/* Painel do histórico de versões */}
+      {showHistory && (
+        <div
+          onClick={() => setShowHistory(false)}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#101830',
+              border: '1px solid rgba(120,160,220,0.6)',
+              borderRadius: 8,
+              padding: '14px 16px',
+              width: Math.min(cssW - 40, 560),
+              maxHeight: Math.min(cssH - 60, 460),
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              color: 'rgba(220,230,250,0.95)',
+              fontFamily: 'monospace',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ margin: 0, fontSize: 13, color: 'rgba(180,210,255,0.95)' }}>
+                ⟲ HISTÓRICO DE VERSÕES — level-patch.json
+              </h3>
+              <button
+                onClick={() => setShowHistory(false)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(180,210,255,0.4)',
+                  color: 'rgba(220,230,250,0.9)',
+                  borderRadius: 3,
+                  padding: '2px 8px',
+                  fontSize: 11,
+                  cursor: 'pointer',
+                }}
+              >FECHAR ✕</button>
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(160,180,210,0.75)' }}>
+              Snapshots criados automaticamente a cada salvamento. Mantém os últimos 30. Restaurar grava o estado atual no histórico antes da troca (rede de segurança).
+            </div>
+            {historyMsg && (
+              <div style={{
+                padding: '6px 8px',
+                background: 'rgba(40,60,100,0.6)',
+                border: '1px solid rgba(120,160,220,0.5)',
+                borderRadius: 3,
+                fontSize: 11,
+              }}>{historyMsg}</div>
+            )}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              border: '1px solid rgba(80,100,140,0.4)',
+              borderRadius: 4,
+              background: 'rgba(0,0,0,0.3)',
+            }}>
+              {historyLoading ? (
+                <div style={{ padding: 16, fontSize: 11, color: 'rgba(160,180,210,0.8)' }}>Carregando...</div>
+              ) : historySnapshots.length === 0 ? (
+                <div style={{ padding: 16, fontSize: 11, color: 'rgba(160,180,210,0.8)' }}>
+                  Nenhum snapshot ainda. Salve uma fase no editor para começar o histórico.
+                </div>
+              ) : (
+                historySnapshots.map((snap) => {
+                  // Decodifica timestamp do nome (ex: 2026-04-24T17-45-12-345Z.json)
+                  let dateLabel = snap.file;
+                  const m = snap.file.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2})-(\d{2})-(\d{2})/);
+                  if (m) {
+                    const iso = `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
+                    const d = new Date(iso);
+                    if (!isNaN(d.getTime())) {
+                      dateLabel = d.toLocaleString('pt-BR', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit',
+                      });
+                    }
+                  }
+                  return (
+                    <div
+                      key={snap.file}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '6px 10px',
+                        borderBottom: '1px solid rgba(80,100,140,0.25)',
+                        fontSize: 11,
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: 'rgba(220,230,250,0.95)' }}>{dateLabel}</div>
+                        <div style={{ fontSize: 10, color: 'rgba(140,170,200,0.75)' }}>
+                          +{snap.addCount} add  −{snap.delCount} del  ·  {(snap.size / 1024).toFixed(1)} KB
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => restoreHistorySnapshot(snap.file)}
+                        disabled={historyLoading}
+                        style={{
+                          background: 'rgba(40,80,140,0.7)',
+                          color: 'rgba(220,235,255,0.95)',
+                          border: '1px solid rgba(120,180,255,0.6)',
+                          borderRadius: 3,
+                          padding: '4px 10px',
+                          fontSize: 10,
+                          fontFamily: 'monospace',
+                          cursor: historyLoading ? 'wait' : 'pointer',
+                          marginLeft: 8,
+                          flexShrink: 0,
+                        }}
+                      >RESTAURAR</button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       )}

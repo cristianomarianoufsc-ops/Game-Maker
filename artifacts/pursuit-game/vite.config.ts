@@ -30,6 +30,32 @@ if (!basePath) {
 const spritesDir = path.resolve(import.meta.dirname, "public/sprites");
 const levelPatchFile = path.resolve(import.meta.dirname, "public/level-patch.json");
 const galleryTypesFile = path.resolve(import.meta.dirname, "public/gallery-types.json");
+const levelPatchHistoryDir = path.resolve(import.meta.dirname, "public/level-patch.history");
+const HISTORY_KEEP = 30;
+
+function writeHistorySnapshot(serializedPatch: string): void {
+  try {
+    fs.mkdirSync(levelPatchHistoryDir, { recursive: true });
+    // Nome: ISO timestamp seguro pra filesystem (sem ":" nem "."), ms para evitar colisão.
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    fs.writeFileSync(
+      path.join(levelPatchHistoryDir, `${stamp}.json`),
+      serializedPatch,
+      "utf-8",
+    );
+    // Rotação — mantém só os HISTORY_KEEP mais recentes.
+    const files = fs
+      .readdirSync(levelPatchHistoryDir)
+      .filter((f) => f.endsWith(".json"))
+      .sort();
+    const excess = files.length - HISTORY_KEEP;
+    if (excess > 0) {
+      for (let i = 0; i < excess; i++) {
+        try { fs.unlinkSync(path.join(levelPatchHistoryDir, files[i])); } catch { /* ignore */ }
+      }
+    }
+  } catch { /* histórico é best-effort, não bloqueia o save */ }
+}
 
 function spriteUploadPlugin() {
   return {
@@ -190,12 +216,94 @@ function spriteUploadPlugin() {
             const merged: Record<string, unknown> = { add: finalAdd, del: finalDel };
             if (finalCheckpoints.length > 0) merged.checkpoints = finalCheckpoints;
 
-            fs.writeFileSync(levelPatchFile, JSON.stringify(merged, null, 2), "utf-8");
+            const serialized = JSON.stringify(merged, null, 2);
+            fs.writeFileSync(levelPatchFile, serialized, "utf-8");
+            // Snapshot pro histórico (best-effort, não bloqueia resposta)
+            writeHistorySnapshot(serialized);
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({ ok: true }));
           } catch {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: "Erro ao salvar patch" }));
+          }
+        });
+      });
+
+      // Lista snapshots do histórico — mais recentes primeiro.
+      server.middlewares.use("/api/list-level-patch-history", (req, res, next) => {
+        if (req.method !== "GET") return next();
+        try {
+          fs.mkdirSync(levelPatchHistoryDir, { recursive: true });
+          const files = fs
+            .readdirSync(levelPatchHistoryDir)
+            .filter((f) => f.endsWith(".json"))
+            .sort()
+            .reverse();
+          const snapshots = files.map((file) => {
+            const full = path.join(levelPatchHistoryDir, file);
+            let size = 0;
+            let addCount = 0;
+            let delCount = 0;
+            try {
+              const stat = fs.statSync(full);
+              size = stat.size;
+              const data = JSON.parse(fs.readFileSync(full, "utf-8")) as {
+                add?: unknown[]; del?: string[];
+              };
+              addCount = (data.add ?? []).length;
+              delCount = (data.del ?? []).length;
+            } catch { /* arquivo corrompido — mostra mesmo assim */ }
+            return { file, size, addCount, delCount };
+          });
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ snapshots }));
+        } catch {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: "Erro ao listar histórico" }));
+        }
+      });
+
+      // Restaura um snapshot — copia conteúdo de history para level-patch.json.
+      // Antes da restauração grava um snapshot "pré-restore" pra poder desfazer.
+      server.middlewares.use("/api/restore-level-patch-history", (req, res, next) => {
+        if (req.method !== "POST") return next();
+        const chunks: Buffer[] = [];
+        req.on("data", (chunk: Buffer) => chunks.push(chunk));
+        req.on("end", () => {
+          try {
+            const { file } = JSON.parse(Buffer.concat(chunks).toString()) as { file: string };
+            if (!file) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: "file obrigatório" }));
+              return;
+            }
+            // Bloqueia path traversal — só nome simples permitido.
+            const safeFile = path.basename(file);
+            if (!/^[A-Za-z0-9._-]+\.json$/.test(safeFile)) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: "nome de arquivo inválido" }));
+              return;
+            }
+            const src = path.join(levelPatchHistoryDir, safeFile);
+            if (!fs.existsSync(src)) {
+              res.statusCode = 404;
+              res.end(JSON.stringify({ error: "snapshot não encontrado" }));
+              return;
+            }
+            const content = fs.readFileSync(src, "utf-8");
+            // Snapshot do estado atual antes de sobrescrever (rede de segurança).
+            try {
+              if (fs.existsSync(levelPatchFile)) {
+                const current = fs.readFileSync(levelPatchFile, "utf-8");
+                writeHistorySnapshot(current);
+              }
+            } catch { /* ignore */ }
+            fs.writeFileSync(levelPatchFile, content, "utf-8");
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: "Erro ao restaurar snapshot" }));
           }
         });
       });
