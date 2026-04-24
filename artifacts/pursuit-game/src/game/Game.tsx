@@ -902,12 +902,22 @@ export default function Game() {
     });
     const patchAddKeys = new Set(patchAdd.map(platBaseKey));
     const currentKeys = new Set(currentPlatforms.map(platBaseKey));
-    const patchDel = originalLevelPlatformsRef.current
-      .filter(p => p.type !== 'ground' && (
-        !currentKeys.has(platBaseKey(p)) ||
-        patchAddKeys.has(platBaseKey(p))
-      ))
-      .map(p => platBaseKey(p));
+    const patchDelSet = new Set(
+      originalLevelPlatformsRef.current
+        .filter(p => p.type !== 'ground' && (
+          !currentKeys.has(platBaseKey(p)) ||
+          patchAddKeys.has(platBaseKey(p))
+        ))
+        .map(p => platBaseKey(p))
+    );
+    // Garante que apagamentos de originais rastreados em deletedPlatformKeysRef
+    // (localStorage) também sejam persistidos no servidor — isso evita que o
+    // original reapareça em outra sessão/máquina sem o localStorage local.
+    const originalKeysSet = new Set(originalLevelPlatformsRef.current.map(platBaseKey));
+    deletedPlatformKeysRef.current.forEach((k) => {
+      if (originalKeysSet.has(k) && !patchAddKeys.has(k)) patchDelSet.add(k);
+    });
+    const patchDel = Array.from(patchDelSet);
     const levelPatch = {
       add: patchAdd,
       del: patchDel,
@@ -993,7 +1003,9 @@ export default function Game() {
         // conflito entre código fonte atualizado e patch antigo).
         const originalKeySet = new Set(originalPlatforms.map(platBaseKey));
         const rawAddPlatforms = (patch.add ?? []) as Platform[];
-        const addPlatforms = rawAddPlatforms.filter(p => !originalKeySet.has(platBaseKey(p)));
+        const addPlatforms = rawAddPlatforms
+          .filter(p => !originalKeySet.has(platBaseKey(p)))
+          .filter(p => !deletedPlatformKeysRef.current.has(platBaseKey(p)));
         addPlatforms.forEach(registerCustomSpriteImage);
         const withDeleted = applyDeletedPlatformKeys(patchedBase, deletedPlatformKeysRef.current);
         platformsRef.current = [...withDeleted, ...customSpritePlatforms, ...addPlatforms];
@@ -1602,6 +1614,7 @@ export default function Game() {
       editorCollisionBoxIdxRef.current = 0;
       editorDragRef.current = null;
       editorMarqueeRef.current = null;
+      markEditorDirty();
       editorCopiedMsgRef.current = {
         text: deleteIndices.length === 1
           ? '× OBJETO DELETADO (Ctrl+Z para desfazer)'
