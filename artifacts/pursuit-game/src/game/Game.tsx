@@ -2049,8 +2049,10 @@ export default function Game() {
             ? '(nenhuma mudança ainda)'
             : `+${addItems.length} add  −${delItems.length} del`;
 
-          // Salva patch permanente no servidor (level-patch.json)
-          if (total > 0) {
+          // Salva patch permanente no servidor (level-patch.json) — SEMPRE salva,
+          // mesmo se o diff em relação à baseline for 0 (a baseline pode estar fora
+          // de sincronia se o patch foi recarregado pelo HMR)
+          {
             const originalKeys = new Set(originalLevelPlatformsRef.current.map(platBaseKey));
             const currentPlatforms = platformsRef.current;
             const patchAdd = currentPlatforms.filter(p =>
@@ -2076,18 +2078,23 @@ export default function Game() {
               del: patchDel,
               checkpoints: editorCustomCheckpointsRef.current,
             };
+            const persistMsg = `+${patchAdd.length} add  −${patchDel.length} del`;
             fetch('/api/save-level-patch', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(levelPatch),
-            }).then(() => {
-              editorCopiedMsgRef.current = { text: `✓ FASE SALVA NO PROJETO: ${countMsg}`, until: Date.now() + 4000 };
-            }).catch(() => {
-              editorCopiedMsgRef.current = { text: `⚠ ERRO AO SALVAR — chave copiada: ${countMsg}`, until: Date.now() + 3500 };
+            }).then((r) => {
+              if (r.ok) {
+                editorCopiedMsgRef.current = { text: `✓ FASE SALVA NO PROJETO: ${persistMsg}`, until: Date.now() + 4000 };
+                // Atualiza baseline pra refletir o estado salvo
+                editorBaselineKeysRef.current = new Set(currentPlatforms.map(platBaseKey));
+              } else {
+                editorCopiedMsgRef.current = { text: `⚠ ERRO ${r.status} AO SALVAR`, until: Date.now() + 4000 };
+              }
+            }).catch((err) => {
+              editorCopiedMsgRef.current = { text: `⚠ ERRO AO SALVAR: ${String(err).slice(0, 40)}`, until: Date.now() + 4000 };
             });
-            navigator.clipboard.writeText(exportStr).catch(() => {});
-          } else {
-            editorCopiedMsgRef.current = { text: '(nenhuma mudança para salvar)', until: Date.now() + 2500 };
+            if (total > 0) navigator.clipboard.writeText(exportStr).catch(() => {});
           }
           return;
         }
