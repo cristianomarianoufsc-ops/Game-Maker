@@ -455,6 +455,14 @@ export default function Game() {
   const originalLevelPlatformsRef = useRef<Platform[]>([]);
   const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number; rotation?: number }) =>
     `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}:${Math.round(p.rotation ?? 0)}`;
+  const editorDirtyRef = useRef(false);
+  const editorSaveStatusRef = useRef<'saved' | 'pending' | 'saving' | 'error'>('saved');
+  const editorSaveStatusUntilRef = useRef(0);
+  const editorSaveStatusMessageRef = useRef('');
+  const editorAutoSaveTimerRef = useRef<number | null>(null);
+  const editorSavedSignatureRef = useRef<string>('');
+  const editorLastDirtyCheckRef = useRef(0);
+  const levelPatchLoadedRef = useRef(false);
   const editorCollisionModeRef = useRef(false);
   const editorCollisionBoxIdxRef = useRef(0);
   type EditorDrag = {
@@ -795,6 +803,111 @@ export default function Game() {
     };
   }, [makeInitialState]);
 
+  // Assinatura de conteúdo de uma plataforma — inclui tudo que importa para
+  // detectar "dirty" (posição/tamanho/rotação/crop/hitboxes/sprite).
+  const platSignature = useCallback((p: Platform): string => {
+    const boxes = (p.collisionBoxes ?? []).map(b =>
+      `${b.x},${b.y},${b.w},${b.h},${b.slopeTop?.left ?? ''},${b.slopeTop?.right ?? ''}`
+    ).join('|');
+    return [
+      p.type, p.x, p.y, p.w, p.h,
+      Math.round(p.rotation ?? 0),
+      p.cropLeft ?? 0, p.cropTop ?? 0, p.cropRight ?? 0, p.cropBottom ?? 0,
+      p.customSpriteName ?? '',
+      boxes,
+    ].join('|');
+  }, []);
+
+  const platformsSignature = useCallback((platforms: Platform[]): string => {
+    return platforms
+      .filter(p => p.type !== 'ground')
+      .map(platSignature)
+      .sort()
+      .join('\n');
+  }, [platSignature]);
+
+  // Persiste o estado atual em /api/save-level-patch. Idempotente.
+  // Retorna true em sucesso. Atualiza baseline e signature em caso positivo.
+  const persistLevelPatch = useCallback(async (silent = false): Promise<boolean> => {
+    if (!levelPatchLoadedRef.current) {
+      // Não persistir antes do patch ter sido carregado — risco de sobrescrever
+      // adições anteriores que ainda não foram aplicadas.
+      return false;
+    }
+    if (editorSaveStatusRef.current === 'saving') return false;
+    editorSaveStatusRef.current = 'saving';
+    if (!silent) editorSaveStatusMessageRef.current = 'salvando...';
+
+    const originalKeys = new Set(originalLevelPlatformsRef.current.map(platBaseKey));
+    const currentPlatforms = platformsRef.current;
+    const patchAdd = currentPlatforms.filter(p =>
+      p.type !== 'ground' && !originalKeys.has(platBaseKey(p))
+    ).map(p => {
+      const clean: Platform = { ...p };
+      if (clean.customSpriteDataUrl && !clean.customSpriteDataUrl.startsWith('/sprites/')) {
+        delete clean.customSpriteDataUrl;
+      }
+      return clean;
+    });
+    const patchAddKeys = new Set(patchAdd.map(platBaseKey));
+    const currentKeys = new Set(currentPlatforms.map(platBaseKey));
+    const patchDel = originalLevelPlatformsRef.current
+      .filter(p => p.type !== 'ground' && (
+        !currentKeys.has(platBaseKey(p)) ||
+        patchAddKeys.has(platBaseKey(p))
+      ))
+      .map(p => platBaseKey(p));
+    const levelPatch = {
+      add: patchAdd,
+      del: patchDel,
+      checkpoints: editorCustomCheckpointsRef.current,
+    };
+    const sigSnapshot = platformsSignature(currentPlatforms);
+
+    try {
+      const r = await fetch('/api/save-level-patch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(levelPatch),
+      });
+      if (r.ok) {
+        editorSaveStatusRef.current = 'saved';
+        editorSaveStatusMessageRef.current = `salvo +${patchAdd.length}/-${patchDel.length}`;
+        editorSaveStatusUntilRef.current = Date.now() + 3000;
+        editorBaselineKeysRef.current = new Set(currentPlatforms.map(platBaseKey));
+        editorSavedSignatureRef.current = sigSnapshot;
+        editorDirtyRef.current = false;
+        return true;
+      } else {
+        editorSaveStatusRef.current = 'error';
+        editorSaveStatusMessageRef.current = `erro ${r.status} ao salvar`;
+        editorSaveStatusUntilRef.current = Date.now() + 6000;
+        return false;
+      }
+    } catch (err) {
+      editorSaveStatusRef.current = 'error';
+      editorSaveStatusMessageRef.current = `erro de rede ao salvar`;
+      editorSaveStatusUntilRef.current = Date.now() + 6000;
+      return false;
+    }
+  }, [platformsSignature]);
+
+  // Marca o editor como modificado e agenda um auto-save (debounced).
+  const markEditorDirty = useCallback(() => {
+    editorDirtyRef.current = true;
+    if (editorSaveStatusRef.current !== 'saving') {
+      editorSaveStatusRef.current = 'pending';
+      editorSaveStatusMessageRef.current = 'modificado — salvando em breve...';
+    }
+    if (editorAutoSaveTimerRef.current !== null) {
+      clearTimeout(editorAutoSaveTimerRef.current);
+    }
+    editorAutoSaveTimerRef.current = window.setTimeout(() => {
+      editorAutoSaveTimerRef.current = null;
+      persistLevelPatch(true).catch(() => { /* silencioso */ });
+    }, 1500);
+  }, [persistLevelPatch]);
+
   useEffect(() => {
     deletedPlatformKeysRef.current = loadDeletedPlatformKeys();
     const customSpritePlatforms = loadCustomSpritePlatforms();
@@ -810,14 +923,26 @@ export default function Game() {
     ];
     gsRef.current = makeInitialState();
 
-    // Carrega level-patch.json do servidor e aplica as mudanças salvas
+    // Carrega level-patch.json do servidor e aplica as mudanças salvas.
+    // Sinaliza levelPatchLoadedRef ao final (sucesso OU falha) para liberar
+    // a entrada no editor e o auto-save.
+    const finishPatchLoad = () => {
+      levelPatchLoadedRef.current = true;
+      editorSavedSignatureRef.current = platformsSignature(platformsRef.current);
+      editorSaveStatusRef.current = 'saved';
+      editorDirtyRef.current = false;
+    };
     fetch('/level-patch.json')
       .then(r => r.ok ? r.json() : null)
       .then((patch: { add?: Platform[]; del?: string[]; checkpoints?: { label: string; x: number }[] } | null) => {
-        if (!patch) return;
+        if (!patch) { finishPatchLoad(); return; }
         const delKeys = new Set<string>(patch.del ?? []);
         const patchedBase = originalPlatforms.filter(p => !delKeys.has(platBaseKey(p)));
-        const addPlatforms = (patch.add ?? []) as Platform[];
+        // Dedup: ignora entradas em add cujo key já está no original (resolve
+        // conflito entre código fonte atualizado e patch antigo).
+        const originalKeySet = new Set(originalPlatforms.map(platBaseKey));
+        const rawAddPlatforms = (patch.add ?? []) as Platform[];
+        const addPlatforms = rawAddPlatforms.filter(p => !originalKeySet.has(platBaseKey(p)));
         addPlatforms.forEach(registerCustomSpriteImage);
         const withDeleted = applyDeletedPlatformKeys(patchedBase, deletedPlatformKeysRef.current);
         platformsRef.current = [...withDeleted, ...customSpritePlatforms, ...addPlatforms];
@@ -826,8 +951,9 @@ export default function Game() {
         if (patch.checkpoints && patch.checkpoints.length > 0) {
           editorCustomCheckpointsRef.current = patch.checkpoints;
         }
+        finishPatchLoad();
       })
-      .catch(() => { /* sem patch salvo ainda */ });
+      .catch(() => { /* sem patch salvo ainda */ finishPatchLoad(); });
 
     // Load sprite images
     const img = new Image();
@@ -2045,57 +2171,29 @@ export default function Game() {
           }
           const total = addItems.length + delItems.length;
           const exportStr = total === 0 ? '{}' : JSON.stringify({ add: addItems, del: delItems });
-          const countMsg = total === 0
-            ? '(nenhuma mudança ainda)'
-            : `+${addItems.length} add  −${delItems.length} del`;
 
-          // Salva patch permanente no servidor (level-patch.json) — SEMPRE salva,
-          // mesmo se o diff em relação à baseline for 0 (a baseline pode estar fora
-          // de sincronia se o patch foi recarregado pelo HMR)
-          {
-            const originalKeys = new Set(originalLevelPlatformsRef.current.map(platBaseKey));
-            const currentPlatforms = platformsRef.current;
-            const patchAdd = currentPlatforms.filter(p =>
-              p.type !== 'ground' && !originalKeys.has(platBaseKey(p))
-            ).map(p => {
-              const clean: Platform = { ...p };
-              // Omite data URLs grandes — só mantém URLs permanentes de servidor
-              if (clean.customSpriteDataUrl && !clean.customSpriteDataUrl.startsWith('/sprites/')) {
-                delete clean.customSpriteDataUrl;
-              }
-              return clean;
-            });
-            const patchAddKeys = new Set(patchAdd.map(platBaseKey));
-            const currentKeys = new Set(currentPlatforms.map(platBaseKey));
-            const patchDel = originalLevelPlatformsRef.current
-              .filter(p => p.type !== 'ground' && (
-                !currentKeys.has(platBaseKey(p)) ||   // removido do estado atual
-                patchAddKeys.has(platBaseKey(p))       // também em patchAdd → evita duplicata no reload
-              ))
-              .map(p => platBaseKey(p));
-            const levelPatch = {
-              add: patchAdd,
-              del: patchDel,
-              checkpoints: editorCustomCheckpointsRef.current,
-            };
-            const persistMsg = `+${patchAdd.length} add  −${patchDel.length} del`;
-            fetch('/api/save-level-patch', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(levelPatch),
-            }).then((r) => {
-              if (r.ok) {
-                editorCopiedMsgRef.current = { text: `✓ FASE SALVA NO PROJETO: ${persistMsg}`, until: Date.now() + 4000 };
-                // Atualiza baseline pra refletir o estado salvo
-                editorBaselineKeysRef.current = new Set(currentPlatforms.map(platBaseKey));
-              } else {
-                editorCopiedMsgRef.current = { text: `⚠ ERRO ${r.status} AO SALVAR`, until: Date.now() + 4000 };
-              }
-            }).catch((err) => {
-              editorCopiedMsgRef.current = { text: `⚠ ERRO AO SALVAR: ${String(err).slice(0, 40)}`, until: Date.now() + 4000 };
-            });
-            if (total > 0) navigator.clipboard.writeText(exportStr).catch(() => {});
+          // Cancela qualquer auto-save pendente para forçar a persistência agora
+          if (editorAutoSaveTimerRef.current !== null) {
+            clearTimeout(editorAutoSaveTimerRef.current);
+            editorAutoSaveTimerRef.current = null;
           }
+          // Salva patch permanente no servidor — sempre executa, mesmo com diff 0
+          // (a baseline pode estar fora de sincronia depois de HMR).
+          editorCopiedMsgRef.current = { text: '⏳ SALVANDO FASE NO PROJETO...', until: Date.now() + 8000 };
+          persistLevelPatch().then((ok) => {
+            if (ok) {
+              editorCopiedMsgRef.current = {
+                text: `✓ FASE SALVA NO PROJETO (${editorSaveStatusMessageRef.current})`,
+                until: Date.now() + 4000,
+              };
+            } else {
+              editorCopiedMsgRef.current = {
+                text: `⚠ ${editorSaveStatusMessageRef.current || 'erro ao salvar'}`,
+                until: Date.now() + 5000,
+              };
+            }
+          });
+          if (total > 0) navigator.clipboard.writeText(exportStr).catch(() => {});
           return;
         }
       }
@@ -2631,13 +2729,26 @@ export default function Game() {
       // --- Update ---
       if (gs.gamePhase === 'menu') {
         if (editorJustPressed.current) {
-          editorJustPressed.current = false;
-          spaceJustPressed.current = false;
-          testJustPressed.current = false;
-          editorCamXRef.current = 0;
-          editorHoveredIdxRef.current = -1;
-          editorBaselineKeysRef.current = new Set(platformsRef.current.map(platBaseKey));
-          gs.gamePhase = 'editor';
+          // Bloqueia entrada no editor enquanto o level-patch.json não terminar
+          // de carregar — entrar antes pode descartar mudanças salvas.
+          if (!levelPatchLoadedRef.current) {
+            editorCopiedMsgRef.current = {
+              text: '⏳ AGUARDE — carregando fase salva do servidor...',
+              until: Date.now() + 1500,
+            };
+          } else {
+            editorJustPressed.current = false;
+            spaceJustPressed.current = false;
+            testJustPressed.current = false;
+            editorCamXRef.current = 0;
+            editorHoveredIdxRef.current = -1;
+            editorBaselineKeysRef.current = new Set(platformsRef.current.map(platBaseKey));
+            editorSavedSignatureRef.current = platformsSignature(platformsRef.current);
+            editorDirtyRef.current = false;
+            editorSaveStatusRef.current = 'saved';
+            editorSaveStatusMessageRef.current = '';
+            gs.gamePhase = 'editor';
+          }
         } else if (testJustPressed.current) {
           resetGame('wall-test');
           testJustPressed.current = false;
@@ -2647,6 +2758,23 @@ export default function Game() {
           spaceJustPressed.current = false;
         }
       } else if (gs.gamePhase === 'editor') {
+        // Detecta mudanças no conteúdo (move/resize/hitbox/crop/rotação/sprite)
+        // a cada ~500ms e agenda auto-save quando difere do último salvo.
+        const nowDirtyCheck = Date.now();
+        if (nowDirtyCheck - editorLastDirtyCheckRef.current >= 500) {
+          editorLastDirtyCheckRef.current = nowDirtyCheck;
+          if (levelPatchLoadedRef.current && editorSaveStatusRef.current !== 'saving') {
+            const sigNow = platformsSignature(platformsRef.current);
+            if (sigNow !== editorSavedSignatureRef.current) {
+              if (!editorDirtyRef.current) markEditorDirty();
+              editorDirtyRef.current = true;
+              if (editorSaveStatusRef.current === 'saved') {
+                editorSaveStatusRef.current = 'pending';
+                editorSaveStatusMessageRef.current = 'modificado — salvando em breve...';
+              }
+            }
+          }
+        }
         if (escJustPressed.current) {
           escJustPressed.current = false;
           spaceJustPressed.current = false;
@@ -3090,7 +3218,7 @@ export default function Game() {
 
       if (gs.gamePhase === 'menu') drawMenuScreen(ctx);
       if (gs.gamePhase === 'editor') {
-        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, getEditorCheckpoints(), editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0, editorBaselineKeysRef.current, galleryServerNamesRef.current, galleryObjectTypesRef.current);
+        drawEditorUI(ctx, platformsRef.current, editorCamXRef.current, editorCamYRef.current, editorHoveredIdxRef.current, editorSelectedIdxRef.current, editorMouseWorldRef.current, editorCopiedMsgRef.current, editorCheckpointIdxRef.current, getEditorCheckpoints(), editorCollisionModeRef.current, editorCollisionBoxIdxRef.current, editorSelectedIndicesRef.current, editorMarqueeRef.current, editorUndoStackRef.current.length > 0, editorRedoStackRef.current.length > 0, editorBaselineKeysRef.current, galleryServerNamesRef.current, galleryObjectTypesRef.current, editorSaveStatusRef.current, editorSaveStatusMessageRef.current, editorSaveStatusUntilRef.current, editorDirtyRef.current);
       }
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);

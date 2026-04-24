@@ -3078,6 +3078,10 @@ export function drawEditorUI(
   baselineKeys: Set<string> = new Set(),
   galleryServerNames: Set<string> = new Set(),
   galleryObjectTypes: Set<string> = new Set(),
+  saveStatus: 'saved' | 'pending' | 'saving' | 'error' = 'saved',
+  saveStatusMessage = '',
+  saveStatusUntil = 0,
+  isDirty = false,
 ): void {
   const platBaseKey = (p: { type: string; x: number; y: number; w: number; h: number; rotation?: number }) =>
     `${p.type}:${p.x}:${p.y}:${p.w}:${p.h}:${Math.round(p.rotation ?? 0)}`;
@@ -3649,6 +3653,69 @@ export function drawEditorUI(
     }
     ctx.fillText(truncated, expX + 56, expY + 12);
     ctx.restore();
+
+    // ── Badge de status do auto-save (logo abaixo do painel SALVAR) ──────
+    const showStatusUntil = saveStatusUntil > Date.now();
+    const showStatus =
+      saveStatus === 'saving' ||
+      saveStatus === 'pending' ||
+      saveStatus === 'error' ||
+      isDirty ||
+      showStatusUntil;
+    if (showStatus) {
+      const badgeY = expY + expH + 3;
+      const badgeH = 14;
+      let bgColor: string;
+      let fgColor: string;
+      let icon: string;
+      let label: string;
+      switch (saveStatus) {
+        case 'saving':
+          bgColor = 'rgba(40,55,90,0.93)';
+          fgColor = 'rgba(150,200,255,0.95)';
+          icon = '⏳';
+          label = saveStatusMessage || 'salvando...';
+          break;
+        case 'pending':
+          bgColor = 'rgba(80,65,20,0.93)';
+          fgColor = 'rgba(255,220,140,0.95)';
+          icon = '●';
+          label = saveStatusMessage || 'modificado';
+          break;
+        case 'error':
+          bgColor = 'rgba(85,25,25,0.93)';
+          fgColor = 'rgba(255,170,170,0.98)';
+          icon = '⚠';
+          label = saveStatusMessage || 'erro ao salvar';
+          break;
+        case 'saved':
+        default:
+          bgColor = 'rgba(20,55,30,0.93)';
+          fgColor = 'rgba(150,255,180,0.95)';
+          icon = '✓';
+          label = saveStatusMessage || 'salvo';
+          break;
+      }
+      ctx.save();
+      ctx.fillStyle = bgColor;
+      ctx.strokeStyle = fgColor;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(expX, badgeY, expW, badgeH, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = fgColor;
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'left';
+      const badgeText = `${icon} ${label}`;
+      const maxBadgeW = expW - 10;
+      let truncatedBadge = badgeText;
+      while (truncatedBadge.length > 4 && ctx.measureText(truncatedBadge).width > maxBadgeW) {
+        truncatedBadge = truncatedBadge.slice(0, -4) + '…';
+      }
+      ctx.fillText(truncatedBadge, expX + 5, badgeY + 10);
+      ctx.restore();
+    }
   }
 
   ctx.fillStyle = 'rgba(180,175,210,0.75)';

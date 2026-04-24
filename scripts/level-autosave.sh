@@ -50,6 +50,16 @@ while true; do
       commit_msg="[autosave] $(date '+%d/%m/%Y %H:%M:%S')"
       git commit -m "$commit_msg" >> "$LOG_FILE" 2>&1
       log "Commit local salvo."
+
+      # Tenta enviar ao remoto com timeout curto.
+      # Falhas (sem rede / sem credencial) são silenciosas e não interrompem o loop.
+      if git remote get-url origin >/dev/null 2>&1; then
+        if timeout 20 git push origin HEAD --quiet >> "$LOG_FILE" 2>&1; then
+          log "Push para origin OK."
+        else
+          log "Push falhou ou expirou (continua local)."
+        fi
+      fi
     fi
 
     last_snapshot=$(get_snapshot)
