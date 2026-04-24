@@ -1278,8 +1278,9 @@ export function updateDrone(
     // Oscilação base pra cima (0 → -120 → 0). BURST raro (~21s) sobe muito
     // mais rápido que o Horácio, ficando em ângulo bem acima dele.
     // Distanciada lateral até 80px pra fora da escada.
-    // sideFactor: -1 = esquerda (padrão), +1 = direita (ocasional, ~25% do tempo).
-    const sideFactor = Math.tanh((Math.sin(Date.now() * 0.00012) - 0.7) * 8);
+    // sideFactor: -1 = esquerda (padrão), +1 = direita (~40% do tempo).
+    // Ciclo curto (~8s) pra alternância acontecer com frequência visível.
+    const sideFactor = Math.tanh((Math.sin(Date.now() * 0.0008) - 0.2) * 6);
     const baseTx = FE_LADDER_CX + sideFactor * 200;
     const distanceMag = (1 - Math.cos(Date.now() * 0.0006)) * 40; // 0 → 80 → 0
     tx = baseTx + sideFactor * distanceMag + Math.sin(Date.now() * 0.0007) * 12;
