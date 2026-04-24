@@ -1285,10 +1285,10 @@ export function updateDrone(
     const baseTx = FE_LADDER_CX + sideFactor * 200;
     const distanceMag = (1 - Math.cos(Date.now() * 0.0006)) * 40; // 0 → 80 → 0
     tx = baseTx + sideFactor * distanceMag + Math.sin(Date.now() * 0.0007) * 12;
-    const baseTy = player.y - 30;
-    const upwardOscillation = (Math.cos(Date.now() * 0.0012) - 1) * 60; // 0 → -120 → 0
-    const burstPhase = Math.pow(Math.sin(Date.now() * 0.0003), 6);
-    const upwardBurst = -burstPhase * 180;
+    const baseTy = player.y - 20;
+    const upwardOscillation = (Math.cos(Date.now() * 0.0012) - 1) * 20; // 0 → -40 → 0
+    const burstPhase = Math.pow(Math.sin(Date.now() * 0.0003), 8); // bem mais raro
+    const upwardBurst = -burstPhase * 70; // burst bem menor
     ty = baseTy + upwardOscillation + upwardBurst;
   } else {
     // Pathfinding: proactive wall scan first (sees wall 280px ahead),
@@ -1359,7 +1359,7 @@ export function updateDrone(
   // sem deixar subir muito acima dele (escada estreita não dá pra desviar de cima).
   const climbingCeiling = player.y - 80;
   const dronMinY = playerNearFireEscape
-    ? player.y - 320 // permite o burst raro subir bem mais alto que o Horácio
+    ? player.y - 130 // teto baixo: drone fica perto da altura do Horácio
     : isOverflying
       ? -(DRONE_H + 10)
       : (player.isClimbing ? climbingCeiling : 30);
