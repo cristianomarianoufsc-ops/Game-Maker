@@ -1274,8 +1274,12 @@ export function updateDrone(
   if (playerNearFireEscape) {
     // Override total: drone vai pro lado ESQUERDO da escada, na mesma altura
     // do Horácio, atirando lateralmente em vez de cair de cima.
+    // Oscila pra CIMA (até 60px acima da altura base) e volta pra inicial,
+    // pra os tiros não saírem todos na mesma linha.
     tx = FE_LADDER_CX - 200 + Math.sin(Date.now() * 0.0007) * 12;
-    ty = player.y - 30 + Math.cos(Date.now() * 0.0009) * 14;
+    const baseTy = player.y - 30;
+    const upwardOscillation = (Math.cos(Date.now() * 0.0012) - 1) * 30; // 0 → -60 → 0
+    ty = baseTy + upwardOscillation;
   } else {
     // Pathfinding: proactive wall scan first (sees wall 280px ahead),
     // then fall back to general obstacle waypoint if no wall detected.
