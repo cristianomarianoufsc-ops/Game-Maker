@@ -1251,19 +1251,38 @@ export function updateDrone(
   const targetX = player.x + DRONE_TARGET_OFFSET_X + Math.sin(Date.now() * 0.0007) * 30;
   const targetY = player.y + verticalOffset + Math.cos(Date.now() * 0.0009) * 20;
 
+  // Detecta se o jogador está na escada de incêndio (pela posição X), mesmo sem estar
+  // ativamente escalando — basta estar dentro da coluna do prédio acima do solo.
+  const FE_LADDER_CX = FIRE_ESCAPE.WALL_X + FIRE_ESCAPE.WALL_W / 2;
+  const playerNearFireEscape =
+    Math.abs((player.x + player.w / 2) - FE_LADDER_CX) < FIRE_ESCAPE.PLAT_W / 2 + 40 &&
+    player.y < GROUND_Y - 100 &&
+    (player.isClimbing || player.touchingLadder);
+
   // Quando o jogador está escalando a escada do prédio, ignoramos as grades
   // dos andares pra que o drone consiga subir junto pelo vão da escada.
-  const dronePlatforms = (player.isClimbing && player.touchingLadder)
+  const dronePlatforms = playerNearFireEscape
     ? platforms.filter(p => !p.isFireEscapeFloor && !p.isLadder)
     : platforms;
 
-  // Pathfinding: proactive wall scan first (sees wall 280px ahead),
-  // then fall back to general obstacle waypoint if no wall detected.
-  const wallAhead = dronePlatforms.length > 0 ? droneWallScan(drone, targetX, dronePlatforms) : null;
-  const { tx, ty } = wallAhead
-    ?? (dronePlatforms.length > 0
-      ? droneComputeWaypoint(drone, targetX, targetY, dronePlatforms)
-      : { tx: targetX, ty: targetY });
+  let tx: number;
+  let ty: number;
+  if (playerNearFireEscape) {
+    // Override total: drone vai direto pra coluna da escada, sem pathfinding,
+    // pra garantir que sobe acompanhando o Horácio até o topo do prédio.
+    tx = FE_LADDER_CX + Math.sin(Date.now() * 0.0007) * 12;
+    ty = player.y - 160 + Math.cos(Date.now() * 0.0009) * 14;
+  } else {
+    // Pathfinding: proactive wall scan first (sees wall 280px ahead),
+    // then fall back to general obstacle waypoint if no wall detected.
+    const wallAhead = dronePlatforms.length > 0 ? droneWallScan(drone, targetX, dronePlatforms) : null;
+    const wp = wallAhead
+      ?? (dronePlatforms.length > 0
+        ? droneComputeWaypoint(drone, targetX, targetY, dronePlatforms)
+        : { tx: targetX, ty: targetY });
+    tx = wp.tx;
+    ty = wp.ty;
+  }
 
   // Se o waypoint está acima do canvas (ty < 0), o drone está em manobra de overfly
   const isOverflying = ty < 0;
