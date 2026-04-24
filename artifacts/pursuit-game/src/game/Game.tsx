@@ -131,6 +131,7 @@ function makeDrone(): Drone {
     stuckTimer: 0,
     stuckLastX: -80,
     lastFireSide: 0,
+    aimTimer: 0,
   };
 }
 

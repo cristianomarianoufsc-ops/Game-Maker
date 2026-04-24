@@ -137,6 +137,7 @@ export interface Drone {
   stuckTimer: number;   // frames sem progresso significativo (para teleporte)
   stuckLastX: number;  // referência de X para detectar estagnação
   lastFireSide: -1 | 0 | 1; // último lado em que atirou estando na escada (-1=esq, 0=neutro, 1=dir)
+  aimTimer: number; // ms restantes na fase de mira antes de disparar (0 = não está mirando)
 }
 
 export interface Camera {

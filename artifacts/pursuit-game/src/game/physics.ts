@@ -1386,43 +1386,59 @@ export function updateDrone(
 
   // Shoot
   drone.shootTimer -= dt;
-  if (drone.shootTimer <= 0) {
-    // Na escada de incêndio: drone só atira quando alcança a EXTREMIDADE
-    // (esquerda ou direita) e alterna entre os dois extremos. Se ainda não
-    // chegou no extremo do outro lado, segura o tiro (timer fica negativo).
-    let canFire = true;
+  let shouldFireNow = false;
+
+  if (drone.aimTimer > 0) {
+    // Fase de mira: drone "trava" no extremo, partículas amarelas pulsam
+    // como aviso visual ao Horácio antes do tiro sair.
+    drone.aimTimer -= dt;
+    if (Math.random() < 0.6) {
+      spawnParticle(
+        drone.x + drone.w / 2 + (Math.random() - 0.5) * 14,
+        drone.y + drone.h / 2 + (Math.random() - 0.5) * 14,
+        '#ffcc00'
+      );
+    }
+    if (drone.aimTimer <= 0) {
+      drone.aimTimer = 0;
+      shouldFireNow = true;
+    }
+  } else if (drone.shootTimer <= 0) {
     if (playerNearFireEscape) {
+      // Na escada: só inicia mira quando alcança a EXTREMIDADE do OUTRO lado
+      // (alterna entre extremo esquerdo e extremo direito).
       const atExtreme = Math.abs(sideFactor) > 0.95;
       const currentSide: -1 | 1 = sideFactor > 0 ? 1 : -1;
-      if (!atExtreme || currentSide === drone.lastFireSide) {
-        canFire = false;
-      } else {
+      if (atExtreme && currentSide !== drone.lastFireSide) {
         drone.lastFireSide = currentSide;
+        drone.aimTimer = 300; // 0.3s de mira antes de disparar
       }
+      // senão: timer negativo "guarda" intenção até chegar no extremo
     } else {
       drone.lastFireSide = 0;
+      shouldFireNow = true;
     }
+  }
 
-    if (canFire) {
-      drone.shootTimer = SHOOT_COOLDOWN + Math.random() * 400;
+  if (shouldFireNow) {
+    drone.shootTimer = SHOOT_COOLDOWN + Math.random() * 400;
 
-      // Aim at player
-      const pdx = player.x + player.w / 2 - (drone.x + drone.w / 2);
-      const pdy = player.y + player.h / 2 - (drone.y + drone.h / 2);
-      const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
+    // Aim at player
+    const pdx = player.x + player.w / 2 - (drone.x + drone.w / 2);
+    const pdy = player.y + player.h / 2 - (drone.y + drone.h / 2);
+    const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
 
-      if (pdist > 0) {
-        bullets.push({
-          x: drone.x + drone.w / 2,
-          y: drone.y + drone.h / 2,
-          vx: (pdx / pdist) * BULLET_SPEED,
-          vy: (pdy / pdist) * BULLET_SPEED * 0.5,
-          age: 0,
-        });
-        shakeAmount = 2;
-        for (let i = 0; i < 4; i++) {
-          spawnParticle(drone.x + drone.w / 2, drone.y + drone.h / 2, '#ff4400');
-        }
+    if (pdist > 0) {
+      bullets.push({
+        x: drone.x + drone.w / 2,
+        y: drone.y + drone.h / 2,
+        vx: (pdx / pdist) * BULLET_SPEED,
+        vy: (pdy / pdist) * BULLET_SPEED * 0.5,
+        age: 0,
+      });
+      shakeAmount = 2;
+      for (let i = 0; i < 4; i++) {
+        spawnParticle(drone.x + drone.w / 2, drone.y + drone.h / 2, '#ff4400');
       }
     }
   }
