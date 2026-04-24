@@ -1291,7 +1291,20 @@ export function updateDrone(
 
   const speed = DRONE_BASE_SPEED;
 
-  if (dist > 2) {
+  if (playerNearFireEscape) {
+    // Modo "subida turbo": move o drone diretamente em direção ao alvo,
+    // ignorando física/inércia, pra garantir que ele alcança o topo do prédio.
+    const MAX_STEP = 14;
+    if (dist > MAX_STEP) {
+      drone.x += (dx / dist) * MAX_STEP;
+      drone.y += (dy / dist) * MAX_STEP;
+    } else {
+      drone.x = tx;
+      drone.y = ty;
+    }
+    drone.vx = 0;
+    drone.vy = 0;
+  } else if (dist > 2) {
     drone.vx += (dx / dist) * speed * 0.25;
     drone.vy += (dy / dist) * speed * 0.25;
   }
