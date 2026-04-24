@@ -1274,15 +1274,20 @@ export function updateDrone(
   if (playerNearFireEscape) {
     // Override total: drone vai pro lado ESQUERDO da escada, na mesma altura
     // do Horácio, atirando lateralmente em vez de cair de cima.
-    // Oscila pra CIMA (até 120px acima da altura base) e volta pra inicial,
-    // pra os tiros não saírem todos na mesma linha. Também dá umas
-    // distanciadas pra trás (até 160px mais longe) e volta.
+    // Oscilação base pra cima (0 → -120 → 0). De vez em quando dispara um
+    // BURST que sobe muito mais rápido que o Horácio, ficando em ângulo bem
+    // acima dele por uns instantes (pico raro, ~-180px extra).
+    // Distanciada lateral menor: até 80px mais longe e volta.
     const baseTx = FE_LADDER_CX - 200;
-    const distanceOscillation = (Math.cos(Date.now() * 0.0006) - 1) * 80; // 0 → -160 → 0
+    const distanceOscillation = (Math.cos(Date.now() * 0.0006) - 1) * 40; // 0 → -80 → 0
     tx = baseTx + distanceOscillation + Math.sin(Date.now() * 0.0007) * 12;
     const baseTy = player.y - 30;
     const upwardOscillation = (Math.cos(Date.now() * 0.0012) - 1) * 60; // 0 → -120 → 0
-    ty = baseTy + upwardOscillation;
+    // Burst raro: Math.pow(sin, 6) fica perto de 0 a maior parte do tempo
+    // e dispara picos curtos próximos a 1; ciclo lento (~21s).
+    const burstPhase = Math.pow(Math.sin(Date.now() * 0.0003), 6);
+    const upwardBurst = -burstPhase * 180;
+    ty = baseTy + upwardOscillation + upwardBurst;
   } else {
     // Pathfinding: proactive wall scan first (sees wall 280px ahead),
     // then fall back to general obstacle waypoint if no wall detected.
@@ -1346,7 +1351,7 @@ export function updateDrone(
   // sem deixar subir muito acima dele (escada estreita não dá pra desviar de cima).
   const climbingCeiling = player.y - 80;
   const dronMinY = playerNearFireEscape
-    ? player.y - 80
+    ? player.y - 320 // permite o burst raro subir bem mais alto que o Horácio
     : isOverflying
       ? -(DRONE_H + 10)
       : (player.isClimbing ? climbingCeiling : 30);
