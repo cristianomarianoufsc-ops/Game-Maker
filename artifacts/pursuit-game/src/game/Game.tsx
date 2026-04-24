@@ -11,6 +11,7 @@ import mortalSheetUrl from '@assets/mortal_1776009939272.png';
 import subidaSheetUrl from '@assets/subida_1776012458574.png';
 import sideFlipSheetUrl from '@assets/SIDE_FLIP_1776053462942.png';
 import ladderClimbUrl from '@assets/image_1776998047300.png';
+import ladderDescendUrl from '@assets/image_1776998292447.png';
 import dogSheetUrl from '@assets/DOG_1776795245228.png';
 import dogIdleUrl from '@assets/image_1776737992484.png';
 import standingTireUrl from '@assets/pneu_1776643651883.png';
@@ -515,6 +516,7 @@ export default function Game() {
   const subidaSheetImgRef = useRef<HTMLImageElement | null>(null);
   const sideFlipSheetImgRef = useRef<HTMLImageElement | null>(null);
   const ladderClimbImgRef = useRef<HTMLImageElement | null>(null);
+  const ladderDescendImgRef = useRef<HTMLImageElement | null>(null);
   const brickTextureImgRef = useRef<HTMLImageElement | null>(null);
   const balconyImgRef = useRef<HTMLImageElement | null>(null);
   const carroImgRef = useRef<HTMLImageElement | null>(null);
@@ -899,9 +901,15 @@ export default function Game() {
 
     const ladderImg = new Image();
     ladderImg.onload = () => {
-      ladderClimbImgRef.current = ladderImg;
+      ladderClimbImgRef.current = stripWhiteBackground(ladderImg);
     };
     ladderImg.src = ladderClimbUrl;
+
+    const ladderDownImg = new Image();
+    ladderDownImg.onload = () => {
+      ladderDescendImgRef.current = stripWhiteBackground(ladderDownImg);
+    };
+    ladderDownImg.src = ladderDescendUrl;
 
     const brickImg = new Image();
     brickImg.src = brickTextureUrl;
@@ -3041,7 +3049,7 @@ export default function Game() {
       drawFlyingTires(ctx, gs.flyingTires, gs.camera.x, rollingTireImgRef.current);
       drawParticles(ctx, gs);
       drawDogs(ctx, gs.dogs, gs.camera.x, dogSheetImgRef.current, dogIdleImgRef.current);
-      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current, ladderClimbImgRef.current);
+      drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current, ladderClimbImgRef.current, ladderDescendImgRef.current);
       drawTireHideouts(ctx, gs.platforms, gs.camera.x, standingTireImgRef.current, gs.destroyedTireIndices);
       if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
         drawDrone(ctx, gs);

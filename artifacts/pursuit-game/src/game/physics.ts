@@ -348,11 +348,12 @@ export function updatePlayer(
   // --- Climbing ---
   if (p.isClimbing) {
     p.vy = 0;
+    const ladderSpeedMul = prevTouchingLadder ? 0.55 : 1;
     if (keys.up) {
-      p.vy = -CLIMB_SPEED;
+      p.vy = -CLIMB_SPEED * ladderSpeedMul;
     } else if (keys.down) {
       // descer é o dobro mais rápido que subir
-      p.vy = CLIMB_SPEED * 2;
+      p.vy = CLIMB_SPEED * 2 * ladderSpeedMul;
     }
     if (prevTouchingLadder) {
       // Escada atravessável: permite andar pra sair lateralmente

@@ -2074,32 +2074,37 @@ export function drawPlayer(
   subidaSheetImg: HTMLImageElement | null = null,
   sideFlipSheetImg: HTMLImageElement | null = null,
   ladderClimbImg: HTMLImageElement | null = null,
+  ladderDescendImg: HTMLImageElement | null = null,
 ): void {
   const p = gs.player;
   const px = p.x - gs.camera.x;
   const py = p.y;
   const ph = p.isRolling ? PLAYER_ROLL_H : PLAYER_H;
 
-  // Ladder climb: alternate mirrored frames to fake limb movement while climbing
-  if (p.state === 'climb' && p.touchingLadder && ladderClimbImg && ladderClimbImg.complete && ladderClimbImg.naturalWidth > 0) {
-    const iw = ladderClimbImg.naturalWidth;
-    const ih = ladderClimbImg.naturalHeight;
-    const dh = PLAYER_H + 18;
-    const dw = Math.round(dh * (iw / ih));
-    const anchorX = px + p.w / 2;
-    const destX = anchorX - dw / 2;
-    const destY = py + ph - dh;
-    // Alterna a cada ~12px de subida — só anima quando o jogador realmente sobe
-    const mirror = Math.floor(Math.abs(p.y) / 12) % 2 === 1;
-    ctx.save();
-    if (mirror) {
-      ctx.translate(anchorX, 0);
-      ctx.scale(-1, 1);
-      ctx.translate(-anchorX, 0);
+  // Ladder climb / descend
+  if (p.state === 'climb' && p.touchingLadder) {
+    const goingDown = p.vy > 0.1;
+    const sprite = goingDown ? ladderDescendImg : ladderClimbImg;
+    if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+      const iw = sprite.naturalWidth;
+      const ih = sprite.naturalHeight;
+      const dh = PLAYER_H + 56;
+      const dw = Math.round(dh * (iw / ih));
+      const anchorX = px + p.w / 2;
+      const destX = anchorX - dw / 2;
+      const destY = py + ph - dh;
+      // Espelha apenas a subida — descida usa só o sprite frontal
+      const mirror = !goingDown && Math.floor(Math.abs(p.y) / 16) % 2 === 1;
+      ctx.save();
+      if (mirror) {
+        ctx.translate(anchorX, 0);
+        ctx.scale(-1, 1);
+        ctx.translate(-anchorX, 0);
+      }
+      ctx.drawImage(sprite, 0, 0, iw, ih, destX, destY, dw, dh);
+      ctx.restore();
+      return;
     }
-    ctx.drawImage(ladderClimbImg, 0, 0, iw, ih, destX, destY, dw, dh);
-    ctx.restore();
-    return;
   }
 
   // Blink when invincible
