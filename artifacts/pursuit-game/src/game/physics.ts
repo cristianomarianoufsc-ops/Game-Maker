@@ -1396,13 +1396,17 @@ export function updateDrone(
 
   if (drone.aimTimer > 0) {
     // Fase de mira: drone "trava" no extremo, partículas amarelas pulsam
-    // como aviso visual ao Horácio antes do tiro sair.
+    // em círculo crescente como aviso visual ao Horácio antes do tiro sair.
     drone.aimTimer -= dt;
-    if (Math.random() < 0.6) {
+    const aimProgress = 1 - drone.aimTimer / 700; // 0 → 1 ao longo da mira
+    const ringRadius = 8 + aimProgress * 22; // raio cresce ao longo do tempo
+    // 3 partículas por frame em posições rotacionadas no círculo
+    for (let i = 0; i < 3; i++) {
+      const ang = (Date.now() * 0.012 + (i * Math.PI * 2) / 3) % (Math.PI * 2);
       spawnParticle(
-        drone.x + drone.w / 2 + (Math.random() - 0.5) * 14,
-        drone.y + drone.h / 2 + (Math.random() - 0.5) * 14,
-        '#ffcc00'
+        drone.x + drone.w / 2 + Math.cos(ang) * ringRadius,
+        drone.y + drone.h / 2 + Math.sin(ang) * ringRadius,
+        aimProgress > 0.6 ? '#ff4400' : '#ffcc00'
       );
     }
     if (drone.aimTimer <= 0) {
@@ -1417,7 +1421,7 @@ export function updateDrone(
       const currentSide: -1 | 1 = sideFactor > 0 ? 1 : -1;
       if (atExtreme && currentSide !== drone.lastFireSide) {
         drone.lastFireSide = currentSide;
-        drone.aimTimer = 300; // 0.3s de mira antes de disparar
+        drone.aimTimer = 700; // 0.7s de mira antes de disparar (visível)
       }
       // senão: timer negativo "guarda" intenção até chegar no extremo
     } else {
