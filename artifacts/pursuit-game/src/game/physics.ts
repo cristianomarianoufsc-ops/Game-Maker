@@ -1251,8 +1251,10 @@ export function updateDrone(
   let shakeAmount = 0;
 
   // Target position: behind and above player
-  // Quando o jogador escala (escada/parede), o drone fica MAIS alto pra atirar de cima
-  const verticalOffset = player.isClimbing ? -180 : DRONE_TARGET_OFFSET_Y;
+  // Quando o jogador escala (escada/parede), o drone fica AO LADO, na mesma altura,
+  // pra atirar lateralmente — escadas estreitas não dão espaço pra desviar de tiros
+  // vindos de cima.
+  const verticalOffset = player.isClimbing ? -30 : DRONE_TARGET_OFFSET_Y;
   const targetX = player.x + DRONE_TARGET_OFFSET_X + Math.sin(Date.now() * 0.0007) * 30;
   const targetY = player.y + verticalOffset + Math.cos(Date.now() * 0.0009) * 20;
 
@@ -1270,10 +1272,10 @@ export function updateDrone(
   let tx: number;
   let ty: number;
   if (playerNearFireEscape) {
-    // Override total: drone vai direto pra coluna da escada, sem pathfinding,
-    // pra garantir que sobe acompanhando o Horácio até o topo do prédio.
-    tx = FE_LADDER_CX + Math.sin(Date.now() * 0.0007) * 12;
-    ty = player.y - 160 + Math.cos(Date.now() * 0.0009) * 14;
+    // Override total: drone vai pro lado ESQUERDO da escada, na mesma altura
+    // do Horácio, atirando lateralmente em vez de cair de cima.
+    tx = FE_LADDER_CX - 200 + Math.sin(Date.now() * 0.0007) * 12;
+    ty = player.y - 30 + Math.cos(Date.now() * 0.0009) * 14;
   } else {
     // Pathfinding: proactive wall scan first (sees wall 280px ahead),
     // then fall back to general obstacle waypoint if no wall detected.
@@ -1333,14 +1335,15 @@ export function updateDrone(
   }
 
   // Keep drone on screen y — durante overfly de parede alta, permite sair pelo topo
-  // Quando o jogador escala, libera o teto pra acompanhar a subida no prédio
-  const climbingCeiling = Math.min(30, player.y - 220);
+  // Quando o jogador escala, mantém o drone próximo à altura do Horácio (lateral),
+  // sem deixar subir muito acima dele (escada estreita não dá pra desviar de cima).
+  const climbingCeiling = player.y - 80;
   const dronMinY = playerNearFireEscape
-    ? Math.min(player.y - 220, -(DRONE_H + 10))
+    ? player.y - 80
     : isOverflying
       ? -(DRONE_H + 10)
       : (player.isClimbing ? climbingCeiling : 30);
-  if (drone.y < dronMinY) { drone.y = dronMinY; if (!isOverflying && !player.isClimbing) drone.vy = Math.abs(drone.vy); }
+  if (drone.y < dronMinY) { drone.y = dronMinY; if (!isOverflying && !player.isClimbing && !playerNearFireEscape) drone.vy = Math.abs(drone.vy); }
   if (drone.y > GROUND_Y - 60) { drone.y = GROUND_Y - 60; drone.vy = -Math.abs(drone.vy); }
 
   // ── Stuck detection: só teleporta se completamente imóvel por ~5s contra parede ──
