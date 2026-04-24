@@ -49,15 +49,9 @@ while true; do
     else
       commit_msg="[autosave] $(date '+%d/%m/%Y %H:%M:%S')"
       git commit -m "$commit_msg" >> "$LOG_FILE" 2>&1
-
-      if git push origin main >> "$LOG_FILE" 2>&1; then
-        log "Push para o GitHub concluido com sucesso."
-      else
-        log "Commit salvo localmente. Push para o GitHub falhou (sem credenciais ou sem conexao)."
-      fi
+      log "Commit local salvo."
     fi
 
-    last_snapshot=$(current_snapshot)
     last_snapshot=$(get_snapshot)
   fi
 done

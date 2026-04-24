@@ -1260,9 +1260,14 @@ export function updateDrone(
     (player.isClimbing || player.touchingLadder);
 
   // Quando o jogador está escalando a escada do prédio, ignoramos as grades
-  // dos andares pra que o drone consiga subir junto pelo vão da escada.
+  // dos andares E a parede 21700 (única parede sólida pro drone próximo da
+  // escada) pra que ele consiga voar direto até a coluna da escada e subir.
   const dronePlatforms = playerNearFireEscape
-    ? platforms.filter(p => !p.isFireEscapeFloor && !p.isLadder)
+    ? platforms.filter(p =>
+        !p.isFireEscapeFloor &&
+        !p.isLadder &&
+        !(p.type === 'wall' && p.x === 21700)
+      )
     : platforms;
 
   let tx: number;

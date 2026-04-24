@@ -1,6 +1,49 @@
 {
   "add": [
     {
+      "x": 21700,
+      "y": 26,
+      "w": 20,
+      "h": 384,
+      "type": "wall",
+      "climbable": true
+    },
+    {
+      "x": 22150,
+      "y": -151,
+      "w": 165,
+      "h": 18,
+      "type": "platform",
+      "hideRender": true,
+      "isFireEscapeFloor": true,
+      "collisionBoxes": [
+        {
+          "x": 20,
+          "y": 0,
+          "w": 145,
+          "h": 18
+        }
+      ]
+    },
+    {
+      "x": 21949,
+      "y": -910,
+      "w": 165,
+      "h": 18,
+      "type": "platform",
+      "hideRender": true,
+      "isFireEscapeFloor": true,
+      "isLadderTopFloor": true,
+      "collisionBoxes": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 165,
+          "h": 18
+        }
+      ]
+    },
+    {
       "x": 18730,
       "y": 294,
       "w": 90,
@@ -524,7 +567,10 @@
     "tireHideout:19485:294:90:116:0",
     "tireHideout:20420:294:90:116:0",
     "obstacle:22000:352:90:58:0",
-    "platform:22490:285:115:62:0"
+    "platform:22490:285:115:62:0",
+    "wall:21711:10:20:400:0",
+    "platform:22150:-160:165:18:0",
+    "platform:21945:-910:165:18:0"
   ],
   "checkpoints": [
     {
