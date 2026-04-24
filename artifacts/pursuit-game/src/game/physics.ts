@@ -1274,11 +1274,14 @@ export function updateDrone(
   if (playerNearFireEscape) {
     // Override total: drone vai pro lado ESQUERDO da escada, na mesma altura
     // do Horácio, atirando lateralmente em vez de cair de cima.
-    // Oscila pra CIMA (até 60px acima da altura base) e volta pra inicial,
-    // pra os tiros não saírem todos na mesma linha.
-    tx = FE_LADDER_CX - 200 + Math.sin(Date.now() * 0.0007) * 12;
+    // Oscila pra CIMA (até 120px acima da altura base) e volta pra inicial,
+    // pra os tiros não saírem todos na mesma linha. Também dá umas
+    // distanciadas pra trás (até 160px mais longe) e volta.
+    const baseTx = FE_LADDER_CX - 200;
+    const distanceOscillation = (Math.cos(Date.now() * 0.0006) - 1) * 80; // 0 → -160 → 0
+    tx = baseTx + distanceOscillation + Math.sin(Date.now() * 0.0007) * 12;
     const baseTy = player.y - 30;
-    const upwardOscillation = (Math.cos(Date.now() * 0.0012) - 1) * 30; // 0 → -60 → 0
+    const upwardOscillation = (Math.cos(Date.now() * 0.0012) - 1) * 60; // 0 → -120 → 0
     ty = baseTy + upwardOscillation;
   } else {
     // Pathfinding: proactive wall scan first (sees wall 280px ahead),
