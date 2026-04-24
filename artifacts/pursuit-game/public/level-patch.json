@@ -2,11 +2,12 @@
   "add": [
     {
       "x": 21700,
-      "y": 80,
+      "y": 56,
       "w": 20,
-      "h": 329,
+      "h": 353,
       "type": "wall",
-      "climbable": true
+      "climbable": true,
+      "climbableSide": "right"
     },
     {
       "x": 22150,

@@ -153,9 +153,14 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
   }
 
   if (plat.type === 'wall' && plat.climbable) {
-    resolveClimbableWallContact(p, hit, p.vx);
-    p.touchingLadder = true;
-    return false;
+    const allowedSide = plat.climbableSide ?? 'both';
+    const touchedFace: 'left' | 'right' = overlapLeft < overlapRight ? 'left' : 'right';
+    if (allowedSide === 'both' || allowedSide === touchedFace) {
+      resolveClimbableWallContact(p, hit, p.vx);
+      p.touchingLadder = true;
+      return false;
+    }
+    // Face não escalável: cai no resolver padrão (push sólido sem wall run/climb).
   }
 
   if (climbableBoxWall && (minOverlap === overlapLeft || minOverlap === overlapRight)) {
