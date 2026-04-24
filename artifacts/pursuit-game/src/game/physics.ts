@@ -1340,6 +1340,12 @@ export function updateDrone(
   drone.vx *= 0.84;
   drone.vy *= 0.84;
 
+  // Durante a fase de mira, drone congela completamente pra deixar o aviso nítido.
+  if (drone.aimTimer > 0) {
+    drone.vx = 0;
+    drone.vy = 0;
+  }
+
   drone.x += drone.vx;
   drone.y += drone.vy;
 
