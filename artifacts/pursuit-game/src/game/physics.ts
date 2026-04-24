@@ -1272,19 +1272,19 @@ export function updateDrone(
   let tx: number;
   let ty: number;
   if (playerNearFireEscape) {
-    // Override total: drone vai pro lado ESQUERDO da escada, na mesma altura
-    // do Horácio, atirando lateralmente em vez de cair de cima.
-    // Oscilação base pra cima (0 → -120 → 0). De vez em quando dispara um
-    // BURST que sobe muito mais rápido que o Horácio, ficando em ângulo bem
-    // acima dele por uns instantes (pico raro, ~-180px extra).
-    // Distanciada lateral menor: até 80px mais longe e volta.
-    const baseTx = FE_LADDER_CX - 200;
-    const distanceOscillation = (Math.cos(Date.now() * 0.0006) - 1) * 40; // 0 → -80 → 0
-    tx = baseTx + distanceOscillation + Math.sin(Date.now() * 0.0007) * 12;
+    // Override total: drone fica AO LADO do Horácio na escada, atirando
+    // lateralmente. Geralmente fica do lado esquerdo, mas de vez em quando
+    // voa pro lado DIREITO pra atacar dali. Transição suave via tanh.
+    // Oscilação base pra cima (0 → -120 → 0). BURST raro (~21s) sobe muito
+    // mais rápido que o Horácio, ficando em ângulo bem acima dele.
+    // Distanciada lateral até 80px pra fora da escada.
+    // sideFactor: -1 = esquerda (padrão), +1 = direita (ocasional, ~25% do tempo).
+    const sideFactor = Math.tanh((Math.sin(Date.now() * 0.00012) - 0.7) * 8);
+    const baseTx = FE_LADDER_CX + sideFactor * 200;
+    const distanceMag = (1 - Math.cos(Date.now() * 0.0006)) * 40; // 0 → 80 → 0
+    tx = baseTx + sideFactor * distanceMag + Math.sin(Date.now() * 0.0007) * 12;
     const baseTy = player.y - 30;
     const upwardOscillation = (Math.cos(Date.now() * 0.0012) - 1) * 60; // 0 → -120 → 0
-    // Burst raro: Math.pow(sin, 6) fica perto de 0 a maior parte do tempo
-    // e dispara picos curtos próximos a 1; ciclo lento (~21s).
     const burstPhase = Math.pow(Math.sin(Date.now() * 0.0003), 6);
     const upwardBurst = -burstPhase * 180;
     ty = baseTy + upwardOscillation + upwardBurst;
