@@ -1255,9 +1255,8 @@ export function updateDrone(
   // ativamente escalando — basta estar dentro da coluna do prédio acima do solo.
   const FE_LADDER_CX = FIRE_ESCAPE.WALL_X + FIRE_ESCAPE.WALL_W / 2;
   const playerNearFireEscape =
-    Math.abs((player.x + player.w / 2) - FE_LADDER_CX) < FIRE_ESCAPE.PLAT_W / 2 + 40 &&
-    player.y < GROUND_Y - 100 &&
-    (player.isClimbing || player.touchingLadder);
+    Math.abs((player.x + player.w / 2) - FE_LADDER_CX) < FIRE_ESCAPE.PLAT_W / 2 + 60 &&
+    player.y < GROUND_Y - 60;
 
   // Quando o jogador está escalando a escada do prédio, o drone atravessa TUDO
   // (sem colisão, repulsão ou pushout) pra conseguir voar direto até o topo.
