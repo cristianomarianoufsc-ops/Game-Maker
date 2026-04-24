@@ -1271,6 +1271,7 @@ export function updateDrone(
 
   let tx: number;
   let ty: number;
+  let sideFactor = 0; // hoisted: usado pelo bloco de tiro abaixo
   if (playerNearFireEscape) {
     // Override total: drone fica AO LADO do Horácio na escada, atirando
     // lateralmente. Geralmente fica do lado esquerdo, mas de vez em quando
@@ -1280,7 +1281,7 @@ export function updateDrone(
     // Distanciada lateral até 80px pra fora da escada.
     // sideFactor: -1 = esquerda (padrão), +1 = direita (~40% do tempo).
     // Ciclo curto (~4s) — escada é curta, alternância precisa ser rápida.
-    const sideFactor = Math.tanh((Math.sin(Date.now() * 0.0016) - 0.2) * 6);
+    sideFactor = Math.tanh((Math.sin(Date.now() * 0.0016) - 0.2) * 6);
     const baseTx = FE_LADDER_CX + sideFactor * 200;
     const distanceMag = (1 - Math.cos(Date.now() * 0.0006)) * 40; // 0 → 80 → 0
     tx = baseTx + sideFactor * distanceMag + Math.sin(Date.now() * 0.0007) * 12;
@@ -1386,24 +1387,42 @@ export function updateDrone(
   // Shoot
   drone.shootTimer -= dt;
   if (drone.shootTimer <= 0) {
-    drone.shootTimer = SHOOT_COOLDOWN + Math.random() * 400;
+    // Na escada de incêndio: drone só atira quando alcança a EXTREMIDADE
+    // (esquerda ou direita) e alterna entre os dois extremos. Se ainda não
+    // chegou no extremo do outro lado, segura o tiro (timer fica negativo).
+    let canFire = true;
+    if (playerNearFireEscape) {
+      const atExtreme = Math.abs(sideFactor) > 0.95;
+      const currentSide: -1 | 1 = sideFactor > 0 ? 1 : -1;
+      if (!atExtreme || currentSide === drone.lastFireSide) {
+        canFire = false;
+      } else {
+        drone.lastFireSide = currentSide;
+      }
+    } else {
+      drone.lastFireSide = 0;
+    }
 
-    // Aim at player
-    const pdx = player.x + player.w / 2 - (drone.x + drone.w / 2);
-    const pdy = player.y + player.h / 2 - (drone.y + drone.h / 2);
-    const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
+    if (canFire) {
+      drone.shootTimer = SHOOT_COOLDOWN + Math.random() * 400;
 
-    if (pdist > 0) {
-      bullets.push({
-        x: drone.x + drone.w / 2,
-        y: drone.y + drone.h / 2,
-        vx: (pdx / pdist) * BULLET_SPEED,
-        vy: (pdy / pdist) * BULLET_SPEED * 0.5,
-        age: 0,
-      });
-      shakeAmount = 2;
-      for (let i = 0; i < 4; i++) {
-        spawnParticle(drone.x + drone.w / 2, drone.y + drone.h / 2, '#ff4400');
+      // Aim at player
+      const pdx = player.x + player.w / 2 - (drone.x + drone.w / 2);
+      const pdy = player.y + player.h / 2 - (drone.y + drone.h / 2);
+      const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
+
+      if (pdist > 0) {
+        bullets.push({
+          x: drone.x + drone.w / 2,
+          y: drone.y + drone.h / 2,
+          vx: (pdx / pdist) * BULLET_SPEED,
+          vy: (pdy / pdist) * BULLET_SPEED * 0.5,
+          age: 0,
+        });
+        shakeAmount = 2;
+        for (let i = 0; i < 4; i++) {
+          spawnParticle(drone.x + drone.w / 2, drone.y + drone.h / 2, '#ff4400');
+        }
       }
     }
   }

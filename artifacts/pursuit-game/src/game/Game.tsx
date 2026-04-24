@@ -130,6 +130,7 @@ function makeDrone(): Drone {
     wobbleDir: 1,
     stuckTimer: 0,
     stuckLastX: -80,
+    lastFireSide: 0,
   };
 }
 

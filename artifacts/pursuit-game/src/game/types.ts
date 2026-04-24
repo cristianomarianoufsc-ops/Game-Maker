@@ -136,6 +136,7 @@ export interface Drone {
   wobbleDir: number;
   stuckTimer: number;   // frames sem progresso significativo (para teleporte)
   stuckLastX: number;  // referência de X para detectar estagnação
+  lastFireSide: -1 | 0 | 1; // último lado em que atirou estando na escada (-1=esq, 0=neutro, 1=dir)
 }
 
 export interface Camera {
