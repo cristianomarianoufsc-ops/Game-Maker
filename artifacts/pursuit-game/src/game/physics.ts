@@ -1330,9 +1330,11 @@ export function updateDrone(
   // Keep drone on screen y — durante overfly de parede alta, permite sair pelo topo
   // Quando o jogador escala, libera o teto pra acompanhar a subida no prédio
   const climbingCeiling = Math.min(30, player.y - 220);
-  const dronMinY = isOverflying || playerNearFireEscape
-    ? -(DRONE_H + 10)
-    : (player.isClimbing ? climbingCeiling : 30);
+  const dronMinY = playerNearFireEscape
+    ? Math.min(player.y - 220, -(DRONE_H + 10))
+    : isOverflying
+      ? -(DRONE_H + 10)
+      : (player.isClimbing ? climbingCeiling : 30);
   if (drone.y < dronMinY) { drone.y = dronMinY; if (!isOverflying && !player.isClimbing) drone.vy = Math.abs(drone.vy); }
   if (drone.y > GROUND_Y - 60) { drone.y = GROUND_Y - 60; drone.vy = -Math.abs(drone.vy); }
 
