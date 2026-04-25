@@ -173,7 +173,7 @@ const FE_BUILDING_W = 820;
 const FE_BUILDING_TOP_Y_OFFSET = 1560;  // altura do prédio acima do chão
 const FE_PLAT_X_RENDER = 21945;          // landings centradas entre as janelas
 const FE_PLAT_W_RENDER = 370;
-const FE_LADDER_W = 56;                   // escada larga, no meio da landing
+const FE_LADDER_W = 76;                   // escada larga, no meio da landing
 const FE_FLOORS_Y = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320]; // mesma lista do level.ts
 
 export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: number, withFloors: boolean = true): void {
