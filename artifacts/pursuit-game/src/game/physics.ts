@@ -1314,7 +1314,8 @@ export function updateDrone(
   if (playerNearFireEscape) {
     // Modo "subida turbo": move o drone diretamente em direção ao alvo,
     // ignorando física/inércia, pra garantir que ele alcança o topo do prédio.
-    const MAX_STEP = 14;
+    // Passo grande pra alternar entre os polos rapidamente.
+    const MAX_STEP = 24;
     if (dist > MAX_STEP) {
       drone.x += (dx / dist) * MAX_STEP;
       drone.y += (dy / dist) * MAX_STEP;
@@ -1390,18 +1391,13 @@ export function updateDrone(
 
   if (drone.shootTimer <= 0) {
     if (playerNearFireEscape) {
-      // Na escada: drone só atira quando está fisicamente PARADO (vx baixo)
-      // E posicionado num dos extremos. Trânsito entre polos NUNCA dispara.
-      // Sem delay de mira — assim que chega no extremo, dispara.
+      // Na escada: dispara só quando o drone CHEGOU no alvo (dist pequena)
+      // E o alvo está num dos extremos. Trânsito entre polos NUNCA dispara.
       const currentSide: -1 | 1 = sideFactor > 0 ? 1 : -1;
-      const targetExtremeX = FE_LADDER_CX + currentSide * 200;
-      const droneCenterX = drone.x + drone.w / 2;
-      const droneArrived = Math.abs(droneCenterX - targetExtremeX) < 40;
-      const droneSettled = Math.abs(drone.vx) < 0.5;
+      const droneArrived = dist < 30; // chegou (ou snapou) no alvo atual
       const targetAtExtreme = Math.abs(sideFactor) > 0.97;
       if (
         droneArrived &&
-        droneSettled &&
         targetAtExtreme &&
         currentSide !== drone.lastFireSide
       ) {
