@@ -11,7 +11,8 @@ import {
   SIDEFLIP_DURATION, SIDEFLIP_BOOST,
 } from './constants';
 import { getPlatformCollisionRects, getSlopeSurfaceY } from './collision';
-import { FIRE_ESCAPE, FIRE_ESCAPE_TOP_FLOOR_H, FIRE_ESCAPES } from './level';
+import { FIRE_ESCAPE, FIRE_ESCAPE_TOP_FLOOR_H, FIRE_ESCAPES, RIVER } from './level';
+import { spawnRiverRipple } from './render';
 import type { SlopedRect } from './collision';
 
 interface BoxStackWall extends SlopedRect {
@@ -940,6 +941,18 @@ export function updatePlayer(
   if (!prevOnGround && p.onGround) {
     const fallVy = p.peakFallVy;
     p.peakFallVy = 0;
+
+    // Ripple na água se aterrissou em um toco do rio
+    const feetCenterX = p.x + p.w / 2;
+    const expectedTopY = GROUND_Y - RIVER.STUMP_RISE - PLAYER_H;
+    if (Math.abs(p.y - expectedTopY) < 6) {
+      for (const stumpX of RIVER.STUMPS_X) {
+        if (feetCenterX >= stumpX - 4 && feetCenterX <= stumpX + RIVER.STUMP_W + 4) {
+          spawnRiverRipple(stumpX + RIVER.STUMP_W / 2);
+          break;
+        }
+      }
+    }
 
     // landingGroundY = bottom of player after collision; jumpOriginGroundY is updated every
     // grounded frame so it always reflects the last surface the player was standing on.

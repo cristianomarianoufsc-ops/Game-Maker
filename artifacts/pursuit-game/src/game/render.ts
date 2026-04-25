@@ -1029,6 +1029,17 @@ export function drawStartingBackWall(ctx: CanvasRenderingContext2D, camX: number
 // ── RIO COM TOCOS DE MADEIRA ──────────────────────────────────────
 // Constantes em level.ts (RIVER) — importado no topo do arquivo.
 
+// Ondas circulares na superfície da água quando algo aterrissa em um toco
+type RiverRipple = { x: number; bornAt: number };
+const _riverRipples: RiverRipple[] = [];
+const RIPPLE_DURATION_MS = 900;
+
+export function spawnRiverRipple(worldX: number): void {
+  _riverRipples.push({ x: worldX, bornAt: Date.now() });
+  // Garante limite — descarta os mais antigos se acumular
+  if (_riverRipples.length > 24) _riverRipples.splice(0, _riverRipples.length - 24);
+}
+
 export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
   const screenX1 = RIVER.X1 - camX;
   const screenX2 = RIVER.X2 - camX;
@@ -1091,6 +1102,41 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
       else ctx.lineTo(sx, yLine + wave);
     }
     ctx.stroke();
+  }
+
+  // ── ONDAS CIRCULARES (ripples ao aterrissar) ─────────────────────
+  if (_riverRipples.length > 0) {
+    const now = Date.now();
+    ctx.save();
+    for (let i = _riverRipples.length - 1; i >= 0; i--) {
+      const r = _riverRipples[i];
+      const age = now - r.bornAt;
+      if (age >= RIPPLE_DURATION_MS) { _riverRipples.splice(i, 1); continue; }
+      const prog = age / RIPPLE_DURATION_MS;          // 0 → 1
+      const sx = r.x - camX;
+      // Limite à área do rio para não vazar nas margens
+      if (sx < screenX1 - 60 || sx > screenX2 + 60) continue;
+      // 3 anéis defasados expandindo
+      for (let k = 0; k < 3; k++) {
+        const kProg = prog - k * 0.18;
+        if (kProg <= 0 || kProg >= 1) continue;
+        const radiusX = 6 + kProg * 56;
+        const radiusY = radiusX * 0.32;               // achatado (perspectiva)
+        const alpha = (1 - kProg) * 0.55;
+        ctx.strokeStyle = `rgba(220,200,180,${alpha})`;
+        ctx.lineWidth = 1.4 - kProg * 1.0;
+        ctx.beginPath();
+        ctx.ellipse(sx, waterTop + 2, radiusX, radiusY, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        // Realce avermelhado (mesma paleta da água)
+        ctx.strokeStyle = `rgba(255,120,60,${alpha * 0.4})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.ellipse(sx, waterTop + 2, radiusX * 0.92, radiusY * 0.85, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
   }
 
   // ── REFLEXOS DOS TOCOS NA ÁGUA ───────────────────────────────────

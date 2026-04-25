@@ -1,6 +1,7 @@
 {
   "types": [
     "box",
-    "obstacle"
+    "obstacle",
+    "wall"
   ]
 }
