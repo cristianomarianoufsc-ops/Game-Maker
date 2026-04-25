@@ -15,6 +15,8 @@ import ladderDescendUrl from '@assets/image_1776998292447.png';
 import fireEscapeFloorUrl from '@assets/image_1776998525637.png';
 import dogSheetUrl from '@assets/DOG_1776795245228.png';
 import dogIdleUrl from '@assets/image_1776737992484.png';
+import bystander1Url from '@assets/1_1777150999247.png';
+import bystander2Url from '@assets/2_1777150999248.png';
 import standingTireUrl from '@assets/pneu_1776643651883.png';
 import rollingTireUrl from '@assets/pneu2_1776643651884.png';
 import brickTextureUrl from '/brick_texture.png';
@@ -26,14 +28,14 @@ import {
 import { generateLevel, generateBuildings, generateWallTestLevel } from './level';
 import {
   updatePlayer, updateDrone, updateBullets, updateParticles, spawnParticleHelper,
-  updateFallingBoxes, updateFlyingTires, updateDogs,
+  updateFallingBoxes, updateFlyingTires, updateDogs, updateBystanders,
 } from './physics';
 import {
   drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawFireEscapeBuilding, drawFireEscapeFloors, drawGround, drawRiver,
   drawStreetBuildings, drawPlatforms, drawFlyingTires, drawTireHideouts,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
-  drawEditorUI, drawDogs,
+  drawEditorUI, drawDogs, drawBystanders,
 } from './render';
 import {
   addPlatformCollisionBox,
@@ -536,6 +538,8 @@ export default function Game() {
   const rollingTireImgRef = useRef<HTMLImageElement | null>(null);
   const dogSheetImgRef = useRef<HTMLImageElement | null>(null);
   const dogIdleImgRef = useRef<HTMLImageElement | null>(null);
+  const bystander1ImgRef = useRef<HTMLImageElement | null>(null);
+  const bystander2ImgRef = useRef<HTMLImageElement | null>(null);
   const customSpriteImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   // Responsive scale: fit canvas inside available viewport
@@ -831,6 +835,32 @@ export default function Game() {
         biteCooldown: 0,
         patrolLeft: 19211,
         patrolRight: 20745,
+      },
+    ] : [],
+    bystanders: gameMode === 'story' ? [
+      {
+        x: 25985,
+        y: GROUND_Y - 92,
+        w: 60,
+        h: 92,
+        vx: 0,
+        facingRight: true,
+        state: 'sit' as const,
+        spriteId: 1 as const,
+        animTimer: 0,
+        triggerX: 25960,
+      },
+      {
+        x: 26095,
+        y: GROUND_Y - 92,
+        w: 60,
+        h: 92,
+        vx: 0,
+        facingRight: true,
+        state: 'sit' as const,
+        spriteId: 2 as const,
+        animTimer: 0,
+        triggerX: 25960,
       },
     ] : [],
   }), []);
@@ -1166,6 +1196,28 @@ export default function Game() {
       }
     };
     dogIdleImg.src = dogIdleUrl;
+
+    const bystander1Img = new Image();
+    bystander1Img.onload = () => {
+      const stripped = stripWhiteBackground(bystander1Img);
+      if (stripped.complete && stripped.naturalWidth > 0) {
+        bystander1ImgRef.current = stripped;
+      } else {
+        stripped.onload = () => { bystander1ImgRef.current = stripped; };
+      }
+    };
+    bystander1Img.src = bystander1Url;
+
+    const bystander2Img = new Image();
+    bystander2Img.onload = () => {
+      const stripped = stripWhiteBackground(bystander2Img);
+      if (stripped.complete && stripped.naturalWidth > 0) {
+        bystander2ImgRef.current = stripped;
+      } else {
+        stripped.onload = () => { bystander2ImgRef.current = stripped; };
+      }
+    };
+    bystander2Img.src = bystander2Url;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       if (down && gsRef.current?.gamePhase === 'editor' && editorCollisionModeRef.current) {
@@ -3046,6 +3098,8 @@ export default function Game() {
           for (let i = 0; i < 6; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
         });
 
+        updateBystanders(gs.bystanders, gs.player, gs.droneIntroduced, dt);
+
         gs.particles = updateParticles(gs.particles, dt);
 
         if (gs.screenShake > 0) gs.screenShake = Math.max(0, gs.screenShake - 0.4);
@@ -3259,6 +3313,7 @@ export default function Game() {
       drawFlyingTires(ctx, gs.flyingTires, gs.camera.x, rollingTireImgRef.current);
       drawParticles(ctx, gs);
       drawDogs(ctx, gs.dogs, gs.camera.x, dogSheetImgRef.current, dogIdleImgRef.current);
+      drawBystanders(ctx, gs.bystanders, gs.camera.x, bystander1ImgRef.current, bystander2ImgRef.current);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current, ladderClimbImgRef.current, ladderDescendImgRef.current);
       drawFireEscapeFloors(ctx, gs.camera.x, fireEscapeFloorImgRef.current);
       drawTireHideouts(ctx, gs.platforms, gs.camera.x, standingTireImgRef.current, gs.destroyedTireIndices);

@@ -183,6 +183,21 @@ export interface FlyingTire {
 
 export type DogAnimState = 'idle' | 'run' | 'bite';
 
+export type BystanderState = 'sit' | 'flee';
+
+export interface Bystander {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  vx: number;
+  facingRight: boolean;
+  state: BystanderState;
+  spriteId: 1 | 2;          // qual das duas sheets usar
+  animTimer: number;
+  triggerX: number;          // a partir de qual x do player ele foge
+}
+
 export interface Dog {
   x: number;
   y: number;
@@ -218,6 +233,7 @@ export interface GameState {
   flyingTires: FlyingTire[];
   destroyedTireIndices: number[];
   dogs: Dog[];
+  bystanders: Bystander[];
 }
 
 export interface Keys {

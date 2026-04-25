@@ -1,4 +1,4 @@
-import type { GameState, Platform, FlyingTire, Dog } from './types';
+import type { GameState, Platform, FlyingTire, Dog, Bystander } from './types';
 import type { BuildingDef } from './level';
 import { RIVER } from './level';
 import {
@@ -3114,6 +3114,53 @@ export function drawDogs(
       }
     }
 
+    ctx.restore();
+  }
+}
+
+// --- Bystanders (NPCs sentados que fogem ao ver o Horácio com drone) ---
+
+const BYSTANDER_RUN_FRAME_INTERVAL = 140; // ms por frame
+
+export function drawBystanders(
+  ctx: CanvasRenderingContext2D,
+  bystanders: Bystander[],
+  camX: number,
+  sheet1: HTMLImageElement | null,
+  sheet2: HTMLImageElement | null
+): void {
+  for (const b of bystanders) {
+    const sheet = b.spriteId === 1 ? sheet1 : sheet2;
+    if (!sheet || !sheet.complete || sheet.naturalWidth === 0) continue;
+
+    const screenX = b.x - camX;
+    if (screenX < -200 || screenX > CANVAS_W + 200) continue;
+
+    const imgW = sheet.naturalWidth;
+    const imgH = sheet.naturalHeight;
+    const frameW = Math.floor(imgW / 3);   // 3 frames lado a lado
+    const frameH = imgH;
+
+    // Escolhe frame: 0 = sentado; 1,2 = corrida
+    let frameIdx = 0;
+    if (b.state === 'flee') {
+      frameIdx = 1 + (Math.floor(b.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2);
+    }
+
+    // Tamanho de exibição — proporcional ao chão. Sentado fica mais baixo.
+    const displayH = b.state === 'sit' ? 92 : 96;
+    const displayW = Math.round(displayH * (frameW / frameH));
+    // Sentado: pé/caixote no chão. Correndo: mesmo pé no chão.
+    const screenY = GROUND_Y - displayH + 4;
+
+    ctx.save();
+    if (!b.facingRight) {
+      ctx.translate(screenX + displayW, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(sheet, frameIdx * frameW, 0, frameW, frameH, 0, screenY, displayW, displayH);
+    } else {
+      ctx.drawImage(sheet, frameIdx * frameW, 0, frameW, frameH, screenX, screenY, displayW, displayH);
+    }
     ctx.restore();
   }
 }

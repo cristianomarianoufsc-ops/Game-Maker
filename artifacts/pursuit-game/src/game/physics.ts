@@ -1,4 +1,4 @@
-import type { Player, Drone, Bullet, Platform, Particle, GameState, Keys, FallingBox, FlyingTire, Dog } from './types';
+import type { Player, Drone, Bullet, Platform, Particle, GameState, Keys, FallingBox, FlyingTire, Dog, Bystander } from './types';
 import {
   GRAVITY, JUMP_FORCE, PLAYER_SPEED, ROLL_SPEED, ROLL_DURATION, CLIMB_SPEED,
   MAX_FALL_SPEED, PLAYER_W, PLAYER_H, PLAYER_ROLL_H, DRONE_W, DRONE_H,
@@ -1775,6 +1775,35 @@ export function updateBullets(
   }
 
   return surviving;
+}
+
+export function updateBystanders(
+  bystanders: Bystander[],
+  player: Player,
+  droneActive: boolean,
+  dt: number
+): void {
+  const FLEE_SPEED = 4.2;
+  const DESPAWN_X = 28000;       // some quando passa muito longe à direita
+  for (const b of bystanders) {
+    b.animTimer += dt;
+    if (b.state === 'sit') {
+      // Trigger: player passou do x do gatilho com drone perseguindo
+      if (droneActive && player.x > b.triggerX) {
+        b.state = 'flee';
+        b.facingRight = true;
+        b.vx = FLEE_SPEED;
+        b.animTimer = 0;
+      }
+    } else {
+      // Em fuga — corre pra direita até sumir
+      b.x += b.vx;
+      if (b.x > DESPAWN_X) {
+        // Mantém posição mas zera vx pra não consumir CPU à toa
+        b.vx = 0;
+      }
+    }
+  }
 }
 
 export function updateDogs(dogs: Dog[], player: Player, dt: number, onBite: () => void): void {
