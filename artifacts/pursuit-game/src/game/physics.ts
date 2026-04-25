@@ -11,7 +11,7 @@ import {
   SIDEFLIP_DURATION, SIDEFLIP_BOOST,
 } from './constants';
 import { getPlatformCollisionRects, getSlopeSurfaceY } from './collision';
-import { FIRE_ESCAPE, FIRE_ESCAPE_TOP_FLOOR_H } from './level';
+import { FIRE_ESCAPE, FIRE_ESCAPE_TOP_FLOOR_H, FIRE_ESCAPES } from './level';
 import type { SlopedRect } from './collision';
 
 interface BoxStackWall extends SlopedRect {
@@ -726,11 +726,15 @@ export function updatePlayer(
 
   // Topo da escada: descer apertando ↓ se está em cima da landing do topo,
   // dentro do range X da escada — entra no climb pra descer pelo vão.
+  // Verifica todas as escadas dos prédios; usa a que o jogador está em cima.
   {
     const TOP_FLOOR_Y = GROUND_Y - FIRE_ESCAPE_TOP_FLOOR_H;
-    const LADDER_X_MIN = FIRE_ESCAPE.WALL_X;
-    const LADDER_X_MAX = FIRE_ESCAPE.WALL_X + FIRE_ESCAPE.WALL_W;
     const playerCenterX = p.x + p.w / 2;
+    const activeFE = FIRE_ESCAPES.find(fe =>
+      playerCenterX >= fe.WALL_X - 4 && playerCenterX <= fe.WALL_X + fe.WALL_W + 4
+    );
+    const LADDER_X_MIN = activeFE ? activeFE.WALL_X : FIRE_ESCAPE.WALL_X;
+    const LADDER_X_MAX = activeFE ? activeFE.WALL_X + activeFE.WALL_W : FIRE_ESCAPE.WALL_X + FIRE_ESCAPE.WALL_W;
     if (
       keys.down && p.onGround && !p.isClimbing && !p.isRolling &&
       Math.abs((p.y + ph) - TOP_FLOOR_Y) < 4 &&
@@ -1259,10 +1263,21 @@ export function updateDrone(
   const targetY = player.y + verticalOffset + Math.cos(Date.now() * 0.0009) * 20;
 
   // Detecta se o jogador está na escada de incêndio (pela posição X), mesmo sem estar
-  // ativamente escalando — basta estar dentro da coluna do prédio acima do solo.
-  const FE_LADDER_CX = FIRE_ESCAPE.WALL_X + FIRE_ESCAPE.WALL_W / 2;
+  // ativamente escalando — basta estar dentro da coluna de ALGUM dos prédios acima do solo.
+  // Usa o prédio mais próximo para definir o centro da escada (FE_LADDER_CX).
+  const playerCx = player.x + player.w / 2;
+  let FE_LADDER_CX = FIRE_ESCAPE.WALL_X + FIRE_ESCAPE.WALL_W / 2;
+  let minLadderDist = Infinity;
+  for (const fe of FIRE_ESCAPES) {
+    const cx = fe.WALL_X + fe.WALL_W / 2;
+    const d = Math.abs(playerCx - cx);
+    if (d < minLadderDist) {
+      minLadderDist = d;
+      FE_LADDER_CX = cx;
+    }
+  }
   const playerNearFireEscape =
-    Math.abs((player.x + player.w / 2) - FE_LADDER_CX) < FIRE_ESCAPE.PLAT_W / 2 + 60 &&
+    minLadderDist < FIRE_ESCAPE.PLAT_W / 2 + 60 &&
     player.y < GROUND_Y - 60;
 
   // Quando o jogador está escalando a escada do prédio, o drone atravessa TUDO

@@ -176,8 +176,27 @@ const FE_PLAT_W_RENDER = 370;
 const FE_LADDER_W = 76;                   // escada larga, no meio da landing
 const FE_FLOORS_Y = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320]; // mesma lista do level.ts
 
+// Conjunto de prédios — manter sincronizado com FIRE_ESCAPES em level.ts
+// Cada item: { buildingX, platX } — o offset entre eles é 880 (820 + 60 de respiro).
+const FE_BUILDINGS_RENDER = [
+  { buildingX: FE_BUILDING_X,        platX: FE_PLAT_X_RENDER        },
+  { buildingX: FE_BUILDING_X + 880,  platX: FE_PLAT_X_RENDER + 880  },
+];
+
 export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: number, withFloors: boolean = true): void {
-  const screenLeft = FE_BUILDING_X - camX;
+  for (const fe of FE_BUILDINGS_RENDER) {
+    drawSingleFireEscapeBuilding(ctx, camX, fe.buildingX, fe.platX, withFloors);
+  }
+}
+
+function drawSingleFireEscapeBuilding(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  buildingX: number,
+  platX: number,
+  withFloors: boolean,
+): void {
+  const screenLeft = buildingX - camX;
   if (screenLeft + FE_BUILDING_W < -50 || screenLeft > CANVAS_W + 50) return;
 
   const buildingTop = GROUND_Y - FE_BUILDING_TOP_Y_OFFSET;
@@ -260,7 +279,7 @@ export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: numb
   }
 
   // ── ESCADA DE INCÊNDIO (estrutura metálica) ────────────────────
-  const platScreenX = FE_PLAT_X_RENDER - camX;
+  const platScreenX = platX - camX;
   const buildingWallX = screenLeft + FE_BUILDING_W - 4;
   const topFloorH = FE_FLOORS_Y[FE_FLOORS_Y.length - 1];
 
@@ -433,10 +452,22 @@ export function drawFireEscapeFloors(
   camX: number,
   textureImg: HTMLImageElement | null,
 ): void {
-  const screenLeft = FE_BUILDING_X - camX;
+  for (const fe of FE_BUILDINGS_RENDER) {
+    drawSingleFireEscapeFloors(ctx, camX, fe.buildingX, fe.platX, textureImg);
+  }
+}
+
+function drawSingleFireEscapeFloors(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  buildingX: number,
+  platX: number,
+  textureImg: HTMLImageElement | null,
+): void {
+  const screenLeft = buildingX - camX;
   if (screenLeft + FE_BUILDING_W < -50 || screenLeft > CANVAS_W + 50) return;
 
-  const platScreenX = FE_PLAT_X_RENDER - camX;
+  const platScreenX = platX - camX;
   const platLeft = platScreenX;
   const platRight = platScreenX + FE_PLAT_W_RENDER;
   const FLOOR_H = 24;

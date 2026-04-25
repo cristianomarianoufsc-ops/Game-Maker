@@ -20,6 +20,18 @@ export const FIRE_ESCAPE = {
 };
 export const FIRE_ESCAPE_TOP_FLOOR_H = FIRE_ESCAPE.FLOOR_HEIGHTS[FIRE_ESCAPE.FLOOR_HEIGHTS.length - 1];
 
+// Segundo prédio idêntico, deslocado 880px (largura 820 do prédio + 60px de respiro)
+export const FIRE_ESCAPE_OFFSET_2 = 880;
+export const FIRE_ESCAPE_2 = {
+  PLAT_X: FIRE_ESCAPE.PLAT_X + FIRE_ESCAPE_OFFSET_2,
+  PLAT_W: FIRE_ESCAPE.PLAT_W,
+  PLAT_H: FIRE_ESCAPE.PLAT_H,
+  WALL_X: FIRE_ESCAPE.WALL_X + FIRE_ESCAPE_OFFSET_2,
+  WALL_W: FIRE_ESCAPE.WALL_W,
+  FLOOR_HEIGHTS: FIRE_ESCAPE.FLOOR_HEIGHTS,
+};
+export const FIRE_ESCAPES = [FIRE_ESCAPE, FIRE_ESCAPE_2];
+
 // ──────────────────────────────────────────────────────────────────
 //  ALTERNAÇÃO DE ZONAS:
 //
@@ -329,51 +341,54 @@ export function generateLevel(): Platform[] {
   // Localizado na FREE ZONE 3, logo após o muro do ferro velho.
   // Proporcional ao Horácio — andares bem espaçados (130px) e landings amplas.
   // 6 andares + telhado, bem alto (passa do topo da câmera, ela sobe junto).
-  const FE_PLAT_X = FIRE_ESCAPE.PLAT_X;
-  const FE_PLAT_W = FIRE_ESCAPE.PLAT_W;
-  const FE_PLAT_H = FIRE_ESCAPE.PLAT_H;
-  const FE_WALL_X = FIRE_ESCAPE.WALL_X;
-  const FE_WALL_W = FIRE_ESCAPE.WALL_W;
-  const FE_FLOOR_HEIGHTS = FIRE_ESCAPE.FLOOR_HEIGHTS;
-  const FE_TOP_H = FE_FLOOR_HEIGHTS[FE_FLOOR_HEIGHTS.length - 1];
+  // Gera a estrutura (escada + landings) para cada prédio do conjunto
+  FIRE_ESCAPES.forEach((fe) => {
+    const FE_PLAT_X = fe.PLAT_X;
+    const FE_PLAT_W = fe.PLAT_W;
+    const FE_PLAT_H = fe.PLAT_H;
+    const FE_WALL_X = fe.WALL_X;
+    const FE_WALL_W = fe.WALL_W;
+    const FE_FLOOR_HEIGHTS = fe.FLOOR_HEIGHTS;
+    const FE_TOP_H = FE_FLOOR_HEIGHTS[FE_FLOOR_HEIGHTS.length - 1];
 
-  // Escada (atravessável) no centro das landings — Horácio fica em cima e ↑ pra subir
-  platforms.push({
-    x: FE_WALL_X, y: GROUND_Y - FE_TOP_H, w: FE_WALL_W, h: FE_TOP_H,
-    type: 'wall', isLadder: true,
-    hideRender: true,
-  });
-
-  // Landings de cada andar (plataformas finas estilo grade metálica)
-  // Divididas em 2 partes (esquerda e direita) deixando um buraco no centro
-  // exatamente onde está a escada — Horácio sobe livre sem bater na grade.
-  // Marcadas com hideRender — desenhadas por drawFireEscapeBuilding como peça única.
-  const FE_PLAT_LEFT_W = FE_WALL_X - FE_PLAT_X;                 // até a borda esquerda da escada
-  const FE_PLAT_RIGHT_X = FE_WALL_X + FE_WALL_W;                // depois da borda direita
-  const FE_PLAT_RIGHT_W = (FE_PLAT_X + FE_PLAT_W) - FE_PLAT_RIGHT_X;
-  FE_FLOOR_HEIGHTS.forEach((floorH) => {
-    const isTopFloor = floorH === FIRE_ESCAPE_TOP_FLOOR_H;
-    // Esquerda: no andar do topo a hitbox cobre o vão da escada (Horácio pousa).
+    // Escada (atravessável) no centro das landings — Horácio fica em cima e ↑ pra subir
     platforms.push({
-      x: FE_PLAT_X, y: GROUND_Y - floorH, w: FE_PLAT_LEFT_W, h: FE_PLAT_H,
-      type: 'platform',
+      x: FE_WALL_X, y: GROUND_Y - FE_TOP_H, w: FE_WALL_W, h: FE_TOP_H,
+      type: 'wall', isLadder: true,
       hideRender: true,
-      isFireEscapeFloor: true,
-      ...(isTopFloor ? { isLadderTopFloor: true } : {}),
-      collisionBoxes: isTopFloor
-        ? [{ x: 0, y: 0, w: 165, h: 18 }]
-        : [{ x: 0, y: 0, w: 143, h: 18 }],
     });
-    // Direita
-    platforms.push({
-      x: FE_PLAT_RIGHT_X, y: GROUND_Y - floorH, w: FE_PLAT_RIGHT_W, h: FE_PLAT_H,
-      type: 'platform',
-      hideRender: true,
-      isFireEscapeFloor: true,
-      ...(isTopFloor ? { isLadderTopFloor: true } : {}),
-      collisionBoxes: isTopFloor
-        ? [{ x: 0, y: 0, w: 165, h: 18 }]
-        : [{ x: 20, y: 0, w: 145, h: 18 }],
+
+    // Landings de cada andar (plataformas finas estilo grade metálica)
+    // Divididas em 2 partes (esquerda e direita) deixando um buraco no centro
+    // exatamente onde está a escada — Horácio sobe livre sem bater na grade.
+    // Marcadas com hideRender — desenhadas por drawFireEscapeBuilding como peça única.
+    const FE_PLAT_LEFT_W = FE_WALL_X - FE_PLAT_X;                 // até a borda esquerda da escada
+    const FE_PLAT_RIGHT_X = FE_WALL_X + FE_WALL_W;                // depois da borda direita
+    const FE_PLAT_RIGHT_W = (FE_PLAT_X + FE_PLAT_W) - FE_PLAT_RIGHT_X;
+    FE_FLOOR_HEIGHTS.forEach((floorH) => {
+      const isTopFloor = floorH === FIRE_ESCAPE_TOP_FLOOR_H;
+      // Esquerda: no andar do topo a hitbox cobre o vão da escada (Horácio pousa).
+      platforms.push({
+        x: FE_PLAT_X, y: GROUND_Y - floorH, w: FE_PLAT_LEFT_W, h: FE_PLAT_H,
+        type: 'platform',
+        hideRender: true,
+        isFireEscapeFloor: true,
+        ...(isTopFloor ? { isLadderTopFloor: true } : {}),
+        collisionBoxes: isTopFloor
+          ? [{ x: 0, y: 0, w: 165, h: 18 }]
+          : [{ x: 0, y: 0, w: 143, h: 18 }],
+      });
+      // Direita
+      platforms.push({
+        x: FE_PLAT_RIGHT_X, y: GROUND_Y - floorH, w: FE_PLAT_RIGHT_W, h: FE_PLAT_H,
+        type: 'platform',
+        hideRender: true,
+        isFireEscapeFloor: true,
+        ...(isTopFloor ? { isLadderTopFloor: true } : {}),
+        collisionBoxes: isTopFloor
+          ? [{ x: 0, y: 0, w: 165, h: 18 }]
+          : [{ x: 20, y: 0, w: 145, h: 18 }],
+      });
     });
   });
 
