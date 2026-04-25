@@ -1780,26 +1780,31 @@ export function updateBullets(
 export function updateBystanders(
   bystanders: Bystander[],
   player: Player,
+  drone: { x: number; y: number },
   droneActive: boolean,
   dt: number
 ): void {
-  const FLEE_SPEED = 4.2;
-  const DESPAWN_X = 28000;       // some quando passa muito longe à direita
+  const FLEE_SPEED = 4.8;
+  const DESPAWN_RIGHT_X = 28000;
+  const DESPAWN_LEFT_X  = 24000; // sai pela esquerda
+  // Distância horizontal do drone que dispara a fuga
+  const DRONE_FLEE_DIST = 400;
+
   for (const b of bystanders) {
     b.animTimer += dt;
     if (b.state === 'sit') {
-      // Trigger: player passou do x do gatilho com drone perseguindo
-      if (droneActive && player.x > b.triggerX) {
+      // Trigger: drone chegou perto
+      const droneDist = Math.abs(drone.x - b.x);
+      if (droneActive && droneDist < DRONE_FLEE_DIST) {
         b.state = 'flee';
-        b.facingRight = true;
-        b.vx = FLEE_SPEED;
+        b.facingRight = b.fleeDir === 'right';
+        b.vx = b.fleeDir === 'right' ? FLEE_SPEED : -FLEE_SPEED;
         b.animTimer = 0;
       }
     } else {
-      // Em fuga — corre pra direita até sumir
+      // Em fuga — corre na direção definida até sumir
       b.x += b.vx;
-      if (b.x > DESPAWN_X) {
-        // Mantém posição mas zera vx pra não consumir CPU à toa
+      if (b.x > DESPAWN_RIGHT_X || b.x < DESPAWN_LEFT_X) {
         b.vx = 0;
       }
     }

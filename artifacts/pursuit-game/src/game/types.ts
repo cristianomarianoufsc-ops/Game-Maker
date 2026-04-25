@@ -195,7 +195,8 @@ export interface Bystander {
   state: BystanderState;
   spriteId: 1 | 2;          // qual das duas sheets usar
   animTimer: number;
-  triggerX: number;          // a partir de qual x do player ele foge
+  triggerX: number;          // mantido para compatibilidade (não usado; trigger agora é por distância do drone)
+  fleeDir: 'left' | 'right'; // direção de fuga ao sentir o drone
 }
 
 export interface Dog {

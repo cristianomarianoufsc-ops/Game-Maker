@@ -3147,10 +3147,10 @@ export function drawBystanders(
       frameIdx = 1 + (Math.floor(b.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2);
     }
 
-    // Tamanho de exibição — proporcional ao chão. Sentado fica mais baixo.
-    const displayH = b.state === 'sit' ? 92 : 96;
+    // Tamanho de exibição — proporcional a Horácio (PLAYER_H = 50).
+    // NPCs adultos ficam um pouco maiores; sentado tem altura reduzida naturalmente pelo sprite.
+    const displayH = b.state === 'sit' ? 140 : 148;
     const displayW = Math.round(displayH * (frameW / frameH));
-    // Sentado: pé/caixote no chão. Correndo: mesmo pé no chão.
     const screenY = GROUND_Y - displayH + 4;
 
     ctx.save();

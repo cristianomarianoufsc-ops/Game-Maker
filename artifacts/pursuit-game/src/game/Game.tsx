@@ -839,28 +839,34 @@ export default function Game() {
     ] : [],
     bystanders: gameMode === 'story' ? [
       {
-        x: 25985,
-        y: GROUND_Y - 92,
+        // NPC da esquerda: virado para a direita (olhando pro NPC2 — conversa)
+        // Ao fugir: corre para a DIREITA, cruzando com NPC2 (efeito de trocar de lugar)
+        x: 25970,
+        y: GROUND_Y - 140,
         w: 60,
-        h: 92,
+        h: 140,
         vx: 0,
         facingRight: true,
         state: 'sit' as const,
         spriteId: 1 as const,
         animTimer: 0,
         triggerX: 25960,
+        fleeDir: 'right' as const,
       },
       {
-        x: 26095,
-        y: GROUND_Y - 92,
+        // NPC da direita: virado para a esquerda (olhando pro NPC1 — conversa)
+        // Ao fugir: corre para a ESQUERDA, cruzando com NPC1 (efeito de trocar de lugar)
+        x: 26090,
+        y: GROUND_Y - 140,
         w: 60,
-        h: 92,
+        h: 140,
         vx: 0,
-        facingRight: true,
+        facingRight: false,
         state: 'sit' as const,
         spriteId: 2 as const,
         animTimer: 0,
         triggerX: 25960,
+        fleeDir: 'left' as const,
       },
     ] : [],
   }), []);
@@ -3098,7 +3104,7 @@ export default function Game() {
           for (let i = 0; i < 6; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
         });
 
-        updateBystanders(gs.bystanders, gs.player, gs.droneIntroduced, dt);
+        updateBystanders(gs.bystanders, gs.player, gs.drone, gs.droneIntroduced, dt);
 
         gs.particles = updateParticles(gs.particles, dt);
 
