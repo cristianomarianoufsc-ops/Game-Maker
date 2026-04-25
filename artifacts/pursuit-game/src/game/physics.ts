@@ -1415,22 +1415,24 @@ export function updateDrone(
     }
   } else if (drone.shootTimer <= 0) {
     if (playerNearFireEscape) {
-      // Na escada: só inicia mira quando o drone (posição REAL, não o alvo)
-      // chega de fato no extremo do OUTRO lado. Evita disparar em trânsito.
+      // Na escada: drone só atira quando está fisicamente PARADO (vx baixo)
+      // E posicionado num dos extremos. Trânsito entre polos NUNCA dispara.
       const currentSide: -1 | 1 = sideFactor > 0 ? 1 : -1;
       const targetExtremeX = FE_LADDER_CX + currentSide * 200;
       const droneCenterX = drone.x + drone.w / 2;
-      const droneArrived = Math.abs(droneCenterX - targetExtremeX) < 35;
-      const targetAtExtreme = Math.abs(sideFactor) > 0.95;
+      const droneArrived = Math.abs(droneCenterX - targetExtremeX) < 40;
+      const droneSettled = Math.abs(drone.vx) < 0.5; // velocidade quase zero
+      const targetAtExtreme = Math.abs(sideFactor) > 0.97;
       if (
         droneArrived &&
+        droneSettled &&
         targetAtExtreme &&
         currentSide !== drone.lastFireSide
       ) {
         drone.lastFireSide = currentSide;
         drone.aimTimer = 700; // 0.7s de mira antes de disparar (visível)
       }
-      // senão: timer negativo "guarda" intenção até o drone chegar no extremo
+      // senão: timer negativo "guarda" intenção até o drone parar no extremo
     } else {
       drone.lastFireSide = 0;
       shouldFireNow = true;
