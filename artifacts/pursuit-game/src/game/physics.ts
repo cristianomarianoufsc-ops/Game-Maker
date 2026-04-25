@@ -1340,12 +1340,6 @@ export function updateDrone(
   drone.vx *= 0.84;
   drone.vy *= 0.84;
 
-  // Durante a fase de mira, drone congela completamente pra deixar o aviso nítido.
-  if (drone.aimTimer > 0) {
-    drone.vx = 0;
-    drone.vy = 0;
-  }
-
   drone.x += drone.vx;
   drone.y += drone.vy;
 
@@ -1394,34 +1388,16 @@ export function updateDrone(
   drone.shootTimer -= dt;
   let shouldFireNow = false;
 
-  if (drone.aimTimer > 0) {
-    // Fase de mira: drone "trava" no extremo, partículas amarelas pulsam
-    // em círculo crescente como aviso visual ao Horácio antes do tiro sair.
-    drone.aimTimer -= dt;
-    const aimProgress = 1 - drone.aimTimer / 700; // 0 → 1 ao longo da mira
-    const ringRadius = 8 + aimProgress * 22; // raio cresce ao longo do tempo
-    // 3 partículas por frame em posições rotacionadas no círculo
-    for (let i = 0; i < 3; i++) {
-      const ang = (Date.now() * 0.012 + (i * Math.PI * 2) / 3) % (Math.PI * 2);
-      spawnParticle(
-        drone.x + drone.w / 2 + Math.cos(ang) * ringRadius,
-        drone.y + drone.h / 2 + Math.sin(ang) * ringRadius,
-        aimProgress > 0.6 ? '#ff4400' : '#ffcc00'
-      );
-    }
-    if (drone.aimTimer <= 0) {
-      drone.aimTimer = 0;
-      shouldFireNow = true;
-    }
-  } else if (drone.shootTimer <= 0) {
+  if (drone.shootTimer <= 0) {
     if (playerNearFireEscape) {
       // Na escada: drone só atira quando está fisicamente PARADO (vx baixo)
       // E posicionado num dos extremos. Trânsito entre polos NUNCA dispara.
+      // Sem delay de mira — assim que chega no extremo, dispara.
       const currentSide: -1 | 1 = sideFactor > 0 ? 1 : -1;
       const targetExtremeX = FE_LADDER_CX + currentSide * 200;
       const droneCenterX = drone.x + drone.w / 2;
       const droneArrived = Math.abs(droneCenterX - targetExtremeX) < 40;
-      const droneSettled = Math.abs(drone.vx) < 0.5; // velocidade quase zero
+      const droneSettled = Math.abs(drone.vx) < 0.5;
       const targetAtExtreme = Math.abs(sideFactor) > 0.97;
       if (
         droneArrived &&
@@ -1430,9 +1406,8 @@ export function updateDrone(
         currentSide !== drone.lastFireSide
       ) {
         drone.lastFireSide = currentSide;
-        drone.aimTimer = 700; // 0.7s de mira antes de disparar (visível)
+        shouldFireNow = true;
       }
-      // senão: timer negativo "guarda" intenção até o drone parar no extremo
     } else {
       drone.lastFireSide = 0;
       shouldFireNow = true;
