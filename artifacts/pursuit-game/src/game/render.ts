@@ -179,8 +179,9 @@ const FE_FLOORS_Y = [120, 270, 420, 570, 720, 870, 1020, 1170, 1320]; // mesma l
 // Conjunto de prédios — manter sincronizado com FIRE_ESCAPES em level.ts
 // Cada item: { buildingX, platX } — o offset entre eles é 880 (820 + 60 de respiro).
 const FE_BUILDINGS_RENDER = [
-  { buildingX: FE_BUILDING_X,        platX: FE_PLAT_X_RENDER        },
-  { buildingX: FE_BUILDING_X + 880,  platX: FE_PLAT_X_RENDER + 880  },
+  { buildingX: FE_BUILDING_X,         platX: FE_PLAT_X_RENDER         },
+  { buildingX: FE_BUILDING_X + 880,   platX: FE_PLAT_X_RENDER + 880   },
+  { buildingX: FE_BUILDING_X + 1760,  platX: FE_PLAT_X_RENDER + 1760  },
 ];
 
 export function drawFireEscapeBuilding(ctx: CanvasRenderingContext2D, camX: number, withFloors: boolean = true): void {

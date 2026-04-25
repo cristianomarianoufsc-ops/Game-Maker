@@ -20,8 +20,9 @@ export const FIRE_ESCAPE = {
 };
 export const FIRE_ESCAPE_TOP_FLOOR_H = FIRE_ESCAPE.FLOOR_HEIGHTS[FIRE_ESCAPE.FLOOR_HEIGHTS.length - 1];
 
-// Segundo prédio idêntico, deslocado 880px (largura 820 do prédio + 60px de respiro)
+// Prédios idênticos enfileirados, cada um deslocado 880px (largura 820 + 60px de respiro)
 export const FIRE_ESCAPE_OFFSET_2 = 880;
+export const FIRE_ESCAPE_OFFSET_3 = 1760;
 export const FIRE_ESCAPE_2 = {
   PLAT_X: FIRE_ESCAPE.PLAT_X + FIRE_ESCAPE_OFFSET_2,
   PLAT_W: FIRE_ESCAPE.PLAT_W,
@@ -30,7 +31,15 @@ export const FIRE_ESCAPE_2 = {
   WALL_W: FIRE_ESCAPE.WALL_W,
   FLOOR_HEIGHTS: FIRE_ESCAPE.FLOOR_HEIGHTS,
 };
-export const FIRE_ESCAPES = [FIRE_ESCAPE, FIRE_ESCAPE_2];
+export const FIRE_ESCAPE_3 = {
+  PLAT_X: FIRE_ESCAPE.PLAT_X + FIRE_ESCAPE_OFFSET_3,
+  PLAT_W: FIRE_ESCAPE.PLAT_W,
+  PLAT_H: FIRE_ESCAPE.PLAT_H,
+  WALL_X: FIRE_ESCAPE.WALL_X + FIRE_ESCAPE_OFFSET_3,
+  WALL_W: FIRE_ESCAPE.WALL_W,
+  FLOOR_HEIGHTS: FIRE_ESCAPE.FLOOR_HEIGHTS,
+};
+export const FIRE_ESCAPES = [FIRE_ESCAPE, FIRE_ESCAPE_2, FIRE_ESCAPE_3];
 
 // ──────────────────────────────────────────────────────────────────
 //  ALTERNAÇÃO DE ZONAS:
