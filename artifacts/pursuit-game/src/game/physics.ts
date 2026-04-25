@@ -1280,8 +1280,8 @@ export function updateDrone(
     // mais rápido que o Horácio, ficando em ângulo bem acima dele.
     // Distanciada lateral até 80px pra fora da escada.
     // sideFactor: -1 = esquerda (padrão), +1 = direita (~40% do tempo).
-    // Ciclo curto (~4s) — escada é curta, alternância precisa ser rápida.
-    sideFactor = Math.tanh((Math.sin(Date.now() * 0.0016) - 0.2) * 6);
+    // Ciclo bem rápido (~2.2s) — alternância acelerada nesse trecho.
+    sideFactor = Math.tanh((Math.sin(Date.now() * 0.0028) - 0.2) * 6);
     const baseTx = FE_LADDER_CX + sideFactor * 200;
     const distanceMag = (1 - Math.cos(Date.now() * 0.0006)) * 40; // 0 → 80 → 0
     tx = baseTx + sideFactor * distanceMag + Math.sin(Date.now() * 0.0007) * 12;
