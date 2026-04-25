@@ -34,6 +34,7 @@ export interface Platform extends Rect {
   hideRender?: boolean;
   isFireEscapeFloor?: boolean;
   isLadderTopFloor?: boolean;
+  isRiverStump?: boolean;
 }
 
 export type PlayerState =

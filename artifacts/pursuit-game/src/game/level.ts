@@ -41,6 +41,17 @@ export const FIRE_ESCAPE_3 = {
 };
 export const FIRE_ESCAPES = [FIRE_ESCAPE, FIRE_ESCAPE_2, FIRE_ESCAPE_3];
 
+// ── RIO COM TOCOS DE MADEIRA (depois do terceiro prédio) ───────────
+// Trecho atravessado SOMENTE pulando entre tocos. Cair = morte por queda.
+export const RIVER = {
+  X1: 24820,        // borda esquerda do rio (fim da margem esquerda)
+  X2: 25750,        // borda direita do rio (início da margem direita)
+  STUMP_W: 60,
+  STUMP_TOP_H: 18,  // altura da hitbox em cima do toco (a parte que dá pra pisar)
+  // Centros dos tocos (gap ~140px entre tocos — pulo médio)
+  STUMPS_X: [24960, 25160, 25360, 25560] as const,
+};
+
 // ──────────────────────────────────────────────────────────────────
 //  ALTERNAÇÃO DE ZONAS:
 //
@@ -101,11 +112,31 @@ export function generateLevel(): Platform[] {
     { x: 22800, w: 550 },
     { x: 23450, w: 500 },
     { x: 24050, w: 550 },
-    { x: 24700, w: 2000},
+    // Margem esquerda do rio (pequena faixa de chão depois do 3º prédio)
+    { x: 24700, w: RIVER.X1 - 24700 },          // 24700 → 24820 (margem esquerda)
+    // RIO entre RIVER.X1 e RIVER.X2 — sem chão, só tocos pra pular
+    // Margem direita do rio + continuação da pista
+    { x: RIVER.X2, w: 26700 - RIVER.X2 },       // 25750 → 26700 (margem direita)
   ];
 
   groundSegments.forEach(({ x, w }) => {
     platforms.push({ x, y: GROUND_Y, w, h: GH, type: 'ground' });
+  });
+
+  // ── TOCOS DE MADEIRA NO RIO ────────────────────────────────────
+  // Plataformas com hitbox só no topo (18px), mas o sprite desce mais fundo
+  // pra parecer enterrado na água. Render é feito em drawRiver() (render.ts).
+  RIVER.STUMPS_X.forEach((stumpX) => {
+    platforms.push({
+      x: stumpX,
+      y: GROUND_Y,                    // topo do toco no nível do chão
+      w: RIVER.STUMP_W,
+      h: 80,                          // parte visível submersa (renderizada pelo drawRiver)
+      type: 'platform',
+      hideRender: true,
+      isRiverStump: true,
+      collisionBoxes: [{ x: 0, y: 0, w: RIVER.STUMP_W, h: RIVER.STUMP_TOP_H }],
+    });
   });
 
   // ── TRASH CAN OBSTACLES ────────────────────────────────────────

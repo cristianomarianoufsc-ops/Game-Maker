@@ -1,5 +1,6 @@
 import type { GameState, Platform, FlyingTire, Dog } from './types';
 import type { BuildingDef } from './level';
+import { RIVER } from './level';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, COLORS,
   PARALLAX_FAR, PARALLAX_MID, PARALLAX_NEAR,
@@ -1024,6 +1025,143 @@ export function drawStartingBackWall(ctx: CanvasRenderingContext2D, camX: number
 }
 
 // --- Ground & Platforms ---
+
+// ── RIO COM TOCOS DE MADEIRA ──────────────────────────────────────
+// Constantes em level.ts (RIVER) — importado no topo do arquivo.
+
+export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
+  const screenX1 = RIVER.X1 - camX;
+  const screenX2 = RIVER.X2 - camX;
+  if (screenX2 < -50 || screenX1 > CANVAS_W + 50) return;
+
+  const waterTop = GROUND_Y + 6;          // superfície um pouco abaixo do nível do chão
+  const waterBottom = CANVAS_H + 10;
+  const t = Date.now() * 0.002;
+
+  ctx.save();
+
+  // ── ÁGUA ─────────────────────────────────────────────────────────
+  // Fundo escuro (sobrepõe o abismo do drawGround na área do rio)
+  const waterGrad = ctx.createLinearGradient(0, waterTop, 0, waterBottom);
+  waterGrad.addColorStop(0,    '#0d2026');   // turquesa-escuro na superfície
+  waterGrad.addColorStop(0.25, '#08161c');
+  waterGrad.addColorStop(1,    '#020608');   // quase preto no fundo
+  ctx.fillStyle = waterGrad;
+  ctx.fillRect(screenX1, waterTop, screenX2 - screenX1, waterBottom - waterTop);
+
+  // Reflexo avermelhado do céu na superfície
+  const reflGrad = ctx.createLinearGradient(0, waterTop, 0, waterTop + 40);
+  reflGrad.addColorStop(0,   'rgba(160,30,15,0.35)');
+  reflGrad.addColorStop(0.6, 'rgba(80,15,8,0.15)');
+  reflGrad.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = reflGrad;
+  ctx.fillRect(screenX1, waterTop, screenX2 - screenX1, 40);
+
+  // Linha de margem (faixa escura nas bordas)
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(screenX1, waterTop - 2, screenX2 - screenX1, 2);
+
+  // ── ONDULAÇÕES (linhas finas correndo na superfície) ─────────────
+  ctx.strokeStyle = 'rgba(180,200,210,0.18)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 8; i++) {
+    const yLine = waterTop + 6 + i * 7;
+    const phase = t + i * 0.6;
+    ctx.beginPath();
+    for (let sx = screenX1; sx <= screenX2; sx += 6) {
+      const worldX = sx + camX;
+      const wave = Math.sin(worldX * 0.04 + phase) * 1.5;
+      if (sx === screenX1) ctx.moveTo(sx, yLine + wave);
+      else ctx.lineTo(sx, yLine + wave);
+    }
+    ctx.stroke();
+  }
+
+  // Brilho avermelhado fraco oscilando na superfície
+  ctx.strokeStyle = 'rgba(220,80,40,0.22)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 3; i++) {
+    const yLine = waterTop + 2 + i * 4;
+    const phase = t * 1.4 + i;
+    ctx.beginPath();
+    for (let sx = screenX1; sx <= screenX2; sx += 8) {
+      const worldX = sx + camX;
+      const wave = Math.sin(worldX * 0.03 + phase) * 1.2;
+      if (sx === screenX1) ctx.moveTo(sx, yLine + wave);
+      else ctx.lineTo(sx, yLine + wave);
+    }
+    ctx.stroke();
+  }
+
+  // ── TOCOS DE MADEIRA ─────────────────────────────────────────────
+  for (const stumpX of RIVER.STUMPS_X) {
+    const sx = stumpX - camX;
+    const sw = RIVER.STUMP_W;
+    const topY = GROUND_Y;            // topo do toco — o player fica em pé aqui
+    const submergedH = 70;            // parte visível submersa abaixo da superfície
+
+    // Sombra projetada no leito do rio (atrás do toco)
+    const shadowGrad = ctx.createRadialGradient(sx + sw/2, waterTop + 3, 4, sx + sw/2, waterTop + 3, sw * 0.9);
+    shadowGrad.addColorStop(0, 'rgba(0,0,0,0.5)');
+    shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = shadowGrad;
+    ctx.beginPath();
+    ctx.ellipse(sx + sw/2, waterTop + 3, sw * 0.85, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tronco submerso (parte abaixo da superfície — desbotado pela água)
+    ctx.fillStyle = '#3a2614';
+    ctx.fillRect(sx + 4, waterTop, sw - 8, submergedH);
+    ctx.fillStyle = 'rgba(0,30,40,0.55)';   // tonalidade verde-azulada da água
+    ctx.fillRect(sx + 4, waterTop, sw - 8, submergedH);
+
+    // Tronco acima da água — madeira escura
+    ctx.fillStyle = '#5a3a1e';
+    ctx.fillRect(sx, topY - 4, sw, waterTop - topY + 12);
+    // Borda direita escura (sombra do volume)
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(sx + sw - 6, topY - 4, 6, waterTop - topY + 12);
+    // Highlight esquerdo
+    ctx.fillStyle = '#7a5028';
+    ctx.fillRect(sx, topY - 4, 4, waterTop - topY + 12);
+
+    // Topo do toco — círculo dos anéis de crescimento
+    ctx.fillStyle = '#7a5028';
+    ctx.beginPath();
+    ctx.ellipse(sx + sw/2, topY - 2, sw/2, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#5a3a1e';
+    ctx.beginPath();
+    ctx.ellipse(sx + sw/2, topY - 2, sw/2 - 4, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Anéis do tronco
+    ctx.strokeStyle = '#3a2410';
+    ctx.lineWidth = 1;
+    for (let r = 4; r < sw/2 - 6; r += 5) {
+      ctx.beginPath();
+      ctx.ellipse(sx + sw/2, topY - 2, r, Math.max(1, r * 0.18), 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    // Núcleo (centro do toco)
+    ctx.fillStyle = '#2a1808';
+    ctx.beginPath();
+    ctx.ellipse(sx + sw/2, topY - 2, 3, 1.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Linha de água na base do toco (ondulação ao redor)
+    ctx.strokeStyle = 'rgba(220,80,40,0.45)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let dx = -8; dx <= sw + 8; dx += 4) {
+      const ww = Math.sin(t * 3 + (sx + dx) * 0.15) * 1.5;
+      if (dx === -8) ctx.moveTo(sx + dx, waterTop + ww);
+      else ctx.lineTo(sx + dx, waterTop + ww);
+    }
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
 
 export function drawGround(ctx: CanvasRenderingContext2D, camX: number): void {
   // Abyss / void — fills the entire bottom area; holes reveal this through the ground segments

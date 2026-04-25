@@ -29,7 +29,7 @@ import {
   updateFallingBoxes, updateFlyingTires, updateDogs,
 } from './physics';
 import {
-  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawFireEscapeBuilding, drawFireEscapeFloors, drawGround,
+  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawFireEscapeBuilding, drawFireEscapeFloors, drawGround, drawRiver,
   drawStreetBuildings, drawPlatforms, drawFlyingTires, drawTireHideouts,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
@@ -3096,6 +3096,7 @@ export default function Game() {
       drawAlleyDetails(ctx, gs.camera.x, gs.time);
       drawStartingBackWall(ctx, gs.camera.x);
       drawGround(ctx, gs.camera.x);
+      drawRiver(ctx, gs.camera.x);
 
       // World-space rendering (offset by camera)
       ctx.save();
