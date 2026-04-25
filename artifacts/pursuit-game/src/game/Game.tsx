@@ -548,14 +548,14 @@ export default function Game() {
 
   // Inicializa nomes da galeria do servidor ao montar
   useEffect(() => {
-    fetch('/api/sprites')
+    fetch('/__editor/sprites')
       .then(r => r.ok ? r.json() : { sprites: [] })
       .then((data: { sprites: { name: string }[] }) => {
         galleryServerNamesRef.current = new Set(data.sprites.map(s => s.name));
       })
       .catch(() => { /* silencioso */ });
 
-    fetch('/api/gallery-types')
+    fetch('/__editor/gallery-types')
       .then(r => r.ok ? r.json() : { types: [] })
       .then((data: { types: string[] }) => {
         galleryObjectTypesRef.current = new Set(data.types ?? []);
@@ -580,7 +580,7 @@ export default function Game() {
     setHistoryLoading(true);
     setHistoryMsg(null);
     try {
-      const r = await fetch('/api/list-level-patch-history');
+      const r = await fetch('/__editor/list-level-patch-history');
       if (r.ok) {
         const data = await r.json() as { snapshots: HistorySnapshot[] };
         setHistorySnapshots(data.snapshots ?? []);
@@ -599,7 +599,7 @@ export default function Game() {
     setHistoryLoading(true);
     setHistoryMsg(null);
     try {
-      const r = await fetch('/api/restore-level-patch-history', {
+      const r = await fetch('/__editor/restore-level-patch-history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file }),
@@ -623,7 +623,7 @@ export default function Game() {
     // Sprites salvos no servidor
     let serverSprites: { name: string; url: string; onServer: boolean }[] = [];
     try {
-      const resp = await fetch('/api/sprites');
+      const resp = await fetch('/__editor/sprites');
       if (resp.ok) {
         const data = await resp.json() as { sprites: { name: string; url: string }[] };
         serverSprites = data.sprites.map(s => ({ ...s, onServer: true }));
@@ -660,7 +660,7 @@ export default function Game() {
     if (onServer) {
       if (!window.confirm(`Deletar "${spriteName}" permanentemente?`)) return;
       try {
-        await fetch('/api/delete-sprite', {
+        await fetch('/__editor/delete-sprite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: spriteName }),
@@ -677,7 +677,7 @@ export default function Game() {
     e.stopPropagation();
     galleryObjectTypesRef.current.delete(type);
     const types = [...galleryObjectTypesRef.current];
-    fetch('/api/save-gallery-types', {
+    fetch('/__editor/save-gallery-types', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ types }),
@@ -688,7 +688,7 @@ export default function Game() {
   const saveToGallery = useCallback(async (p: Platform) => {
     if (p.type === 'sprite' && p.customSpriteName && p.customSpriteDataUrl) {
       try {
-        const resp = await fetch('/api/upload-sprite', {
+        const resp = await fetch('/__editor/upload-sprite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: p.customSpriteName, dataUrl: p.customSpriteDataUrl }),
@@ -705,7 +705,7 @@ export default function Game() {
     } else if (p.type !== 'ground') {
       galleryObjectTypesRef.current.add(p.type);
       const types = [...galleryObjectTypesRef.current];
-      fetch('/api/save-gallery-types', {
+      fetch('/__editor/save-gallery-types', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ types }),
@@ -879,7 +879,7 @@ export default function Game() {
       .join('\n');
   }, [platSignature]);
 
-  // Persiste o estado atual em /api/save-level-patch. Idempotente.
+  // Persiste o estado atual em /__editor/save-level-patch. Idempotente.
   // Retorna true em sucesso. Atualiza baseline e signature em caso positivo.
   const persistLevelPatch = useCallback(async (silent = false): Promise<boolean> => {
     if (!levelPatchLoadedRef.current) {
@@ -928,7 +928,7 @@ export default function Game() {
     const sigSnapshot = platformsSignature(currentPlatforms);
 
     try {
-      const r = await fetch('/api/save-level-patch', {
+      const r = await fetch('/__editor/save-level-patch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(levelPatch),
@@ -1327,7 +1327,7 @@ export default function Game() {
             merged.forEach((cp, i) => { cp.label = `CP${i + 1}`; });
             editorCustomCheckpointsRef.current = merged;
             editorCheckpointIdxRef.current = -1;
-            fetch('/api/save-level-patch', {
+            fetch('/__editor/save-level-patch', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ checkpoints: editorCustomCheckpointsRef.current }),
@@ -2105,7 +2105,7 @@ export default function Game() {
           editorCheckpointIdxRef.current = newIdx;
           const newLabel = merged[newIdx]?.label ?? `CP${merged.length}`;
           // Salva imediatamente no JSON para persistir
-          fetch('/api/save-level-patch', {
+          fetch('/__editor/save-level-patch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ checkpoints: editorCustomCheckpointsRef.current }),
@@ -2152,7 +2152,7 @@ export default function Game() {
           merged.forEach((cp, i) => { cp.label = `CP${i + 1}`; });
           editorCustomCheckpointsRef.current = merged;
           editorCheckpointIdxRef.current = -1;
-          fetch('/api/save-level-patch', {
+          fetch('/__editor/save-level-patch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ checkpoints: editorCustomCheckpointsRef.current }),
@@ -3338,7 +3338,7 @@ export default function Game() {
         // Tenta salvar permanentemente no servidor (public/sprites/)
         let spriteDataUrl = processedDataUrl;
         try {
-          const resp = await fetch('/api/upload-sprite', {
+          const resp = await fetch('/__editor/upload-sprite', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: file.name, dataUrl: processedDataUrl }),

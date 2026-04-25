@@ -61,7 +61,7 @@ function spriteUploadPlugin() {
   return {
     name: "sprite-upload",
     configureServer(server: import("vite").ViteDevServer) {
-      server.middlewares.use("/api/upload-sprite", (req, res, next) => {
+      server.middlewares.use("/__editor/upload-sprite", (req, res, next) => {
         if (req.method !== "POST") return next();
 
         const chunks: Buffer[] = [];
@@ -93,7 +93,7 @@ function spriteUploadPlugin() {
         });
       });
 
-      server.middlewares.use("/api/sprites", (req, res, next) => {
+      server.middlewares.use("/__editor/sprites", (req, res, next) => {
         if (req.method !== "GET") return next();
         try {
           fs.mkdirSync(spritesDir, { recursive: true });
@@ -108,7 +108,7 @@ function spriteUploadPlugin() {
         }
       });
 
-      server.middlewares.use("/api/delete-sprite", (req, res, next) => {
+      server.middlewares.use("/__editor/delete-sprite", (req, res, next) => {
         if (req.method !== "POST") return next();
         const chunks: Buffer[] = [];
         req.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -131,7 +131,7 @@ function spriteUploadPlugin() {
         });
       });
 
-      server.middlewares.use("/api/gallery-types", (req, res, next) => {
+      server.middlewares.use("/__editor/gallery-types", (req, res, next) => {
         if (req.method !== "GET") return next();
         try {
           const data = fs.existsSync(galleryTypesFile)
@@ -145,7 +145,7 @@ function spriteUploadPlugin() {
         }
       });
 
-      server.middlewares.use("/api/save-gallery-types", (req, res, next) => {
+      server.middlewares.use("/__editor/save-gallery-types", (req, res, next) => {
         if (req.method !== "POST") return next();
         const chunks: Buffer[] = [];
         req.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -162,7 +162,7 @@ function spriteUploadPlugin() {
         });
       });
 
-      server.middlewares.use("/api/save-level-patch", (req, res, next) => {
+      server.middlewares.use("/__editor/save-level-patch", (req, res, next) => {
         if (req.method !== "POST") return next();
         const chunks: Buffer[] = [];
         req.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -230,7 +230,7 @@ function spriteUploadPlugin() {
       });
 
       // Lista snapshots do histórico — mais recentes primeiro.
-      server.middlewares.use("/api/list-level-patch-history", (req, res, next) => {
+      server.middlewares.use("/__editor/list-level-patch-history", (req, res, next) => {
         if (req.method !== "GET") return next();
         try {
           fs.mkdirSync(levelPatchHistoryDir, { recursive: true });
@@ -265,7 +265,7 @@ function spriteUploadPlugin() {
 
       // Restaura um snapshot — copia conteúdo de history para level-patch.json.
       // Antes da restauração grava um snapshot "pré-restore" pra poder desfazer.
-      server.middlewares.use("/api/restore-level-patch-history", (req, res, next) => {
+      server.middlewares.use("/__editor/restore-level-patch-history", (req, res, next) => {
         if (req.method !== "POST") return next();
         const chunks: Buffer[] = [];
         req.on("data", (chunk: Buffer) => chunks.push(chunk));
