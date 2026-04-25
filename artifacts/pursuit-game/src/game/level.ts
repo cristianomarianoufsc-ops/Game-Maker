@@ -48,6 +48,7 @@ export const RIVER = {
   X2: 25750,        // borda direita do rio (início da margem direita)
   STUMP_W: 60,
   STUMP_TOP_H: 18,  // altura da hitbox em cima do toco (a parte que dá pra pisar)
+  STUMP_RISE: 22,   // quanto o topo do toco fica acima do nível do chão
   // Centros dos tocos (gap ~140px entre tocos — pulo médio)
   STUMPS_X: [24960, 25160, 25360, 25560] as const,
 };
@@ -129,9 +130,9 @@ export function generateLevel(): Platform[] {
   RIVER.STUMPS_X.forEach((stumpX) => {
     platforms.push({
       x: stumpX,
-      y: GROUND_Y,                    // topo do toco no nível do chão
+      y: GROUND_Y - RIVER.STUMP_RISE, // topo do toco um pouco acima do chão
       w: RIVER.STUMP_W,
-      h: 80,                          // parte visível submersa (renderizada pelo drawRiver)
+      h: 80 + RIVER.STUMP_RISE,       // parte visível submersa (renderizada pelo drawRiver)
       type: 'platform',
       hideRender: true,
       isRiverStump: true,

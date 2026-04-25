@@ -1093,12 +1093,43 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
     ctx.stroke();
   }
 
+  // ── REFLEXOS DOS TOCOS NA ÁGUA ───────────────────────────────────
+  // Espelha verticalmente os tocos abaixo da superfície com leve ondulação
+  // pra criar profundidade. Desenhado antes dos tocos pra ficar atrás.
+  ctx.save();
+  for (const stumpX of RIVER.STUMPS_X) {
+    const sx = stumpX - camX;
+    const sw = RIVER.STUMP_W;
+    if (sx + sw < -20 || sx > CANVAS_W + 20) continue;
+    const topY = GROUND_Y - RIVER.STUMP_RISE;
+    const aboveH = waterTop - topY;       // altura visível do toco acima da água
+    const reflH = aboveH + 6;
+    // Distorção ondulatória do reflexo
+    const slices = 8;
+    const sliceH = reflH / slices;
+    for (let i = 0; i < slices; i++) {
+      const reflY = waterTop + i * sliceH;
+      const wave = Math.sin(t * 2.2 + (stumpX + i * 8) * 0.05) * (1.2 + i * 0.4);
+      const alpha = Math.max(0, 0.32 - i * 0.035);
+      // Faixa do tronco refletida (cor madeira esmaecida)
+      ctx.fillStyle = `rgba(90,58,30,${alpha})`;
+      ctx.fillRect(sx + wave, reflY, sw, sliceH + 0.5);
+      // Highlight esquerdo refletido
+      ctx.fillStyle = `rgba(122,80,40,${alpha * 0.6})`;
+      ctx.fillRect(sx + wave, reflY, 4, sliceH + 0.5);
+      // Borda direita escura refletida
+      ctx.fillStyle = `rgba(58,36,16,${alpha * 0.7})`;
+      ctx.fillRect(sx + sw - 6 + wave, reflY, 6, sliceH + 0.5);
+    }
+  }
+  ctx.restore();
+
   // ── TOCOS DE MADEIRA ─────────────────────────────────────────────
   for (const stumpX of RIVER.STUMPS_X) {
     const sx = stumpX - camX;
     const sw = RIVER.STUMP_W;
-    const topY = GROUND_Y;            // topo do toco — o player fica em pé aqui
-    const submergedH = 70;            // parte visível submersa abaixo da superfície
+    const topY = GROUND_Y - RIVER.STUMP_RISE; // topo do toco — o player fica em pé aqui
+    const submergedH = 70 + RIVER.STUMP_RISE; // parte visível submersa abaixo da superfície
 
     // Sombra projetada no leito do rio (atrás do toco)
     const shadowGrad = ctx.createRadialGradient(sx + sw/2, waterTop + 3, 4, sx + sw/2, waterTop + 3, sw * 0.9);
