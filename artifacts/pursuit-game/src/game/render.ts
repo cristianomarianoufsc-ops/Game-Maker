@@ -1212,13 +1212,13 @@ export function drawGround(ctx: CanvasRenderingContext2D, camX: number): void {
 
 // ── Cached platform groups — recomputed once per level change ───────
 let _cachedPlatKey = '';
-type PlatType2 = { x: number; y: number; w: number; h: number; type: string };
+type PlatType2 = { x: number; y: number; w: number; h: number; type: string; isRiverStump?: boolean };
 type Group2 = { x1: number; x2: number; sw: number; plats: PlatType2[] };
 let _cachedGroups: Group2[] = [];
 
 function buildGroups(platforms: PlatType2[]): Group2[] {
   const elev = platforms
-    .filter(p => p.type === 'platform')
+    .filter(p => p.type === 'platform' && !p.isRiverStump)
     .sort((a, b) => a.x - b.x);
   const groups: Group2[] = [];
   let cur: Group2 | null = null;
@@ -1254,7 +1254,7 @@ export function drawStreetBuildings(
   camX: number
 ): void {
   const platKey = platforms
-    .filter(p => p.type === 'platform')
+    .filter(p => p.type === 'platform' && !p.isRiverStump)
     .map(p => `${p.x},${p.y},${p.w}`)
     .join('|');
   if (platKey !== _cachedPlatKey) {
