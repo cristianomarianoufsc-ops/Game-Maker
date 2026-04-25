@@ -1419,11 +1419,13 @@ export function updateDrone(
     const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
 
     if (pdist > 0) {
+      // Na escada, tiro mais rápido pra exigir mais reflexo do Horácio.
+      const bulletSpeed = playerNearFireEscape ? BULLET_SPEED * 1.4 : BULLET_SPEED;
       bullets.push({
         x: drone.x + drone.w / 2,
         y: drone.y + drone.h / 2,
-        vx: (pdx / pdist) * BULLET_SPEED,
-        vy: (pdy / pdist) * BULLET_SPEED * 0.5,
+        vx: (pdx / pdist) * bulletSpeed,
+        vy: (pdy / pdist) * bulletSpeed * 0.5,
         age: 0,
       });
       shakeAmount = 2;
