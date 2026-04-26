@@ -3152,7 +3152,7 @@ export function drawBystanders(
     // Sprite 2 (verde): caixa sit ligeiramente acima do fundo → offset 36.
     // Flee: pés tocam o fundo do frame para ambos → offset base 26.
     const isSit = b.state === 'sit';
-    const displayH = 175;
+    const displayH = isSit ? 175 : 166; // flee: 175 * 0.95 ≈ 166px
     const NPC_FOOT_OFFSET = isSit ? (b.spriteId === 1 ? 47 : 36) : 26;
     const displayW = Math.round(displayH * (frameW / frameH));
     const screenY = GROUND_Y + NPC_FOOT_OFFSET - displayH;
