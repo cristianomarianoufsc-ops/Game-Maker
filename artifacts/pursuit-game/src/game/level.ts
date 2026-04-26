@@ -112,9 +112,8 @@ export function generateLevel(): Platform[] {
     { x: 21650, w: 1050 },
     { x: 22800, w: 550 },
     { x: 23450, w: 500 },
-    { x: 24050, w: 550 },
-    // Margem esquerda do rio (pequena faixa de chão depois do 3º prédio)
-    { x: 24700, w: RIVER.X1 - 24700 },          // 24700 → 24820 (margem esquerda)
+    // Chão contínuo até a margem esquerda do rio (buraco em frente ao CP5 fechado)
+    { x: 24050, w: RIVER.X1 - 24050 },          // 24050 → 24820 (770px sem buraco)
     // RIO entre RIVER.X1 e RIVER.X2 — sem chão, só tocos pra pular
     // Margem direita do rio + reta longa (≈ metade do ferro velho)
     // Ferro velho: x:12250→21720 (9470px) → metade ≈ 4735px após o muro x:25929

@@ -3172,7 +3172,7 @@ export default function Game() {
       drawBuildings(ctx, buildingsRef.current, gs.camera.x);
       drawAlleyDetails(ctx, gs.camera.x, gs.time);
       drawStartingBackWall(ctx, gs.camera.x);
-      drawGround(ctx, gs.camera.x);
+      drawGround(ctx, gs.camera.x, gs.platforms);
       drawRiver(ctx, gs.camera.x);
 
       // World-space rendering (offset by camera)

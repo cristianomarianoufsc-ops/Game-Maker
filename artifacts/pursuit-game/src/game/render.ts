@@ -1240,7 +1240,11 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
   ctx.restore();
 }
 
-export function drawGround(ctx: CanvasRenderingContext2D, camX: number): void {
+export function drawGround(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  platforms?: ReadonlyArray<{ x: number; w: number; type: string }>,
+): void {
   // Abyss / void — fills the entire bottom area; holes reveal this through the ground segments
   const abyssGrad = ctx.createLinearGradient(0, GROUND_Y, 0, CANVAS_H);
   abyssGrad.addColorStop(0,    '#0a0005');  // very dark plum at ground level (hinting at depth)
@@ -1269,22 +1273,76 @@ export function drawGround(ctx: CanvasRenderingContext2D, camX: number): void {
   ctx.fillStyle = mistGrad;
   ctx.fillRect(0, GROUND_Y, CANVAS_W, 28);
 
-  // Warning chevrons at the very top edge of the void (hint that this is dangerous)
-  ctx.save();
-  ctx.globalAlpha = 0.18 + 0.06 * Math.sin(Date.now() * 0.003);
-  const chevW = 32;
-  const chevStep = 56;
-  const offset = (camX * 0.4) % chevStep;
-  for (let cx2 = -chevStep + offset; cx2 < CANVAS_W + chevStep; cx2 += chevStep) {
-    ctx.fillStyle = 'rgba(200,20,8,0.85)';
-    ctx.beginPath();
-    ctx.moveTo(cx2,          GROUND_Y);
-    ctx.lineTo(cx2 + chevW * 0.5, GROUND_Y + 9);
-    ctx.lineTo(cx2 + chevW,  GROUND_Y);
-    ctx.closePath();
-    ctx.fill();
+  // ── BUEIROS — desenha grade metálica escura sobre cada buraco ──
+  // Detecta gaps entre ground segments e desenha uma "boca de bueiro"
+  if (platforms) {
+    const grounds = platforms
+      .filter(p => p.type === 'ground')
+      .map(p => ({ x: p.x, end: p.x + p.w }))
+      .sort((a, b) => a.x - b.x);
+
+    for (let i = 0; i < grounds.length - 1; i++) {
+      const gapStart = grounds[i].end;
+      const gapEnd = grounds[i + 1].x;
+      const gapW = gapEnd - gapStart;
+      if (gapW <= 0 || gapW > 300) continue; // pula gaps grandes (rio etc)
+
+      const sx1 = gapStart - camX;
+      const sx2 = gapEnd - camX;
+      if (sx2 < -20 || sx1 > CANVAS_W + 20) continue;
+
+      ctx.save();
+
+      // Moldura escura sob a borda do bueiro (faixa horizontal logo abaixo do GROUND_Y)
+      const frameY = GROUND_Y;
+      const frameH = 14;
+      const frameGrad = ctx.createLinearGradient(0, frameY, 0, frameY + frameH);
+      frameGrad.addColorStop(0,   '#1a1a1d');
+      frameGrad.addColorStop(0.5, '#0a0a0c');
+      frameGrad.addColorStop(1,   '#050506');
+      ctx.fillStyle = frameGrad;
+      ctx.fillRect(sx1, frameY, sx2 - sx1, frameH);
+
+      // Borda metálica superior (highlight sutil, como aro de bueiro)
+      ctx.strokeStyle = 'rgba(140,130,120,0.55)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sx1, frameY + 0.5);
+      ctx.lineTo(sx2, frameY + 0.5);
+      ctx.stroke();
+
+      // Sombra interna na borda inferior do aro
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sx1, frameY + frameH - 0.5);
+      ctx.lineTo(sx2, frameY + frameH - 0.5);
+      ctx.stroke();
+
+      // Barras verticais da grade (estilo grelha de bueiro)
+      const barStep = 7;
+      const barW = 3;
+      ctx.fillStyle = 'rgba(45,40,38,0.95)';
+      for (let bx = sx1 + 3; bx + barW <= sx2 - 3; bx += barStep) {
+        ctx.fillRect(bx, frameY + 2, barW, frameH - 4);
+      }
+
+      // Highlight fino no topo de cada barra
+      ctx.fillStyle = 'rgba(120,110,100,0.35)';
+      for (let bx = sx1 + 3; bx + barW <= sx2 - 3; bx += barStep) {
+        ctx.fillRect(bx, frameY + 2, barW, 1);
+      }
+
+      // "Cantos" do aro do bueiro nas extremidades (parafusos pequenos)
+      ctx.fillStyle = 'rgba(90,82,75,0.9)';
+      ctx.fillRect(sx1 + 1, frameY + 2, 2, 2);
+      ctx.fillRect(sx2 - 3, frameY + 2, 2, 2);
+      ctx.fillRect(sx1 + 1, frameY + frameH - 4, 2, 2);
+      ctx.fillRect(sx2 - 3, frameY + frameH - 4, 2, 2);
+
+      ctx.restore();
+    }
   }
-  ctx.restore();
 }
 
 // ── Cached platform groups — recomputed once per level change ───────

@@ -387,7 +387,7 @@ export function updatePlayer(
     // Allow jump off wall (não escada)
     if (keys.space && prevTouchingWall && !prevTouchingLadder) {
       p.isClimbing = false;
-      const lowFactor = p.wallLowImpulse ? 0.72 : 1;
+      const lowFactor = p.wallLowImpulse ? 0.5 : 1;
       p.vy = JUMP_FORCE * 0.9 * lowFactor;
       p.vx = p.wallSide === 'right' ? -5 : 5;
       p.facingRight = p.wallSide === 'right' ? false : true;
@@ -465,7 +465,7 @@ export function updatePlayer(
         p.isWallFlipping = true;
         p.wallFlipTimer = WALLFLIP_DURATION;
         p.coyoteTime = 0;
-        const lowFactor = p.wallLowImpulse ? 0.72 : 1;
+        const lowFactor = p.wallLowImpulse ? 0.5 : 1;
         p.vy = WALLFLIP_JUMP_VY * lowFactor;
         const flipVx = WALLFLIP_BACK_VX;
         p.vx = wallSide === 'right' ? -flipVx : flipVx;
@@ -483,7 +483,7 @@ export function updatePlayer(
       } else if (canJumpOffWall && keys.space && wallSide) {
         p.isWallRunning = false;
         p.coyoteTime = 0;
-        const lowFactor = p.wallLowImpulse ? 0.72 : 1;
+        const lowFactor = p.wallLowImpulse ? 0.5 : 1;
         p.vy = WALLRUN_JUMP_VY * lowFactor;
         const jumpVx = WALLRUN_JUMP_VX;
         p.vx = wallSide === 'right' ? -jumpVx : jumpVx;
@@ -522,7 +522,7 @@ export function updatePlayer(
 
         if (pressingAway) {
           // Back + jump → drop off wall backward (penalidade reduz impulso vertical)
-          const lowFactor = p.wallLowImpulse ? 0.72 : 1;
+          const lowFactor = p.wallLowImpulse ? 0.5 : 1;
           p.vx = side === 'right' ? -WALLFLIP_BACK_VX : WALLFLIP_BACK_VX;
           p.vy = WALLFLIP_JUMP_VY * p.wallClimbJumpPenalty * lowFactor;
           p.jumpedFromWall = true;
