@@ -1781,28 +1781,29 @@ export function updateBystanders(
   bystanders: Bystander[],
   player: Player,
   drone: { x: number; y: number },
-  droneActive: boolean,
+  _droneActive: boolean,
   dt: number
 ): void {
   const FLEE_SPEED = 4.8;
   const DESPAWN_RIGHT_X = 28000;
-  const DESPAWN_LEFT_X  = 24000; // sai pela esquerda
-  // Distância horizontal do drone que dispara a fuga
-  const DRONE_FLEE_DIST = 400;
+  const DESPAWN_LEFT_X  = 24000;
+  // Distância horizontal do drone que dispara a fuga.
+  // No modo editor sem Z, o drone fica em x:-80 (longe demais para disparar).
+  // Na história, o drone segue ~140px atrás do jogador — ativa perto dos NPCs.
+  // No modo editor com Z, o drone spawna perto do jogador — também ativa.
+  const DRONE_FLEE_DIST = 500;
 
   for (const b of bystanders) {
     b.animTimer += dt;
     if (b.state === 'sit') {
-      // Trigger: drone chegou perto
       const droneDist = Math.abs(drone.x - b.x);
-      if (droneActive && droneDist < DRONE_FLEE_DIST) {
+      if (droneDist < DRONE_FLEE_DIST) {
         b.state = 'flee';
         b.facingRight = b.fleeDir === 'right';
         b.vx = b.fleeDir === 'right' ? FLEE_SPEED : -FLEE_SPEED;
         b.animTimer = 0;
       }
     } else {
-      // Em fuga — corre na direção definida até sumir
       b.x += b.vx;
       if (b.x > DESPAWN_RIGHT_X || b.x < DESPAWN_LEFT_X) {
         b.vx = 0;
