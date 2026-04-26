@@ -31,7 +31,7 @@ import {
   updateFallingBoxes, updateFlyingTires, updateDogs, updateBystanders,
 } from './physics';
 import {
-  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawFireEscapeBuilding, drawFireEscapeFloors, drawGround, drawRiver,
+  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawFireEscapeBuilding, drawFireEscapeFloors, drawGround, drawRiver, drawPotholes,
   drawStreetBuildings, drawPlatforms, drawFlyingTires, drawTireHideouts,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
@@ -767,6 +767,7 @@ export default function Game() {
       tire:        { w: 40,  h: 60 },
       tireHideout: { w: 80,  h: 80 },
       box:         { w: 65,  h: 55 },
+      pothole:     { w: 100, h: 14 },
     };
     const dims = defaults[type] ?? { w: 60, h: 40 };
     const cx = editorCamXRef.current + CANVAS_W / 2;
@@ -3174,6 +3175,7 @@ export default function Game() {
       drawStartingBackWall(ctx, gs.camera.x);
       drawGround(ctx, gs.camera.x, gs.platforms);
       drawRiver(ctx, gs.camera.x);
+      drawPotholes(ctx, gs.platforms, gs.camera.x);
 
       // World-space rendering (offset by camera)
       ctx.save();
@@ -3672,6 +3674,7 @@ export default function Game() {
                       tire:        { fill: '#444444', stroke: '#777777', shape: 'circle' },
                       tireHideout: { fill: '#553311', stroke: '#886633', shape: 'square' },
                       box:         { fill: '#8b5a2b', stroke: '#c88844', shape: 'square' },
+                      pothole:     { fill: '#0a0a0c', stroke: '#5a5248', shape: 'wide' },
                     };
                     const cfg = shapes[type] ?? { fill: '#333', stroke: '#888', shape: 'square' };
 

@@ -2,6 +2,7 @@
   "types": [
     "box",
     "obstacle",
+    "pothole",
     "wall"
   ]
 }

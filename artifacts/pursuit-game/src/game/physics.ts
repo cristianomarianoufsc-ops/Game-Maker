@@ -628,7 +628,8 @@ export function updatePlayer(
     } else if (keys.space && (p.coyoteTime > 0)) {
       // Aplica penalidade de pulo se o personagem acabou de escalar uma parede alta
       // Não reseta a penalidade aqui — ela persiste até o pouso para limitar vx no ar também
-      p.vy = JUMP_FORCE * p.wallClimbJumpPenalty;
+      const lowFactor = p.wallLowImpulse ? 0.5 : 1;
+      p.vy = JUMP_FORCE * p.wallClimbJumpPenalty * lowFactor;
       p.onGround = false;
       p.coyoteTime = 0;
       p.jumpCount = 1;
@@ -722,8 +723,16 @@ export function updatePlayer(
 
   // Collision
   if (!p.isWallClimbUp) {
+    // Pré-computa potholes — buracos editáveis que "anulam" o chão dentro de seu range X
+    const potholes = platforms.filter(pl => pl.type === 'pothole');
+    const playerCenterX = p.x + p.w / 2;
+    const insidePothole = potholes.some(ph => playerCenterX > ph.x && playerCenterX < ph.x + ph.w);
+
     for (const plat of platforms) {
       if (plat.type === 'tireHideout') continue;
+      if (plat.type === 'pothole') continue; // pothole não tem colisão sólida
+      // Se o jogador está sobre um pothole, ignora colisão de chão para deixar cair
+      if (plat.type === 'ground' && insidePothole) continue;
       const climbableBoxWall = getStackedBoxWall(platforms, plat);
       for (const hit of getPlatformCollisionRects(plat)) {
         resolvePlayerPlatform(p, plat, hit, climbableBoxWall);
@@ -947,6 +956,8 @@ export function updatePlayer(
   if (!prevOnGround && p.onGround) {
     const fallVy = p.peakFallVy;
     p.peakFallVy = 0;
+    // Reset low-impulse flag ao tocar o chão — só vale para o próximo pulo de muro específico
+    p.wallLowImpulse = false;
 
     // Ripple na água se aterrissou em um toco do rio
     const feetCenterX = p.x + p.w / 2;

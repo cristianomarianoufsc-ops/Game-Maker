@@ -1273,75 +1273,73 @@ export function drawGround(
   ctx.fillStyle = mistGrad;
   ctx.fillRect(0, GROUND_Y, CANVAS_W, 28);
 
-  // ── BUEIROS — desenha grade metálica escura sobre cada buraco ──
-  // Detecta gaps entre ground segments e desenha uma "boca de bueiro"
-  if (platforms) {
-    const grounds = platforms
-      .filter(p => p.type === 'ground')
-      .map(p => ({ x: p.x, end: p.x + p.w }))
-      .sort((a, b) => a.x - b.x);
+  // Bueiros agora são objetos `pothole` editáveis — desenhados em drawPotholes()
+}
 
-    for (let i = 0; i < grounds.length - 1; i++) {
-      const gapStart = grounds[i].end;
-      const gapEnd = grounds[i + 1].x;
-      const gapW = gapEnd - gapStart;
-      if (gapW <= 0 || gapW > 300) continue; // pula gaps grandes (rio etc)
+// ── Desenha objetos pothole (bueiros editáveis) — grade metálica escura sobre o chão
+export function drawPotholes(
+  ctx: CanvasRenderingContext2D,
+  platforms: ReadonlyArray<{ x: number; y: number; w: number; h: number; type: string }>,
+  camX: number,
+): void {
+  for (const p of platforms) {
+    if (p.type !== 'pothole') continue;
 
-      const sx1 = gapStart - camX;
-      const sx2 = gapEnd - camX;
-      if (sx2 < -20 || sx1 > CANVAS_W + 20) continue;
+    const sx1 = p.x - camX;
+    const sx2 = p.x + p.w - camX;
+    if (sx2 < -20 || sx1 > CANVAS_W + 20) continue;
 
-      ctx.save();
+    const frameY = p.y;
+    const frameH = Math.max(8, p.h);
 
-      // Moldura escura sob a borda do bueiro (faixa horizontal logo abaixo do GROUND_Y)
-      const frameY = GROUND_Y;
-      const frameH = 14;
-      const frameGrad = ctx.createLinearGradient(0, frameY, 0, frameY + frameH);
-      frameGrad.addColorStop(0,   '#1a1a1d');
-      frameGrad.addColorStop(0.5, '#0a0a0c');
-      frameGrad.addColorStop(1,   '#050506');
-      ctx.fillStyle = frameGrad;
-      ctx.fillRect(sx1, frameY, sx2 - sx1, frameH);
+    ctx.save();
 
-      // Borda metálica superior (highlight sutil, como aro de bueiro)
-      ctx.strokeStyle = 'rgba(140,130,120,0.55)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(sx1, frameY + 0.5);
-      ctx.lineTo(sx2, frameY + 0.5);
-      ctx.stroke();
+    // Cobre o chão atrás do bueiro com gradiente preto (anula visualmente o chão)
+    const frameGrad = ctx.createLinearGradient(0, frameY, 0, frameY + frameH);
+    frameGrad.addColorStop(0,   '#1a1a1d');
+    frameGrad.addColorStop(0.5, '#0a0a0c');
+    frameGrad.addColorStop(1,   '#050506');
+    ctx.fillStyle = frameGrad;
+    ctx.fillRect(sx1, frameY, sx2 - sx1, frameH);
 
-      // Sombra interna na borda inferior do aro
-      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(sx1, frameY + frameH - 0.5);
-      ctx.lineTo(sx2, frameY + frameH - 0.5);
-      ctx.stroke();
+    // Aro metálico superior (highlight sutil)
+    ctx.strokeStyle = 'rgba(140,130,120,0.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(sx1, frameY + 0.5);
+    ctx.lineTo(sx2, frameY + 0.5);
+    ctx.stroke();
 
-      // Barras verticais da grade (estilo grelha de bueiro)
-      const barStep = 7;
-      const barW = 3;
-      ctx.fillStyle = 'rgba(45,40,38,0.95)';
-      for (let bx = sx1 + 3; bx + barW <= sx2 - 3; bx += barStep) {
-        ctx.fillRect(bx, frameY + 2, barW, frameH - 4);
-      }
+    // Sombra interna na borda inferior do aro
+    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(sx1, frameY + frameH - 0.5);
+    ctx.lineTo(sx2, frameY + frameH - 0.5);
+    ctx.stroke();
 
-      // Highlight fino no topo de cada barra
-      ctx.fillStyle = 'rgba(120,110,100,0.35)';
-      for (let bx = sx1 + 3; bx + barW <= sx2 - 3; bx += barStep) {
-        ctx.fillRect(bx, frameY + 2, barW, 1);
-      }
-
-      // "Cantos" do aro do bueiro nas extremidades (parafusos pequenos)
-      ctx.fillStyle = 'rgba(90,82,75,0.9)';
-      ctx.fillRect(sx1 + 1, frameY + 2, 2, 2);
-      ctx.fillRect(sx2 - 3, frameY + 2, 2, 2);
-      ctx.fillRect(sx1 + 1, frameY + frameH - 4, 2, 2);
-      ctx.fillRect(sx2 - 3, frameY + frameH - 4, 2, 2);
-
-      ctx.restore();
+    // Barras verticais da grade (grelha de bueiro)
+    const barStep = 7;
+    const barW = 3;
+    ctx.fillStyle = 'rgba(45,40,38,0.95)';
+    for (let bx = sx1 + 3; bx + barW <= sx2 - 3; bx += barStep) {
+      ctx.fillRect(bx, frameY + 2, barW, frameH - 4);
     }
+
+    // Highlight fino no topo de cada barra
+    ctx.fillStyle = 'rgba(120,110,100,0.35)';
+    for (let bx = sx1 + 3; bx + barW <= sx2 - 3; bx += barStep) {
+      ctx.fillRect(bx, frameY + 2, barW, 1);
+    }
+
+    // Parafusos pequenos nos cantos
+    ctx.fillStyle = 'rgba(90,82,75,0.9)';
+    ctx.fillRect(sx1 + 1, frameY + 2, 2, 2);
+    ctx.fillRect(sx2 - 3, frameY + 2, 2, 2);
+    ctx.fillRect(sx1 + 1, frameY + frameH - 4, 2, 2);
+    ctx.fillRect(sx2 - 3, frameY + frameH - 4, 2, 2);
+
+    ctx.restore();
   }
 }
 

@@ -15,7 +15,7 @@ export interface CollisionBox extends Rect {
 }
 
 export interface Platform extends Rect {
-  type: 'ground' | 'platform' | 'wall' | 'obstacle' | 'car' | 'tire' | 'tireHideout' | 'box' | 'sprite';
+  type: 'ground' | 'platform' | 'wall' | 'obstacle' | 'car' | 'tire' | 'tireHideout' | 'box' | 'sprite' | 'pothole';
   climbable?: boolean;
   climbableSide?: 'left' | 'right' | 'both';
   isLadder?: boolean;

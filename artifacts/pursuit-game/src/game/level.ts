@@ -84,45 +84,42 @@ export function generateLevel(): Platform[] {
 
   // ── GROUND SEGMENTS ────────────────────────────────────────────
 
+  // Chão contínuo dos dois lados do rio. Buracos agora são objetos `pothole`
+  // editáveis (criar/duplicar/deletar pelo editor de fase) que "anulam" o chão
+  // dentro de seu range X (resolução em physics.ts).
   const groundSegments: Array<{ x: number; w: number }> = [
-    // FREE ZONE 1 — pista lisa, sem buracos
-    { x: -400, w: 3500 },   // -400 → 3100
-
-    // WALL ZONE 1 — primeiros buracos e paredes
-    { x: 3200, w: 900  },
-    { x: 4200, w: 800  },
-    { x: 5100, w: 700  },
-    { x: 5900, w: 600  },
-    { x: 6600, w: 500  },
-
-    // FREE ZONE 2 — buracos moderados, ZERO paredes
-    { x: 7300, w: 700  },
-    { x: 8100, w: 650  },
-    { x: 8850, w: 600  },
-    { x: 9550, w: 700  },
-    { x: 10350, w: 600 },
-    { x: 11050, w: 500 },
-
-    // WALL ZONE 2 — buracos maiores + paredes
-    { x: 11700, w: 550 },
-    // Ferro velho (x:12100-21700): chão contínuo, sem buracos
-    { x: 12250, w: 9470 },  // 12250 → 21720 (dobro do original, cobre toda a zona)
-
-    // WALL ZONE 3 — buracos grandes + muitas paredes (começa após x:21700)
-    { x: 21650, w: 1050 },
-    { x: 22800, w: 550 },
-    { x: 23450, w: 500 },
-    // Chão contínuo até a margem esquerda do rio (buraco em frente ao CP5 fechado)
-    { x: 24050, w: RIVER.X1 - 24050 },          // 24050 → 24820 (770px sem buraco)
-    // RIO entre RIVER.X1 e RIVER.X2 — sem chão, só tocos pra pular
-    // Margem direita do rio + reta longa (≈ metade do ferro velho)
-    // Ferro velho: x:12250→21720 (9470px) → metade ≈ 4735px após o muro x:25929
-    // 25750 → 30664 = 4914px de chão contínuo, sem buracos nem obstáculos
-    { x: RIVER.X2, w: 30664 - RIVER.X2 },
+    { x: -400, w: RIVER.X1 - (-400) },          // -400 → 24820 (margem esquerda do rio)
+    { x: RIVER.X2, w: 30664 - RIVER.X2 },       // 25750 → 30664 (margem direita + reta longa)
   ];
 
   groundSegments.forEach(({ x, w }) => {
     platforms.push({ x, y: GROUND_Y, w, h: GH, type: 'ground' });
+  });
+
+  // Buracos de bueiro padrão (substituem os antigos gaps no chão).
+  // Largura/posição mantidas iguais aos gaps originais para preservar o level design.
+  // Estes objetos são adicionados ao array de plataformas e podem ser editados
+  // (movidos, duplicados ou deletados) pelo editor de fase como qualquer objeto.
+  const POTHOLE_H = 14;
+  const defaultPotholes: Array<{ x: number; w: number }> = [
+    { x: 3100, w: 100 },   // WALL ZONE 1
+    { x: 4100, w: 100 },
+    { x: 5000, w: 100 },
+    { x: 5800, w: 100 },
+    { x: 6500, w: 100 },
+    { x: 7100, w: 200 },   // FREE ZONE 2
+    { x: 8000, w: 100 },
+    { x: 8750, w: 100 },
+    { x: 9450, w: 100 },
+    { x: 10250, w: 100 },
+    { x: 10950, w: 100 },
+    { x: 11550, w: 150 },  // WALL ZONE 2 (entrada)
+    { x: 22700, w: 100 },  // WALL ZONE 3
+    { x: 23350, w: 100 },
+    { x: 23950, w: 100 },
+  ];
+  defaultPotholes.forEach(({ x, w }) => {
+    platforms.push({ x, y: GROUND_Y, w, h: POTHOLE_H, type: 'pothole' });
   });
 
   // ── TOCOS DE MADEIRA NO RIO ────────────────────────────────────
