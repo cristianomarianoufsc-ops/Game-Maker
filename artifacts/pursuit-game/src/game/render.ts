@@ -1502,10 +1502,11 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
     scale: number,
   ): void {
     const seed = (seedBase >>> 0);
-    const houseW = Math.round((260 + (seed % 160)) * scale);  // 260–420px base (2x)
-    const houseH = Math.round((160 + ((seed >> 4) % 100)) * scale);  // 160–260px base (2x) — mais largo que alto
+    const houseW = Math.round((260 + (seed % 160)) * scale);
+    // Altura uniforme: variação mínima (±12px) para evitar casas achatadas
+    const houseH = Math.round((200 + ((seed >> 4) % 25)) * scale);
 
-    // offsetY zerado — todas as casas pousam no chão sem flutuar
+    // Todas as casas pousam no chão na mesma linha base
     const baseY = GROUND_Y - 4 - baseYOffset;
     const topY = baseY - houseH;
     const screenX = hx - camX;
@@ -1518,39 +1519,101 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
     ctx.ellipse(screenX + houseW / 2, baseY + 3, houseW * 0.5, 4, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Corpo da casa — madeira clara visível contra o morro escuro
-    const woodTones = ['#7a5234', '#8b5e3a', '#6e4628', '#9a6a44', '#7d5232', '#6b4a2c'];
+    // Corpo da casa — tons de madeira velha, mais escuros e encardidos
+    const woodTones = ['#5c3a20', '#6a4228', '#4e2e14', '#624030', '#583625', '#4a301a'];
     const wood = woodTones[seed % woodTones.length];
     ctx.fillStyle = wood;
     ctx.fillRect(screenX, topY, houseW, houseH);
 
-    // Sombra interna lateral direita (lateral oposta à luz)
+    // Sujeira geral: camada de escurecimento sujo por cima
+    const grimeGrad = ctx.createLinearGradient(screenX, topY, screenX, baseY);
+    grimeGrad.addColorStop(0, 'rgba(10,6,2,0.35)');
+    grimeGrad.addColorStop(0.4, 'rgba(10,6,2,0.10)');
+    grimeGrad.addColorStop(1, 'rgba(10,6,2,0.55)');
+    ctx.fillStyle = grimeGrad;
+    ctx.fillRect(screenX, topY, houseW, houseH);
+
+    // Sombra interna lateral direita
     const sideShade = ctx.createLinearGradient(screenX, 0, screenX + houseW, 0);
-    sideShade.addColorStop(0, 'rgba(255,200,140,0.10)');
-    sideShade.addColorStop(0.45, 'rgba(0,0,0,0)');
-    sideShade.addColorStop(1, 'rgba(0,0,0,0.48)');
+    sideShade.addColorStop(0, 'rgba(255,200,140,0.06)');
+    sideShade.addColorStop(0.4, 'rgba(0,0,0,0)');
+    sideShade.addColorStop(1, 'rgba(0,0,0,0.52)');
     ctx.fillStyle = sideShade;
     ctx.fillRect(screenX, topY, houseW, houseH);
 
-    // Tábuas verticais — linhas escuras com leve highlight
-    ctx.strokeStyle = 'rgba(20,12,5,0.65)';
+    // Tábuas verticais — algumas mais irregulares (quebradas)
     ctx.lineWidth = 1;
     const plankW = Math.round((10 + (seed % 5)) * scale);
-    for (let px = screenX + plankW; px < screenX + houseW; px += plankW) {
+    let plankIdx = 0;
+    for (let px = screenX + plankW; px < screenX + houseW; px += plankW, plankIdx++) {
+      // Usa índice relativo (estável entre frames) — não a posição de tela
+      const plankSeed = ((plankIdx * 1234567) ^ seed) >>> 0;
+      const isBroken = (plankSeed % 8) === 0;
+      // Junta escura
+      ctx.strokeStyle = isBroken ? 'rgba(8,4,2,0.90)' : 'rgba(20,12,5,0.65)';
+      ctx.lineWidth = isBroken ? 2 : 1;
       ctx.beginPath();
       ctx.moveTo(px, topY + 2);
       ctx.lineTo(px, topY + houseH);
       ctx.stroke();
+      // Tábua quebrada: buraco escuro em posição aleatória
+      if (isBroken) {
+        const bHoleY = topY + houseH * 0.2 + (plankSeed % Math.round(houseH * 0.5));
+        const bHoleH = Math.round(10 + (plankSeed % 18) * scale);
+        ctx.fillStyle = 'rgba(5,3,1,0.80)';
+        ctx.fillRect(px - 2, bHoleY, plankW + 1, bHoleH);
+      }
     }
-    // Highlight claro em algumas tábuas
-    ctx.fillStyle = 'rgba(255,210,150,0.12)';
-    for (let px = screenX + 2; px < screenX + houseW; px += plankW * 2) {
-      ctx.fillRect(px, topY + 2, 1, houseH - 2);
+    // Linhas horizontais de deformação (madeira empenada)
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 1;
+    const warpCount = 2 + (seed % 3);
+    for (let i = 0; i < warpCount; i++) {
+      const wy = topY + houseH * (0.2 + i * 0.22);
+      ctx.beginPath();
+      ctx.moveTo(screenX, wy);
+      ctx.lineTo(screenX + houseW, wy + ((seed >> (i * 3)) % 5) - 2);
+      ctx.stroke();
     }
 
-    // Manchas de mofo/desgaste na base
-    ctx.fillStyle = 'rgba(20,15,8,0.40)';
-    ctx.fillRect(screenX + 2, baseY - Math.round(14 * scale), houseW - 4, Math.round(14 * scale));
+    // Manchas de umidade/mofo — múltiplas, grandes
+    const stainCount = 3 + (seed % 4);
+    for (let si = 0; si < stainCount; si++) {
+      const stSeed = ((seed ^ (si * 6364136223)) >>> 0);
+      const stX = screenX + (stSeed % Math.max(1, houseW - 30));
+      const stY = topY + ((stSeed >> 8) % houseH);
+      const stW = 20 + ((stSeed >> 16) % 60);
+      const stH = 10 + ((stSeed >> 20) % 30);
+      ctx.fillStyle = `rgba(${5 + (stSeed % 10)},${3 + (stSeed % 6)},${1},${0.30 + (stSeed % 20) / 100})`;
+      ctx.fillRect(stX, stY, stW, stH);
+    }
+
+    // Rachaduras na parede — linhas diagonais irregulares
+    const crackCount = 1 + (seed % 3);
+    for (let ci = 0; ci < crackCount; ci++) {
+      const crSeed = ((seed ^ (ci * 2246822519)) >>> 0);
+      const crX = screenX + 20 + (crSeed % Math.max(1, houseW - 40));
+      const crY = topY + 10 + ((crSeed >> 8) % Math.round(houseH * 0.6));
+      const crLen = 15 + ((crSeed >> 12) % 35);
+      ctx.strokeStyle = 'rgba(5,3,1,0.70)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(crX, crY);
+      ctx.lineTo(crX + ((crSeed >> 6) % 9) - 4, crY + crLen * 0.5);
+      ctx.lineTo(crX + ((crSeed >> 4) % 11) - 5, crY + crLen);
+      ctx.stroke();
+    }
+
+    // Desgaste severo na base (mofo avançado, 30% da altura)
+    const baseGrime = ctx.createLinearGradient(0, baseY - Math.round(houseH * 0.30), 0, baseY);
+    baseGrime.addColorStop(0, 'rgba(8,5,2,0)');
+    baseGrime.addColorStop(1, 'rgba(8,5,2,0.65)');
+    ctx.fillStyle = baseGrime;
+    ctx.fillRect(screenX, baseY - Math.round(houseH * 0.30), houseW, Math.round(houseH * 0.30));
+
+    // Faixa de sujeira na base (terra/umidade)
+    ctx.fillStyle = 'rgba(15,9,3,0.55)';
+    ctx.fillRect(screenX + 2, baseY - Math.round(18 * scale), houseW - 4, Math.round(18 * scale));
 
     // ── TELHADO triangular — telhado mais suave (proporção 0.22 da largura) ──
     const roofH = houseW * 0.22;
