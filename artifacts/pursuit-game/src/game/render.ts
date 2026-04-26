@@ -3147,11 +3147,13 @@ export function drawBystanders(
       frameIdx = 1 + (Math.floor(b.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2);
     }
 
-    // Tamanho de exibição — igual à altura de referência do Horácio (SPRITE_DISPLAY_H = 131).
-    // Âncora: fundo do sprite em GROUND_Y + 26 (mesmo FOOT_OFFSET que o Horácio usa),
-    // compensando o espaço transparente no rodapé dos sprites.
-    const NPC_FOOT_OFFSET = 26; // espelha FOOT_OFFSET=28 do Horácio (28-2=26)
-    const displayH = SPRITE_DISPLAY_H; // 131px
+    // Tamanho de exibição — flee=160px (igual ao run do Horácio), sit=145px.
+    // Âncora: fundo do sprite em GROUND_Y + NPC_FOOT_OFFSET.
+    // Sprite 1 (jaqueta marrom) tem o frame 'sit' com personagem mais alto
+    // dentro do quadro → precisa de offset extra para não flutuar.
+    const isSit = b.state === 'sit';
+    const displayH = isSit ? 145 : 160;
+    const NPC_FOOT_OFFSET = isSit && b.spriteId === 1 ? 56 : 26;
     const displayW = Math.round(displayH * (frameW / frameH));
     const screenY = GROUND_Y + NPC_FOOT_OFFSET - displayH;
 
