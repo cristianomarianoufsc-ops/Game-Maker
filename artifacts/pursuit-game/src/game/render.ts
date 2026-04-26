@@ -1504,9 +1504,9 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
     const seed = (seedBase >>> 0);
     const houseW = Math.round((260 + (seed % 160)) * scale);  // 260–420px base (2x)
     const houseH = Math.round((160 + ((seed >> 4) % 100)) * scale);  // 160–260px base (2x) — mais largo que alto
-    const offsetY = Math.round(((seed >> 8) % 20) * scale);
 
-    const baseY = GROUND_Y - 4 - baseYOffset - offsetY;
+    // offsetY zerado — todas as casas pousam no chão sem flutuar
+    const baseY = GROUND_Y - 4 - baseYOffset;
     const topY = baseY - houseH;
     const screenX = hx - camX;
 
@@ -1598,8 +1598,10 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
         ? [screenX + houseW * 0.22, screenX + houseW * 0.62]
         : [screenX + houseW * 0.5 - winW / 2];
 
+      // winY alinhado ao nível da porta: a porta ocupa os 42% inferiores da casa,
+      // então a janela fica a partir de 55% do topo (mesma faixa da porta, lado a lado)
       winPositions.forEach((winX, wi) => {
-        const winY = topY + houseH * 0.28;
+        const winY = topY + houseH * 0.55;
         const litSeed = (seed ^ (wi * 7919)) >>> 0;
         const litUp = (litSeed >> 20) % 3 !== 0;
         // Moldura escura
@@ -1704,14 +1706,12 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
   }
   ctx.restore();
 
-  // ── FILEIRA PRINCIPAL: casas grandes, próximas entre si ──
-  const HOUSE_STEP = 300;
+  // ── FILEIRA PRINCIPAL: casas grandes, sem espaços — step < min_houseW ──
+  const HOUSE_STEP = 240;  // menor que a largura mínima (260px) → casas sempre sobrepostas/tocando
   const startX = Math.ceil(SHANTY_X1 / HOUSE_STEP) * HOUSE_STEP;
   for (let hx = startX; hx < SHANTY_X2; hx += HOUSE_STEP) {
     const seed = ((hx * 2654435761) >>> 0);
-    const skip = ((seed >> 12) % 10) === 0;   // salto raro — só 10% pulam
-    if (skip) continue;
-    drawShantyHouse(hx, seed, 0, 1.0);
+    drawShantyHouse(hx, seed, 0, 1.0);  // sem skip — terreno totalmente coberto
   }
 
   // ── 3. NÉVOA BAIXA atmosférica integrando ao chão ──
