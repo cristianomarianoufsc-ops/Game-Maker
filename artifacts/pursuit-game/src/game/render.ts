@@ -1604,6 +1604,75 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
       ctx.stroke();
     }
 
+    // ── TINTA DESCASCADA ──────────────────────────────────────────────
+    // Manchas de tinta velha (branca/amarelada) se soltando da madeira
+    const peelCount = 1 + (seed % 3);
+    for (let pi = 0; pi < peelCount; pi++) {
+      const pSeed = ((seed ^ (pi * 3141592653)) >>> 0);
+      const pX = screenX + 10 + (pSeed % Math.max(1, houseW - 50));
+      const pY = topY + Math.round(houseH * 0.10) + ((pSeed >> 8) % Math.round(houseH * 0.50));
+      const pW = 18 + ((pSeed >> 12) % 40);
+      const pH = 8 + ((pSeed >> 16) % 20);
+      // Camada de tinta antiga (bege/amarelado desbotado)
+      ctx.fillStyle = `rgba(${160 + (pSeed % 40)},${130 + (pSeed % 30)},${80 + (pSeed % 25)},0.55)`;
+      ctx.beginPath();
+      ctx.moveTo(pX, pY);
+      ctx.lineTo(pX + pW * 0.6, pY - 3);
+      ctx.lineTo(pX + pW, pY + pH * 0.3);
+      ctx.lineTo(pX + pW - 4, pY + pH);
+      ctx.lineTo(pX + 3, pY + pH + 2);
+      ctx.closePath();
+      ctx.fill();
+      // Borda escura simulando a tinta levantando
+      ctx.strokeStyle = 'rgba(20,12,4,0.55)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Sombra embaixo da tinta solta (profundidade)
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      ctx.fillRect(pX + 2, pY + pH, pW - 4, 2);
+    }
+
+    // ── PICHAÇÕES ──────────────────────────────────────────────────────
+    // Rabiscos de spray em algumas casas (~40%)
+    if ((seed % 5) < 2) {
+      const tagSeed  = ((seed * 1664525 + 1013904223) >>> 0);
+      const tagCount = 1 + (tagSeed % 2);
+      // Palavras típicas de pichação de favela oprimida
+      const tags = ['ZIKA', '157', 'CV', 'X', 'LUTA', 'NÃO', 'PAZ?', 'FORA', '13', 'DZ7', 'BORA'];
+      // Cores de spray: vermelho, branco sujo, amarelo, verde
+      const tagColors = [
+        'rgba(190,25,15,0.75)',
+        'rgba(200,185,140,0.65)',
+        'rgba(180,160,30,0.70)',
+        'rgba(30,130,60,0.65)',
+        'rgba(160,20,10,0.80)',
+      ];
+      for (let ti = 0; ti < tagCount; ti++) {
+        const tSeed = ((tagSeed ^ (ti * 6364136223)) >>> 0);
+        const tagWord  = tags[tSeed % tags.length];
+        const tagColor = tagColors[(tSeed >> 4) % tagColors.length];
+        const tagX = screenX + 14 + (tSeed % Math.max(1, houseW - 60));
+        // Pichações ficam no terço superior da parede (acima das portas/janelas)
+        const tagY = topY + Math.round(houseH * 0.15) + ((tSeed >> 8) % Math.round(houseH * 0.30));
+        const tagSize = Math.round((10 + (tSeed % 8)) * scale);
+        // Glow de spray ao redor da letra (halo difuso)
+        const tagCx = tagX + (tagWord.length * tagSize * 0.35);
+        const glowR = ctx.createRadialGradient(tagCx, tagY - tagSize * 0.5, 1, tagCx, tagY - tagSize * 0.5, tagWord.length * tagSize * 0.65 + 4);
+        glowR.addColorStop(0, 'rgba(255,200,80,0.12)');
+        glowR.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glowR;
+        ctx.fillRect(tagX - 8, tagY - tagSize - 6, tagWord.length * tagSize * 0.75 + 16, tagSize + 14);
+        // Texto em si — fonte condensada e grossa, ligeiramente inclinado
+        ctx.save();
+        ctx.translate(tagX, tagY);
+        ctx.rotate(-0.06 + ((tSeed % 7) - 3) * 0.02);
+        ctx.font = `bold ${tagSize}px monospace`;
+        ctx.fillStyle = tagColor;
+        ctx.fillText(tagWord, 0, 0);
+        ctx.restore();
+      }
+    }
+
     // Desgaste severo na base (mofo avançado, 30% da altura)
     const baseGrime = ctx.createLinearGradient(0, baseY - Math.round(houseH * 0.30), 0, baseY);
     baseGrime.addColorStop(0, 'rgba(8,5,2,0)');
