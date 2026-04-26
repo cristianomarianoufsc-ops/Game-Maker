@@ -1588,71 +1588,79 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
       ctx.stroke();
     }
 
-    // ── JANELAS com luz quente — casas largas têm 1 ou 2 janelas ──
-    const numWindows = houseW > 160 ? 2 : 1;
-    const hasWindow = (seed >> 16) % 5 !== 0;
-    if (hasWindow) {
-      const winW = Math.max(12, Math.round(houseW * 0.20));
-      const winH = Math.max(10, Math.round(houseH * 0.25));
-      const winPositions = numWindows === 2
-        ? [screenX + houseW * 0.22, screenX + houseW * 0.62]
-        : [screenX + houseW * 0.5 - winW / 2];
+    // ── LAYOUT ESTRUTURADO: janelas e porta em zonas separadas, sem sobreposição ──
+    // Dimensões compartilhadas
+    const winW  = Math.max(14, Math.round(houseW * 0.19));
+    const winH  = Math.max(12, Math.round(houseH * 0.24));
+    const doorW = Math.max(16, Math.round(houseW * 0.15));
+    const doorH = Math.max(28, Math.round(houseH * 0.42));
+    const winY  = topY + houseH * 0.55;   // janelas no terço inferior (nível da porta)
+    const doorY = baseY - doorH;           // porta encosta no chão
 
-      // winY alinhado ao nível da porta: a porta ocupa os 42% inferiores da casa,
-      // então a janela fica a partir de 55% do topo (mesma faixa da porta, lado a lado)
-      winPositions.forEach((winX, wi) => {
-        const winY = topY + houseH * 0.55;
-        const litSeed = (seed ^ (wi * 7919)) >>> 0;
-        const litUp = (litSeed >> 20) % 3 !== 0;
-        // Moldura escura
-        ctx.fillStyle = '#0e0805';
-        ctx.fillRect(winX - 2, winY - 2, winW + 4, winH + 4);
-        if (litUp) {
-          ctx.fillStyle = 'rgba(255,180,80,0.95)';
-          ctx.fillRect(winX, winY, winW, winH);
-          const glow = ctx.createRadialGradient(
-            winX + winW / 2, winY + winH / 2, 0,
-            winX + winW / 2, winY + winH / 2, winW * 1.6,
-          );
-          glow.addColorStop(0, 'rgba(255,160,60,0.30)');
-          glow.addColorStop(1, 'rgba(255,160,60,0)');
-          ctx.fillStyle = glow;
-          ctx.fillRect(winX - winW, winY - winH, winW * 3, winH * 3);
-        } else {
-          ctx.fillStyle = 'rgba(35,25,15,0.95)';
-          ctx.fillRect(winX, winY, winW, winH);
-        }
-        // Cruzeta da janela
-        ctx.strokeStyle = 'rgba(15,8,4,0.95)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(winX + winW / 2, winY);
-        ctx.lineTo(winX + winW / 2, winY + winH);
-        ctx.moveTo(winX, winY + winH / 2);
-        ctx.lineTo(winX + winW, winY + winH / 2);
-        ctx.stroke();
-      });
+    // Layout para casa larga (2 janelas):
+    //   [WIN_L | gap | DOOR | gap | WIN_R]
+    //   8%–27% | 27%–41% | 41%–56% | 56%–67% | 67%–86%
+    // Layout para casa estreita (1 janela), alternado por seed:
+    //   A: [WIN | gap | DOOR]  10%–29% | 29%–55% | 55%–70%
+    //   B: [DOOR | gap | WIN]  10%–25% | 25%–52% | 52%–71%
+    const layout2W = {
+      winLX: screenX + houseW * 0.08,
+      doorX: screenX + houseW * 0.41,
+      winRX: screenX + houseW * 0.67,
+    };
+    const layout1A = { winX: screenX + houseW * 0.10, doorX: screenX + houseW * 0.55 };
+    const layout1B = { doorX: screenX + houseW * 0.10, winX: screenX + houseW * 0.52 };
+
+    const useTwoWindows = houseW > 200;
+    const layout1 = ((seed >> 28) % 2 === 0) ? layout1A : layout1B;
+
+    // Helper: desenha uma janela em (wx, winY)
+    function drawWindow(wx: number, wi: number): void {
+      const litSeed = (seed ^ (wi * 7919)) >>> 0;
+      const litUp   = (litSeed >> 20) % 3 !== 0;
+      ctx.fillStyle = '#0e0805';
+      ctx.fillRect(wx - 2, winY - 2, winW + 4, winH + 4);
+      if (litUp) {
+        ctx.fillStyle = 'rgba(255,180,80,0.95)';
+        ctx.fillRect(wx, winY, winW, winH);
+        const glow = ctx.createRadialGradient(wx + winW / 2, winY + winH / 2, 0, wx + winW / 2, winY + winH / 2, winW * 1.6);
+        glow.addColorStop(0, 'rgba(255,160,60,0.30)');
+        glow.addColorStop(1, 'rgba(255,160,60,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(wx - winW, winY - winH, winW * 3, winH * 3);
+      } else {
+        ctx.fillStyle = 'rgba(35,25,15,0.95)';
+        ctx.fillRect(wx, winY, winW, winH);
+      }
+      ctx.strokeStyle = 'rgba(15,8,4,0.95)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(wx + winW / 2, winY); ctx.lineTo(wx + winW / 2, winY + winH);
+      ctx.moveTo(wx, winY + winH / 2); ctx.lineTo(wx + winW, winY + winH / 2);
+      ctx.stroke();
     }
 
-    // ── PORTA rústica ──
-    const hasDoor = ((seed >> 24) % 3) !== 2;
-    if (hasDoor) {
-      const doorW = Math.max(12, Math.round(houseW * 0.16));
-      const doorH = Math.max(24, Math.round(houseH * 0.42));
-      const doorX = screenX + houseW * (0.14 + ((seed >> 28) % 3) * 0.24);
-      const doorY = baseY - doorH;
+    // Helper: desenha a porta em (dx, doorY)
+    function drawDoor(dx: number): void {
       ctx.fillStyle = '#1a0e06';
-      ctx.fillRect(doorX, doorY, doorW, doorH);
+      ctx.fillRect(dx, doorY, doorW, doorH);
       ctx.strokeStyle = 'rgba(60,35,18,0.7)';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(doorX + doorW / 3, doorY);
-      ctx.lineTo(doorX + doorW / 3, doorY + doorH);
-      ctx.moveTo(doorX + doorW * 2 / 3, doorY);
-      ctx.lineTo(doorX + doorW * 2 / 3, doorY + doorH);
+      ctx.moveTo(dx + doorW / 3, doorY); ctx.lineTo(dx + doorW / 3, doorY + doorH);
+      ctx.moveTo(dx + doorW * 2 / 3, doorY); ctx.lineTo(dx + doorW * 2 / 3, doorY + doorH);
       ctx.stroke();
       ctx.fillStyle = 'rgba(180,140,90,0.85)';
-      ctx.fillRect(doorX + doorW - 4, doorY + doorH * 0.55, 2, 2);
+      ctx.fillRect(dx + doorW - 4, doorY + doorH * 0.55, 2, 2);
+    }
+
+    if (useTwoWindows) {
+      drawWindow(layout2W.winLX, 0);
+      drawDoor(layout2W.doorX);
+      drawWindow(layout2W.winRX, 1);
+    } else {
+      if ((seed >> 16) % 5 !== 0) drawWindow(layout1.winX, 0);
+      drawDoor(layout1.doorX);
     }
 
     // ── ANTENA de TV improvisada ──
