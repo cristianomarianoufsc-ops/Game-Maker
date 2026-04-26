@@ -1494,45 +1494,48 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
   ctx.fillRect(sx, GROUND_Y - 320, ex - sx, 140);
 
   // ── 2. CASINHAS DE MADEIRA ──
-  // Geração determinística por X mundial — tamanhos maiores e mais visíveis
-  const HOUSE_STEP = 110;
-  const startX = Math.ceil(SHANTY_X1 / HOUSE_STEP) * HOUSE_STEP;
-  for (let hx = startX; hx < SHANTY_X2; hx += HOUSE_STEP) {
-    const seed = ((hx * 2654435761) >>> 0);
-    const houseW = 75 + (seed % 50);
-    const houseH = 95 + ((seed >> 4) % 65);
-    const offsetY = ((seed >> 8) % 30);
-    const skip = ((seed >> 12) % 8) === 0;
-    if (skip) continue;
+  // Função auxiliar para desenhar uma casa individualmente
+  function drawShantyHouse(
+    hx: number,
+    seedBase: number,
+    baseYOffset: number,
+    scale: number,
+  ): void {
+    const seed = (seedBase >>> 0);
+    const houseW = Math.round((130 + (seed % 80)) * scale);  // 130–210px base
+    const houseH = Math.round((80 + ((seed >> 4) % 50)) * scale);  // 80–130px base — mais largo que alto
+    const offsetY = Math.round(((seed >> 8) % 20) * scale);
 
-    const baseY = GROUND_Y - 4 - offsetY;
+    const baseY = GROUND_Y - 4 - baseYOffset - offsetY;
     const topY = baseY - houseH;
     const screenX = hx - camX;
 
+    if (screenX + houseW < -20 || screenX > CANVAS_W + 20) return;
+
     // Sombra projetada no chão
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.beginPath();
-    ctx.ellipse(screenX + houseW / 2, baseY + 3, houseW * 0.55, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(screenX + houseW / 2, baseY + 3, houseW * 0.5, 4, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Corpo da casa — madeira clara visível contra o morro escuro
-    const woodTones = ['#7a5234', '#8b5e3a', '#6e4628', '#9a6a44', '#7d5232'];
+    const woodTones = ['#7a5234', '#8b5e3a', '#6e4628', '#9a6a44', '#7d5232', '#6b4a2c'];
     const wood = woodTones[seed % woodTones.length];
     ctx.fillStyle = wood;
     ctx.fillRect(screenX, topY, houseW, houseH);
 
     // Sombra interna lateral direita (lateral oposta à luz)
     const sideShade = ctx.createLinearGradient(screenX, 0, screenX + houseW, 0);
-    sideShade.addColorStop(0, 'rgba(255,200,140,0.12)');
-    sideShade.addColorStop(0.5, 'rgba(0,0,0,0)');
-    sideShade.addColorStop(1, 'rgba(0,0,0,0.45)');
+    sideShade.addColorStop(0, 'rgba(255,200,140,0.10)');
+    sideShade.addColorStop(0.45, 'rgba(0,0,0,0)');
+    sideShade.addColorStop(1, 'rgba(0,0,0,0.48)');
     ctx.fillStyle = sideShade;
     ctx.fillRect(screenX, topY, houseW, houseH);
 
     // Tábuas verticais — linhas escuras com leve highlight
-    ctx.strokeStyle = 'rgba(20,12,5,0.7)';
+    ctx.strokeStyle = 'rgba(20,12,5,0.65)';
     ctx.lineWidth = 1;
-    const plankW = 9 + (seed % 5);
+    const plankW = Math.round((10 + (seed % 5)) * scale);
     for (let px = screenX + plankW; px < screenX + houseW; px += plankW) {
       ctx.beginPath();
       ctx.moveTo(px, topY + 2);
@@ -1540,146 +1543,175 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
       ctx.stroke();
     }
     // Highlight claro em algumas tábuas
-    ctx.fillStyle = 'rgba(255,210,150,0.14)';
+    ctx.fillStyle = 'rgba(255,210,150,0.12)';
     for (let px = screenX + 2; px < screenX + houseW; px += plankW * 2) {
       ctx.fillRect(px, topY + 2, 1, houseH - 2);
     }
 
     // Manchas de mofo/desgaste na base
-    ctx.fillStyle = 'rgba(20,15,8,0.45)';
-    ctx.fillRect(screenX + 2, baseY - 14, houseW - 4, 14);
+    ctx.fillStyle = 'rgba(20,15,8,0.40)';
+    ctx.fillRect(screenX + 2, baseY - Math.round(14 * scale), houseW - 4, Math.round(14 * scale));
 
-    // ── TELHADO triangular — zinco enferrujado ──
-    const roofPeak = topY - (houseW * 0.34);
+    // ── TELHADO triangular — telhado mais suave (proporção 0.22 da largura) ──
+    const roofH = houseW * 0.22;
+    const roofPeak = topY - roofH;
     const roofGrad = ctx.createLinearGradient(0, roofPeak, 0, topY);
     roofGrad.addColorStop(0, '#5a3a22');
     roofGrad.addColorStop(0.5, '#3a2414');
     roofGrad.addColorStop(1, '#1f130a');
     ctx.fillStyle = roofGrad;
     ctx.beginPath();
-    ctx.moveTo(screenX - 5, topY);
+    ctx.moveTo(screenX - 6, topY);
     ctx.lineTo(screenX + houseW / 2, roofPeak);
-    ctx.lineTo(screenX + houseW + 5, topY);
+    ctx.lineTo(screenX + houseW + 6, topY);
     ctx.closePath();
     ctx.fill();
     // Borda do telhado escura
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.65)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(screenX - 5, topY);
+    ctx.moveTo(screenX - 6, topY);
     ctx.lineTo(screenX + houseW / 2, roofPeak);
-    ctx.lineTo(screenX + houseW + 5, topY);
+    ctx.lineTo(screenX + houseW + 6, topY);
     ctx.stroke();
     // Manchas de ferrugem
-    ctx.fillStyle = 'rgba(180,75,25,0.45)';
-    ctx.fillRect(screenX + houseW * 0.25, topY - 5, houseW * 0.5, 3);
-    ctx.fillRect(screenX + houseW * 0.45, topY - 12, houseW * 0.18, 2);
+    ctx.fillStyle = 'rgba(180,75,25,0.40)';
+    ctx.fillRect(screenX + houseW * 0.25, topY - 4, houseW * 0.45, 3);
     // Linhas de telha
-    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
     for (let i = 1; i < 4; i++) {
-      const ty = topY - (houseW * 0.34) * (i / 4);
+      const ty = topY - roofH * (i / 4);
       const tShrink = (houseW / 2) * (i / 4);
       ctx.beginPath();
-      ctx.moveTo(screenX - 5 + tShrink, ty);
-      ctx.lineTo(screenX + houseW + 5 - tShrink, ty);
+      ctx.moveTo(screenX - 6 + tShrink, ty);
+      ctx.lineTo(screenX + houseW + 6 - tShrink, ty);
       ctx.stroke();
     }
 
-    // ── JANELA com luz quente (alta chance de estar acesa) ──
-    const hasWindow = (seed >> 16) % 4 !== 0;
+    // ── JANELAS com luz quente — casas largas têm 1 ou 2 janelas ──
+    const numWindows = houseW > 160 ? 2 : 1;
+    const hasWindow = (seed >> 16) % 5 !== 0;
     if (hasWindow) {
-      const winW = Math.max(10, houseW * 0.22);
-      const winH = Math.max(10, houseH * 0.2);
-      const winX = screenX + houseW * 0.5 - winW / 2;
-      const winY = topY + houseH * 0.32;
-      // Moldura escura
-      ctx.fillStyle = '#0e0805';
-      ctx.fillRect(winX - 2, winY - 2, winW + 4, winH + 4);
-      // Vidro
-      const litUp = ((seed >> 20) % 3) !== 0;
-      if (litUp) {
-        // Luz amarela quente vibrante
-        ctx.fillStyle = 'rgba(255,180,80,0.95)';
-        ctx.fillRect(winX, winY, winW, winH);
-        // Glow externo
-        const glow = ctx.createRadialGradient(
-          winX + winW / 2, winY + winH / 2, 0,
-          winX + winW / 2, winY + winH / 2, winW * 1.4
-        );
-        glow.addColorStop(0, 'rgba(255,160,60,0.35)');
-        glow.addColorStop(1, 'rgba(255,160,60,0)');
-        ctx.fillStyle = glow;
-        ctx.fillRect(winX - winW, winY - winH, winW * 3, winH * 3);
-      } else {
-        ctx.fillStyle = 'rgba(35,25,15,0.95)';
-        ctx.fillRect(winX, winY, winW, winH);
-      }
-      // Cruzeta da janela
-      ctx.strokeStyle = 'rgba(15,8,4,0.95)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(winX + winW / 2, winY);
-      ctx.lineTo(winX + winW / 2, winY + winH);
-      ctx.moveTo(winX, winY + winH / 2);
-      ctx.lineTo(winX + winW, winY + winH / 2);
-      ctx.stroke();
+      const winW = Math.max(12, Math.round(houseW * 0.20));
+      const winH = Math.max(10, Math.round(houseH * 0.25));
+      const winPositions = numWindows === 2
+        ? [screenX + houseW * 0.22, screenX + houseW * 0.62]
+        : [screenX + houseW * 0.5 - winW / 2];
+
+      winPositions.forEach((winX, wi) => {
+        const winY = topY + houseH * 0.28;
+        const litSeed = (seed ^ (wi * 7919)) >>> 0;
+        const litUp = (litSeed >> 20) % 3 !== 0;
+        // Moldura escura
+        ctx.fillStyle = '#0e0805';
+        ctx.fillRect(winX - 2, winY - 2, winW + 4, winH + 4);
+        if (litUp) {
+          ctx.fillStyle = 'rgba(255,180,80,0.95)';
+          ctx.fillRect(winX, winY, winW, winH);
+          const glow = ctx.createRadialGradient(
+            winX + winW / 2, winY + winH / 2, 0,
+            winX + winW / 2, winY + winH / 2, winW * 1.6,
+          );
+          glow.addColorStop(0, 'rgba(255,160,60,0.30)');
+          glow.addColorStop(1, 'rgba(255,160,60,0)');
+          ctx.fillStyle = glow;
+          ctx.fillRect(winX - winW, winY - winH, winW * 3, winH * 3);
+        } else {
+          ctx.fillStyle = 'rgba(35,25,15,0.95)';
+          ctx.fillRect(winX, winY, winW, winH);
+        }
+        // Cruzeta da janela
+        ctx.strokeStyle = 'rgba(15,8,4,0.95)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(winX + winW / 2, winY);
+        ctx.lineTo(winX + winW / 2, winY + winH);
+        ctx.moveTo(winX, winY + winH / 2);
+        ctx.lineTo(winX + winW, winY + winH / 2);
+        ctx.stroke();
+      });
     }
 
     // ── PORTA rústica ──
-    const hasDoor = ((seed >> 24) % 2) === 0;
-    if (hasDoor && houseH > 70) {
-      const doorW = Math.max(10, houseW * 0.18);
-      const doorH = Math.max(22, houseH * 0.34);
-      const doorX = screenX + houseW * (0.18 + ((seed >> 28) % 3) * 0.22);
+    const hasDoor = ((seed >> 24) % 3) !== 2;
+    if (hasDoor) {
+      const doorW = Math.max(12, Math.round(houseW * 0.16));
+      const doorH = Math.max(24, Math.round(houseH * 0.42));
+      const doorX = screenX + houseW * (0.14 + ((seed >> 28) % 3) * 0.24);
       const doorY = baseY - doorH;
       ctx.fillStyle = '#1a0e06';
       ctx.fillRect(doorX, doorY, doorW, doorH);
-      // Tábuas verticais da porta
       ctx.strokeStyle = 'rgba(60,35,18,0.7)';
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(doorX + doorW / 2, doorY);
-      ctx.lineTo(doorX + doorW / 2, doorY + doorH);
+      ctx.moveTo(doorX + doorW / 3, doorY);
+      ctx.lineTo(doorX + doorW / 3, doorY + doorH);
+      ctx.moveTo(doorX + doorW * 2 / 3, doorY);
+      ctx.lineTo(doorX + doorW * 2 / 3, doorY + doorH);
       ctx.stroke();
-      // Maçaneta
       ctx.fillStyle = 'rgba(180,140,90,0.85)';
-      ctx.fillRect(doorX + doorW - 3, doorY + doorH * 0.55, 2, 2);
+      ctx.fillRect(doorX + doorW - 4, doorY + doorH * 0.55, 2, 2);
     }
 
     // ── ANTENA de TV improvisada ──
     if ((seed >> 6) % 3 === 0) {
-      ctx.strokeStyle = 'rgba(15,12,8,0.95)';
+      ctx.strokeStyle = 'rgba(15,12,8,0.90)';
       ctx.lineWidth = 1;
-      const antX = screenX + houseW * 0.5;
+      const antX = screenX + houseW * 0.55;
       ctx.beginPath();
       ctx.moveTo(antX, roofPeak);
-      ctx.lineTo(antX, roofPeak - 18);
-      ctx.moveTo(antX - 6, roofPeak - 14);
-      ctx.lineTo(antX + 6, roofPeak - 14);
-      ctx.moveTo(antX - 4, roofPeak - 18);
-      ctx.lineTo(antX + 4, roofPeak - 18);
+      ctx.lineTo(antX, roofPeak - 20);
+      ctx.moveTo(antX - 7, roofPeak - 15);
+      ctx.lineTo(antX + 7, roofPeak - 15);
+      ctx.moveTo(antX - 5, roofPeak - 20);
+      ctx.lineTo(antX + 5, roofPeak - 20);
       ctx.stroke();
     }
 
     // ── CHAMINÉ com fumaça em algumas casas ──
     if ((seed >> 10) % 4 === 0) {
-      const chimX = screenX + houseW * 0.7;
-      const chimY = roofPeak + 10;
+      const chimX = screenX + houseW * 0.72;
+      const chimY = roofPeak + Math.round(roofH * 0.5);
       ctx.fillStyle = '#2a1810';
-      ctx.fillRect(chimX, chimY, 6, 14);
-      // Fumaça subindo (3 nuvens cinza translúcidas)
-      ctx.fillStyle = 'rgba(120,110,100,0.35)';
+      ctx.fillRect(chimX, chimY, 7, Math.round(16 * scale));
+      ctx.fillStyle = 'rgba(120,110,100,0.30)';
       ctx.beginPath();
-      ctx.arc(chimX + 3, chimY - 4, 4, 0, Math.PI * 2);
+      ctx.arc(chimX + 3, chimY - 5, 5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = 'rgba(140,130,120,0.25)';
+      ctx.fillStyle = 'rgba(140,130,120,0.20)';
       ctx.beginPath();
-      ctx.arc(chimX + 6, chimY - 12, 5, 0, Math.PI * 2);
+      ctx.arc(chimX + 6, chimY - 14, 6, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = 'rgba(160,150,140,0.15)';
+      ctx.fillStyle = 'rgba(160,150,140,0.12)';
       ctx.beginPath();
-      ctx.arc(chimX + 9, chimY - 22, 6, 0, Math.PI * 2);
+      ctx.arc(chimX + 9, chimY - 25, 7, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  // ── FILEIRA DE FUNDO: casas menores em paralax 0.88 (mais distantes) ──
+  // ctx.translate desloca +camX*0.12 para que screenX = hx - camX vire hx - camX*0.88
+  const BG_STEP = 160;
+  const bgStartX = Math.ceil(SHANTY_X1 / BG_STEP) * BG_STEP;
+  ctx.save();
+  ctx.translate(Math.round(camX * 0.12), 0);
+  ctx.globalAlpha = 0.50;
+  for (let hx = bgStartX; hx < SHANTY_X2; hx += BG_STEP) {
+    const bgSeed = ((hx * 374761393 + 9999) >>> 0);
+    const skip = (bgSeed % 6) === 0;
+    if (skip) continue;
+    drawShantyHouse(hx, bgSeed, 18, 0.68);
+  }
+  ctx.restore();
+
+  // ── FILEIRA PRINCIPAL: casas grandes, próximas entre si ──
+  const HOUSE_STEP = 155;
+  const startX = Math.ceil(SHANTY_X1 / HOUSE_STEP) * HOUSE_STEP;
+  for (let hx = startX; hx < SHANTY_X2; hx += HOUSE_STEP) {
+    const seed = ((hx * 2654435761) >>> 0);
+    const skip = ((seed >> 12) % 10) === 0;   // salto raro — só 10% pulam
+    if (skip) continue;
+    drawShantyHouse(hx, seed, 0, 1.0);
   }
 
   // ── 3. NÉVOA BAIXA atmosférica integrando ao chão ──
