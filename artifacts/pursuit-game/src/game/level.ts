@@ -100,7 +100,9 @@ export function generateLevel(): Platform[] {
   // Largura/posição mantidas iguais aos gaps originais para preservar o level design.
   // Estes objetos são adicionados ao array de plataformas e podem ser editados
   // (movidos, duplicados ou deletados) pelo editor de fase como qualquer objeto.
-  const POTHOLE_H = 14;
+  // Bueiros padrão: retangulares verticais (h:90) — boca da largura do gap original.
+  // O h define a profundidade visual do poço (cinza escuro com gradiente até preto).
+  const POTHOLE_H = 90;
   const defaultPotholes: Array<{ x: number; w: number }> = [
     { x: 3100, w: 100 },   // WALL ZONE 1
     { x: 4100, w: 100 },

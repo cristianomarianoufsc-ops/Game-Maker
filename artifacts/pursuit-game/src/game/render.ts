@@ -1276,7 +1276,8 @@ export function drawGround(
   // Bueiros agora são objetos `pothole` editáveis — desenhados em drawPotholes()
 }
 
-// ── Desenha objetos pothole (bueiros editáveis) — grade metálica escura sobre o chão
+// ── Desenha objetos pothole (bueiros editáveis) — poço de cimento com profundidade
+// Bueiro retangular vertical: w controla a largura da boca, h controla a profundidade visual.
 export function drawPotholes(
   ctx: CanvasRenderingContext2D,
   platforms: ReadonlyArray<{ x: number; y: number; w: number; h: number; type: string }>,
@@ -1289,58 +1290,254 @@ export function drawPotholes(
     const sx2 = p.x + p.w - camX;
     if (sx2 < -20 || sx1 > CANVAS_W + 20) continue;
 
-    const frameY = p.y;
-    const frameH = Math.max(8, p.h);
+    const topY = p.y;
+    const totalH = Math.max(20, p.h);
+    const w = sx2 - sx1;
 
     ctx.save();
 
-    // Cobre o chão atrás do bueiro com gradiente preto (anula visualmente o chão)
-    const frameGrad = ctx.createLinearGradient(0, frameY, 0, frameY + frameH);
-    frameGrad.addColorStop(0,   '#1a1a1d');
-    frameGrad.addColorStop(0.5, '#0a0a0c');
-    frameGrad.addColorStop(1,   '#050506');
-    ctx.fillStyle = frameGrad;
-    ctx.fillRect(sx1, frameY, sx2 - sx1, frameH);
+    // ── 1. POÇO INTERNO — gradiente vertical do cinza escuro ao preto (profundidade) ──
+    const wellGrad = ctx.createLinearGradient(0, topY, 0, topY + totalH);
+    wellGrad.addColorStop(0,    '#1c1c20');  // topo: cimento escuro
+    wellGrad.addColorStop(0.25, '#0e0e11');
+    wellGrad.addColorStop(0.6,  '#050507');
+    wellGrad.addColorStop(1,    '#000000');  // fundo: escuridão total
+    ctx.fillStyle = wellGrad;
+    ctx.fillRect(sx1, topY, w, totalH);
 
-    // Aro metálico superior (highlight sutil)
-    ctx.strokeStyle = 'rgba(140,130,120,0.55)';
+    // ── 2. PAREDES LATERAIS INTERNAS — sombra projetada do aro pra dar 3D ──
+    const sideW = Math.max(3, Math.min(8, Math.round(w * 0.08)));
+    const leftSideGrad = ctx.createLinearGradient(sx1, 0, sx1 + sideW, 0);
+    leftSideGrad.addColorStop(0, 'rgba(0,0,0,0.85)');
+    leftSideGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = leftSideGrad;
+    ctx.fillRect(sx1, topY, sideW, totalH);
+
+    const rightSideGrad = ctx.createLinearGradient(sx2 - sideW, 0, sx2, 0);
+    rightSideGrad.addColorStop(0, 'rgba(0,0,0,0)');
+    rightSideGrad.addColorStop(1, 'rgba(0,0,0,0.85)');
+    ctx.fillStyle = rightSideGrad;
+    ctx.fillRect(sx2 - sideW, topY, sideW, totalH);
+
+    // ── 3. TIJOLOS NAS PAREDES INTERNAS — linhas horizontais sutis indicando construção ──
+    ctx.strokeStyle = 'rgba(60,55,50,0.35)';
     ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(sx1, frameY + 0.5);
-    ctx.lineTo(sx2, frameY + 0.5);
-    ctx.stroke();
-
-    // Sombra interna na borda inferior do aro
-    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(sx1, frameY + frameH - 0.5);
-    ctx.lineTo(sx2, frameY + frameH - 0.5);
-    ctx.stroke();
-
-    // Barras verticais da grade (grelha de bueiro)
-    const barStep = 7;
-    const barW = 3;
-    ctx.fillStyle = 'rgba(45,40,38,0.95)';
-    for (let bx = sx1 + 3; bx + barW <= sx2 - 3; bx += barStep) {
-      ctx.fillRect(bx, frameY + 2, barW, frameH - 4);
+    const brickRowH = 12;
+    for (let by = topY + 6; by < topY + totalH - 4; by += brickRowH) {
+      const fade = 1 - (by - topY) / totalH;
+      ctx.globalAlpha = Math.max(0.1, fade * 0.55);
+      // Linha esquerda
+      ctx.beginPath();
+      ctx.moveTo(sx1 + 2, by);
+      ctx.lineTo(sx1 + sideW + 2, by);
+      ctx.stroke();
+      // Linha direita
+      ctx.beginPath();
+      ctx.moveTo(sx2 - sideW - 2, by);
+      ctx.lineTo(sx2 - 2, by);
+      ctx.stroke();
     }
+    ctx.globalAlpha = 1;
 
-    // Highlight fino no topo de cada barra
-    ctx.fillStyle = 'rgba(120,110,100,0.35)';
-    for (let bx = sx1 + 3; bx + barW <= sx2 - 3; bx += barStep) {
-      ctx.fillRect(bx, frameY + 2, barW, 1);
+    // ── 4. ARO DE CIMENTO/FERRO no topo (boca do bueiro) ──
+    const rimH = 5;
+    const rimGrad = ctx.createLinearGradient(0, topY - 2, 0, topY + rimH);
+    rimGrad.addColorStop(0,   '#807870');
+    rimGrad.addColorStop(0.4, '#5a534b');
+    rimGrad.addColorStop(1,   '#2a2520');
+    ctx.fillStyle = rimGrad;
+    ctx.fillRect(sx1 - 2, topY - 2, w + 4, rimH);
+
+    // Highlight superior do aro (luz batendo)
+    ctx.fillStyle = 'rgba(180,170,158,0.85)';
+    ctx.fillRect(sx1 - 2, topY - 2, w + 4, 1);
+
+    // Sombra inferior do aro (transição pra escuridão)
+    ctx.fillStyle = 'rgba(0,0,0,0.95)';
+    ctx.fillRect(sx1, topY + rimH - 1, w, 2);
+
+    // ── 5. PARAFUSOS DO ARO nos cantos ──
+    const boltY = topY;
+    ctx.fillStyle = '#1a1612';
+    ctx.fillRect(sx1, boltY, 3, 2);
+    ctx.fillRect(sx2 - 3, boltY, 3, 2);
+    ctx.fillStyle = 'rgba(160,150,140,0.6)';
+    ctx.fillRect(sx1, boltY, 3, 1);
+    ctx.fillRect(sx2 - 3, boltY, 3, 1);
+
+    // ── 6. LIXO NO FUNDO — pequenas manchas claras (reflexo de água parada) ──
+    if (totalH > 50) {
+      const fundoY = topY + totalH * 0.85;
+      const fundoH = Math.min(8, totalH * 0.1);
+      ctx.fillStyle = 'rgba(50,30,20,0.4)';
+      ctx.fillRect(sx1 + sideW + 2, fundoY, w - 2 * sideW - 4, fundoH);
+      // Pequeno brilho de água
+      ctx.fillStyle = 'rgba(80,90,100,0.18)';
+      ctx.fillRect(sx1 + sideW + 4, fundoY + 1, w - 2 * sideW - 8, 1);
     }
-
-    // Parafusos pequenos nos cantos
-    ctx.fillStyle = 'rgba(90,82,75,0.9)';
-    ctx.fillRect(sx1 + 1, frameY + 2, 2, 2);
-    ctx.fillRect(sx2 - 3, frameY + 2, 2, 2);
-    ctx.fillRect(sx1 + 1, frameY + frameH - 4, 2, 2);
-    ctx.fillRect(sx2 - 3, frameY + frameH - 4, 2, 2);
 
     ctx.restore();
   }
+}
+
+// ── VILA HUMILDE DE MADEIRA ────────────────────────────────────────
+// Backdrop após o muro x:25929 até x:30664 — pequenas casas de madeira pobres
+// que enquadram o encontro do drone com os 2 NPCs como uma cena de favela.
+const SHANTY_X1 = 25929;
+const SHANTY_X2 = 30664;
+
+export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): void {
+  const sx = SHANTY_X1 - camX;
+  const ex = SHANTY_X2 - camX;
+  if (ex < -20 || sx > CANVAS_W + 20) return;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(sx, 0, ex - sx, GROUND_Y);
+  ctx.clip();
+
+  // Camada de fundo — silhueta escura de morro/colina suave
+  const hillGrad = ctx.createLinearGradient(0, GROUND_Y - 220, 0, GROUND_Y);
+  hillGrad.addColorStop(0, 'rgba(28,18,14,0)');
+  hillGrad.addColorStop(0.6, 'rgba(28,18,14,0.55)');
+  hillGrad.addColorStop(1, 'rgba(20,12,8,0.85)');
+  ctx.fillStyle = hillGrad;
+  ctx.beginPath();
+  let firstX = sx;
+  ctx.moveTo(firstX, GROUND_Y);
+  for (let x = SHANTY_X1; x <= SHANTY_X2; x += 40) {
+    const seed = ((x * 374761393) >>> 0);
+    const hillH = 140 + (seed % 80);
+    ctx.lineTo(x - camX, GROUND_Y - hillH);
+  }
+  ctx.lineTo(ex, GROUND_Y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Casinhas de madeira — geração determinística pelo X mundial
+  // Cada casa tem largura ~70-110, altura ~75-130, com telhado triangular
+  const HOUSE_STEP = 95;
+  const startX = Math.ceil(SHANTY_X1 / HOUSE_STEP) * HOUSE_STEP;
+  for (let hx = startX; hx < SHANTY_X2; hx += HOUSE_STEP) {
+    const seed = ((hx * 2654435761) >>> 0);
+    // Aleatório mas determinístico
+    const houseW = 60 + (seed % 45);
+    const houseH = 70 + ((seed >> 4) % 55);
+    const offsetY = ((seed >> 8) % 35);    // alguns mais altos/baixos no morro
+    const skip = ((seed >> 12) % 7) === 0; // espaços ocasionais (becos)
+    if (skip) continue;
+
+    const baseY = GROUND_Y - 6 - offsetY;
+    const topY = baseY - houseH;
+    const screenX = hx - camX;
+
+    // Sombra da casa no chão (atrás)
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(screenX - 2, topY + 4, houseW + 4, houseH);
+
+    // Corpo da casa — paleta de madeira escura, marrom envelhecido
+    const woodTones = ['#4a3322', '#5a3d28', '#3d2a1a', '#523524', '#604030'];
+    const wood = woodTones[seed % woodTones.length];
+    ctx.fillStyle = wood;
+    ctx.fillRect(screenX, topY, houseW, houseH);
+
+    // Tábuas verticais (linhas escuras)
+    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    ctx.lineWidth = 1;
+    const plankW = 8 + (seed % 5);
+    for (let px = screenX + plankW; px < screenX + houseW; px += plankW) {
+      ctx.beginPath();
+      ctx.moveTo(px, topY + 2);
+      ctx.lineTo(px, topY + houseH);
+      ctx.stroke();
+    }
+
+    // Highlights claros em algumas tábuas (luz lateral)
+    ctx.fillStyle = 'rgba(140,100,60,0.18)';
+    for (let px = screenX + 2; px < screenX + houseW; px += plankW * 2) {
+      ctx.fillRect(px, topY + 2, 1, houseH - 2);
+    }
+
+    // Telhado triangular — telhas/zinco enferrujado
+    const roofPeak = topY - (houseW * 0.32);
+    const roofGrad = ctx.createLinearGradient(0, roofPeak, 0, topY);
+    roofGrad.addColorStop(0, '#3a2418');
+    roofGrad.addColorStop(1, '#1f130a');
+    ctx.fillStyle = roofGrad;
+    ctx.beginPath();
+    ctx.moveTo(screenX - 4, topY);
+    ctx.lineTo(screenX + houseW / 2, roofPeak);
+    ctx.lineTo(screenX + houseW + 4, topY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ferrugem no telhado (manchas avermelhadas)
+    ctx.fillStyle = 'rgba(140,55,20,0.35)';
+    ctx.fillRect(screenX + houseW * 0.3, topY - 4, houseW * 0.4, 3);
+
+    // Janela única amarelada (luz acesa em algumas casas)
+    const hasWindow = (seed >> 16) % 3 !== 0;
+    if (hasWindow) {
+      const winW = Math.max(8, houseW * 0.18);
+      const winH = Math.max(8, houseH * 0.18);
+      const winX = screenX + houseW * 0.5 - winW / 2;
+      const winY = topY + houseH * 0.35;
+      // Moldura
+      ctx.fillStyle = '#1a0e06';
+      ctx.fillRect(winX - 1, winY - 1, winW + 2, winH + 2);
+      // Vidro com luz interna amarela quente
+      const litUp = ((seed >> 20) % 4) !== 0;
+      ctx.fillStyle = litUp ? 'rgba(220,160,70,0.85)' : 'rgba(40,30,20,0.95)';
+      ctx.fillRect(winX, winY, winW, winH);
+      // Cruzeta de madeira na janela
+      ctx.strokeStyle = 'rgba(20,12,6,0.85)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(winX + winW / 2, winY);
+      ctx.lineTo(winX + winW / 2, winY + winH);
+      ctx.moveTo(winX, winY + winH / 2);
+      ctx.lineTo(winX + winW, winY + winH / 2);
+      ctx.stroke();
+    }
+
+    // Porta pequena rústica
+    const hasDoor = ((seed >> 24) % 2) === 0;
+    if (hasDoor && houseH > 60) {
+      const doorW = Math.max(8, houseW * 0.16);
+      const doorH = Math.max(18, houseH * 0.32);
+      const doorX = screenX + houseW * (0.18 + ((seed >> 28) % 3) * 0.22);
+      const doorY = baseY - doorH;
+      ctx.fillStyle = '#1a0e06';
+      ctx.fillRect(doorX, doorY, doorW, doorH);
+      // Maçaneta
+      ctx.fillStyle = 'rgba(150,120,80,0.6)';
+      ctx.fillRect(doorX + doorW - 2, doorY + doorH * 0.5, 1, 1);
+    }
+
+    // Antena improvisada de TV em algumas casas (galho cruzado no telhado)
+    if ((seed >> 6) % 4 === 0) {
+      ctx.strokeStyle = 'rgba(20,18,15,0.85)';
+      ctx.lineWidth = 1;
+      const antX = screenX + houseW * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(antX, roofPeak);
+      ctx.lineTo(antX, roofPeak - 16);
+      ctx.moveTo(antX - 5, roofPeak - 12);
+      ctx.lineTo(antX + 5, roofPeak - 12);
+      ctx.moveTo(antX - 3, roofPeak - 16);
+      ctx.lineTo(antX + 3, roofPeak - 16);
+      ctx.stroke();
+    }
+  }
+
+  // Névoa baixa atmosférica
+  const fogGrad = ctx.createLinearGradient(0, GROUND_Y - 50, 0, GROUND_Y);
+  fogGrad.addColorStop(0, 'rgba(40,25,15,0)');
+  fogGrad.addColorStop(1, 'rgba(40,25,15,0.35)');
+  ctx.fillStyle = fogGrad;
+  ctx.fillRect(sx, GROUND_Y - 50, ex - sx, 50);
+
+  ctx.restore();
 }
 
 // ── Cached platform groups — recomputed once per level change ───────
