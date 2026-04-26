@@ -1,5 +1,24 @@
 # Workspace
 
+## Configuração Inicial do Agente (LEIA PRIMEIRO)
+
+Toda vez que um novo agente assumir este projeto, execute estes passos antes de qualquer outra coisa:
+
+1. **Instalar dependências** (caso `node_modules` esteja ausente):
+   ```
+   pnpm install
+   ```
+
+2. **Iniciar os workflows obrigatórios** — o preview fica branco/parado se eles não estiverem rodando:
+   - `artifacts/pursuit-game: web` — servidor principal do jogo (porta 5000)
+   - `Level Autosave` — vigia de salvamento automático da fase
+
+   Use `restart_workflow("<nome>")` para cada um, na ordem acima.
+
+3. **Confirmar que o jogo está acessível** fazendo um screenshot em `path: "/"` antes de iniciar qualquer tarefa.
+
+> Os workflows `artifacts/api-server: API Server` e `artifacts/mockup-sandbox: Component Preview Server` só precisam ser iniciados se a tarefa exigir o servidor de API ou o sandbox de mockup.
+
 ## Overview
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
