@@ -3147,13 +3147,14 @@ export function drawBystanders(
       frameIdx = 1 + (Math.floor(b.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2);
     }
 
-    // Tamanho de exibição — flee=160px (igual ao run do Horácio), sit=145px.
-    // Âncora: fundo do sprite em GROUND_Y + NPC_FOOT_OFFSET.
-    // Sprite 1 (jaqueta marrom) tem o frame 'sit' com personagem mais alto
-    // dentro do quadro → precisa de offset extra para não flutuar.
+    // Sprites: 851x315px, 3 frames (frameW=283, frameH=315).
+    // Sprite 2 (verde): caixa sit toca o fundo do frame (100%) → offset base 26.
+    // Sprite 1 (marrom): caixa sit ocupa ~88% do frame, 12% transparente abaixo
+    //   → offset calculado: GROUND_Y + offset - displayH + displayH*0.88 = anchorY(436)
+    //   → offset = 436 - displayH*0.88 + displayH - GROUND_Y = displayH*0.12 + 26 ≈ 26+24=50 (200px)
     const isSit = b.state === 'sit';
-    const displayH = isSit ? 145 : 160;
-    const NPC_FOOT_OFFSET = isSit && b.spriteId === 1 ? 56 : 26;
+    const displayH = 200;
+    const NPC_FOOT_OFFSET = isSit && b.spriteId === 1 ? 50 : 26;
     const displayW = Math.round(displayH * (frameW / frameH));
     const screenY = GROUND_Y + NPC_FOOT_OFFSET - displayH;
 
