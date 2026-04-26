@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import type { GameState, Keys, Player, Drone, Platform } from './types';
+import type { GameState, Keys, Player, Drone, Platform, Bystander } from './types';
 import spriteUrl from '/horacio_transparent.png';
 import runSheetUrl from '/run_sheet_transparent.png';
 import idleUrl from '/idle_transparent.png';
@@ -116,6 +116,37 @@ function makePlayer(): Player {
     sideFlipTimer: 0,
     sideFlipImmune: false,
   };
+}
+
+function makeInitialBystanders(): Bystander[] {
+  return [
+    {
+      x: 25970,
+      y: GROUND_Y - 140,
+      w: 60,
+      h: 140,
+      vx: 0,
+      facingRight: true,
+      state: 'sit' as const,
+      spriteId: 1 as const,
+      animTimer: 0,
+      triggerX: 25960,
+      fleeDir: 'right' as const,
+    },
+    {
+      x: 26090,
+      y: GROUND_Y - 140,
+      w: 60,
+      h: 140,
+      vx: 0,
+      facingRight: false,
+      state: 'sit' as const,
+      spriteId: 2 as const,
+      animTimer: 0,
+      triggerX: 25960,
+      fleeDir: 'left' as const,
+    },
+  ];
 }
 
 function makeDrone(): Drone {
@@ -837,38 +868,7 @@ export default function Game() {
         patrolRight: 20745,
       },
     ] : [],
-    bystanders: gameMode === 'story' ? [
-      {
-        // NPC da esquerda: virado para a direita (olhando pro NPC2 — conversa)
-        // Ao fugir: corre para a DIREITA, cruzando com NPC2 (efeito de trocar de lugar)
-        x: 25970,
-        y: GROUND_Y - 140,
-        w: 60,
-        h: 140,
-        vx: 0,
-        facingRight: true,
-        state: 'sit' as const,
-        spriteId: 1 as const,
-        animTimer: 0,
-        triggerX: 25960,
-        fleeDir: 'right' as const,
-      },
-      {
-        // NPC da direita: virado para a esquerda (olhando pro NPC1 — conversa)
-        // Ao fugir: corre para a ESQUERDA, cruzando com NPC1 (efeito de trocar de lugar)
-        x: 26090,
-        y: GROUND_Y - 140,
-        w: 60,
-        h: 140,
-        vx: 0,
-        facingRight: false,
-        state: 'sit' as const,
-        spriteId: 2 as const,
-        animTimer: 0,
-        triggerX: 25960,
-        fleeDir: 'left' as const,
-      },
-    ] : [],
+    bystanders: gameMode === 'story' ? makeInitialBystanders() : [],
   }), []);
 
   const registerCustomSpriteImage = useCallback((platform: Platform) => {
@@ -1730,6 +1730,7 @@ export default function Game() {
       gsRef.current.destroyedTireIndices = [];
       gsRef.current.bullets = [];
       gsRef.current.particles = [];
+      gsRef.current.bystanders = makeInitialBystanders();
       editorSelectedIdxRef.current = -1;
       editorSelectedIndicesRef.current = new Set();
       editorCollisionModeRef.current = false;
@@ -1738,7 +1739,7 @@ export default function Game() {
       editorMarqueeRef.current = null;
       editorPendingHistoryRef.current = null;
       editorCopiedMsgRef.current = {
-        text: '↺ TESTE RESETADO — caixas restauradas para a última alteração',
+        text: '↺ TESTE RESETADO — caixas e NPCs restaurados',
         until: Date.now() + 2800,
       };
       return true;
