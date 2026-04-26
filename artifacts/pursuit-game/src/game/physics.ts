@@ -1708,7 +1708,9 @@ export function updateBullets(
   particles: Particle[],
   fallingBoxes: FallingBox[],
   flyingTires: FlyingTire[],
-  destroyedTireIndices: number[]
+  destroyedTireIndices: number[],
+  bystanders: Bystander[],
+  onBystanderHit: (bx: number, by: number) => void
 ): Bullet[] {
   const ph = player.isRolling ? PLAYER_ROLL_H : PLAYER_H;
   const surviving: Bullet[] = [];
@@ -1771,6 +1773,21 @@ export function updateBullets(
       }
     }
 
+    // Hit bystander — hitbox generoso (100px largura) para combinar com o sprite visual
+    let hitBystander = false;
+    for (const by of bystanders) {
+      if (by.state === 'dead') continue;
+      if (rectOverlap(b.x - 4, b.y - 4, 8, 8, by.x, by.y, 100, by.h)) {
+        by.state = 'dead';
+        by.vx = 0;
+        by.deadTimer = 1400;
+        onBystanderHit(by.x + 50, by.y + by.h / 2);
+        hitBystander = true;
+        break;
+      }
+    }
+    if (hitBystander) continue;
+
     surviving.push(b);
   }
 
@@ -1794,6 +1811,7 @@ export function updateBystanders(
   const DRONE_FLEE_DIST = 500;
 
   for (const b of bystanders) {
+    if (b.state === 'dead') continue;
     b.animTimer += dt;
     if (b.state === 'sit') {
       const droneDist = Math.abs(drone.x - b.x);

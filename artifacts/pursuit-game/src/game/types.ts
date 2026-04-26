@@ -183,7 +183,7 @@ export interface FlyingTire {
 
 export type DogAnimState = 'idle' | 'run' | 'bite';
 
-export type BystanderState = 'sit' | 'flee';
+export type BystanderState = 'sit' | 'flee' | 'dead';
 
 export interface Bystander {
   x: number;
@@ -197,6 +197,7 @@ export interface Bystander {
   animTimer: number;
   triggerX: number;          // mantido para compatibilidade (não usado; trigger agora é por distância do drone)
   fleeDir: 'left' | 'right'; // direção de fuga ao sentir o drone
+  deadTimer: number;         // ms até desaparecer após ser atingido
 }
 
 export interface Dog {

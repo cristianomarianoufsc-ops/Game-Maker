@@ -132,6 +132,7 @@ function makeInitialBystanders(): Bystander[] {
       animTimer: 0,
       triggerX: 25960,
       fleeDir: 'right' as const,
+      deadTimer: 0,
     },
     {
       x: 26090,
@@ -145,6 +146,7 @@ function makeInitialBystanders(): Bystander[] {
       animTimer: 0,
       triggerX: 25960,
       fleeDir: 'right' as const,
+      deadTimer: 0,
     },
   ];
 }
@@ -3094,7 +3096,11 @@ export default function Game() {
           gs.bullets = updateBullets(gs.bullets, gs.player, gs.platforms, dt, () => {
             gs.screenShake = 6;
             for (let i = 0; i < 8; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
-          }, gs.destroyedBoxIndices, gs.particles, gs.fallingBoxes, gs.flyingTires, gs.destroyedTireIndices);
+          }, gs.destroyedBoxIndices, gs.particles, gs.fallingBoxes, gs.flyingTires, gs.destroyedTireIndices,
+          gs.bystanders, (bx: number, by: number) => {
+            gs.screenShake = 4;
+            for (let i = 0; i < 10; i++) spawnP(bx, by, i % 2 === 0 ? '#cc1111' : '#881111');
+          });
 
           updateFallingBoxes(gs.fallingBoxes, gs.platforms, gs.destroyedBoxIndices, gs.destroyedTireIndices);
           updateFlyingTires(gs.flyingTires);
@@ -3106,6 +3112,11 @@ export default function Game() {
         });
 
         updateBystanders(gs.bystanders, gs.player, gs.drone, gs.droneIntroduced, dt);
+        // Decrementa deadTimer e remove NPCs que já desapareceram
+        for (const by of gs.bystanders) {
+          if (by.state === 'dead') by.deadTimer = Math.max(0, by.deadTimer - dt);
+        }
+        gs.bystanders = gs.bystanders.filter(by => by.state !== 'dead' || by.deadTimer > 0);
 
         gs.particles = updateParticles(gs.particles, dt);
 

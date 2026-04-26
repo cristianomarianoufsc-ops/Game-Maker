@@ -3151,11 +3151,33 @@ export function drawBystanders(
     // Sprite 1 (marrom): caixa sit ocupa ~88% do frame → offset 47 (175*0.12+26).
     // Sprite 2 (verde): caixa sit ligeiramente acima do fundo → offset 36.
     // Flee: pés tocam o fundo do frame para ambos → offset base 26.
-    const isSit = b.state === 'sit';
-    const displayH = isSit ? 175 : 166; // flee: 175 * 0.95 ≈ 166px
+    const isSit = b.state === 'sit' || b.state === 'dead';
+    const displayH = isSit ? 175 : 166;
     const NPC_FOOT_OFFSET = isSit ? (b.spriteId === 1 ? 47 : 36) : 26;
     const displayW = Math.round(displayH * (frameW / frameH));
     const screenY = GROUND_Y + NPC_FOOT_OFFSET - displayH;
+
+    // --- Estado morto: colapsa no chão com tint vermelho e fade ---
+    if (b.state === 'dead') {
+      const DEAD_DURATION = 1400;
+      const t = Math.max(0, b.deadTimer / DEAD_DURATION); // 1→0
+      const alpha = t < 0.3 ? t / 0.3 : 1;              // fade out último 30%
+      const angle = (1 - t) * (Math.PI / 2);             // roda até 90° deitado
+      const footX = screenX + displayW / 2;
+      const footY = screenY + displayH;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(footX, footY);
+      ctx.rotate(b.facingRight ? angle : -angle);
+      // desenha frame sit (frame 0) na posição relativa à âncora (pé)
+      ctx.drawImage(sheet, 0, 0, frameW, frameH, -displayW / 2, -displayH, displayW, displayH);
+      // overlay vermelho sangue
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = `rgba(180, 0, 0, ${0.55 * t < 0.01 ? 0.55 : 0.55 * Math.min(1, (1 - t) * 6)})`;
+      ctx.fillRect(-displayW / 2, -displayH, displayW, displayH);
+      ctx.restore();
+      continue;
+    }
 
     ctx.save();
     if (!b.facingRight) {
