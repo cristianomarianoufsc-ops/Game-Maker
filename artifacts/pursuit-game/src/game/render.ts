@@ -3148,13 +3148,12 @@ export function drawBystanders(
     }
 
     // Sprites: 851x315px, 3 frames (frameW=283, frameH=315).
-    // Sprite 2 (verde): caixa sit toca o fundo do frame (100%) → offset base 26.
-    // Sprite 1 (marrom): caixa sit ocupa ~88% do frame, 12% transparente abaixo
-    //   → offset calculado: GROUND_Y + offset - displayH + displayH*0.88 = anchorY(436)
-    //   → offset = 436 - displayH*0.88 + displayH - GROUND_Y = displayH*0.12 + 26 ≈ 26+24=50 (200px)
+    // Sprite 1 (marrom): caixa sit ocupa ~88% do frame → offset 47 (175*0.12+26).
+    // Sprite 2 (verde): caixa sit ligeiramente acima do fundo → offset 36.
+    // Flee: pés tocam o fundo do frame para ambos → offset base 26.
     const isSit = b.state === 'sit';
-    const displayH = 200;
-    const NPC_FOOT_OFFSET = isSit && b.spriteId === 1 ? 50 : 26;
+    const displayH = 175;
+    const NPC_FOOT_OFFSET = isSit ? (b.spriteId === 1 ? 47 : 36) : 26;
     const displayW = Math.round(displayH * (frameW / frameH));
     const screenY = GROUND_Y + NPC_FOOT_OFFSET - displayH;
 

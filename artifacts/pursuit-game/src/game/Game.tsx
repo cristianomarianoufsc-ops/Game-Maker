@@ -139,12 +139,12 @@ function makeInitialBystanders(): Bystander[] {
       w: 60,
       h: 140,
       vx: 0,
-      facingRight: false,
+      facingRight: true,
       state: 'sit' as const,
       spriteId: 2 as const,
       animTimer: 0,
       triggerX: 25960,
-      fleeDir: 'left' as const,
+      fleeDir: 'right' as const,
     },
   ];
 }
