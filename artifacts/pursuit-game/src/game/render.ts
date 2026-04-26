@@ -3148,10 +3148,12 @@ export function drawBystanders(
     }
 
     // Tamanho de exibição — igual à altura de referência do Horácio (SPRITE_DISPLAY_H = 131).
-    // Pés alinhados com GROUND_Y independente do estado (sit/flee).
+    // Âncora: fundo do sprite em GROUND_Y + 26 (mesmo FOOT_OFFSET que o Horácio usa),
+    // compensando o espaço transparente no rodapé dos sprites.
+    const NPC_FOOT_OFFSET = 26; // espelha FOOT_OFFSET=28 do Horácio (28-2=26)
     const displayH = SPRITE_DISPLAY_H; // 131px
     const displayW = Math.round(displayH * (frameW / frameH));
-    const screenY = GROUND_Y - displayH;
+    const screenY = GROUND_Y + NPC_FOOT_OFFSET - displayH;
 
     ctx.save();
     if (!b.facingRight) {
