@@ -1276,8 +1276,9 @@ export function drawGround(
   // Bueiros agora são objetos `pothole` editáveis — desenhados em drawPotholes()
 }
 
-// ── Desenha objetos pothole (bueiros editáveis) — poço de cimento com profundidade
-// Bueiro retangular vertical: w controla a largura da boca, h controla a profundidade visual.
+// ── Desenha objetos pothole (bueiros editáveis) — poço cilíndrico com perspectiva
+// w controla a largura da boca; h controla a profundidade visual do poço.
+// Visual: aro elíptico no topo (perspectiva) + cilindro escuro descendo + gradiente radial.
 export function drawPotholes(
   ctx: CanvasRenderingContext2D,
   platforms: ReadonlyArray<{ x: number; y: number; w: number; h: number; type: string }>,
@@ -1293,87 +1294,162 @@ export function drawPotholes(
     const topY = p.y;
     const totalH = Math.max(20, p.h);
     const w = sx2 - sx1;
+    const cx = sx1 + w / 2;
+
+    // Achatamento da elipse — quanto mais "de cima" estamos olhando, mais aberta
+    // (escolhi 0.32 = perspectiva levemente inclinada, dá ar cilíndrico)
+    const ellipseRy = Math.max(4, w * 0.18);
+    const rimY = topY + ellipseRy * 0.5;          // centro vertical do aro elíptico
+    const rx = w / 2;
+    const ry = ellipseRy;
 
     ctx.save();
 
-    // ── 1. POÇO INTERNO — gradiente vertical do cinza escuro ao preto (profundidade) ──
-    const wellGrad = ctx.createLinearGradient(0, topY, 0, topY + totalH);
-    wellGrad.addColorStop(0,    '#1c1c20');  // topo: cimento escuro
-    wellGrad.addColorStop(0.25, '#0e0e11');
-    wellGrad.addColorStop(0.6,  '#050507');
-    wellGrad.addColorStop(1,    '#000000');  // fundo: escuridão total
-    ctx.fillStyle = wellGrad;
-    ctx.fillRect(sx1, topY, w, totalH);
+    // ── 1. PAREDES CILÍNDRICAS DESCENDO ─────────────────────────────────
+    // Faixa lateral mais estreita que o w, simulando o "fundo do tubo"
+    // visto em perspectiva (o tubo descendo é ligeiramente mais estreito que a boca).
+    const wallTopX1 = sx1 + 2;
+    const wallTopX2 = sx2 - 2;
+    const wallBottomNarrow = w * 0.08;
+    const wallBotX1 = sx1 + wallBottomNarrow;
+    const wallBotX2 = sx2 - wallBottomNarrow;
+    const wallBottomY = topY + totalH;
 
-    // ── 2. PAREDES LATERAIS INTERNAS — sombra projetada do aro pra dar 3D ──
-    const sideW = Math.max(3, Math.min(8, Math.round(w * 0.08)));
-    const leftSideGrad = ctx.createLinearGradient(sx1, 0, sx1 + sideW, 0);
-    leftSideGrad.addColorStop(0, 'rgba(0,0,0,0.85)');
-    leftSideGrad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = leftSideGrad;
-    ctx.fillRect(sx1, topY, sideW, totalH);
+    // Trapézio invertido = corpo do cilindro visto de lado, escurecendo descendo
+    const wallGrad = ctx.createLinearGradient(0, rimY, 0, wallBottomY);
+    wallGrad.addColorStop(0,    '#3a3a3e');   // topo do cilindro: cimento iluminado
+    wallGrad.addColorStop(0.15, '#1c1c20');
+    wallGrad.addColorStop(0.45, '#0a0a0d');
+    wallGrad.addColorStop(1,    '#000000');
+    ctx.fillStyle = wallGrad;
+    ctx.beginPath();
+    ctx.moveTo(wallTopX1, rimY);
+    ctx.lineTo(wallTopX2, rimY);
+    ctx.lineTo(wallBotX2, wallBottomY);
+    ctx.lineTo(wallBotX1, wallBottomY);
+    ctx.closePath();
+    ctx.fill();
 
-    const rightSideGrad = ctx.createLinearGradient(sx2 - sideW, 0, sx2, 0);
-    rightSideGrad.addColorStop(0, 'rgba(0,0,0,0)');
-    rightSideGrad.addColorStop(1, 'rgba(0,0,0,0.85)');
-    ctx.fillStyle = rightSideGrad;
-    ctx.fillRect(sx2 - sideW, topY, sideW, totalH);
+    // Sombras curvas laterais (dão o efeito de tubo redondo, não retangular)
+    const leftCurveGrad = ctx.createLinearGradient(wallTopX1, 0, wallTopX1 + w * 0.35, 0);
+    leftCurveGrad.addColorStop(0, 'rgba(0,0,0,0.85)');
+    leftCurveGrad.addColorStop(0.6, 'rgba(0,0,0,0.25)');
+    leftCurveGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = leftCurveGrad;
+    ctx.beginPath();
+    ctx.moveTo(wallTopX1, rimY);
+    ctx.lineTo(wallTopX1 + w * 0.35, rimY);
+    ctx.lineTo(wallBotX1 + w * 0.25, wallBottomY);
+    ctx.lineTo(wallBotX1, wallBottomY);
+    ctx.closePath();
+    ctx.fill();
 
-    // ── 3. TIJOLOS NAS PAREDES INTERNAS — linhas horizontais sutis indicando construção ──
-    ctx.strokeStyle = 'rgba(60,55,50,0.35)';
-    ctx.lineWidth = 1;
-    const brickRowH = 12;
-    for (let by = topY + 6; by < topY + totalH - 4; by += brickRowH) {
-      const fade = 1 - (by - topY) / totalH;
-      ctx.globalAlpha = Math.max(0.1, fade * 0.55);
-      // Linha esquerda
-      ctx.beginPath();
-      ctx.moveTo(sx1 + 2, by);
-      ctx.lineTo(sx1 + sideW + 2, by);
-      ctx.stroke();
-      // Linha direita
-      ctx.beginPath();
-      ctx.moveTo(sx2 - sideW - 2, by);
-      ctx.lineTo(sx2 - 2, by);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
+    const rightCurveGrad = ctx.createLinearGradient(wallTopX2 - w * 0.35, 0, wallTopX2, 0);
+    rightCurveGrad.addColorStop(0, 'rgba(0,0,0,0)');
+    rightCurveGrad.addColorStop(0.4, 'rgba(0,0,0,0.25)');
+    rightCurveGrad.addColorStop(1, 'rgba(0,0,0,0.85)');
+    ctx.fillStyle = rightCurveGrad;
+    ctx.beginPath();
+    ctx.moveTo(wallTopX2 - w * 0.35, rimY);
+    ctx.lineTo(wallTopX2, rimY);
+    ctx.lineTo(wallBotX2, wallBottomY);
+    ctx.lineTo(wallBotX2 - w * 0.25, wallBottomY);
+    ctx.closePath();
+    ctx.fill();
 
-    // ── 4. ARO DE CIMENTO/FERRO no topo (boca do bueiro) ──
-    const rimH = 5;
-    const rimGrad = ctx.createLinearGradient(0, topY - 2, 0, topY + rimH);
-    rimGrad.addColorStop(0,   '#807870');
-    rimGrad.addColorStop(0.4, '#5a534b');
-    rimGrad.addColorStop(1,   '#2a2520');
+    // ── 2. POÇO ESCURO REDONDO no centro (gradiente radial) ─────────────
+    // Cria a sensação de "olhar para dentro de um tubo redondo"
+    const wellRadius = Math.min(w * 0.45, totalH * 0.55);
+    const radial = ctx.createRadialGradient(
+      cx, rimY + wellRadius * 0.2, wellRadius * 0.1,
+      cx, rimY + wellRadius * 0.5, wellRadius
+    );
+    radial.addColorStop(0, '#000000');
+    radial.addColorStop(0.5, 'rgba(0,0,0,0.85)');
+    radial.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = radial;
+    ctx.beginPath();
+    ctx.ellipse(cx, rimY + wellRadius * 0.3, w * 0.5, wellRadius * 1.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── 3. ELIPSE INTERNA SUPERIOR (boca escura vista de cima) ──────────
+    // Elipse preta achatada que define a abertura do tubo
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.ellipse(cx, rimY, rx - 2, ry - 1, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Highlight curvo interno superior (luz refletindo na parede oposta do tubo)
+    ctx.strokeStyle = 'rgba(110,108,105,0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, rimY + 1, rx - 4, ry - 2.5, 0, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+
+    // Sombra curva interna inferior (parede frontal interna)
+    ctx.strokeStyle = 'rgba(0,0,0,0.95)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(cx, rimY - 0.5, rx - 3, ry - 2, 0, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.stroke();
+
+    // ── 4. ARO DE CIMENTO/FERRO em volta da boca (perspectiva elíptica) ─
+    // Aro externo elíptico — visível como anel
+    const rimGrad = ctx.createLinearGradient(0, topY - ry * 0.4, 0, topY + ry * 1.2);
+    rimGrad.addColorStop(0,   '#a39a8e');
+    rimGrad.addColorStop(0.3, '#7a7268');
+    rimGrad.addColorStop(0.7, '#4a423a');
+    rimGrad.addColorStop(1,   '#1f1a14');
     ctx.fillStyle = rimGrad;
-    ctx.fillRect(sx1 - 2, topY - 2, w + 4, rimH);
 
-    // Highlight superior do aro (luz batendo)
-    ctx.fillStyle = 'rgba(180,170,158,0.85)';
-    ctx.fillRect(sx1 - 2, topY - 2, w + 4, 1);
+    ctx.beginPath();
+    ctx.ellipse(cx, rimY, rx + 3, ry + 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, rimY, rx - 1, ry - 0.5, 0, 0, Math.PI * 2, true);
+    ctx.fill('evenodd');
 
-    // Sombra inferior do aro (transição pra escuridão)
-    ctx.fillStyle = 'rgba(0,0,0,0.95)';
-    ctx.fillRect(sx1, topY + rimH - 1, w, 2);
+    // Highlight do aro (luz batendo na parte de trás/topo)
+    ctx.strokeStyle = 'rgba(220,210,195,0.85)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, rimY - 1, rx + 2, ry + 1, 0, Math.PI * 1.15, Math.PI * 1.85);
+    ctx.stroke();
 
-    // ── 5. PARAFUSOS DO ARO nos cantos ──
-    const boltY = topY;
+    // Sombra do aro (parte da frente, mais escura)
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(cx, rimY + 1, rx + 2, ry + 1, 0, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+
+    // Parafusos pequenos no aro (4 pontos cardeais)
     ctx.fillStyle = '#1a1612';
-    ctx.fillRect(sx1, boltY, 3, 2);
-    ctx.fillRect(sx2 - 3, boltY, 3, 2);
-    ctx.fillStyle = 'rgba(160,150,140,0.6)';
-    ctx.fillRect(sx1, boltY, 3, 1);
-    ctx.fillRect(sx2 - 3, boltY, 3, 1);
+    const boltPositions: Array<[number, number]> = [
+      [cx - rx * 0.7, rimY - ry * 0.3],
+      [cx + rx * 0.7, rimY - ry * 0.3],
+      [cx - rx * 0.7, rimY + ry * 0.3],
+      [cx + rx * 0.7, rimY + ry * 0.3],
+    ];
+    for (const [bx, by] of boltPositions) {
+      ctx.beginPath();
+      ctx.arc(bx, by, 1.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-    // ── 6. LIXO NO FUNDO — pequenas manchas claras (reflexo de água parada) ──
-    if (totalH > 50) {
-      const fundoY = topY + totalH * 0.85;
-      const fundoH = Math.min(8, totalH * 0.1);
-      ctx.fillStyle = 'rgba(50,30,20,0.4)';
-      ctx.fillRect(sx1 + sideW + 2, fundoY, w - 2 * sideW - 4, fundoH);
-      // Pequeno brilho de água
-      ctx.fillStyle = 'rgba(80,90,100,0.18)';
-      ctx.fillRect(sx1 + sideW + 4, fundoY + 1, w - 2 * sideW - 8, 1);
+    // ── 5. ÁGUA PARADA NO FUNDO (se profundo o bastante) ────────────────
+    if (totalH > 60) {
+      const waterY = topY + totalH * 0.78;
+      const waterRx = (wallBotX2 - wallBotX1) * 0.42;
+      const waterRy = waterRx * 0.18;
+      // Reflexo levemente esverdeado de água suja
+      ctx.fillStyle = 'rgba(45,55,40,0.55)';
+      ctx.beginPath();
+      ctx.ellipse(cx, waterY, waterRx, waterRy, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Pequeno brilho na água
+      ctx.fillStyle = 'rgba(120,140,130,0.3)';
+      ctx.beginPath();
+      ctx.ellipse(cx, waterY - 0.5, waterRx * 0.6, waterRy * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     ctx.restore();
@@ -1381,8 +1457,9 @@ export function drawPotholes(
 }
 
 // ── VILA HUMILDE DE MADEIRA ────────────────────────────────────────
-// Backdrop após o muro x:25929 até x:30664 — pequenas casas de madeira pobres
-// que enquadram o encontro do drone com os 2 NPCs como uma cena de favela.
+// Backdrop após o muro x:25929 até x:30664 — casas de madeira pobres
+// em primeiro plano de fundo, formando uma vila/favela onde o drone
+// encontra os 2 NPCs.
 const SHANTY_X1 = 25929;
 const SHANTY_X2 = 30664;
 
@@ -1396,102 +1473,150 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
   ctx.rect(sx, 0, ex - sx, GROUND_Y);
   ctx.clip();
 
-  // Camada de fundo — silhueta escura de morro/colina suave
-  const hillGrad = ctx.createLinearGradient(0, GROUND_Y - 220, 0, GROUND_Y);
-  hillGrad.addColorStop(0, 'rgba(28,18,14,0)');
-  hillGrad.addColorStop(0.6, 'rgba(28,18,14,0.55)');
-  hillGrad.addColorStop(1, 'rgba(20,12,8,0.85)');
-  ctx.fillStyle = hillGrad;
+  // ── 1. SILHUETA DE MORRO ESCURO no fundo (esconde os prédios atrás)
+  ctx.fillStyle = '#1a100a';
   ctx.beginPath();
-  let firstX = sx;
-  ctx.moveTo(firstX, GROUND_Y);
-  for (let x = SHANTY_X1; x <= SHANTY_X2; x += 40) {
+  ctx.moveTo(sx, GROUND_Y);
+  for (let x = SHANTY_X1; x <= SHANTY_X2; x += 35) {
     const seed = ((x * 374761393) >>> 0);
-    const hillH = 140 + (seed % 80);
+    const hillH = 200 + (seed % 100);
     ctx.lineTo(x - camX, GROUND_Y - hillH);
   }
   ctx.lineTo(ex, GROUND_Y);
   ctx.closePath();
   ctx.fill();
 
-  // Casinhas de madeira — geração determinística pelo X mundial
-  // Cada casa tem largura ~70-110, altura ~75-130, com telhado triangular
-  const HOUSE_STEP = 95;
+  // Faixa de transição superior do morro (gradiente para sumir suave)
+  const hillFade = ctx.createLinearGradient(0, GROUND_Y - 320, 0, GROUND_Y - 180);
+  hillFade.addColorStop(0, 'rgba(15,8,5,0)');
+  hillFade.addColorStop(1, 'rgba(15,8,5,0.6)');
+  ctx.fillStyle = hillFade;
+  ctx.fillRect(sx, GROUND_Y - 320, ex - sx, 140);
+
+  // ── 2. CASINHAS DE MADEIRA ──
+  // Geração determinística por X mundial — tamanhos maiores e mais visíveis
+  const HOUSE_STEP = 110;
   const startX = Math.ceil(SHANTY_X1 / HOUSE_STEP) * HOUSE_STEP;
   for (let hx = startX; hx < SHANTY_X2; hx += HOUSE_STEP) {
     const seed = ((hx * 2654435761) >>> 0);
-    // Aleatório mas determinístico
-    const houseW = 60 + (seed % 45);
-    const houseH = 70 + ((seed >> 4) % 55);
-    const offsetY = ((seed >> 8) % 35);    // alguns mais altos/baixos no morro
-    const skip = ((seed >> 12) % 7) === 0; // espaços ocasionais (becos)
+    const houseW = 75 + (seed % 50);
+    const houseH = 95 + ((seed >> 4) % 65);
+    const offsetY = ((seed >> 8) % 30);
+    const skip = ((seed >> 12) % 8) === 0;
     if (skip) continue;
 
-    const baseY = GROUND_Y - 6 - offsetY;
+    const baseY = GROUND_Y - 4 - offsetY;
     const topY = baseY - houseH;
     const screenX = hx - camX;
 
-    // Sombra da casa no chão (atrás)
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillRect(screenX - 2, topY + 4, houseW + 4, houseH);
+    // Sombra projetada no chão
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(screenX + houseW / 2, baseY + 3, houseW * 0.55, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Corpo da casa — paleta de madeira escura, marrom envelhecido
-    const woodTones = ['#4a3322', '#5a3d28', '#3d2a1a', '#523524', '#604030'];
+    // Corpo da casa — madeira clara visível contra o morro escuro
+    const woodTones = ['#7a5234', '#8b5e3a', '#6e4628', '#9a6a44', '#7d5232'];
     const wood = woodTones[seed % woodTones.length];
     ctx.fillStyle = wood;
     ctx.fillRect(screenX, topY, houseW, houseH);
 
-    // Tábuas verticais (linhas escuras)
-    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    // Sombra interna lateral direita (lateral oposta à luz)
+    const sideShade = ctx.createLinearGradient(screenX, 0, screenX + houseW, 0);
+    sideShade.addColorStop(0, 'rgba(255,200,140,0.12)');
+    sideShade.addColorStop(0.5, 'rgba(0,0,0,0)');
+    sideShade.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = sideShade;
+    ctx.fillRect(screenX, topY, houseW, houseH);
+
+    // Tábuas verticais — linhas escuras com leve highlight
+    ctx.strokeStyle = 'rgba(20,12,5,0.7)';
     ctx.lineWidth = 1;
-    const plankW = 8 + (seed % 5);
+    const plankW = 9 + (seed % 5);
     for (let px = screenX + plankW; px < screenX + houseW; px += plankW) {
       ctx.beginPath();
       ctx.moveTo(px, topY + 2);
       ctx.lineTo(px, topY + houseH);
       ctx.stroke();
     }
-
-    // Highlights claros em algumas tábuas (luz lateral)
-    ctx.fillStyle = 'rgba(140,100,60,0.18)';
+    // Highlight claro em algumas tábuas
+    ctx.fillStyle = 'rgba(255,210,150,0.14)';
     for (let px = screenX + 2; px < screenX + houseW; px += plankW * 2) {
       ctx.fillRect(px, topY + 2, 1, houseH - 2);
     }
 
-    // Telhado triangular — telhas/zinco enferrujado
-    const roofPeak = topY - (houseW * 0.32);
+    // Manchas de mofo/desgaste na base
+    ctx.fillStyle = 'rgba(20,15,8,0.45)';
+    ctx.fillRect(screenX + 2, baseY - 14, houseW - 4, 14);
+
+    // ── TELHADO triangular — zinco enferrujado ──
+    const roofPeak = topY - (houseW * 0.34);
     const roofGrad = ctx.createLinearGradient(0, roofPeak, 0, topY);
-    roofGrad.addColorStop(0, '#3a2418');
+    roofGrad.addColorStop(0, '#5a3a22');
+    roofGrad.addColorStop(0.5, '#3a2414');
     roofGrad.addColorStop(1, '#1f130a');
     ctx.fillStyle = roofGrad;
     ctx.beginPath();
-    ctx.moveTo(screenX - 4, topY);
+    ctx.moveTo(screenX - 5, topY);
     ctx.lineTo(screenX + houseW / 2, roofPeak);
-    ctx.lineTo(screenX + houseW + 4, topY);
+    ctx.lineTo(screenX + houseW + 5, topY);
     ctx.closePath();
     ctx.fill();
+    // Borda do telhado escura
+    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(screenX - 5, topY);
+    ctx.lineTo(screenX + houseW / 2, roofPeak);
+    ctx.lineTo(screenX + houseW + 5, topY);
+    ctx.stroke();
+    // Manchas de ferrugem
+    ctx.fillStyle = 'rgba(180,75,25,0.45)';
+    ctx.fillRect(screenX + houseW * 0.25, topY - 5, houseW * 0.5, 3);
+    ctx.fillRect(screenX + houseW * 0.45, topY - 12, houseW * 0.18, 2);
+    // Linhas de telha
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    for (let i = 1; i < 4; i++) {
+      const ty = topY - (houseW * 0.34) * (i / 4);
+      const tShrink = (houseW / 2) * (i / 4);
+      ctx.beginPath();
+      ctx.moveTo(screenX - 5 + tShrink, ty);
+      ctx.lineTo(screenX + houseW + 5 - tShrink, ty);
+      ctx.stroke();
+    }
 
-    // Ferrugem no telhado (manchas avermelhadas)
-    ctx.fillStyle = 'rgba(140,55,20,0.35)';
-    ctx.fillRect(screenX + houseW * 0.3, topY - 4, houseW * 0.4, 3);
-
-    // Janela única amarelada (luz acesa em algumas casas)
-    const hasWindow = (seed >> 16) % 3 !== 0;
+    // ── JANELA com luz quente (alta chance de estar acesa) ──
+    const hasWindow = (seed >> 16) % 4 !== 0;
     if (hasWindow) {
-      const winW = Math.max(8, houseW * 0.18);
-      const winH = Math.max(8, houseH * 0.18);
+      const winW = Math.max(10, houseW * 0.22);
+      const winH = Math.max(10, houseH * 0.2);
       const winX = screenX + houseW * 0.5 - winW / 2;
-      const winY = topY + houseH * 0.35;
-      // Moldura
-      ctx.fillStyle = '#1a0e06';
-      ctx.fillRect(winX - 1, winY - 1, winW + 2, winH + 2);
-      // Vidro com luz interna amarela quente
-      const litUp = ((seed >> 20) % 4) !== 0;
-      ctx.fillStyle = litUp ? 'rgba(220,160,70,0.85)' : 'rgba(40,30,20,0.95)';
-      ctx.fillRect(winX, winY, winW, winH);
-      // Cruzeta de madeira na janela
-      ctx.strokeStyle = 'rgba(20,12,6,0.85)';
-      ctx.lineWidth = 1;
+      const winY = topY + houseH * 0.32;
+      // Moldura escura
+      ctx.fillStyle = '#0e0805';
+      ctx.fillRect(winX - 2, winY - 2, winW + 4, winH + 4);
+      // Vidro
+      const litUp = ((seed >> 20) % 3) !== 0;
+      if (litUp) {
+        // Luz amarela quente vibrante
+        ctx.fillStyle = 'rgba(255,180,80,0.95)';
+        ctx.fillRect(winX, winY, winW, winH);
+        // Glow externo
+        const glow = ctx.createRadialGradient(
+          winX + winW / 2, winY + winH / 2, 0,
+          winX + winW / 2, winY + winH / 2, winW * 1.4
+        );
+        glow.addColorStop(0, 'rgba(255,160,60,0.35)');
+        glow.addColorStop(1, 'rgba(255,160,60,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(winX - winW, winY - winH, winW * 3, winH * 3);
+      } else {
+        ctx.fillStyle = 'rgba(35,25,15,0.95)';
+        ctx.fillRect(winX, winY, winW, winH);
+      }
+      // Cruzeta da janela
+      ctx.strokeStyle = 'rgba(15,8,4,0.95)';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(winX + winW / 2, winY);
       ctx.lineTo(winX + winW / 2, winY + winH);
@@ -1500,42 +1625,69 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
       ctx.stroke();
     }
 
-    // Porta pequena rústica
+    // ── PORTA rústica ──
     const hasDoor = ((seed >> 24) % 2) === 0;
-    if (hasDoor && houseH > 60) {
-      const doorW = Math.max(8, houseW * 0.16);
-      const doorH = Math.max(18, houseH * 0.32);
+    if (hasDoor && houseH > 70) {
+      const doorW = Math.max(10, houseW * 0.18);
+      const doorH = Math.max(22, houseH * 0.34);
       const doorX = screenX + houseW * (0.18 + ((seed >> 28) % 3) * 0.22);
       const doorY = baseY - doorH;
       ctx.fillStyle = '#1a0e06';
       ctx.fillRect(doorX, doorY, doorW, doorH);
+      // Tábuas verticais da porta
+      ctx.strokeStyle = 'rgba(60,35,18,0.7)';
+      ctx.beginPath();
+      ctx.moveTo(doorX + doorW / 2, doorY);
+      ctx.lineTo(doorX + doorW / 2, doorY + doorH);
+      ctx.stroke();
       // Maçaneta
-      ctx.fillStyle = 'rgba(150,120,80,0.6)';
-      ctx.fillRect(doorX + doorW - 2, doorY + doorH * 0.5, 1, 1);
+      ctx.fillStyle = 'rgba(180,140,90,0.85)';
+      ctx.fillRect(doorX + doorW - 3, doorY + doorH * 0.55, 2, 2);
     }
 
-    // Antena improvisada de TV em algumas casas (galho cruzado no telhado)
-    if ((seed >> 6) % 4 === 0) {
-      ctx.strokeStyle = 'rgba(20,18,15,0.85)';
+    // ── ANTENA de TV improvisada ──
+    if ((seed >> 6) % 3 === 0) {
+      ctx.strokeStyle = 'rgba(15,12,8,0.95)';
       ctx.lineWidth = 1;
       const antX = screenX + houseW * 0.5;
       ctx.beginPath();
       ctx.moveTo(antX, roofPeak);
-      ctx.lineTo(antX, roofPeak - 16);
-      ctx.moveTo(antX - 5, roofPeak - 12);
-      ctx.lineTo(antX + 5, roofPeak - 12);
-      ctx.moveTo(antX - 3, roofPeak - 16);
-      ctx.lineTo(antX + 3, roofPeak - 16);
+      ctx.lineTo(antX, roofPeak - 18);
+      ctx.moveTo(antX - 6, roofPeak - 14);
+      ctx.lineTo(antX + 6, roofPeak - 14);
+      ctx.moveTo(antX - 4, roofPeak - 18);
+      ctx.lineTo(antX + 4, roofPeak - 18);
       ctx.stroke();
+    }
+
+    // ── CHAMINÉ com fumaça em algumas casas ──
+    if ((seed >> 10) % 4 === 0) {
+      const chimX = screenX + houseW * 0.7;
+      const chimY = roofPeak + 10;
+      ctx.fillStyle = '#2a1810';
+      ctx.fillRect(chimX, chimY, 6, 14);
+      // Fumaça subindo (3 nuvens cinza translúcidas)
+      ctx.fillStyle = 'rgba(120,110,100,0.35)';
+      ctx.beginPath();
+      ctx.arc(chimX + 3, chimY - 4, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(140,130,120,0.25)';
+      ctx.beginPath();
+      ctx.arc(chimX + 6, chimY - 12, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(160,150,140,0.15)';
+      ctx.beginPath();
+      ctx.arc(chimX + 9, chimY - 22, 6, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 
-  // Névoa baixa atmosférica
-  const fogGrad = ctx.createLinearGradient(0, GROUND_Y - 50, 0, GROUND_Y);
+  // ── 3. NÉVOA BAIXA atmosférica integrando ao chão ──
+  const fogGrad = ctx.createLinearGradient(0, GROUND_Y - 60, 0, GROUND_Y);
   fogGrad.addColorStop(0, 'rgba(40,25,15,0)');
-  fogGrad.addColorStop(1, 'rgba(40,25,15,0.35)');
+  fogGrad.addColorStop(1, 'rgba(40,25,15,0.55)');
   ctx.fillStyle = fogGrad;
-  ctx.fillRect(sx, GROUND_Y - 50, ex - sx, 50);
+  ctx.fillRect(sx, GROUND_Y - 60, ex - sx, 60);
 
   ctx.restore();
 }

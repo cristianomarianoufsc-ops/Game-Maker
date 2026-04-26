@@ -3171,9 +3171,9 @@ export default function Game() {
       ctx.save();
       ctx.translate(0, -gs.camera.y);
       drawBuildings(ctx, buildingsRef.current, gs.camera.x);
-      drawShantyVillage(ctx, gs.camera.x);
       drawAlleyDetails(ctx, gs.camera.x, gs.time);
       drawStartingBackWall(ctx, gs.camera.x);
+      drawShantyVillage(ctx, gs.camera.x);
       drawGround(ctx, gs.camera.x, gs.platforms);
       drawRiver(ctx, gs.camera.x);
       drawPotholes(ctx, gs.platforms, gs.camera.x);
