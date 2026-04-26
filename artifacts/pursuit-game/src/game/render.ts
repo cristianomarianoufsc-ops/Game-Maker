@@ -1502,8 +1502,8 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
     scale: number,
   ): void {
     const seed = (seedBase >>> 0);
-    const houseW = Math.round((130 + (seed % 80)) * scale);  // 130–210px base
-    const houseH = Math.round((80 + ((seed >> 4) % 50)) * scale);  // 80–130px base — mais largo que alto
+    const houseW = Math.round((260 + (seed % 160)) * scale);  // 260–420px base (2x)
+    const houseH = Math.round((160 + ((seed >> 4) % 100)) * scale);  // 160–260px base (2x) — mais largo que alto
     const offsetY = Math.round(((seed >> 8) % 20) * scale);
 
     const baseY = GROUND_Y - 4 - baseYOffset - offsetY;
@@ -1691,7 +1691,7 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
 
   // ── FILEIRA DE FUNDO: casas menores em paralax 0.88 (mais distantes) ──
   // ctx.translate desloca +camX*0.12 para que screenX = hx - camX vire hx - camX*0.88
-  const BG_STEP = 160;
+  const BG_STEP = 320;
   const bgStartX = Math.ceil(SHANTY_X1 / BG_STEP) * BG_STEP;
   ctx.save();
   ctx.translate(Math.round(camX * 0.12), 0);
@@ -1705,7 +1705,7 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
   ctx.restore();
 
   // ── FILEIRA PRINCIPAL: casas grandes, próximas entre si ──
-  const HOUSE_STEP = 155;
+  const HOUSE_STEP = 300;
   const startX = Math.ceil(SHANTY_X1 / HOUSE_STEP) * HOUSE_STEP;
   for (let hx = startX; hx < SHANTY_X2; hx += HOUSE_STEP) {
     const seed = ((hx * 2654435761) >>> 0);
