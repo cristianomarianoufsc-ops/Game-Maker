@@ -3147,11 +3147,11 @@ export function drawBystanders(
       frameIdx = 1 + (Math.floor(b.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2);
     }
 
-    // Tamanho de exibição — proporcional a Horácio (PLAYER_H = 50).
-    // NPCs adultos ficam um pouco maiores; sentado tem altura reduzida naturalmente pelo sprite.
-    const displayH = b.state === 'sit' ? 140 : 148;
+    // Tamanho de exibição — igual à altura de referência do Horácio (SPRITE_DISPLAY_H = 131).
+    // Pés alinhados com GROUND_Y independente do estado (sit/flee).
+    const displayH = SPRITE_DISPLAY_H; // 131px
     const displayW = Math.round(displayH * (frameW / frameH));
-    const screenY = GROUND_Y - displayH + 4;
+    const screenY = GROUND_Y - displayH;
 
     ctx.save();
     if (!b.facingRight) {
