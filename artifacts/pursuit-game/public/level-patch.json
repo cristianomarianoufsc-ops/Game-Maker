@@ -520,7 +520,8 @@
       "y": 228,
       "w": 20,
       "h": 182,
-      "climbable": true
+      "climbable": true,
+      "lowJumpImpulse": true
     },
     {
       "type": "sprite",

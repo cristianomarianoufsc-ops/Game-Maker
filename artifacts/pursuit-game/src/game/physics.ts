@@ -70,7 +70,7 @@ function getStackedBoxWall(platforms: Platform[], box: Platform): BoxStackWall |
   return { x: left, y: top, w: right - left, h: columnHeight, boxCount: stack.length };
 }
 
-function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, boxWall: BoxStackWall | null = null): void {
+function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, boxWall: BoxStackWall | null = null, lowImpulse = false): void {
   const overlapLeft = p.x + p.w - hit.x;
   const overlapRight = hit.x + hit.w - p.x;
   const isBox = !!boxWall;
@@ -81,6 +81,7 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, box
     p.wallSide = 'right';
     p.wallX = hit.x;
     p.wallTopY = hit.y;
+    p.wallLowImpulse = lowImpulse;
     if (p.vx > 0) p.vx = 0;
     if (!p.isWallRunning) {
       p.wallRunOnBox = isBox;
@@ -93,6 +94,7 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, box
     p.wallSide = 'left';
     p.wallX = hit.x + hit.w;
     p.wallTopY = hit.y;
+    p.wallLowImpulse = lowImpulse;
     if (p.vx < 0) p.vx = 0;
     if (!p.isWallRunning) {
       p.wallRunOnBox = isBox;
@@ -157,7 +159,7 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
     const allowedSide = plat.climbableSide ?? 'both';
     const touchedFace: 'left' | 'right' = overlapLeft < overlapRight ? 'left' : 'right';
     if (allowedSide === 'both' || allowedSide === touchedFace) {
-      resolveClimbableWallContact(p, hit, p.vx);
+      resolveClimbableWallContact(p, hit, p.vx, null, plat.lowJumpImpulse === true);
       p.touchingLadder = true;
       return false;
     }
@@ -385,7 +387,8 @@ export function updatePlayer(
     // Allow jump off wall (não escada)
     if (keys.space && prevTouchingWall && !prevTouchingLadder) {
       p.isClimbing = false;
-      p.vy = JUMP_FORCE * 0.9;
+      const lowFactor = p.wallLowImpulse ? 0.72 : 1;
+      p.vy = JUMP_FORCE * 0.9 * lowFactor;
       p.vx = p.wallSide === 'right' ? -5 : 5;
       p.facingRight = p.wallSide === 'right' ? false : true;
     }
@@ -462,7 +465,8 @@ export function updatePlayer(
         p.isWallFlipping = true;
         p.wallFlipTimer = WALLFLIP_DURATION;
         p.coyoteTime = 0;
-        p.vy = WALLFLIP_JUMP_VY;
+        const lowFactor = p.wallLowImpulse ? 0.72 : 1;
+        p.vy = WALLFLIP_JUMP_VY * lowFactor;
         const flipVx = WALLFLIP_BACK_VX;
         p.vx = wallSide === 'right' ? -flipVx : flipVx;
         p.facingRight = wallSide === 'right';
@@ -479,7 +483,8 @@ export function updatePlayer(
       } else if (canJumpOffWall && keys.space && wallSide) {
         p.isWallRunning = false;
         p.coyoteTime = 0;
-        p.vy = WALLRUN_JUMP_VY;
+        const lowFactor = p.wallLowImpulse ? 0.72 : 1;
+        p.vy = WALLRUN_JUMP_VY * lowFactor;
         const jumpVx = WALLRUN_JUMP_VX;
         p.vx = wallSide === 'right' ? -jumpVx : jumpVx;
         p.facingRight = wallSide !== 'right';
@@ -517,8 +522,9 @@ export function updatePlayer(
 
         if (pressingAway) {
           // Back + jump → drop off wall backward (penalidade reduz impulso vertical)
+          const lowFactor = p.wallLowImpulse ? 0.72 : 1;
           p.vx = side === 'right' ? -WALLFLIP_BACK_VX : WALLFLIP_BACK_VX;
-          p.vy = WALLFLIP_JUMP_VY * p.wallClimbJumpPenalty;
+          p.vy = WALLFLIP_JUMP_VY * p.wallClimbJumpPenalty * lowFactor;
           p.jumpedFromWall = true;
           // Penalidade persiste até pousar (reseta em onGround)
         } else {
@@ -1802,7 +1808,7 @@ export function updateBystanders(
   dt: number
 ): void {
   const FLEE_SPEED = 4.8;
-  const DESPAWN_RIGHT_X = 28000;
+  const DESPAWN_RIGHT_X = 31000;
   const DESPAWN_LEFT_X  = 24000;
   // Distância horizontal do drone que dispara a fuga.
   // No modo editor sem Z, o drone fica em x:-80 (longe demais para disparar).
@@ -1816,9 +1822,10 @@ export function updateBystanders(
     if (b.state === 'sit') {
       const droneDist = Math.abs(drone.x - b.x);
       if (droneDist < DRONE_FLEE_DIST) {
+        const speed = b.fleeSpeed ?? FLEE_SPEED;
         b.state = 'flee';
         b.facingRight = b.fleeDir === 'right';
-        b.vx = b.fleeDir === 'right' ? FLEE_SPEED : -FLEE_SPEED;
+        b.vx = b.fleeDir === 'right' ? speed : -speed;
         b.animTimer = 0;
       }
     } else {

@@ -35,6 +35,7 @@ export interface Platform extends Rect {
   isFireEscapeFloor?: boolean;
   isLadderTopFloor?: boolean;
   isRiverStump?: boolean;
+  lowJumpImpulse?: boolean;
 }
 
 export type PlayerState =
@@ -108,6 +109,7 @@ export interface Player {
   wallClimbSide: 'left' | 'right' | null;
   isWallHanging: boolean;
   wallHangJumpConsumed: boolean;
+  wallLowImpulse: boolean;
   jumpedFromWall: boolean;
   jumpCount: number;
   doubleJumpReady: boolean;
@@ -197,6 +199,7 @@ export interface Bystander {
   animTimer: number;
   triggerX: number;          // mantido para compatibilidade (não usado; trigger agora é por distância do drone)
   fleeDir: 'left' | 'right'; // direção de fuga ao sentir o drone
+  fleeSpeed?: number;        // velocidade individual de fuga (sobrescreve o padrão)
   deadTimer: number;         // ms até desaparecer após ser atingido
 }
 

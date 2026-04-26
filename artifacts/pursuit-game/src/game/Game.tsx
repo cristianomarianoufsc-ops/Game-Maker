@@ -109,6 +109,7 @@ function makePlayer(): Player {
     wallClimbSide: null,
     isWallHanging: false,
     wallHangJumpConsumed: false,
+    wallLowImpulse: false,
     jumpedFromWall: false,
     jumpCount: 0,
     doubleJumpReady: false,
@@ -132,20 +133,24 @@ function makeInitialBystanders(): Bystander[] {
       animTimer: 0,
       triggerX: 25960,
       fleeDir: 'right' as const,
+      fleeSpeed: 4.8,
       deadTimer: 0,
     },
     {
+      // Barbudo da direita: virado para a esquerda no frame sentado
+      // (parece estar conversando com o NPC à esquerda)
       x: 26090,
       y: GROUND_Y - 140,
       w: 60,
       h: 140,
       vx: 0,
-      facingRight: true,
+      facingRight: false,
       state: 'sit' as const,
       spriteId: 2 as const,
       animTimer: 0,
       triggerX: 25960,
       fleeDir: 'right' as const,
+      fleeSpeed: 3.4,
       deadTimer: 0,
     },
   ];

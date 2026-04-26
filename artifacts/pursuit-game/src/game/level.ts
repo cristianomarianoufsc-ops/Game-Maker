@@ -116,8 +116,10 @@ export function generateLevel(): Platform[] {
     // Margem esquerda do rio (pequena faixa de chão depois do 3º prédio)
     { x: 24700, w: RIVER.X1 - 24700 },          // 24700 → 24820 (margem esquerda)
     // RIO entre RIVER.X1 e RIVER.X2 — sem chão, só tocos pra pular
-    // Margem direita do rio + continuação da pista
-    { x: RIVER.X2, w: 26700 - RIVER.X2 },       // 25750 → 26700 (margem direita)
+    // Margem direita do rio + reta longa (≈ metade do ferro velho)
+    // Ferro velho: x:12250→21720 (9470px) → metade ≈ 4735px após o muro x:25929
+    // 25750 → 30664 = 4914px de chão contínuo, sem buracos nem obstáculos
+    { x: RIVER.X2, w: 30664 - RIVER.X2 },
   ];
 
   groundSegments.forEach(({ x, w }) => {
