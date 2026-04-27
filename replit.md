@@ -10,10 +10,10 @@ Toda vez que um novo agente assumir este projeto, execute estes passos antes de 
    ```
 
 2. **Iniciar os workflows obrigatórios** — o preview fica branco/parado se eles não estiverem rodando:
-   - `artifacts/pursuit-game: web` — servidor principal do jogo (porta 5000)
+   - `artifacts/pursuit-game: web` — servidor principal do jogo (porta 5000) — **nome exato do workflow configurado**
    - `Level Autosave` — vigia de salvamento automático da fase
 
-   Use `restart_workflow("<nome>")` para cada um, na ordem acima.
+   Use `restart_workflow("<nome>")` para cada um, na ordem acima. Atenção: o workflow do jogo se chama `artifacts/pursuit-game: web`, não `Start application`.
 
 3. **Confirmar que o jogo está acessível** fazendo um screenshot em `path: "/"` antes de iniciar qualquer tarefa.
 
