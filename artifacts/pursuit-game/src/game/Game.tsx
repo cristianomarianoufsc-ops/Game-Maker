@@ -3176,8 +3176,6 @@ export default function Game() {
       drawShantyVillage(ctx, gs.camera.x);
       drawGround(ctx, gs.camera.x, gs.platforms);
       drawRiver(ctx, gs.camera.x);
-      drawPotholes(ctx, gs.platforms, gs.camera.x);
-
       // World-space rendering (offset by camera)
       ctx.save();
       ctx.translate(-gs.camera.x, 0);
@@ -3230,6 +3228,9 @@ export default function Game() {
         }
       }
       ctx.restore();
+
+      // Potholes desenhados APÓS o chão para aparecer sobre ele
+      drawPotholes(ctx, gs.platforms, gs.camera.x);
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);
