@@ -1404,11 +1404,11 @@ export function drawPotholes(
 }
 
 // ── VILA HUMILDE DE MADEIRA ────────────────────────────────────────
-// Backdrop após o muro x:25929 até x:30664 — casas de madeira pobres
+// Backdrop após o muro x:25929 até x:29457 — casas de madeira pobres
 // em primeiro plano de fundo, formando uma vila/favela onde o drone
-// encontra os 2 NPCs.
+// encontra os 2 NPCs. A partir do muro x:29457 volta o cenário de prédios.
 const SHANTY_X1 = 25929;
-const SHANTY_X2 = 30664;
+const SHANTY_X2 = 29457;
 
 export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): void {
   const sx = SHANTY_X1 - camX;

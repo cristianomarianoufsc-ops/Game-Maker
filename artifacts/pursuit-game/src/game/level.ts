@@ -501,7 +501,7 @@ export function generateBuildings(): BuildingDef[] {
   const rand = rng(42);
 
   let bx = -200;
-  while (bx < 26000) {
+  while (bx < 35000) {
     const bw = 80 + Math.floor(rand() * 180);
     const bh = 120 + Math.floor(rand() * 260);
     const by = CANVAS_H - 80 - bh;
@@ -523,7 +523,7 @@ export function generateBuildings(): BuildingDef[] {
   }
 
   bx = -100;
-  while (bx < 26000) {
+  while (bx < 35000) {
     const bw = 60 + Math.floor(rand() * 140);
     const bh = 80 + Math.floor(rand() * 200);
     const by = CANVAS_H - 90 - bh;
