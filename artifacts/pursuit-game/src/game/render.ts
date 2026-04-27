@@ -1854,7 +1854,62 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
     drawShantyHouse(hx, seed, 0, 1.0);  // sem skip — terreno totalmente coberto
   }
 
-  // ── 3. NÉVOA BAIXA atmosférica integrando ao chão ──
+  // ── 3. POÇAS D'ÁGUA SUJA ──────────────────────────────────────────
+  // Geradas deterministicamente entre x:SHANTY_X1 e SHANTY_X2
+  const PUDDLE_STEP = 170;
+  const puddleStart = Math.ceil(SHANTY_X1 / PUDDLE_STEP) * PUDDLE_STEP;
+  for (let px = puddleStart; px < SHANTY_X2; px += PUDDLE_STEP) {
+    const pSeed = ((px * 3141592653) >>> 0);
+    if ((pSeed % 5) === 0) continue;          // ~20% de posições sem poça
+
+    const pScreenX = px - camX;
+    const pW = 30 + (pSeed % 60);             // largura 30–90px
+    const pH = 4  + (pSeed % 7);              // altura (profundidade) 4–10px
+    const pX = pScreenX - pW / 2 + ((pSeed >> 8) % 40) - 20;
+    const pY = GROUND_Y - 2;                  // pousada no chão
+
+    if (pX + pW < sx || pX > ex) continue;
+
+    // Corpo da poça — água escura e suja
+    const puddleGrad = ctx.createRadialGradient(
+      pX + pW / 2, pY, 0,
+      pX + pW / 2, pY, pW * 0.6,
+    );
+    puddleGrad.addColorStop(0,   'rgba(30,20,12,0.80)');
+    puddleGrad.addColorStop(0.6, 'rgba(20,12,6,0.65)');
+    puddleGrad.addColorStop(1,   'rgba(10,6,3,0)');
+    ctx.fillStyle = puddleGrad;
+    ctx.beginPath();
+    ctx.ellipse(pX + pW / 2, pY, pW / 2, pH, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Reflexo da iluminação ambiente — tom avermelhado do regime
+    const hasWarmReflection = (pSeed % 3) !== 0;
+    if (hasWarmReflection) {
+      const reflColor = (pSeed % 4) === 0
+        ? 'rgba(255,120,40,0.18)'    // reflexo de janela acesa (laranja quente)
+        : 'rgba(160,20,8,0.14)';     // reflexo dos holofotes vermelhos do regime
+      const refGrad = ctx.createLinearGradient(pX, pY - pH, pX + pW * 0.65, pY);
+      refGrad.addColorStop(0, reflColor);
+      refGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = refGrad;
+      ctx.beginPath();
+      ctx.ellipse(pX + pW / 2, pY, pW / 2, pH, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Especular — pequeno brilho branco
+    ctx.fillStyle = 'rgba(200,190,170,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(
+      pX + pW * 0.35, pY - 1,
+      pW * 0.12, pH * 0.35,
+      -0.3, 0, Math.PI * 2,
+    );
+    ctx.fill();
+  }
+
+  // ── 4. NÉVOA BAIXA atmosférica integrando ao chão ──
   const fogGrad = ctx.createLinearGradient(0, GROUND_Y - 60, 0, GROUND_Y);
   fogGrad.addColorStop(0, 'rgba(40,25,15,0)');
   fogGrad.addColorStop(1, 'rgba(40,25,15,0.55)');
