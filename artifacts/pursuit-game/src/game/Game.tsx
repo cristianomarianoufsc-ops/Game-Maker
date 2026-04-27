@@ -1849,7 +1849,7 @@ export default function Game() {
                 const gp = platformsRef.current[idx];
                 if (!gp) return;
                 gp.x = Math.round(origX + requestedDx);
-                gp.y = Math.round(origY + requestedDy);
+                if (gp.type !== 'pothole') gp.y = Math.round(origY + requestedDy);
               });
               const groupBasePositions = groupEntries.map(({ idx }) => {
                 const gp = platformsRef.current[idx];
@@ -1908,14 +1908,21 @@ export default function Game() {
                   const gp = platformsRef.current[idx];
                   if (!gp) return;
                   gp.x = Math.round(x + snapDx);
-                  gp.y = Math.round(y + snapDy);
+                  if (gp.type !== 'pothole') gp.y = Math.round(y + snapDy);
                 });
               }
             } else {
               p.x = Math.round(drag.origX + dx);
-              p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
-              p.y = Math.max(-4000, p.y);
-              snapEditorPlatform(p, editorSelectedIdxRef.current);
+              if (p.type === 'pothole') {
+                // potholes só movem horizontalmente — Y permanentemente fixo em GROUND_Y
+                p.y = EDITOR_GROUND_Y;
+                snapEditorPlatform(p, editorSelectedIdxRef.current);
+                p.y = EDITOR_GROUND_Y; // restaura após snap (que pode ter alterado Y)
+              } else {
+                p.y = Math.round(Math.min(drag.origY + dy, EDITOR_GROUND_Y - getPlatformGroundClampOffset(p)));
+                p.y = Math.max(-4000, p.y);
+                snapEditorPlatform(p, editorSelectedIdxRef.current);
+              }
             }
           } else if (drag.mode === 'resize-right') {
             p.w = Math.round(Math.max(10, drag.origW + dx));

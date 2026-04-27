@@ -1,11 +1,328 @@
 {
   "add": [
     {
-      "x": 11546,
-      "y": 476,
-      "w": 150,
-      "h": 90,
-      "type": "pothole"
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
+    },
+    {
+      "type": "sprite",
+      "x": 20580,
+      "y": 299,
+      "w": 180,
+      "h": 135,
+      "customSpriteName": "homem.png",
+      "customSpriteDataUrl": "/sprites/homem.png"
     },
     {
       "type": "sprite",
