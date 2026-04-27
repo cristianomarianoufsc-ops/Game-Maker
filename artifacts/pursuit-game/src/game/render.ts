@@ -1943,7 +1943,8 @@ export function drawPlatforms(
 ): void {
   for (let pi = 0; pi < platforms.length; pi++) {
     const plat = platforms[pi];
-    if (plat.type === 'ground') continue; // drawn separately
+    if (plat.type === 'ground') continue;   // drawn separately
+    if (plat.type === 'pothole') continue;  // drawn by drawPotholes()
     if (plat.hideRender) continue; // desenhada por outro renderizador (ex.: escada de incêndio)
     if (plat.type === 'box'  && destroyedBoxIndices?.includes(pi)) continue;
     if ((plat.type === 'tire' || plat.type === 'tireHideout') && destroyedTireIndices?.includes(pi)) continue;
