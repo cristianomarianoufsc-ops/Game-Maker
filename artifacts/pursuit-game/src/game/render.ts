@@ -1305,124 +1305,132 @@ export function drawPotholes(
 
     ctx.save();
 
-    // Buraco é uma abertura ELÍPTICA no nível do chão.
-    // holeRy controla quanto o buraco "abre" em perspectiva isométrica.
-    const holeRy  = Math.max(6, w * 0.20);
-    const holeY   = topY + holeRy * 0.5;    // centro da elipse de abertura
-    const depth   = Math.max(20, totalH);    // profundidade visual do buraco
+    // Jogo é SIDE-SCROLLING: vista lateral. O buraco aparece como abertura
+    // retangular no chão, vendo-se o interior escuro de baixo do asfalto.
+    // topY = GROUND_Y = topo da laje de concreto.
+    // sx1/sx2 = bordas esquerda/direita em coordenadas de tela.
 
-    // Seed determinístico baseado na posição mundial para variações consistentes
-    const holeSeed = ((Math.round(p.x) * 2654435761) >>> 0);
+    const seed = ((Math.round(p.x) * 2654435761) >>> 0);
+    const botY = topY + totalH;           // fundo do buraco (y cresce para baixo)
 
-    // ── 1. ASFALTO RACHADO AO REDOR DA BORDA ───────────────────────────
-    // Pedaços irregulares de concreto/asfalto se soltando
-    ctx.fillStyle = '#1c1814';
-    for (let fi = 0; fi < 10; fi++) {
-      const fSeed = ((holeSeed ^ (fi * 1664525 + 1013904223)) >>> 0);
-      const angle  = (fi / 10) * Math.PI * 2;
-      const spread = 1.0 + (fSeed % 10) / 25;   // irregular: 1.0–1.4 do raio
-      const fx = cx + Math.cos(angle) * rx * spread;
-      const fy = holeY + Math.sin(angle) * holeRy * spread * 0.5;
-      const fSize = 3 + (fSeed % 5);
+    // ── 1. INTERIOR DO BURACO — gradiente de profundidade ────────────────
+    // O fundo é preto absoluto; o topo mostra a face traseira do asfalto
+    // (ligeiramente marrom-escuro), pois olhamos levemente de cima.
+    const interiorGrad = ctx.createLinearGradient(0, topY, 0, botY);
+    interiorGrad.addColorStop(0,    '#2a1c0e');   // face traseira do asfalto: terra visível
+    interiorGrad.addColorStop(0.18, '#190d04');
+    interiorGrad.addColorStop(0.50, '#0a0501');
+    interiorGrad.addColorStop(1,    '#000000');
+    ctx.fillStyle = interiorGrad;
+    ctx.fillRect(sx1, topY, w, totalH);
+
+    // Sombra lateral esquerda (parede interna esquerda em sombra)
+    const lgL = ctx.createLinearGradient(sx1, 0, sx1 + w * 0.38, 0);
+    lgL.addColorStop(0, 'rgba(0,0,0,0.88)');
+    lgL.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = lgL;
+    ctx.fillRect(sx1, topY, w * 0.38, totalH);
+
+    // Sombra lateral direita
+    const lgR = ctx.createLinearGradient(sx2 - w * 0.38, 0, sx2, 0);
+    lgR.addColorStop(0, 'rgba(0,0,0,0)');
+    lgR.addColorStop(1, 'rgba(0,0,0,0.88)');
+    ctx.fillStyle = lgR;
+    ctx.fillRect(sx2 - w * 0.38, topY, w * 0.38, totalH);
+
+    // Textura de terra — pontos e veios de raízes irregulares
+    for (let ti = 0; ti < 22; ti++) {
+      const ts = ((seed ^ (ti * 374761393)) >>> 0);
+      const tx2 = sx1 + 4 + (ts % Math.max(1, w - 8));
+      const ty2 = topY + 6 + ((ts >> 8) % Math.max(1, totalH - 12));
+      const tr = 1 + (ts % 2);
+      const br = 38 + (ts % 30);
+      const bg = 22 + (ts % 18);
+      const bb = 8 + (ts % 10);
+      ctx.fillStyle = `rgba(${br},${bg},${bb},0.55)`;
       ctx.beginPath();
-      ctx.arc(fx, fy, fSize, 0, Math.PI * 2);
+      ctx.arc(tx2, ty2, tr, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Rachaduras irradiando a partir da borda do buraco
-    ctx.strokeStyle = 'rgba(8,6,3,0.70)';
+    // ── 2. BORDA SUPERIOR — asfalto partido em vista lateral ─────────────
+    // Mostramos a espessura do asfalto/concreto na borda superior do buraco.
+    // Cor: cinza concreto — BEM MAIS CLARO que o chão (#1a1816) para contrastar.
+    const rimThick = Math.min(10, totalH * 0.14);  // espessura da laje visível
+
+    // Borda esquerda — cunha irregular (asfalto partido)
+    ctx.fillStyle = '#52483e';
+    ctx.beginPath();
+    ctx.moveTo(sx1 - 4, topY);                           // ponta externa
+    ctx.lineTo(sx1 + w * 0.12, topY);                    // superfície
+    ctx.lineTo(sx1 + w * 0.08, topY + rimThick);         // fratura diagonal
+    ctx.lineTo(sx1 + 1, topY + rimThick + 3);            // parede interna
+    ctx.lineTo(sx1 - 4, topY + rimThick + 1);
+    ctx.closePath();
+    ctx.fill();
+    // destaque claro no topo da borda (luz batendo no topo da laje)
+    ctx.fillStyle = '#706456';
+    ctx.fillRect(sx1 - 4, topY, w * 0.12 + 4, 2);
+
+    // Borda direita — cunha irregular (asfalto partido)
+    ctx.fillStyle = '#52483e';
+    ctx.beginPath();
+    ctx.moveTo(sx2 + 4, topY);
+    ctx.lineTo(sx2 - w * 0.12, topY);
+    ctx.lineTo(sx2 - w * 0.08, topY + rimThick);
+    ctx.lineTo(sx2 - 1, topY + rimThick + 3);
+    ctx.lineTo(sx2 + 4, topY + rimThick + 1);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#706456';
+    ctx.fillRect(sx2 - w * 0.12, topY, w * 0.12 + 4, 2);
+
+    // ── 3. RACHADURAS NA SUPERFÍCIE do asfalto ao redor ─────────────────
+    // Fissuras irradiando das bordas — claramente visíveis (#3e3428)
+    ctx.strokeStyle = '#3e3428';
     ctx.lineWidth = 1;
-    for (let ci = 0; ci < 6; ci++) {
-      const cSeed = ((holeSeed ^ (ci * 2246822519)) >>> 0);
-      const angle  = (ci / 6) * Math.PI * 2 + (cSeed % 10) * 0.1;
-      const len    = 6 + (cSeed % 14);
-      const startX = cx + Math.cos(angle) * (rx + 2);
-      const startY = holeY + Math.sin(angle) * (holeRy + 1) * 0.5;
-      const endX   = startX + Math.cos(angle) * len;
-      const endY   = startY + Math.sin(angle) * len * 0.35;
+    // Esquerda
+    for (let ci = 0; ci < 3; ci++) {
+      const cs = ((seed ^ (ci * 1664525)) >>> 0);
+      const ox = -4 - (cs % 8);
+      const oy = -3 + (ci * 3) - (cs % 4);
       ctx.beginPath();
-      ctx.moveTo(startX, startY);
-      ctx.lineTo(endX + ((cSeed >> 4) % 5) - 2, endY);
+      ctx.moveTo(sx1, topY + oy);
+      ctx.lineTo(sx1 + ox, topY + oy - 4 - (cs % 6));
+      ctx.stroke();
+    }
+    // Direita
+    for (let ci = 0; ci < 3; ci++) {
+      const cs = ((seed ^ ((ci + 10) * 1664525)) >>> 0);
+      const ox = 4 + (cs % 8);
+      const oy = -3 + (ci * 3) - (cs % 4);
+      ctx.beginPath();
+      ctx.moveTo(sx2, topY + oy);
+      ctx.lineTo(sx2 + ox, topY + oy - 4 - (cs % 6));
       ctx.stroke();
     }
 
-    // ── 2. INTERIOR DO BURACO — profundidade e textura de terra ─────────
-    // Fundo do buraco: gradiente vertical escurecendo conforme desce
-    const depthGrad = ctx.createLinearGradient(0, holeY, 0, holeY + depth);
-    depthGrad.addColorStop(0,    'rgba(25,16,8,0.92)');   // boca: terra escura visível
-    depthGrad.addColorStop(0.30, 'rgba(12,8,3,0.97)');
-    depthGrad.addColorStop(0.65, 'rgba(4,2,1,1)');
-    depthGrad.addColorStop(1,    '#000000');              // fundo: preto absoluto
-    ctx.fillStyle = depthGrad;
+    // ── 4. LINHA DE ABERTURA (contorno superior) — define a boca do buraco
+    // Linha mais clara no topo do buraco (contraste com o interior escuro)
+    ctx.strokeStyle = '#5c5044';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.ellipse(cx, holeY, rx, holeRy, 0, 0, Math.PI);   // metade inferior (descendo)
-    ctx.rect(sx1, holeY, w, depth);
-    ctx.fill();
-
-    // Paredes laterais internas — sombra curva dando volume de buraco
-    const leftWallGrad = ctx.createLinearGradient(sx1, 0, sx1 + w * 0.45, 0);
-    leftWallGrad.addColorStop(0,   'rgba(0,0,0,0.92)');
-    leftWallGrad.addColorStop(0.5, 'rgba(0,0,0,0.40)');
-    leftWallGrad.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = leftWallGrad;
-    ctx.fillRect(sx1, holeY, w * 0.45, depth);
-
-    const rightWallGrad = ctx.createLinearGradient(sx2 - w * 0.45, 0, sx2, 0);
-    rightWallGrad.addColorStop(0,   'rgba(0,0,0,0)');
-    rightWallGrad.addColorStop(0.5, 'rgba(0,0,0,0.40)');
-    rightWallGrad.addColorStop(1,   'rgba(0,0,0,0.92)');
-    ctx.fillStyle = rightWallGrad;
-    ctx.fillRect(sx2 - w * 0.45, holeY, w * 0.45, depth);
-
-    // Textura de terra nas paredes internas — pontos irregulares
-    for (let ti = 0; ti < 18; ti++) {
-      const tSeed = ((holeSeed ^ (ti * 374761393)) >>> 0);
-      const tx = sx1 + 3 + (tSeed % Math.max(1, w - 6));
-      const ty = holeY + 4 + ((tSeed >> 8) % Math.max(1, depth - 8));
-      const tr = 1 + (tSeed % 3);
-      ctx.fillStyle = `rgba(${35 + (tSeed % 20)},${20 + (tSeed % 12)},${8 + (tSeed % 8)},${0.35 + (tSeed % 20) / 100})`;
-      ctx.beginPath();
-      ctx.arc(tx, ty, tr, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // ── 3. ABERTURA (boca do buraco) — elipse de corte ──────────────────
-    // Elipse preta definindo o contorno da abertura
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.ellipse(cx, holeY, rx, holeRy, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Luz ambiente fraca batendo na parede oposta (borda posterior mais clara)
-    const rimAmbient = ctx.createLinearGradient(0, holeY - holeRy, 0, holeY + holeRy);
-    rimAmbient.addColorStop(0,   'rgba(40,28,14,0.65)');  // borda posterior: leve luz
-    rimAmbient.addColorStop(0.4, 'rgba(0,0,0,0)');
-    rimAmbient.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = rimAmbient;
-    ctx.beginPath();
-    ctx.ellipse(cx, holeY, rx - 1, holeRy - 0.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Borda do buraco — calçada escura partida
-    ctx.strokeStyle = 'rgba(12,8,4,0.85)';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.ellipse(cx, holeY, rx + 1, holeRy + 0.5, 0, 0, Math.PI * 2);
+    ctx.moveTo(sx1, topY);
+    ctx.lineTo(sx2, topY);
     ctx.stroke();
 
-    // ── 4. ÁGUA PARADA NO FUNDO (se profundo o bastante) ────────────────
-    if (depth > 55) {
-      const waterY  = holeY + depth * 0.80;
-      const waterRx = rx * 0.35;
-      const waterRy = waterRx * 0.15;
-      ctx.fillStyle = 'rgba(35,45,30,0.60)';
-      ctx.beginPath();
-      ctx.ellipse(cx, waterY, waterRx, waterRy, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(100,120,110,0.25)';
-      ctx.beginPath();
-      ctx.ellipse(cx - waterRx * 0.1, waterY - 0.5, waterRx * 0.5, waterRy * 0.4, 0, 0, Math.PI * 2);
-      ctx.fill();
+    // ── 5. ÁGUA NO FUNDO (se profundo o bastante) ────────────────────────
+    if (totalH > 55) {
+      const waterY = botY - 6;
+      const ww     = w * 0.65;
+      const wGrad  = ctx.createLinearGradient(0, waterY - 4, 0, waterY + 2);
+      wGrad.addColorStop(0, 'rgba(30,55,45,0.0)');
+      wGrad.addColorStop(1, 'rgba(30,55,45,0.7)');
+      ctx.fillStyle = wGrad;
+      ctx.fillRect(cx - ww / 2, waterY - 4, ww, 6);
+      // brilho na superfície da água
+      ctx.fillStyle = 'rgba(90,130,110,0.30)';
+      ctx.fillRect(cx - ww * 0.25, waterY - 2, ww * 0.5, 1.5);
     }
 
     ctx.restore();
