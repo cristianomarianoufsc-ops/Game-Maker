@@ -21,6 +21,7 @@ import standingTireUrl from '@assets/pneu_1776643651883.png';
 import rollingTireUrl from '@assets/pneu2_1776643651884.png';
 import brickTextureUrl from '/brick_texture.png';
 import balconyUrl from '/balcony.png';
+import sewerUrl from '/sewer.png';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, PLAYER_W, PLAYER_H, DRONE_W, DRONE_H,
   PLAYER_MAX_HEALTH, SHOOT_COOLDOWN, CAMERA_LEAD_X, COLORS,
@@ -572,6 +573,7 @@ export default function Game() {
   const brickTextureImgRef = useRef<HTMLImageElement | null>(null);
   const balconyImgRef = useRef<HTMLImageElement | null>(null);
   const carroImgRef = useRef<HTMLImageElement | null>(null);
+  const sewerImgRef = useRef<HTMLImageElement | null>(null);
   const standingTireImgRef = useRef<HTMLImageElement | null>(null);
   const rollingTireImgRef = useRef<HTMLImageElement | null>(null);
   const dogSheetImgRef = useRef<HTMLImageElement | null>(null);
@@ -1161,6 +1163,10 @@ export default function Game() {
     const balconyImg = new Image();
     balconyImg.src = balconyUrl;
     balconyImgRef.current = balconyImg;
+
+    const sewerImg = new Image();
+    sewerImg.src = sewerUrl;
+    sewerImgRef.current = sewerImg;
 
     const carroImg = new Image();
     carroImg.onload = () => {
@@ -3237,7 +3243,7 @@ export default function Game() {
       ctx.restore();
 
       // Potholes desenhados APÓS o chão para aparecer sobre ele
-      drawPotholes(ctx, gs.platforms, gs.camera.x);
+      drawPotholes(ctx, gs.platforms, gs.camera.x, sewerImgRef.current);
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);

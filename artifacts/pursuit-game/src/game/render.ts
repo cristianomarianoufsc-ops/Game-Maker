@@ -1278,11 +1278,29 @@ export function drawGround(
 
 // ── Desenha objetos pothole (bueiros editáveis) — poço cilíndrico com perspectiva
 // w controla a largura da boca; h controla a profundidade visual do poço.
-// Visual: aro elíptico no topo (perspectiva) + cilindro escuro descendo + gradiente radial.
+// Visual: textura de esgoto + aro metálico elíptico no topo + sombras laterais.
+//
+// BACKUP — versão toda preta (restaurar se necessário):
+// export function drawPotholes(ctx, platforms, camX) {
+//   for (const p of platforms) {
+//     if (p.type !== 'pothole') continue;
+//     const sx1 = p.x - camX;
+//     const sx2 = p.x + p.w - camX;
+//     if (sx2 < -20 || sx1 > CANVAS_W + 20) continue;
+//     const topY = p.y;
+//     const totalH = Math.max(20, p.h);
+//     const w = sx2 - sx1;
+//     ctx.save();
+//     ctx.fillStyle = '#000000';
+//     ctx.fillRect(sx1, topY, w, totalH);
+//     ctx.restore();
+//   }
+// }
 export function drawPotholes(
   ctx: CanvasRenderingContext2D,
   platforms: ReadonlyArray<{ x: number; y: number; w: number; h: number; type: string }>,
   camX: number,
+  sewerImg?: HTMLImageElement | null,
 ): void {
   for (const p of platforms) {
     if (p.type !== 'pothole') continue;
@@ -1296,18 +1314,80 @@ export function drawPotholes(
     const w = sx2 - sx1;
     const cx = sx1 + w / 2;
 
-    // Achatamento da elipse — quanto mais "de cima" estamos olhando, mais aberta
-    // (escolhi 0.32 = perspectiva levemente inclinada, dá ar cilíndrico)
     const ellipseRy = Math.max(4, w * 0.18);
-    const rimY = topY + ellipseRy * 0.5;          // centro vertical do aro elíptico
+    const rimY = topY + ellipseRy * 0.5;
     const rx = w / 2;
     const ry = ellipseRy;
 
     ctx.save();
 
-    // Buraco preto sólido — simula abertura escura no chão
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(sx1, topY, w, totalH);
+    // Clip para o retângulo do buraco
+    ctx.beginPath();
+    ctx.rect(sx1, topY, w, totalH);
+    ctx.clip();
+
+    if (sewerImg && sewerImg.complete && sewerImg.naturalWidth > 0) {
+      // Textura de esgoto escalada para preencher o buraco
+      ctx.drawImage(sewerImg, sx1, topY, w, totalH);
+
+      // Sombra lateral esquerda (dá profundidade de poço)
+      const shadowL = ctx.createLinearGradient(sx1, 0, sx1 + w * 0.35, 0);
+      shadowL.addColorStop(0, 'rgba(0,0,0,0.72)');
+      shadowL.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = shadowL;
+      ctx.fillRect(sx1, topY, w * 0.35, totalH);
+
+      // Sombra lateral direita
+      const shadowR = ctx.createLinearGradient(sx1 + w, 0, sx1 + w * 0.65, 0);
+      shadowR.addColorStop(0, 'rgba(0,0,0,0.72)');
+      shadowR.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = shadowR;
+      ctx.fillRect(sx1 + w * 0.65, topY, w * 0.35, totalH);
+
+      // Sombra no topo (abertura do buraco fica mais escura)
+      const shadowTop = ctx.createLinearGradient(0, topY, 0, topY + totalH * 0.4);
+      shadowTop.addColorStop(0, 'rgba(0,0,0,0.55)');
+      shadowTop.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = shadowTop;
+      ctx.fillRect(sx1, topY, w, totalH * 0.4);
+
+      // Sombra no fundo (escurece ainda mais o fundo do poço)
+      const shadowBot = ctx.createLinearGradient(0, topY + totalH * 0.6, 0, topY + totalH);
+      shadowBot.addColorStop(0, 'rgba(0,0,0,0)');
+      shadowBot.addColorStop(1, 'rgba(0,0,0,0.85)');
+      ctx.fillStyle = shadowBot;
+      ctx.fillRect(sx1, topY + totalH * 0.6, w, totalH * 0.4);
+    } else {
+      // Fallback preto enquanto imagem carrega
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(sx1, topY, w, totalH);
+    }
+
+    ctx.restore();
+
+    // Aro metálico elíptico no topo do bueiro
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, rimY, rx, ry, 0, 0, Math.PI * 2);
+    const rimGrad = ctx.createRadialGradient(cx - rx * 0.2, rimY - ry * 0.3, 0, cx, rimY, rx);
+    rimGrad.addColorStop(0, '#8a8a7a');
+    rimGrad.addColorStop(0.5, '#555548');
+    rimGrad.addColorStop(1, '#333328');
+    ctx.strokeStyle = rimGrad;
+    ctx.lineWidth = Math.max(2, w * 0.06);
+    ctx.stroke();
+
+    // Grade do bueiro (duas barras horizontais)
+    ctx.strokeStyle = 'rgba(60,60,50,0.9)';
+    ctx.lineWidth = Math.max(1.5, w * 0.04);
+    ctx.beginPath();
+    ctx.moveTo(cx - rx * 0.6, rimY - ry * 0.25);
+    ctx.lineTo(cx + rx * 0.6, rimY - ry * 0.25);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - rx * 0.6, rimY + ry * 0.25);
+    ctx.lineTo(cx + rx * 0.6, rimY + ry * 0.25);
+    ctx.stroke();
 
     ctx.restore();
   }
