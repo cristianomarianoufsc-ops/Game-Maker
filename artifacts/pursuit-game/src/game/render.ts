@@ -1276,31 +1276,23 @@ export function drawGround(
   // Bueiros agora são objetos `pothole` editáveis — desenhados em drawPotholes()
 }
 
-// ── Desenha objetos pothole (bueiros editáveis) — poço cilíndrico com perspectiva
-// w controla a largura da boca; h controla a profundidade visual do poço.
-// Visual: textura de esgoto + aro metálico elíptico no topo + sombras laterais.
+// ── Desenha objetos pothole (bueiros editáveis) — poço cilíndrico procedural
+// Visual gerado 100% via Canvas: concreto úmido, anéis cilíndricos, musgo e sombras.
 //
 // BACKUP — versão toda preta (restaurar se necessário):
 // export function drawPotholes(ctx, platforms, camX) {
 //   for (const p of platforms) {
 //     if (p.type !== 'pothole') continue;
-//     const sx1 = p.x - camX;
-//     const sx2 = p.x + p.w - camX;
+//     const sx1 = p.x - camX; const sx2 = p.x + p.w - camX;
 //     if (sx2 < -20 || sx1 > CANVAS_W + 20) continue;
-//     const topY = p.y;
-//     const totalH = Math.max(20, p.h);
-//     const w = sx2 - sx1;
-//     ctx.save();
-//     ctx.fillStyle = '#000000';
-//     ctx.fillRect(sx1, topY, w, totalH);
-//     ctx.restore();
+//     ctx.save(); ctx.fillStyle = '#000000';
+//     ctx.fillRect(sx1, p.y, sx2 - sx1, Math.max(20, p.h)); ctx.restore();
 //   }
 // }
 export function drawPotholes(
   ctx: CanvasRenderingContext2D,
   platforms: ReadonlyArray<{ x: number; y: number; w: number; h: number; type: string }>,
   camX: number,
-  sewerImg?: HTMLImageElement | null,
 ): void {
   for (const p of platforms) {
     if (p.type !== 'pothole') continue;
@@ -1312,50 +1304,109 @@ export function drawPotholes(
     const topY = p.y;
     const totalH = Math.max(20, p.h);
     const w = sx2 - sx1;
+    const cx = sx1 + w / 2;
 
     ctx.save();
-
-    // Clip para o retângulo do buraco
     ctx.beginPath();
     ctx.rect(sx1, topY, w, totalH);
     ctx.clip();
 
-    if (sewerImg && sewerImg.complete && sewerImg.naturalWidth > 0) {
-      // Textura de esgoto escalada para preencher o buraco
-      ctx.drawImage(sewerImg, sx1, topY, w, totalH);
+    // ── 1. BASE — concreto úmido escuro (verde-musgo muito escuro)
+    ctx.fillStyle = '#181810';
+    ctx.fillRect(sx1, topY, w, totalH);
 
-      // Sombra lateral esquerda (dá profundidade de poço)
-      const shadowL = ctx.createLinearGradient(sx1, 0, sx1 + w * 0.35, 0);
-      shadowL.addColorStop(0, 'rgba(0,0,0,0.72)');
-      shadowL.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = shadowL;
-      ctx.fillRect(sx1, topY, w * 0.35, totalH);
+    // ── 2. COLUNA CENTRAL — luz vinda de cima, ligeiramente mais clara
+    const centerLight = ctx.createLinearGradient(sx1, 0, sx1 + w, 0);
+    centerLight.addColorStop(0,    'rgba(0,0,0,0)');
+    centerLight.addColorStop(0.25, 'rgba(0,0,0,0)');
+    centerLight.addColorStop(0.4,  'rgba(38,35,14,0.55)');
+    centerLight.addColorStop(0.5,  'rgba(50,46,18,0.75)');
+    centerLight.addColorStop(0.6,  'rgba(38,35,14,0.55)');
+    centerLight.addColorStop(0.75, 'rgba(0,0,0,0)');
+    centerLight.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = centerLight;
+    ctx.fillRect(sx1, topY, w, totalH);
 
-      // Sombra lateral direita
-      const shadowR = ctx.createLinearGradient(sx1 + w, 0, sx1 + w * 0.65, 0);
-      shadowR.addColorStop(0, 'rgba(0,0,0,0.72)');
-      shadowR.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = shadowR;
-      ctx.fillRect(sx1 + w * 0.65, topY, w * 0.35, totalH);
+    // ── 3. ANÉIS CILÍNDRICOS — marcas horizontais de seções de concreto
+    const ringSpacing = Math.max(8, totalH / 7);
+    for (let ry = topY + ringSpacing * 0.6; ry < topY + totalH; ry += ringSpacing) {
+      // fade-in pelo progresso (mais visível no meio, some no fundo)
+      const prog = (ry - topY) / totalH;
+      const alpha = 0.18 + prog * 0.12;
 
-      // Sombra no topo (abertura do buraco fica mais escura)
-      const shadowTop = ctx.createLinearGradient(0, topY, 0, topY + totalH * 0.4);
-      shadowTop.addColorStop(0, 'rgba(0,0,0,0.55)');
-      shadowTop.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = shadowTop;
-      ctx.fillRect(sx1, topY, w, totalH * 0.4);
+      // linha escura (junta do anel)
+      ctx.strokeStyle = `rgba(0,0,0,${alpha + 0.15})`;
+      ctx.lineWidth = Math.max(1, w * 0.025);
+      ctx.beginPath();
+      ctx.moveTo(sx1 + w * 0.04, ry);
+      ctx.lineTo(sx1 + w * 0.96, ry);
+      ctx.stroke();
 
-      // Sombra no fundo (escurece ainda mais o fundo do poço)
-      const shadowBot = ctx.createLinearGradient(0, topY + totalH * 0.6, 0, topY + totalH);
-      shadowBot.addColorStop(0, 'rgba(0,0,0,0)');
-      shadowBot.addColorStop(1, 'rgba(0,0,0,0.85)');
-      ctx.fillStyle = shadowBot;
-      ctx.fillRect(sx1, topY + totalH * 0.6, w, totalH * 0.4);
-    } else {
-      // Fallback preto enquanto imagem carrega
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(sx1, topY, w, totalH);
+      // reflexo claro logo acima (borda superior do anel)
+      ctx.strokeStyle = `rgba(55,52,20,${alpha * 0.6})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sx1 + w * 0.08, ry - 1.5);
+      ctx.lineTo(sx1 + w * 0.92, ry - 1.5);
+      ctx.stroke();
     }
+
+    // ── 4. MANCHAS DE MUSGO — retângulos determinísticos baseados em posição
+    const seed = Math.floor(p.x / 10);
+    const mossCount = 6 + (seed % 5);
+    for (let i = 0; i < mossCount; i++) {
+      const s1 = Math.sin((seed + i) * 127.1) * 0.5 + 0.5;
+      const s2 = Math.sin((seed + i) * 311.7) * 0.5 + 0.5;
+      const s3 = Math.sin((seed + i) * 74.3)  * 0.5 + 0.5;
+      const s4 = Math.sin((seed + i) * 193.5) * 0.5 + 0.5;
+
+      const mx = sx1 + w * 0.08 + s1 * w * 0.84;
+      const my = topY + totalH * 0.12 + s2 * totalH * 0.72;
+      const mw = 2 + s3 * w * 0.18;
+      const mh = 3 + s4 * totalH * 0.14;
+
+      // Verde-musgo muito discreto
+      const g = Math.floor(38 + s1 * 18);
+      const b = Math.floor(5  + s2 * 8);
+      ctx.fillStyle = `rgba(14,${g},${b},0.22)`;
+      ctx.fillRect(mx - mw / 2, my - mh / 2, mw, mh);
+    }
+
+    // ── 5. RISCO VERTICAL ÚMIDO — fio d'água escorrendo pelo centro
+    const wetGrad = ctx.createLinearGradient(0, topY, 0, topY + totalH);
+    wetGrad.addColorStop(0,   'rgba(28,42,14,0)');
+    wetGrad.addColorStop(0.2, 'rgba(28,42,14,0.18)');
+    wetGrad.addColorStop(0.7, 'rgba(20,32,10,0.28)');
+    wetGrad.addColorStop(1,   'rgba(10,18,6,0.10)');
+    ctx.fillStyle = wetGrad;
+    ctx.fillRect(cx - w * 0.06, topY, w * 0.12, totalH);
+
+    // ── 6. SOMBRAS LATERAIS — paredes do poço bem escuras
+    const shadowL = ctx.createLinearGradient(sx1, 0, sx1 + w * 0.42, 0);
+    shadowL.addColorStop(0, 'rgba(0,0,0,0.82)');
+    shadowL.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = shadowL;
+    ctx.fillRect(sx1, topY, w * 0.42, totalH);
+
+    const shadowR = ctx.createLinearGradient(sx1 + w, 0, sx1 + w * 0.58, 0);
+    shadowR.addColorStop(0, 'rgba(0,0,0,0.82)');
+    shadowR.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = shadowR;
+    ctx.fillRect(sx1 + w * 0.58, topY, w * 0.42, totalH);
+
+    // ── 7. SOMBRA DO FUNDO — quanto mais fundo, mais escuro
+    const shadowBot = ctx.createLinearGradient(0, topY + totalH * 0.45, 0, topY + totalH);
+    shadowBot.addColorStop(0, 'rgba(0,0,0,0)');
+    shadowBot.addColorStop(1, 'rgba(0,0,0,0.92)');
+    ctx.fillStyle = shadowBot;
+    ctx.fillRect(sx1, topY + totalH * 0.45, w, totalH * 0.55);
+
+    // ── 8. SOMBRA DO TOPO — borda da abertura projeta sombra para dentro
+    const shadowTop = ctx.createLinearGradient(0, topY, 0, topY + totalH * 0.22);
+    shadowTop.addColorStop(0, 'rgba(0,0,0,0.60)');
+    shadowTop.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = shadowTop;
+    ctx.fillRect(sx1, topY, w, totalH * 0.22);
 
     ctx.restore();
   }
