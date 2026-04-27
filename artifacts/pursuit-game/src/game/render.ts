@@ -1312,12 +1312,6 @@ export function drawPotholes(
     const topY = p.y;
     const totalH = Math.max(20, p.h);
     const w = sx2 - sx1;
-    const cx = sx1 + w / 2;
-
-    const ellipseRy = Math.max(4, w * 0.18);
-    const rimY = topY + ellipseRy * 0.5;
-    const rx = w / 2;
-    const ry = ellipseRy;
 
     ctx.save();
 
@@ -1362,32 +1356,6 @@ export function drawPotholes(
       ctx.fillStyle = '#000000';
       ctx.fillRect(sx1, topY, w, totalH);
     }
-
-    ctx.restore();
-
-    // Aro metálico elíptico no topo do bueiro
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(cx, rimY, rx, ry, 0, 0, Math.PI * 2);
-    const rimGrad = ctx.createRadialGradient(cx - rx * 0.2, rimY - ry * 0.3, 0, cx, rimY, rx);
-    rimGrad.addColorStop(0, '#8a8a7a');
-    rimGrad.addColorStop(0.5, '#555548');
-    rimGrad.addColorStop(1, '#333328');
-    ctx.strokeStyle = rimGrad;
-    ctx.lineWidth = Math.max(2, w * 0.06);
-    ctx.stroke();
-
-    // Grade do bueiro (duas barras horizontais)
-    ctx.strokeStyle = 'rgba(60,60,50,0.9)';
-    ctx.lineWidth = Math.max(1.5, w * 0.04);
-    ctx.beginPath();
-    ctx.moveTo(cx - rx * 0.6, rimY - ry * 0.25);
-    ctx.lineTo(cx + rx * 0.6, rimY - ry * 0.25);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(cx - rx * 0.6, rimY + ry * 0.25);
-    ctx.lineTo(cx + rx * 0.6, rimY + ry * 0.25);
-    ctx.stroke();
 
     ctx.restore();
   }
