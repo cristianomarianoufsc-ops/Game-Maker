@@ -234,6 +234,7 @@ export function scalePlatformCollisionOverrides(
 }
 
 export function getPlatformGroundClampOffset(platform: Platform): number {
+  if (platform.type === 'pothole') return 0; // topo do buraco fica em GROUND_Y
   return Math.max(...getPlatformCollisionRects(platform).map((hit) => hit.y - platform.y + hit.h));
 }
 
