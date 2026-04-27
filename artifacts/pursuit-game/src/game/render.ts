@@ -1,6 +1,6 @@
 import type { GameState, Platform, FlyingTire, Dog, Bystander } from './types';
 import type { BuildingDef } from './level';
-import { RIVER } from './level';
+import { RIVER, RIVER2 } from './level';
 import {
   CANVAS_W, CANVAS_H, GROUND_Y, COLORS,
   PARALLAX_FAR, PARALLAX_MID, PARALLAX_NEAR,
@@ -1040,27 +1040,33 @@ export function spawnRiverRipple(worldX: number): void {
   if (_riverRipples.length > 24) _riverRipples.splice(0, _riverRipples.length - 24);
 }
 
-export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
-  const screenX1 = RIVER.X1 - camX;
-  const screenX2 = RIVER.X2 - camX;
+function drawSingleRiver(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  riverX1: number,
+  riverX2: number,
+  stumpsX: ReadonlyArray<number>,
+  stumpW: number,
+  stumpRise: number,
+): void {
+  const screenX1 = riverX1 - camX;
+  const screenX2 = riverX2 - camX;
   if (screenX2 < -50 || screenX1 > CANVAS_W + 50) return;
 
-  const waterTop = GROUND_Y + 6;          // superfície um pouco abaixo do nível do chão
+  const waterTop = GROUND_Y + 6;
   const waterBottom = CANVAS_H + 10;
   const t = Date.now() * 0.002;
 
   ctx.save();
 
   // ── ÁGUA ─────────────────────────────────────────────────────────
-  // Fundo escuro (sobrepõe o abismo do drawGround na área do rio)
   const waterGrad = ctx.createLinearGradient(0, waterTop, 0, waterBottom);
-  waterGrad.addColorStop(0,    '#0d2026');   // turquesa-escuro na superfície
+  waterGrad.addColorStop(0,    '#0d2026');
   waterGrad.addColorStop(0.25, '#08161c');
-  waterGrad.addColorStop(1,    '#020608');   // quase preto no fundo
+  waterGrad.addColorStop(1,    '#020608');
   ctx.fillStyle = waterGrad;
   ctx.fillRect(screenX1, waterTop, screenX2 - screenX1, waterBottom - waterTop);
 
-  // Reflexo avermelhado do céu na superfície
   const reflGrad = ctx.createLinearGradient(0, waterTop, 0, waterTop + 40);
   reflGrad.addColorStop(0,   'rgba(160,30,15,0.35)');
   reflGrad.addColorStop(0.6, 'rgba(80,15,8,0.15)');
@@ -1068,11 +1074,10 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
   ctx.fillStyle = reflGrad;
   ctx.fillRect(screenX1, waterTop, screenX2 - screenX1, 40);
 
-  // Linha de margem (faixa escura nas bordas)
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.fillRect(screenX1, waterTop - 2, screenX2 - screenX1, 2);
 
-  // ── ONDULAÇÕES (linhas finas correndo na superfície) ─────────────
+  // ── ONDULAÇÕES ─────────────────────────────────────────────────
   ctx.strokeStyle = 'rgba(180,200,210,0.18)';
   ctx.lineWidth = 1;
   for (let i = 0; i < 8; i++) {
@@ -1088,7 +1093,6 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
     ctx.stroke();
   }
 
-  // Brilho avermelhado fraco oscilando na superfície
   ctx.strokeStyle = 'rgba(220,80,40,0.22)';
   ctx.lineWidth = 1;
   for (let i = 0; i < 3; i++) {
@@ -1104,7 +1108,7 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
     ctx.stroke();
   }
 
-  // ── ONDAS CIRCULARES (ripples ao aterrissar) ─────────────────────
+  // ── ONDAS CIRCULARES (ripples) ──────────────────────────────────
   if (_riverRipples.length > 0) {
     const now = Date.now();
     ctx.save();
@@ -1112,23 +1116,20 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
       const r = _riverRipples[i];
       const age = now - r.bornAt;
       if (age >= RIPPLE_DURATION_MS) { _riverRipples.splice(i, 1); continue; }
-      const prog = age / RIPPLE_DURATION_MS;          // 0 → 1
+      const prog = age / RIPPLE_DURATION_MS;
       const sx = r.x - camX;
-      // Limite à área do rio para não vazar nas margens
       if (sx < screenX1 - 60 || sx > screenX2 + 60) continue;
-      // 3 anéis defasados expandindo
       for (let k = 0; k < 3; k++) {
         const kProg = prog - k * 0.18;
         if (kProg <= 0 || kProg >= 1) continue;
         const radiusX = 6 + kProg * 56;
-        const radiusY = radiusX * 0.32;               // achatado (perspectiva)
+        const radiusY = radiusX * 0.32;
         const alpha = (1 - kProg) * 0.55;
         ctx.strokeStyle = `rgba(220,200,180,${alpha})`;
         ctx.lineWidth = 1.4 - kProg * 1.0;
         ctx.beginPath();
         ctx.ellipse(sx, waterTop + 2, radiusX, radiusY, 0, 0, Math.PI * 2);
         ctx.stroke();
-        // Realce avermelhado (mesma paleta da água)
         ctx.strokeStyle = `rgba(255,120,60,${alpha * 0.4})`;
         ctx.lineWidth = 0.8;
         ctx.beginPath();
@@ -1139,31 +1140,25 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
     ctx.restore();
   }
 
-  // ── REFLEXOS DOS TOCOS NA ÁGUA ───────────────────────────────────
-  // Espelha verticalmente os tocos abaixo da superfície com leve ondulação
-  // pra criar profundidade. Desenhado antes dos tocos pra ficar atrás.
+  // ── REFLEXOS DOS TOCOS NA ÁGUA ──────────────────────────────────
   ctx.save();
-  for (const stumpX of RIVER.STUMPS_X) {
+  for (const stumpX of stumpsX) {
     const sx = stumpX - camX;
-    const sw = RIVER.STUMP_W;
+    const sw = stumpW;
     if (sx + sw < -20 || sx > CANVAS_W + 20) continue;
-    const topY = GROUND_Y - RIVER.STUMP_RISE;
-    const aboveH = waterTop - topY;       // altura visível do toco acima da água
+    const topY = GROUND_Y - stumpRise;
+    const aboveH = waterTop - topY;
     const reflH = aboveH + 6;
-    // Distorção ondulatória do reflexo
     const slices = 8;
     const sliceH = reflH / slices;
     for (let i = 0; i < slices; i++) {
       const reflY = waterTop + i * sliceH;
       const wave = Math.sin(t * 2.2 + (stumpX + i * 8) * 0.05) * (1.2 + i * 0.4);
       const alpha = Math.max(0, 0.32 - i * 0.035);
-      // Faixa do tronco refletida (cor madeira esmaecida)
       ctx.fillStyle = `rgba(90,58,30,${alpha})`;
       ctx.fillRect(sx + wave, reflY, sw, sliceH + 0.5);
-      // Highlight esquerdo refletido
       ctx.fillStyle = `rgba(122,80,40,${alpha * 0.6})`;
       ctx.fillRect(sx + wave, reflY, 4, sliceH + 0.5);
-      // Borda direita escura refletida
       ctx.fillStyle = `rgba(58,36,16,${alpha * 0.7})`;
       ctx.fillRect(sx + sw - 6 + wave, reflY, 6, sliceH + 0.5);
     }
@@ -1171,13 +1166,12 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
   ctx.restore();
 
   // ── TOCOS DE MADEIRA ─────────────────────────────────────────────
-  for (const stumpX of RIVER.STUMPS_X) {
+  for (const stumpX of stumpsX) {
     const sx = stumpX - camX;
-    const sw = RIVER.STUMP_W;
-    const topY = GROUND_Y - RIVER.STUMP_RISE; // topo do toco — o player fica em pé aqui
-    const submergedH = 70 + RIVER.STUMP_RISE; // parte visível submersa abaixo da superfície
+    const sw = stumpW;
+    const topY = GROUND_Y - stumpRise;
+    const submergedH = 70 + stumpRise;
 
-    // Sombra projetada no leito do rio (atrás do toco)
     const shadowGrad = ctx.createRadialGradient(sx + sw/2, waterTop + 3, 4, sx + sw/2, waterTop + 3, sw * 0.9);
     shadowGrad.addColorStop(0, 'rgba(0,0,0,0.5)');
     shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
@@ -1186,23 +1180,18 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
     ctx.ellipse(sx + sw/2, waterTop + 3, sw * 0.85, 4, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Tronco submerso (parte abaixo da superfície — desbotado pela água)
     ctx.fillStyle = '#3a2614';
     ctx.fillRect(sx + 4, waterTop, sw - 8, submergedH);
-    ctx.fillStyle = 'rgba(0,30,40,0.55)';   // tonalidade verde-azulada da água
+    ctx.fillStyle = 'rgba(0,30,40,0.55)';
     ctx.fillRect(sx + 4, waterTop, sw - 8, submergedH);
 
-    // Tronco acima da água — madeira escura
     ctx.fillStyle = '#5a3a1e';
     ctx.fillRect(sx, topY - 4, sw, waterTop - topY + 12);
-    // Borda direita escura (sombra do volume)
     ctx.fillStyle = '#3a2410';
     ctx.fillRect(sx + sw - 6, topY - 4, 6, waterTop - topY + 12);
-    // Highlight esquerdo
     ctx.fillStyle = '#7a5028';
     ctx.fillRect(sx, topY - 4, 4, waterTop - topY + 12);
 
-    // Topo do toco — círculo dos anéis de crescimento
     ctx.fillStyle = '#7a5028';
     ctx.beginPath();
     ctx.ellipse(sx + sw/2, topY - 2, sw/2, 6, 0, 0, Math.PI * 2);
@@ -1211,7 +1200,6 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
     ctx.beginPath();
     ctx.ellipse(sx + sw/2, topY - 2, sw/2 - 4, 4, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Anéis do tronco
     ctx.strokeStyle = '#3a2410';
     ctx.lineWidth = 1;
     for (let r = 4; r < sw/2 - 6; r += 5) {
@@ -1219,13 +1207,11 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
       ctx.ellipse(sx + sw/2, topY - 2, r, Math.max(1, r * 0.18), 0, 0, Math.PI * 2);
       ctx.stroke();
     }
-    // Núcleo (centro do toco)
     ctx.fillStyle = '#2a1808';
     ctx.beginPath();
     ctx.ellipse(sx + sw/2, topY - 2, 3, 1.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Linha de água na base do toco (ondulação ao redor)
     ctx.strokeStyle = 'rgba(220,80,40,0.45)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -1238,6 +1224,11 @@ export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
   }
 
   ctx.restore();
+}
+
+export function drawRiver(ctx: CanvasRenderingContext2D, camX: number): void {
+  drawSingleRiver(ctx, camX, RIVER.X1, RIVER.X2, RIVER.STUMPS_X, RIVER.STUMP_W, RIVER.STUMP_RISE);
+  drawSingleRiver(ctx, camX, RIVER2.X1, RIVER2.X2, RIVER2.STUMPS_X, RIVER2.STUMP_W, RIVER2.STUMP_RISE);
 }
 
 export function drawGround(

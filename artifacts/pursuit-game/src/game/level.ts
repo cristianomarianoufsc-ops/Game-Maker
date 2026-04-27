@@ -53,6 +53,16 @@ export const RIVER = {
   STUMPS_X: [24960, 25160, 25360, 25560] as const,
 };
 
+// Segundo rio — aparece logo após o muro x:29457 (termina em x:29477)
+export const RIVER2 = {
+  X1: 29580,        // borda esquerda (100px após o muro)
+  X2: 30450,        // borda direita
+  STUMP_W: 60,
+  STUMP_TOP_H: 18,
+  STUMP_RISE: 22,
+  STUMPS_X: [29720, 29920, 30120, 30320] as const,
+};
+
 // ──────────────────────────────────────────────────────────────────
 //  ALTERNAÇÃO DE ZONAS:
 //
@@ -88,8 +98,9 @@ export function generateLevel(): Platform[] {
   // editáveis (criar/duplicar/deletar pelo editor de fase) que "anulam" o chão
   // dentro de seu range X (resolução em physics.ts).
   const groundSegments: Array<{ x: number; w: number }> = [
-    { x: -400, w: RIVER.X1 - (-400) },          // -400 → 24820 (margem esquerda do rio)
-    { x: RIVER.X2, w: 30664 - RIVER.X2 },       // 25750 → 30664 (margem direita + reta longa)
+    { x: -400, w: RIVER.X1 - (-400) },              // -400 → 24820 (margem esquerda do rio)
+    { x: RIVER.X2, w: RIVER2.X1 - RIVER.X2 },      // 25750 → 29580 (entre os dois rios)
+    { x: RIVER2.X2, w: 30664 - RIVER2.X2 },        // 30450 → 30664 (margem direita do rio 2)
   ];
 
   groundSegments.forEach(({ x, w }) => {
@@ -137,6 +148,20 @@ export function generateLevel(): Platform[] {
       hideRender: true,
       isRiverStump: true,
       collisionBoxes: [{ x: 0, y: 0, w: RIVER.STUMP_W, h: RIVER.STUMP_TOP_H }],
+    });
+  });
+
+  // ── TOCOS DE MADEIRA NO SEGUNDO RIO ────────────────────────────
+  RIVER2.STUMPS_X.forEach((stumpX) => {
+    platforms.push({
+      x: stumpX,
+      y: GROUND_Y - RIVER2.STUMP_RISE,
+      w: RIVER2.STUMP_W,
+      h: 80 + RIVER2.STUMP_RISE,
+      type: 'platform',
+      hideRender: true,
+      isRiverStump: true,
+      collisionBoxes: [{ x: 0, y: 0, w: RIVER2.STUMP_W, h: RIVER2.STUMP_TOP_H }],
     });
   });
 
