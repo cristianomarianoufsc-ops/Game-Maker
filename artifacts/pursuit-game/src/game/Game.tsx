@@ -31,7 +31,7 @@ import {
   updateFallingBoxes, updateFlyingTires, updateDogs, updateBystanders,
 } from './physics';
 import {
-  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawFireEscapeBuilding, drawFireEscapeFloors, drawGround, drawRiver, drawPotholes, drawShantyVillage,
+  drawSky, drawBuildings, drawAlleyDetails, drawJunkyardBackdrop, drawFireEscapeBuilding, drawFireEscapeFloors, drawGround, drawRiver, drawPotholes, drawShantyVillage, drawStaircase,
   drawStreetBuildings, drawPlatforms, drawFlyingTires, drawTireHideouts,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
@@ -3182,6 +3182,7 @@ export default function Game() {
       drawStartingBackWall(ctx, gs.camera.x);
       drawShantyVillage(ctx, gs.camera.x);
       drawGround(ctx, gs.camera.x, gs.platforms);
+      drawStaircase(ctx, gs.camera.x);
       drawRiver(ctx, gs.camera.x);
       // World-space rendering (offset by camera)
       ctx.save();

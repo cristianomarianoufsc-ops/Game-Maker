@@ -100,7 +100,7 @@ export function generateLevel(): Platform[] {
   const groundSegments: Array<{ x: number; w: number }> = [
     { x: -400, w: RIVER.X1 - (-400) },              // -400 → 24820 (margem esquerda do rio)
     { x: RIVER.X2, w: RIVER2.X1 - RIVER.X2 },      // 25750 → 29580 (entre os dois rios)
-    { x: RIVER2.X2, w: 30664 - RIVER2.X2 },        // 30450 → 30664 (margem direita do rio 2)
+    { x: RIVER2.X2, w: 31400 - RIVER2.X2 },        // 30450 → 31400 (margem direita do rio 2 + área da escada)
   ];
 
   groundSegments.forEach(({ x, w }) => {

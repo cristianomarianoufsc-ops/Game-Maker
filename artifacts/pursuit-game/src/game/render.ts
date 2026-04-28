@@ -1866,6 +1866,83 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
   ctx.restore();
 }
 
+// ── ESCADA LATERAL (após muro x:30578) ─────────────────────────────
+// Escada de concreto/pedra com 8 degraus subindo para a direita.
+// Degraus de colisão ficam no level-patch.json (hideRender:true).
+const STAIR_X       = 30600;   // início horizontal (logo após muro 30578+20)
+const STAIR_N       = 8;       // número de degraus
+const STAIR_STEP_W  = 50;      // largura de cada degrau (px)
+const STAIR_STEP_H  = 18;      // altura de cada espelho/degrau (px)
+
+export function drawStaircase(ctx: CanvasRenderingContext2D, camX: number): void {
+  const sx = STAIR_X - camX;
+  const totalW = STAIR_N * STAIR_STEP_W;
+  const totalH = STAIR_N * STAIR_STEP_H;
+  if (sx + totalW < -20 || sx > CANVAS_W + 20) return;
+
+  ctx.save();
+
+  // ── 1. Corpo sólido: perfil de escada como polígono ─────────────────
+  ctx.beginPath();
+  ctx.moveTo(sx, GROUND_Y);                                          // base esq.
+  for (let i = 0; i < STAIR_N; i++) {
+    const stepX = sx + i * STAIR_STEP_W;
+    const stepY = GROUND_Y - (i + 1) * STAIR_STEP_H;
+    ctx.lineTo(stepX, stepY);                                        // espelho
+    ctx.lineTo(stepX + STAIR_STEP_W, stepY);                        // cobertura
+  }
+  ctx.lineTo(sx + totalW, GROUND_Y);                                 // lado direito
+  ctx.closePath();                                                    // linha de base
+
+  // Preenchimento: gradiente de pedra/concreto envelhecido
+  const grad = ctx.createLinearGradient(sx, GROUND_Y - totalH, sx, GROUND_Y);
+  grad.addColorStop(0,   '#4a4a4a');
+  grad.addColorStop(0.5, '#3a3a3a');
+  grad.addColorStop(1,   '#282828');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // ── 2. Bordas da escada (outline escuro) ────────────────────────────
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // ── 3. Highlight no bordo de cada cobertura (topo do degrau) ────────
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < STAIR_N; i++) {
+    const stepX = sx + i * STAIR_STEP_W;
+    const stepY = GROUND_Y - (i + 1) * STAIR_STEP_H;
+    ctx.beginPath();
+    ctx.moveTo(stepX,                stepY + 1);
+    ctx.lineTo(stepX + STAIR_STEP_W, stepY + 1);
+    ctx.stroke();
+  }
+
+  // ── 4. Sombra de canto (espelhos verticais: parte inferior escura) ──
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  for (let i = 0; i < STAIR_N; i++) {
+    const stepX = sx + i * STAIR_STEP_W;
+    const stepTopY  = GROUND_Y - (i + 1) * STAIR_STEP_H;
+    const stepBotY  = GROUND_Y - i * STAIR_STEP_H;
+    // sombra interna no espelho (lateral esquerda de cada "degrau superior")
+    ctx.fillRect(stepX, stepTopY, 3, stepBotY - stepTopY);
+  }
+
+  // ── 5. Textura de granulado: manchas claras pseudo-aleatórias ───────
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  for (let i = 0; i < STAIR_N; i++) {
+    const stepX = sx + i * STAIR_STEP_W;
+    const stepY = GROUND_Y - (i + 1) * STAIR_STEP_H;
+    const seed  = ((i * 374761393 + 2654435761) >>> 0);
+    const dotX  = stepX + 4 + (seed % 34);
+    const dotY  = stepY + 4 + ((seed >> 8) % (STAIR_STEP_H - 6));
+    ctx.fillRect(dotX, dotY, 2, 1);
+  }
+
+  ctx.restore();
+}
+
 // ── Cached platform groups — recomputed once per level change ───────
 let _cachedPlatKey = '';
 type PlatType2 = { x: number; y: number; w: number; h: number; type: string; isRiverStump?: boolean };
