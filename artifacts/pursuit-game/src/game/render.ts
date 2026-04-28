@@ -1883,90 +1883,85 @@ export function drawStaircase(ctx: CanvasRenderingContext2D, camX: number): void
 
   ctx.save();
 
-  // ── 1. Clip ao contorno da escada para não vazar texturas ───────────
+  const STEEL_BRIGHT  = '#d0dce8';
+  const STEEL_MID     = '#8a9aaa';
+  const STEEL_DARK    = '#4a5560';
+  const STEEL_OUTLINE = '#1a2028';
+
+  // ── 1. Stringer diagonal — viga inclinada na diagonal da escada ─────
+  // Duas linhas paralelas formando a viga estrutural (sem fill)
+  ctx.strokeStyle = STEEL_DARK;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.moveTo(sx, GROUND_Y);
-  for (let i = 0; i < STAIR_N; i++) {
-    const tx = sx + i * STAIR_STEP_W;
-    const ty = GROUND_Y - (i + 1) * STAIR_STEP_H;
-    ctx.lineTo(tx,                 ty);
-    ctx.lineTo(tx + STAIR_STEP_W, ty);
-  }
-  ctx.lineTo(sx + totalW, GROUND_Y);
-  ctx.closePath();
-  ctx.save();
-  ctx.clip();
-
-  // ── 2. Base de aço: gradiente metálico vertical (escuro→claro→escuro) ─
-  const steelGrad = ctx.createLinearGradient(sx, topY, sx + totalW, GROUND_Y);
-  steelGrad.addColorStop(0.00, '#4a5560');
-  steelGrad.addColorStop(0.18, '#8a9aaa');
-  steelGrad.addColorStop(0.38, '#c0cdd8');
-  steelGrad.addColorStop(0.50, '#d8e4ee');
-  steelGrad.addColorStop(0.62, '#a8b8c8');
-  steelGrad.addColorStop(0.82, '#6a7a8a');
-  steelGrad.addColorStop(1.00, '#3a4550');
-  ctx.fillStyle = steelGrad;
-  ctx.fillRect(sx, topY, totalW, totalH);
-
-  // ── 3. Listras horizontais — chapa corrugada de aço ────────────────
-  for (let y = topY; y < GROUND_Y; y += 5) {
-    const alpha = (Math.floor((y - topY) / 5) % 2 === 0) ? 0.07 : 0;
-    if (alpha === 0) continue;
-    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-    ctx.fillRect(sx, y, totalW, 2);
-  }
-
-  // ── 4. Pontos de rebite nas laterais dos degraus ────────────────────
-  ctx.fillStyle = '#2a333c';
-  for (let i = 0; i < STAIR_N; i++) {
-    const rx = sx + i * STAIR_STEP_W + STAIR_STEP_W - 6;
-    const ry = GROUND_Y - (i + 1) * STAIR_STEP_H + 4;
-    ctx.beginPath();
-    ctx.arc(rx, ry, 2, 0, Math.PI * 2);
-    ctx.fill();
-    const rx2 = sx + i * STAIR_STEP_W + STAIR_STEP_W - 6;
-    const ry2 = GROUND_Y - (i + 1) * STAIR_STEP_H + STAIR_STEP_H - 4;
-    ctx.beginPath();
-    ctx.arc(rx2, ry2, 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  ctx.restore(); // remove clip
-
-  // ── 5. Outline do perfil da escada ─────────────────────────────────
-  ctx.beginPath();
-  ctx.moveTo(sx, GROUND_Y);
-  for (let i = 0; i < STAIR_N; i++) {
-    const tx = sx + i * STAIR_STEP_W;
-    const ty = GROUND_Y - (i + 1) * STAIR_STEP_H;
-    ctx.lineTo(tx,                 ty);
-    ctx.lineTo(tx + STAIR_STEP_W, ty);
-  }
-  ctx.lineTo(sx + totalW, GROUND_Y);
-  ctx.closePath();
-  ctx.strokeStyle = '#1e252c';
+  ctx.moveTo(sx,     GROUND_Y - 2);
+  ctx.lineTo(sx + totalW, GROUND_Y - totalH - 2);
+  ctx.stroke();
   ctx.lineWidth = 1.5;
+  ctx.strokeStyle = STEEL_MID;
+  ctx.beginPath();
+  ctx.moveTo(sx + 3, GROUND_Y - 2);
+  ctx.lineTo(sx + totalW + 3, GROUND_Y - totalH - 2);
   ctx.stroke();
 
-  // ── 6. Highlight metálico no bordo de cada cobertura (topo do degrau)─
+  // ── 2. Degraus: barra de tread + riser + rebite ─────────────────────
   for (let i = 0; i < STAIR_N; i++) {
     const tx = sx + i * STAIR_STEP_W;
     const ty = GROUND_Y - (i + 1) * STAIR_STEP_H;
-    // Barra brilhante no topo do degrau
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    ctx.fillRect(tx + 1, ty, STAIR_STEP_W - 2, 2);
-    // Sombra no canto inferior do espelho (riser)
-    ctx.fillStyle = 'rgba(0,0,0,0.40)';
-    ctx.fillRect(tx, ty, 4, STAIR_STEP_H);
+
+    // Riser bar (vertical) — 3px à esquerda de cada degrau
+    const rGrad = ctx.createLinearGradient(tx, 0, tx + 3, 0);
+    rGrad.addColorStop(0, STEEL_BRIGHT);
+    rGrad.addColorStop(1, STEEL_DARK);
+    ctx.fillStyle = rGrad;
+    ctx.fillRect(tx, ty, 3, STAIR_STEP_H);
+
+    // Tread bar (horizontal) — 5px de espessura com gradiente metálico
+    const tGrad = ctx.createLinearGradient(tx, ty, tx, ty + 5);
+    tGrad.addColorStop(0,   STEEL_BRIGHT);
+    tGrad.addColorStop(0.4, STEEL_MID);
+    tGrad.addColorStop(1,   STEEL_DARK);
+    ctx.fillStyle = tGrad;
+    ctx.fillRect(tx - 1, ty, STAIR_STEP_W + 2, 5);
+
+    // Outline da tread
+    ctx.strokeStyle = STEEL_OUTLINE;
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(tx - 1, ty, STAIR_STEP_W + 2, 5);
+
+    // Rebite na junção tread × riser
+    ctx.fillStyle = STEEL_OUTLINE;
+    ctx.beginPath();
+    ctx.arc(tx + 1.5, ty + 2.5, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = STEEL_BRIGHT;
+    ctx.beginPath();
+    ctx.arc(tx + 1.2, ty + 2.2, 0.7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sombra abaixo do tread (atmosfera, não estrutura)
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(tx, ty + 5, STAIR_STEP_W, 4);
   }
 
-  // ── 7. Sombra projetada no chão à direita ───────────────────────────
-  const shadowGrad = ctx.createLinearGradient(sx + totalW, 0, sx + totalW + 18, 0);
-  shadowGrad.addColorStop(0, 'rgba(0,0,0,0.35)');
-  shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = shadowGrad;
-  ctx.fillRect(sx + totalW, GROUND_Y - 8, 18, 8);
+  // Riser da borda direita do último degrau (fechamento)
+  const lastTx = sx + STAIR_N * STAIR_STEP_W;
+  const lastTy = GROUND_Y - STAIR_N * STAIR_STEP_H;
+  ctx.fillStyle = STEEL_MID;
+  ctx.fillRect(lastTx - 2, lastTy, 2, STAIR_STEP_H);
+
+  // ── 3. Perfil de contorno (só traçado, SEM base em baixo) ───────────
+  ctx.beginPath();
+  ctx.moveTo(sx, GROUND_Y);
+  for (let i = 0; i < STAIR_N; i++) {
+    const tx = sx + i * STAIR_STEP_W;
+    const ty = GROUND_Y - (i + 1) * STAIR_STEP_H;
+    ctx.lineTo(tx,                 ty);
+    ctx.lineTo(tx + STAIR_STEP_W, ty);
+  }
+  // sem closePath — base aberta (sem linha de fundo)
+  ctx.strokeStyle = STEEL_OUTLINE;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
   ctx.restore();
 }
