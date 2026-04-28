@@ -2516,13 +2516,28 @@ export default function Game() {
           const spriteAlreadyInGallery = isSprite && galleryServerNamesRef.current.has(p.customSpriteName!);
           const typeAlreadyInGallery = !isSprite && galleryObjectTypesRef.current.has(p.type);
           const alreadyInGallery = isSprite ? spriteAlreadyInGallery : typeAlreadyInGallery;
-          if (!editorCollisionModeRef.current && p.type !== 'ground' && !alreadyInGallery) {
+          const isStairPlat = !!(p as any)._stair;
+          if (!editorCollisionModeRef.current && p.type !== 'ground' && !alreadyInGallery && !isStairPlat) {
             const galBtnX = delBtnX;
             const galBtnY = delBtnY + 26;
             const galBtnW = 82;
             const galBtnH = 22;
             if (wx >= galBtnX && wx <= galBtnX + galBtnW && wy >= galBtnY && wy <= galBtnY + galBtnH) {
               saveToGallery(p);
+              return;
+            }
+          }
+
+          // ── Botão ↔ INVERTER (só para plataformas _stair) ─────────────
+          if (!editorCollisionModeRef.current && isStairPlat) {
+            const flipBtnX = delBtnX;
+            const flipBtnY = delBtnY + 26;
+            const flipBtnW = 82;
+            const flipBtnH = 22;
+            if (wx >= flipBtnX && wx <= flipBtnX + flipBtnW && wy >= flipBtnY && wy <= flipBtnY + flipBtnH) {
+              pushEditorHistory();
+              (p as any).flipX = !(p as any).flipX;
+              copyPlatText(platCoordText(p), (p as any).flipX ? '↔ ESCADA INVERTIDA' : '↔ ESCADA NORMAL');
               return;
             }
           }
@@ -3240,7 +3255,7 @@ export default function Game() {
       drawPotholes(ctx, gs.platforms, gs.camera.x);
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
-      drawStaircase(ctx, gs.camera.x);
+      drawStaircase(ctx, gs.camera.x, gs.platforms);
       drawJunkyardBackdrop(ctx, gs.camera.x);
       drawFireEscapeBuilding(ctx, gs.camera.x, false);
       // ── Drag-ghost: temporariamente move originais de volta pra exibição ──

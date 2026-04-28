@@ -121,6 +121,7 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
       if (p.vy > 0) p.vy = 0;
       p.onGround = true;
       p.coyoteTime = 6;
+      if (plat.noAutoRoll) p.justLandedOnNoRollSlope = true;
       return true;
     }
     // Otherwise let player pass through freely (they're above or passing under)
@@ -250,6 +251,7 @@ export function updatePlayer(
   p.onGround = false;
   p.touchingWall = false;
   p.touchingLadder = false;
+  p.justLandedOnNoRollSlope = false;
   p.wallSide = null;
   p.wallX = previousWallX;
   p.wallTopY = previousWallTopY;
@@ -1009,7 +1011,7 @@ export function updatePlayer(
       for (let i = 0; i < 14; i++) {
         spawnParticle(p.x + p.w / 2, p.y + PLAYER_ROLL_H, i % 2 === 0 ? '#808090' : '#555060');
       }
-    } else if (droppedDown && !p.isRolling && p.state !== 'hurt') {
+    } else if (droppedDown && !p.isRolling && !p.justLandedOnNoRollSlope && p.state !== 'hurt') {
       // Fell to a lower surface — full auto-roll
       p.isRolling = true;
       p.autoRoll = true;

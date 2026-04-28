@@ -93881,6 +93881,7 @@
       "w": 400,
       "h": 144,
       "hideRender": true,
+      "noAutoRoll": true,
       "slopeTop": {
         "left": 144,
         "right": 0

@@ -36,6 +36,9 @@ export interface Platform extends Rect {
   isLadderTopFloor?: boolean;
   isRiverStump?: boolean;
   lowJumpImpulse?: boolean;
+  noAutoRoll?: boolean;
+  flipX?: boolean;
+  _stair?: boolean;
 }
 
 export type PlayerState =
@@ -116,6 +119,7 @@ export interface Player {
   isSideFlipping: boolean;
   sideFlipTimer: number;
   sideFlipImmune: boolean;
+  justLandedOnNoRollSlope?: boolean;
 }
 
 export interface Bullet {

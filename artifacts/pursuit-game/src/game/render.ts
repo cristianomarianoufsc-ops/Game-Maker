@@ -1866,104 +1866,117 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
   ctx.restore();
 }
 
-// ── ESCADA LATERAL (após muro x:30578) ─────────────────────────────
-// Escada de concreto/pedra com 8 degraus subindo para a direita.
+// ── ESCADA LATERAL — renderiza todas as plataformas _stair:true ─────
+// flipX:true na plataforma inverte a escada horizontalmente.
 // Degraus de colisão ficam no level-patch.json (hideRender:true).
-const STAIR_X       = 31200;   // início horizontal (≈600px após o muro x:30578)
-const STAIR_N       = 8;       // número de degraus
-const STAIR_STEP_W  = 50;      // largura de cada degrau (px)
-const STAIR_STEP_H  = 18;      // altura de cada espelho/degrau (px)
+const STAIR_STEP_W = 50;   // largura de cada degrau (px)
+const STAIR_STEP_H = 18;   // altura de cada espelho  (px)
 
-export function drawStaircase(ctx: CanvasRenderingContext2D, camX: number): void {
-  const sx       = STAIR_X - camX;
-  const totalW   = STAIR_N * STAIR_STEP_W;   // 400
-  const totalH   = STAIR_N * STAIR_STEP_H;   // 144
-  const topY     = GROUND_Y - totalH;         // 266
-  if (sx + totalW < -20 || sx > CANVAS_W + 20) return;
+export function drawStaircase(ctx: CanvasRenderingContext2D, camX: number, platforms: Platform[]): void {
+  if (!platforms) return;
+  const BRIGHT  = '#d0dce8';
+  const MID     = '#8a9aaa';
+  const DARK    = '#4a5560';
+  const OUTLINE = '#1a2028';
 
-  ctx.save();
+  for (const plat of platforms) {
+    if (!(plat as any)._stair) continue;
+    const N      = Math.max(1, Math.round(plat.h / STAIR_STEP_H));
+    const totalW = N * STAIR_STEP_W;
+    const totalH = N * STAIR_STEP_H;
+    const sx     = plat.x - camX;
+    if (sx + totalW < -20 || sx > CANVAS_W + 20) continue;
 
-  const STEEL_BRIGHT  = '#d0dce8';
-  const STEEL_MID     = '#8a9aaa';
-  const STEEL_DARK    = '#4a5560';
-  const STEEL_OUTLINE = '#1a2028';
+    ctx.save();
+    if (plat.flipX) {
+      // Espelha horizontalmente: pivot na borda direita da escada
+      ctx.translate(sx + totalW, 0);
+      ctx.scale(-1, 1);
+      _drawStaircaseFrame(ctx, 0, totalW, totalH, N, BRIGHT, MID, DARK, OUTLINE);
+    } else {
+      _drawStaircaseFrame(ctx, sx, totalW, totalH, N, BRIGHT, MID, DARK, OUTLINE);
+    }
+    ctx.restore();
+  }
+}
 
-  // ── 1. Stringer diagonal — viga inclinada na diagonal da escada ─────
-  // Duas linhas paralelas formando a viga estrutural (sem fill)
-  ctx.strokeStyle = STEEL_DARK;
+function _drawStaircaseFrame(
+  ctx: CanvasRenderingContext2D,
+  sx: number, totalW: number, totalH: number, N: number,
+  BRIGHT: string, MID: string, DARK: string, OUTLINE: string,
+): void {
+  const stepW = totalW / N;
+  const stepH = totalH / N;
+
+  // ── 1. Stringer diagonal ────────────────────────────────────────────
+  ctx.strokeStyle = DARK;
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(sx,     GROUND_Y - 2);
   ctx.lineTo(sx + totalW, GROUND_Y - totalH - 2);
   ctx.stroke();
   ctx.lineWidth = 1.5;
-  ctx.strokeStyle = STEEL_MID;
+  ctx.strokeStyle = MID;
   ctx.beginPath();
   ctx.moveTo(sx + 3, GROUND_Y - 2);
   ctx.lineTo(sx + totalW + 3, GROUND_Y - totalH - 2);
   ctx.stroke();
 
-  // ── 2. Degraus: barra de tread + riser + rebite ─────────────────────
-  for (let i = 0; i < STAIR_N; i++) {
-    const tx = sx + i * STAIR_STEP_W;
-    const ty = GROUND_Y - (i + 1) * STAIR_STEP_H;
+  // ── 2. Degraus: riser + tread + rebite ─────────────────────────────
+  for (let i = 0; i < N; i++) {
+    const tx = sx + i * stepW;
+    const ty = GROUND_Y - (i + 1) * stepH;
 
-    // Riser bar (vertical) — 3px à esquerda de cada degrau
+    // Riser bar (vertical)
     const rGrad = ctx.createLinearGradient(tx, 0, tx + 3, 0);
-    rGrad.addColorStop(0, STEEL_BRIGHT);
-    rGrad.addColorStop(1, STEEL_DARK);
+    rGrad.addColorStop(0, BRIGHT);
+    rGrad.addColorStop(1, DARK);
     ctx.fillStyle = rGrad;
-    ctx.fillRect(tx, ty, 3, STAIR_STEP_H);
+    ctx.fillRect(tx, ty, 3, stepH);
 
-    // Tread bar (horizontal) — 5px de espessura com gradiente metálico
+    // Tread bar (horizontal)
     const tGrad = ctx.createLinearGradient(tx, ty, tx, ty + 5);
-    tGrad.addColorStop(0,   STEEL_BRIGHT);
-    tGrad.addColorStop(0.4, STEEL_MID);
-    tGrad.addColorStop(1,   STEEL_DARK);
+    tGrad.addColorStop(0,   BRIGHT);
+    tGrad.addColorStop(0.4, MID);
+    tGrad.addColorStop(1,   DARK);
     ctx.fillStyle = tGrad;
-    ctx.fillRect(tx - 1, ty, STAIR_STEP_W + 2, 5);
+    ctx.fillRect(tx - 1, ty, stepW + 2, 5);
 
-    // Outline da tread
-    ctx.strokeStyle = STEEL_OUTLINE;
+    ctx.strokeStyle = OUTLINE;
     ctx.lineWidth = 0.8;
-    ctx.strokeRect(tx - 1, ty, STAIR_STEP_W + 2, 5);
+    ctx.strokeRect(tx - 1, ty, stepW + 2, 5);
 
-    // Rebite na junção tread × riser
-    ctx.fillStyle = STEEL_OUTLINE;
+    // Rebite
+    ctx.fillStyle = OUTLINE;
     ctx.beginPath();
     ctx.arc(tx + 1.5, ty + 2.5, 1.8, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = STEEL_BRIGHT;
+    ctx.fillStyle = BRIGHT;
     ctx.beginPath();
     ctx.arc(tx + 1.2, ty + 2.2, 0.7, 0, Math.PI * 2);
     ctx.fill();
 
-    // Sombra abaixo do tread (atmosfera, não estrutura)
+    // Sombra abaixo do tread
     ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.fillRect(tx, ty + 5, STAIR_STEP_W, 4);
+    ctx.fillRect(tx, ty + 5, stepW, 4);
   }
 
-  // Riser da borda direita do último degrau (fechamento)
-  const lastTx = sx + STAIR_N * STAIR_STEP_W;
-  const lastTy = GROUND_Y - STAIR_N * STAIR_STEP_H;
-  ctx.fillStyle = STEEL_MID;
-  ctx.fillRect(lastTx - 2, lastTy, 2, STAIR_STEP_H);
+  // Riser de fechamento na borda direita
+  ctx.fillStyle = MID;
+  ctx.fillRect(sx + totalW - 2, GROUND_Y - totalH, 2, stepH);
 
-  // ── 3. Perfil de contorno (só traçado, SEM base em baixo) ───────────
+  // ── 3. Perfil de contorno sem base em baixo ─────────────────────────
   ctx.beginPath();
   ctx.moveTo(sx, GROUND_Y);
-  for (let i = 0; i < STAIR_N; i++) {
-    const tx = sx + i * STAIR_STEP_W;
-    const ty = GROUND_Y - (i + 1) * STAIR_STEP_H;
-    ctx.lineTo(tx,                 ty);
-    ctx.lineTo(tx + STAIR_STEP_W, ty);
+  for (let i = 0; i < N; i++) {
+    const tx = sx + i * stepW;
+    const ty = GROUND_Y - (i + 1) * stepH;
+    ctx.lineTo(tx,         ty);
+    ctx.lineTo(tx + stepW, ty);
   }
-  // sem closePath — base aberta (sem linha de fundo)
-  ctx.strokeStyle = STEEL_OUTLINE;
+  ctx.strokeStyle = OUTLINE;
   ctx.lineWidth = 1.5;
   ctx.stroke();
-
-  ctx.restore();
 }
 
 // ── Cached platform groups — recomputed once per level change ───────
@@ -4369,12 +4382,13 @@ export function drawEditorUI(
         ctx.fillText(delLabel, delBtnX + delBtnW / 2, delBtnY + 15);
         ctx.textAlign = 'left';
 
-        // ── Botão SALVAR NA GALERIA (para todos os tipos não-ground) ──
+        // ── Botão SALVAR NA GALERIA (tipos não-ground, exceto escadas) ──
         const isSprite = p.type === 'sprite' && !!p.customSpriteName;
         const spriteAlreadyInGallery = isSprite && galleryServerNames.has(p.customSpriteName!);
         const typeAlreadyInGallery = !isSprite && galleryObjectTypes.has(p.type);
         const alreadyInGallery = isSprite ? spriteAlreadyInGallery : typeAlreadyInGallery;
-        if (p.type !== 'ground' && !alreadyInGallery) {
+        const isStairPlat = !!(p as any)._stair;
+        if (p.type !== 'ground' && !alreadyInGallery && !isStairPlat) {
           const galBtnX = delBtnX;
           const galBtnY = delBtnY + 26;
           const galBtnW = 82;
@@ -4390,6 +4404,27 @@ export function drawEditorUI(
           ctx.font = 'bold 10px monospace';
           ctx.textAlign = 'center';
           ctx.fillText('📁 GALERIA', galBtnX + galBtnW / 2, galBtnY + 15);
+          ctx.textAlign = 'left';
+        }
+
+        // ── Botão ↔ INVERTER (só para plataformas _stair) ──────────────
+        if (isStairPlat) {
+          const flipBtnX = delBtnX;
+          const flipBtnY = delBtnY + 26;
+          const flipBtnW = 82;
+          const flipBtnH = 22;
+          const flipped = !!(p as any).flipX;
+          ctx.fillStyle = flipped ? 'rgba(40,60,20,0.94)' : 'rgba(30,30,55,0.94)';
+          ctx.strokeStyle = flipped ? 'rgba(140,255,100,0.9)' : 'rgba(180,180,255,0.85)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(flipBtnX, flipBtnY, flipBtnW, flipBtnH, 4);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = flipped ? 'rgba(180,255,140,1)' : 'rgba(200,200,255,1)';
+          ctx.font = 'bold 11px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(flipped ? '↔ NORMAL' : '↔ INVERTER', flipBtnX + flipBtnW / 2, flipBtnY + 15);
           ctx.textAlign = 'left';
         }
       }
