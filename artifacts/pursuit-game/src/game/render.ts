@@ -1869,76 +1869,104 @@ export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): 
 // ── ESCADA LATERAL (após muro x:30578) ─────────────────────────────
 // Escada de concreto/pedra com 8 degraus subindo para a direita.
 // Degraus de colisão ficam no level-patch.json (hideRender:true).
-const STAIR_X       = 30600;   // início horizontal (logo após muro 30578+20)
+const STAIR_X       = 31200;   // início horizontal (≈600px após o muro x:30578)
 const STAIR_N       = 8;       // número de degraus
 const STAIR_STEP_W  = 50;      // largura de cada degrau (px)
 const STAIR_STEP_H  = 18;      // altura de cada espelho/degrau (px)
 
 export function drawStaircase(ctx: CanvasRenderingContext2D, camX: number): void {
-  const sx = STAIR_X - camX;
-  const totalW = STAIR_N * STAIR_STEP_W;
-  const totalH = STAIR_N * STAIR_STEP_H;
+  const sx       = STAIR_X - camX;
+  const totalW   = STAIR_N * STAIR_STEP_W;   // 400
+  const totalH   = STAIR_N * STAIR_STEP_H;   // 144
+  const topY     = GROUND_Y - totalH;         // 266
   if (sx + totalW < -20 || sx > CANVAS_W + 20) return;
 
   ctx.save();
 
-  // ── 1. Corpo sólido: perfil de escada como polígono ─────────────────
+  // ── 1. Clip ao contorno da escada para não vazar texturas ───────────
   ctx.beginPath();
-  ctx.moveTo(sx, GROUND_Y);                                          // base esq.
+  ctx.moveTo(sx, GROUND_Y);
   for (let i = 0; i < STAIR_N; i++) {
-    const stepX = sx + i * STAIR_STEP_W;
-    const stepY = GROUND_Y - (i + 1) * STAIR_STEP_H;
-    ctx.lineTo(stepX, stepY);                                        // espelho
-    ctx.lineTo(stepX + STAIR_STEP_W, stepY);                        // cobertura
+    const tx = sx + i * STAIR_STEP_W;
+    const ty = GROUND_Y - (i + 1) * STAIR_STEP_H;
+    ctx.lineTo(tx,                 ty);
+    ctx.lineTo(tx + STAIR_STEP_W, ty);
   }
-  ctx.lineTo(sx + totalW, GROUND_Y);                                 // lado direito
-  ctx.closePath();                                                    // linha de base
+  ctx.lineTo(sx + totalW, GROUND_Y);
+  ctx.closePath();
+  ctx.save();
+  ctx.clip();
 
-  // Preenchimento: gradiente de pedra/concreto envelhecido
-  const grad = ctx.createLinearGradient(sx, GROUND_Y - totalH, sx, GROUND_Y);
-  grad.addColorStop(0,   '#4a4a4a');
-  grad.addColorStop(0.5, '#3a3a3a');
-  grad.addColorStop(1,   '#282828');
-  ctx.fillStyle = grad;
-  ctx.fill();
+  // ── 2. Base de aço: gradiente metálico vertical (escuro→claro→escuro) ─
+  const steelGrad = ctx.createLinearGradient(sx, topY, sx + totalW, GROUND_Y);
+  steelGrad.addColorStop(0.00, '#4a5560');
+  steelGrad.addColorStop(0.18, '#8a9aaa');
+  steelGrad.addColorStop(0.38, '#c0cdd8');
+  steelGrad.addColorStop(0.50, '#d8e4ee');
+  steelGrad.addColorStop(0.62, '#a8b8c8');
+  steelGrad.addColorStop(0.82, '#6a7a8a');
+  steelGrad.addColorStop(1.00, '#3a4550');
+  ctx.fillStyle = steelGrad;
+  ctx.fillRect(sx, topY, totalW, totalH);
 
-  // ── 2. Bordas da escada (outline escuro) ────────────────────────────
-  ctx.strokeStyle = '#1a1a1a';
+  // ── 3. Listras horizontais — chapa corrugada de aço ────────────────
+  for (let y = topY; y < GROUND_Y; y += 5) {
+    const alpha = (Math.floor((y - topY) / 5) % 2 === 0) ? 0.07 : 0;
+    if (alpha === 0) continue;
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.fillRect(sx, y, totalW, 2);
+  }
+
+  // ── 4. Pontos de rebite nas laterais dos degraus ────────────────────
+  ctx.fillStyle = '#2a333c';
+  for (let i = 0; i < STAIR_N; i++) {
+    const rx = sx + i * STAIR_STEP_W + STAIR_STEP_W - 6;
+    const ry = GROUND_Y - (i + 1) * STAIR_STEP_H + 4;
+    ctx.beginPath();
+    ctx.arc(rx, ry, 2, 0, Math.PI * 2);
+    ctx.fill();
+    const rx2 = sx + i * STAIR_STEP_W + STAIR_STEP_W - 6;
+    const ry2 = GROUND_Y - (i + 1) * STAIR_STEP_H + STAIR_STEP_H - 4;
+    ctx.beginPath();
+    ctx.arc(rx2, ry2, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore(); // remove clip
+
+  // ── 5. Outline do perfil da escada ─────────────────────────────────
+  ctx.beginPath();
+  ctx.moveTo(sx, GROUND_Y);
+  for (let i = 0; i < STAIR_N; i++) {
+    const tx = sx + i * STAIR_STEP_W;
+    const ty = GROUND_Y - (i + 1) * STAIR_STEP_H;
+    ctx.lineTo(tx,                 ty);
+    ctx.lineTo(tx + STAIR_STEP_W, ty);
+  }
+  ctx.lineTo(sx + totalW, GROUND_Y);
+  ctx.closePath();
+  ctx.strokeStyle = '#1e252c';
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // ── 3. Highlight no bordo de cada cobertura (topo do degrau) ────────
-  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-  ctx.lineWidth = 1;
+  // ── 6. Highlight metálico no bordo de cada cobertura (topo do degrau)─
   for (let i = 0; i < STAIR_N; i++) {
-    const stepX = sx + i * STAIR_STEP_W;
-    const stepY = GROUND_Y - (i + 1) * STAIR_STEP_H;
-    ctx.beginPath();
-    ctx.moveTo(stepX,                stepY + 1);
-    ctx.lineTo(stepX + STAIR_STEP_W, stepY + 1);
-    ctx.stroke();
+    const tx = sx + i * STAIR_STEP_W;
+    const ty = GROUND_Y - (i + 1) * STAIR_STEP_H;
+    // Barra brilhante no topo do degrau
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillRect(tx + 1, ty, STAIR_STEP_W - 2, 2);
+    // Sombra no canto inferior do espelho (riser)
+    ctx.fillStyle = 'rgba(0,0,0,0.40)';
+    ctx.fillRect(tx, ty, 4, STAIR_STEP_H);
   }
 
-  // ── 4. Sombra de canto (espelhos verticais: parte inferior escura) ──
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  for (let i = 0; i < STAIR_N; i++) {
-    const stepX = sx + i * STAIR_STEP_W;
-    const stepTopY  = GROUND_Y - (i + 1) * STAIR_STEP_H;
-    const stepBotY  = GROUND_Y - i * STAIR_STEP_H;
-    // sombra interna no espelho (lateral esquerda de cada "degrau superior")
-    ctx.fillRect(stepX, stepTopY, 3, stepBotY - stepTopY);
-  }
-
-  // ── 5. Textura de granulado: manchas claras pseudo-aleatórias ───────
-  ctx.fillStyle = 'rgba(255,255,255,0.04)';
-  for (let i = 0; i < STAIR_N; i++) {
-    const stepX = sx + i * STAIR_STEP_W;
-    const stepY = GROUND_Y - (i + 1) * STAIR_STEP_H;
-    const seed  = ((i * 374761393 + 2654435761) >>> 0);
-    const dotX  = stepX + 4 + (seed % 34);
-    const dotY  = stepY + 4 + ((seed >> 8) % (STAIR_STEP_H - 6));
-    ctx.fillRect(dotX, dotY, 2, 1);
-  }
+  // ── 7. Sombra projetada no chão à direita ───────────────────────────
+  const shadowGrad = ctx.createLinearGradient(sx + totalW, 0, sx + totalW + 18, 0);
+  shadowGrad.addColorStop(0, 'rgba(0,0,0,0.35)');
+  shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = shadowGrad;
+  ctx.fillRect(sx + totalW, GROUND_Y - 8, 18, 8);
 
   ctx.restore();
 }
