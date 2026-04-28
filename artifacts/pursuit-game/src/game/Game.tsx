@@ -3182,7 +3182,6 @@ export default function Game() {
       drawStartingBackWall(ctx, gs.camera.x);
       drawShantyVillage(ctx, gs.camera.x);
       drawGround(ctx, gs.camera.x, gs.platforms);
-      drawStaircase(ctx, gs.camera.x);
       drawRiver(ctx, gs.camera.x);
       // World-space rendering (offset by camera)
       ctx.save();
@@ -3241,6 +3240,7 @@ export default function Game() {
       drawPotholes(ctx, gs.platforms, gs.camera.x);
 
       drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
+      drawStaircase(ctx, gs.camera.x);
       drawJunkyardBackdrop(ctx, gs.camera.x);
       drawFireEscapeBuilding(ctx, gs.camera.x, false);
       // ── Drag-ghost: temporariamente move originais de volta pra exibição ──
