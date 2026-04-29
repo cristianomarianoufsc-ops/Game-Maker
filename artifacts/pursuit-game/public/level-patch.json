@@ -187219,6 +187219,32 @@
           }
         }
       ]
+    },
+    {
+      "type": "platform",
+      "x": 31600,
+      "y": 266,
+      "w": 400,
+      "h": 144,
+      "hideRender": true,
+      "noAutoRoll": true,
+      "slopeTop": {
+        "left": 144,
+        "right": 0
+      },
+      "_stair": true,
+      "collisionBoxes": [
+        {
+          "x": 6,
+          "y": 0,
+          "w": 357,
+          "h": 144,
+          "slopeTop": {
+            "left": 141,
+            "right": 0
+          }
+        }
+      ]
     }
   ],
   "del": [
