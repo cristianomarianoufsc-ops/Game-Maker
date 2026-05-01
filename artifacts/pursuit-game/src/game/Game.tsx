@@ -536,7 +536,7 @@ export default function Game() {
   const editorDragRef = useRef<EditorDrag | null>(null);
   const editorSnapAxesRef = useRef<{ worldX: number | null; worldY: number | null }>({ worldX: null, worldY: null });
   const editorSnapStateRef = useRef<{ x: boolean; y: boolean }>({ x: false, y: false });
-  const EDITOR_PAN_SPEED = 12;
+  const EDITOR_PAN_SPEED = 30;
   const EDITOR_CHECKPOINTS_DEFAULT = [
     { label: 'CP1', x: 6500 },
     { label: 'CP2', x: 12100 },
