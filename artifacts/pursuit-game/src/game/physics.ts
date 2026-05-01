@@ -117,9 +117,11 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
 
     // Downslope snap threshold: when going down a slope the surface drops faster than
     // gravity pulls the player, causing feetY to be slightly ABOVE surfaceY each frame.
-    // We snap the player down to the surface if they're within this margin and not jumping up.
+    // Only applies to platforms explicitly marked slopeRunDown (e.g. the staircase).
+    // Car slopes and other slopes keep the original behavior.
     const SLOPE_SNAP_THRESHOLD = 14;
-    const onSlopeDownSnap = feetY >= surfaceY - SLOPE_SNAP_THRESHOLD && feetY < surfaceY && p.vy >= 0;
+    const onSlopeDownSnap = plat.slopeRunDown === true &&
+      feetY >= surfaceY - SLOPE_SNAP_THRESHOLD && feetY < surfaceY && p.vy >= 0;
 
     // Land on slope: feet at or below surface (normal), or within snap threshold going down
     if ((feetY >= surfaceY || onSlopeDownSnap) && p.y <= surfaceY) {

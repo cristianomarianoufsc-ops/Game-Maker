@@ -37,6 +37,7 @@ export interface Platform extends Rect {
   isRiverStump?: boolean;
   lowJumpImpulse?: boolean;
   noAutoRoll?: boolean;
+  slopeRunDown?: boolean;
   flipX?: boolean;
   _stair?: boolean;
 }

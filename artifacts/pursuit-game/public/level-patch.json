@@ -187228,6 +187228,7 @@
       "h": 144,
       "hideRender": true,
       "noAutoRoll": true,
+      "slopeRunDown": true,
       "slopeTop": {
         "left": 144,
         "right": 0
@@ -187235,7 +187236,7 @@
       "_stair": true,
       "collisionBoxes": [
         {
-          "x": 6,
+          "x": 12,
           "y": 0,
           "w": 357,
           "h": 144,
