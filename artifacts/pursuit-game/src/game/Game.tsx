@@ -234,9 +234,31 @@ function loadCustomSpritePlatforms(): Platform[] {
   }
 }
 
-function saveCustomSpritePlatforms(platforms: Platform[]): void {
+/** Returns a warning message if the storage quota was exceeded, null otherwise. */
+function saveCustomSpritePlatforms(platforms: Platform[]): string | null {
   const customSprites = platforms.filter((platform) => platform.type === 'sprite');
-  window.localStorage.setItem(EDITOR_CUSTOM_SPRITES_STORAGE_KEY, JSON.stringify(customSprites));
+  try {
+    window.localStorage.setItem(EDITOR_CUSTOM_SPRITES_STORAGE_KEY, JSON.stringify(customSprites));
+    return null;
+  } catch (e) {
+    if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+      // Fallback: salvar somente sprites já enviados ao servidor (URLs pequenas, sem base64)
+      const serverSprites = customSprites.filter(
+        (p) => typeof p.customSpriteDataUrl === 'string' && p.customSpriteDataUrl.startsWith('/sprites/')
+      );
+      try {
+        window.localStorage.setItem(EDITOR_CUSTOM_SPRITES_STORAGE_KEY, JSON.stringify(serverSprites));
+      } catch {
+        // Nem mesmo sprites do servidor cabem — limpa a chave para não corromper
+        try { window.localStorage.removeItem(EDITOR_CUSTOM_SPRITES_STORAGE_KEY); } catch { /* noop */ }
+      }
+      const dropped = customSprites.length - serverSprites.length;
+      const msg = `⚠️ ARMAZENAMENTO CHEIO — ${dropped} sprite(s) local(is) não foram salvos. Use 📁 GALERIA para persistir no servidor.`;
+      console.warn('[pursuit] localStorage quota exceeded:', msg);
+      return msg;
+    }
+    return null;
+  }
 }
 
 // Remove white/near-white background from a sprite sheet exported without transparency.
@@ -486,6 +508,10 @@ export default function Game() {
   const galleryObjectTypesRef = useRef<Set<string>>(new Set());
   const editorHoveredIdxRef = useRef(-1);
   const editorCopiedMsgRef = useRef<{ text: string; until: number } | null>(null);
+  const saveSprites = (platforms: Platform[]) => {
+    const warn = saveCustomSpritePlatforms(platforms);
+    if (warn) editorCopiedMsgRef.current = { text: warn, until: Date.now() + 6000 };
+  };
   const editorSelectedIdxRef = useRef(-1);
   const editorSelectedIndicesRef = useRef<Set<number>>(new Set());
   const editorMarqueeRef = useRef<{ startWX: number; startWY: number; endWX: number; endWY: number } | null>(null);
@@ -790,7 +816,7 @@ export default function Game() {
     if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
     editorRedoStackRef.current = [];
     platformsRef.current.push(platform);
-    saveCustomSpritePlatforms(platformsRef.current);
+    saveSprites(platformsRef.current);
     if (gsRef.current) gsRef.current.platforms = platformsRef.current;
     const idx = platformsRef.current.length - 1;
     editorSelectedIdxRef.current = idx;
@@ -832,7 +858,7 @@ export default function Game() {
       editorRedoStackRef.current = [];
       customSpriteImagesRef.current.set(spriteName, processed);
       platformsRef.current.push(platform);
-      saveCustomSpritePlatforms(platformsRef.current);
+      saveSprites(platformsRef.current);
       if (gsRef.current) gsRef.current.platforms = platformsRef.current;
       const idx = platformsRef.current.length - 1;
       editorSelectedIdxRef.current = idx;
@@ -1674,7 +1700,7 @@ export default function Game() {
         platforms.splice(idx, 1);
       });
       saveDeletedPlatformKeys(deletedPlatformKeysRef.current);
-      saveCustomSpritePlatforms(platforms);
+      saveSprites(platforms);
       if (gsRef.current) gsRef.current.platforms = platforms;
       editorSelectedIdxRef.current = -1;
       editorSelectedIndicesRef.current = new Set();
@@ -1707,7 +1733,7 @@ export default function Game() {
     const applyEditorSnapshot = (snapshot: Platform[]) => {
       platformsRef.current = snapshot;
       if (gsRef.current) gsRef.current.platforms = snapshot;
-      saveCustomSpritePlatforms(snapshot);
+      saveSprites(snapshot);
       editorSelectedIdxRef.current = -1;
       editorSelectedIndicesRef.current = new Set();
       editorDragRef.current = null;
@@ -2435,7 +2461,7 @@ export default function Game() {
               }
             }
 
-            saveCustomSpritePlatforms(platforms);
+            saveSprites(platforms);
             copyPlatText(platCoordText(platforms[editorSelectedIdxRef.current]), `✓ GRUPO DUPLICADO: ${newIndices.length} OBJETOS`);
             return;
           }
@@ -2443,7 +2469,7 @@ export default function Game() {
           const copy = { ...p, x: p.x + p.w };
           if (p.collisionBoxes) copy.collisionBoxes = p.collisionBoxes.map((box) => ({ ...box, slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined }));
           platforms.push(copy);
-          saveCustomSpritePlatforms(platforms);
+          saveSprites(platforms);
           const newIdx = platforms.length - 1;
           snapEditorPlatform(copy, newIdx);
           editorSelectedIndicesRef.current = new Set([newIdx]);
@@ -2761,7 +2787,7 @@ export default function Game() {
           const clipText = `ANTIGO: ${drag.origText}\nNOVO:   ${newText}`;
           copyPlatText(clipText, `✓ ATUALIZADO — cole aqui e diga "atualizar"`);
         }
-        saveCustomSpritePlatforms(platformsRef.current);
+        saveSprites(platformsRef.current);
       }
       editorPendingHistoryRef.current = null;
     };
@@ -2852,7 +2878,7 @@ export default function Game() {
 
         // 5. Limpar drag e salvar
         editorDragRef.current = null;
-        saveCustomSpritePlatforms(platforms);
+        saveSprites(platforms);
         if (gsRef.current) gsRef.current.platforms = platforms;
         const count = newIndices.length;
         editorCopiedMsgRef.current = {
@@ -3477,7 +3503,7 @@ export default function Game() {
         editorRedoStackRef.current = [];
         customSpriteImagesRef.current.set(file.name, processed);
         platformsRef.current.push(platform);
-        saveCustomSpritePlatforms(platformsRef.current);
+        saveSprites(platformsRef.current);
         if (gsRef.current) gsRef.current.platforms = platformsRef.current;
         const idx = platformsRef.current.length - 1;
         editorSelectedIdxRef.current = idx;
