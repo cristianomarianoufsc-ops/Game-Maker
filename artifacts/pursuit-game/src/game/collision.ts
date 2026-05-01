@@ -90,13 +90,29 @@ export function getPlatformCollisionBoxes(platform: Platform): CollisionBox[] {
 }
 
 export function getPlatformCollisionRects(platform: Platform): SlopedRect[] {
-  return getPlatformCollisionBoxes(platform).map((box) => ({
-    x: platform.x + box.x,
-    y: platform.y + box.y,
-    w: box.w,
-    h: box.h,
-    slopeTop: box.slopeTop,
-  }));
+  return getPlatformCollisionBoxes(platform).map((box) => {
+    if (platform.flipX) {
+      // Espelha a hitbox horizontalmente em relação ao centro da plataforma
+      const flippedLocalX = platform.w - (box.x + box.w);
+      return {
+        x: platform.x + flippedLocalX,
+        y: platform.y + box.y,
+        w: box.w,
+        h: box.h,
+        // Inverte sl/sr do slope quando flipado
+        slopeTop: box.slopeTop
+          ? { left: box.slopeTop.right, right: box.slopeTop.left }
+          : undefined,
+      };
+    }
+    return {
+      x: platform.x + box.x,
+      y: platform.y + box.y,
+      w: box.w,
+      h: box.h,
+      slopeTop: box.slopeTop,
+    };
+  });
 }
 
 export function getPlatformCollisionRect(platform: Platform): Rect {

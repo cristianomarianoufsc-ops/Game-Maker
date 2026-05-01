@@ -2517,7 +2517,7 @@ export default function Game() {
           const typeAlreadyInGallery = !isSprite && galleryObjectTypesRef.current.has(p.type);
           const alreadyInGallery = isSprite ? spriteAlreadyInGallery : typeAlreadyInGallery;
           const isStairPlat = !!(p as any)._stair;
-          if (!editorCollisionModeRef.current && p.type !== 'ground' && !alreadyInGallery && !isStairPlat) {
+          if (!editorCollisionModeRef.current && p.type !== 'ground' && !alreadyInGallery) {
             const galBtnX = delBtnX;
             const galBtnY = delBtnY + 26;
             const galBtnW = 82;
@@ -2528,10 +2528,10 @@ export default function Game() {
             }
           }
 
-          // ── Botão ↔ INVERTER (só para plataformas _stair) ─────────────
+          // ── Botão ↔ INVERTER (só para plataformas _stair) — abaixo da galeria ──
           if (!editorCollisionModeRef.current && isStairPlat) {
             const flipBtnX = delBtnX;
-            const flipBtnY = delBtnY + 26;
+            const flipBtnY = delBtnY + 52;
             const flipBtnW = 82;
             const flipBtnH = 22;
             if (wx >= flipBtnX && wx <= flipBtnX + flipBtnW && wy >= flipBtnY && wy <= flipBtnY + flipBtnH) {

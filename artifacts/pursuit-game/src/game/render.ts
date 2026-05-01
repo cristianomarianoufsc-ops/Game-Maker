@@ -1887,14 +1887,15 @@ export function drawStaircase(ctx: CanvasRenderingContext2D, camX: number, platf
     const sx     = plat.x - camX;
     if (sx + totalW < -20 || sx > CANVAS_W + 20) continue;
 
+    const baseY = plat.y + plat.h;
     ctx.save();
     if (plat.flipX) {
       // Espelha horizontalmente: pivot na borda direita da escada
       ctx.translate(sx + totalW, 0);
       ctx.scale(-1, 1);
-      _drawStaircaseFrame(ctx, 0, totalW, totalH, N, BRIGHT, MID, DARK, OUTLINE);
+      _drawStaircaseFrame(ctx, 0, totalW, totalH, N, baseY, BRIGHT, MID, DARK, OUTLINE);
     } else {
-      _drawStaircaseFrame(ctx, sx, totalW, totalH, N, BRIGHT, MID, DARK, OUTLINE);
+      _drawStaircaseFrame(ctx, sx, totalW, totalH, N, baseY, BRIGHT, MID, DARK, OUTLINE);
     }
     ctx.restore();
   }
@@ -1902,7 +1903,7 @@ export function drawStaircase(ctx: CanvasRenderingContext2D, camX: number, platf
 
 function _drawStaircaseFrame(
   ctx: CanvasRenderingContext2D,
-  sx: number, totalW: number, totalH: number, N: number,
+  sx: number, totalW: number, totalH: number, N: number, baseY: number,
   BRIGHT: string, MID: string, DARK: string, OUTLINE: string,
 ): void {
   const stepW = totalW / N;
@@ -1912,20 +1913,20 @@ function _drawStaircaseFrame(
   ctx.strokeStyle = DARK;
   ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.moveTo(sx,     GROUND_Y - 2);
-  ctx.lineTo(sx + totalW, GROUND_Y - totalH - 2);
+  ctx.moveTo(sx,     baseY - 2);
+  ctx.lineTo(sx + totalW, baseY - totalH - 2);
   ctx.stroke();
   ctx.lineWidth = 1.5;
   ctx.strokeStyle = MID;
   ctx.beginPath();
-  ctx.moveTo(sx + 3, GROUND_Y - 2);
-  ctx.lineTo(sx + totalW + 3, GROUND_Y - totalH - 2);
+  ctx.moveTo(sx + 3, baseY - 2);
+  ctx.lineTo(sx + totalW + 3, baseY - totalH - 2);
   ctx.stroke();
 
   // ── 2. Degraus: riser + tread + rebite ─────────────────────────────
   for (let i = 0; i < N; i++) {
     const tx = sx + i * stepW;
-    const ty = GROUND_Y - (i + 1) * stepH;
+    const ty = baseY - (i + 1) * stepH;
 
     // Riser bar (vertical)
     const rGrad = ctx.createLinearGradient(tx, 0, tx + 3, 0);
@@ -1963,14 +1964,14 @@ function _drawStaircaseFrame(
 
   // Riser de fechamento na borda direita
   ctx.fillStyle = MID;
-  ctx.fillRect(sx + totalW - 2, GROUND_Y - totalH, 2, stepH);
+  ctx.fillRect(sx + totalW - 2, baseY - totalH, 2, stepH);
 
   // ── 3. Perfil de contorno sem base em baixo ─────────────────────────
   ctx.beginPath();
-  ctx.moveTo(sx, GROUND_Y);
+  ctx.moveTo(sx, baseY);
   for (let i = 0; i < N; i++) {
     const tx = sx + i * stepW;
-    const ty = GROUND_Y - (i + 1) * stepH;
+    const ty = baseY - (i + 1) * stepH;
     ctx.lineTo(tx,         ty);
     ctx.lineTo(tx + stepW, ty);
   }
@@ -4388,7 +4389,7 @@ export function drawEditorUI(
         const typeAlreadyInGallery = !isSprite && galleryObjectTypes.has(p.type);
         const alreadyInGallery = isSprite ? spriteAlreadyInGallery : typeAlreadyInGallery;
         const isStairPlat = !!(p as any)._stair;
-        if (p.type !== 'ground' && !alreadyInGallery && !isStairPlat) {
+        if (p.type !== 'ground' && !alreadyInGallery) {
           const galBtnX = delBtnX;
           const galBtnY = delBtnY + 26;
           const galBtnW = 82;
@@ -4407,10 +4408,10 @@ export function drawEditorUI(
           ctx.textAlign = 'left';
         }
 
-        // ── Botão ↔ INVERTER (só para plataformas _stair) ──────────────
+        // ── Botão ↔ INVERTER (só para plataformas _stair) — abaixo da galeria ──
         if (isStairPlat) {
           const flipBtnX = delBtnX;
-          const flipBtnY = delBtnY + 26;
+          const flipBtnY = delBtnY + 52;
           const flipBtnW = 82;
           const flipBtnH = 22;
           const flipped = !!(p as any).flipX;
