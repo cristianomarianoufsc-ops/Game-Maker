@@ -115,8 +115,14 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
     const surfaceY = getSlopeSurfaceY(hit, centerX);
     const feetY = p.y + ph;
 
-    // Land on slope: feet at or below surface, player's head above the surface
-    if (feetY >= surfaceY && p.y <= surfaceY) {
+    // Downslope snap threshold: when going down a slope the surface drops faster than
+    // gravity pulls the player, causing feetY to be slightly ABOVE surfaceY each frame.
+    // We snap the player down to the surface if they're within this margin and not jumping up.
+    const SLOPE_SNAP_THRESHOLD = 14;
+    const onSlopeDownSnap = feetY >= surfaceY - SLOPE_SNAP_THRESHOLD && feetY < surfaceY && p.vy >= 0;
+
+    // Land on slope: feet at or below surface (normal), or within snap threshold going down
+    if ((feetY >= surfaceY || onSlopeDownSnap) && p.y <= surfaceY) {
       p.y = surfaceY - ph;
       if (p.vy > 0) p.vy = 0;
       p.onGround = true;
