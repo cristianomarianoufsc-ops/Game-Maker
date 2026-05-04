@@ -1980,8 +1980,8 @@ function _drawStaircaseFrame(
   ctx.stroke();
 }
 
-// ── Cached platform groups — recomputed once per level change ───────
-let _cachedPlatKey = '';
+// ── Cached platform groups — recomputed once per platform array reference change ───────
+let _cachedPlatRef: unknown = null;
 type PlatType2 = { x: number; y: number; w: number; h: number; type: string; isRiverStump?: boolean; hideRender?: boolean };
 type Group2 = { x1: number; x2: number; sw: number; plats: PlatType2[] };
 let _cachedGroups: Group2[] = [];
@@ -2023,13 +2023,9 @@ export function drawStreetBuildings(
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
   camX: number
 ): void {
-  const platKey = platforms
-    .filter(p => p.type === 'platform' && !p.isRiverStump)
-    .map(p => `${p.x},${p.y},${p.w}`)
-    .join('|');
-  if (platKey !== _cachedPlatKey) {
+  if (platforms !== _cachedPlatRef) {
     _cachedGroups  = buildGroups(platforms as PlatType2[]);
-    _cachedPlatKey = platKey;
+    _cachedPlatRef = platforms;
   }
 
   const bH = GROUND_Y;

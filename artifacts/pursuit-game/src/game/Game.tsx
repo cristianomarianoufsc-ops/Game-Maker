@@ -37,6 +37,7 @@ import {
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen,
   drawEditorUI, drawDogs, drawBystanders,
 } from './render';
+import { buildSpatialGrid, queryGrid, type SpatialGrid } from './spatialGrid';
 import {
   addPlatformCollisionBox,
   removePlatformCollisionBox,
@@ -512,6 +513,9 @@ export default function Game() {
     const warn = saveCustomSpritePlatforms(platforms);
     if (warn) editorCopiedMsgRef.current = { text: warn, until: Date.now() + 6000 };
   };
+  const spatialGridRef = useRef<SpatialGrid | null>(null);
+  const spatialGridSourceRef = useRef<Platform[] | null>(null);
+  const droneSolidPlatsRef = useRef<Platform[]>([]);
   const editorSelectedIdxRef = useRef(-1);
   const editorSelectedIndicesRef = useRef<Set<number>>(new Set());
   const editorMarqueeRef = useRef<{ startWX: number; startWY: number; endWX: number; endWY: number } | null>(null);
@@ -2907,6 +2911,15 @@ export default function Game() {
 
       const ctx = canvas.getContext('2d')!;
 
+      // ── Reconstrói grade espacial quando o array de plataformas muda ──
+      if (spatialGridSourceRef.current !== gs.platforms) {
+        spatialGridSourceRef.current = gs.platforms;
+        spatialGridRef.current = buildSpatialGrid(gs.platforms);
+        droneSolidPlatsRef.current = gs.platforms.filter(
+          p => p.type === 'wall' && (p.x === 12100 || p.x === 21700)
+        );
+      }
+
       // --- Update ---
       if (gs.gamePhase === 'menu') {
         if (editorJustPressed.current) {
@@ -3111,9 +3124,17 @@ export default function Game() {
           (keys.space && (now - lastDownPressTime.current) < DIVE_COMBO_WINDOW);
         const effectiveKeys = windowDive ? { ...keys, dive: true } : keys;
 
-        const activePlatforms = gs.platforms.filter((p, i) =>
-          !(p.type === 'box' && gs.destroyedBoxIndices.includes(i))
-        );
+        // Consulta grade espacial: só plataformas próximas ao jogador (~±900px)
+        const PHYS_MARGIN = 900;
+        const _nearbyPhys = spatialGridRef.current
+          ? queryGrid(spatialGridRef.current, gs.player.x - PHYS_MARGIN, gs.player.x + PHYS_MARGIN)
+          : gs.platforms;
+        const _destroyedPlatSet = gs.destroyedBoxIndices.length > 0
+          ? new Set(gs.destroyedBoxIndices.map(i => gs.platforms[i]))
+          : null;
+        const activePlatforms = _destroyedPlatSet
+          ? _nearbyPhys.filter(p => !_destroyedPlatSet.has(p))
+          : _nearbyPhys;
         updatePlayer(gs.player, effectiveKeys, activePlatforms, dt, spawnP);
 
         // Camera follows player
@@ -3144,7 +3165,7 @@ export default function Game() {
         }
 
         if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
-          const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP, gs.platforms);
+          const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP, droneSolidPlatsRef.current);
           if (shakeAmount > 0) gs.screenShake = shakeAmount;
 
           gs.bullets = updateBullets(gs.bullets, gs.player, gs.platforms, dt, () => {
@@ -3224,11 +3245,17 @@ export default function Game() {
       drawShantyVillage(ctx, gs.camera.x);
       drawGround(ctx, gs.camera.x, gs.platforms);
       drawRiver(ctx, gs.camera.x);
+      // Pré-filtra plataformas visíveis no viewport para todos os loops de render abaixo
+      const _rCamX = gs.camera.x;
+      const _rMargin = 80;
+      const _rVisPlats = spatialGridRef.current
+        ? queryGrid(spatialGridRef.current, _rCamX - _rMargin, _rCamX + CANVAS_W + _rMargin)
+        : gs.platforms;
       // World-space rendering (offset by camera)
       ctx.save();
-      ctx.translate(-gs.camera.x, 0);
+      ctx.translate(-_rCamX, 0);
       // Draw all ground segments with decoration
-      for (const plat of gs.platforms) {
+      for (const plat of _rVisPlats) {
         if (plat.type === 'ground') {
           // Concrete body
           ctx.fillStyle = COLORS.ground;
@@ -3278,10 +3305,10 @@ export default function Game() {
       ctx.restore();
 
       // Potholes desenhados APÓS o chão para aparecer sobre ele
-      drawPotholes(ctx, gs.platforms, gs.camera.x);
+      drawPotholes(ctx, _rVisPlats, _rCamX);
 
-      drawStreetBuildings(ctx, gs.platforms, gs.camera.x);
-      drawStaircase(ctx, gs.camera.x, gs.platforms);
+      drawStreetBuildings(ctx, gs.platforms, _rCamX);
+      drawStaircase(ctx, _rCamX, _rVisPlats);
       drawJunkyardBackdrop(ctx, gs.camera.x);
       drawFireEscapeBuilding(ctx, gs.camera.x, false);
       // ── Drag-ghost: temporariamente move originais de volta pra exibição ──
@@ -3311,7 +3338,17 @@ export default function Game() {
         }
       }
 
-      drawPlatforms(ctx, gs.platforms, gs.camera.x, balconyImgRef.current, carroImgRef.current, gs.destroyedBoxIndices, customSpriteImagesRef.current, gs.destroyedTireIndices);
+      // Filtra plataformas destruídas antes de enviar ao renderizador
+      const _destroyedRenderSet: Set<Platform> = gs.destroyedBoxIndices.length > 0 || gs.destroyedTireIndices.length > 0
+        ? new Set([
+            ...gs.destroyedBoxIndices.map(i => gs.platforms[i]),
+            ...gs.destroyedTireIndices.map(i => gs.platforms[i]),
+          ].filter(Boolean) as Platform[])
+        : new Set();
+      const _renderPlats = _destroyedRenderSet.size > 0
+        ? _rVisPlats.filter(p => !_destroyedRenderSet.has(p))
+        : _rVisPlats;
+      drawPlatforms(ctx, _renderPlats, _rCamX, balconyImgRef.current, carroImgRef.current, [], customSpriteImagesRef.current, []);
 
       // ── Restaura posições e desenha ghost transparente ──
       if (_isDragGhost && _ghostEntries.length > 0) {
@@ -3392,7 +3429,7 @@ export default function Game() {
       drawBystanders(ctx, gs.bystanders, gs.camera.x, bystander1ImgRef.current, bystander2ImgRef.current);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current, ladderClimbImgRef.current, ladderDescendImgRef.current);
       drawFireEscapeFloors(ctx, gs.camera.x, fireEscapeFloorImgRef.current);
-      drawTireHideouts(ctx, gs.platforms, gs.camera.x, standingTireImgRef.current, gs.destroyedTireIndices);
+      drawTireHideouts(ctx, _renderPlats, _rCamX, standingTireImgRef.current, []);
       if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
         drawDrone(ctx, gs);
         drawBullets(ctx, gs);
