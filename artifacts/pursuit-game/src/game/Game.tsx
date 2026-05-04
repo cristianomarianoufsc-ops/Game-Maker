@@ -1079,6 +1079,15 @@ export default function Game() {
         // conflito entre código fonte atualizado e patch antigo).
         const originalKeySet = new Set(originalPlatforms.map(platBaseKey));
         const rawAddPlatforms = (patch.add ?? []) as Platform[];
+        // Se um platform está explicitamente no patch.add, remove do set de deletados
+        // (sobrescreve deleções antigas do localStorage para esse objeto)
+        for (const p of rawAddPlatforms) {
+          const k = platBaseKey(p);
+          if (deletedPlatformKeysRef.current.has(k)) {
+            deletedPlatformKeysRef.current.delete(k);
+            saveDeletedPlatformKeys(deletedPlatformKeysRef.current);
+          }
+        }
         const addPlatforms = rawAddPlatforms
           .filter(p => !originalKeySet.has(platBaseKey(p)))
           .filter(p => !deletedPlatformKeysRef.current.has(platBaseKey(p)));
