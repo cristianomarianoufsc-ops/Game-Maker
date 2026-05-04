@@ -2474,7 +2474,14 @@ export default function Game() {
               }
             }
 
+            // Invalida grade espacial para o visual aparecer imediatamente
+            spatialGridSourceRef.current = null;
             saveSprites(platforms);
+            // Centraliza câmera no grupo duplicado
+            const leaderCopy = platforms[newIndices[0] ?? 0];
+            if (leaderCopy) {
+              editorCamXRef.current = Math.max(0, leaderCopy.x + leaderCopy.w / 2 - CANVAS_W / 2);
+            }
             copyPlatText(platCoordText(platforms[editorSelectedIdxRef.current]), `✓ GRUPO DUPLICADO: ${newIndices.length} OBJETOS`);
             return;
           }
@@ -2482,12 +2489,16 @@ export default function Game() {
           const copy = { ...p, x: p.x + p.w };
           if (p.collisionBoxes) copy.collisionBoxes = p.collisionBoxes.map((box) => ({ ...box, slopeTop: box.slopeTop ? { ...box.slopeTop } : undefined }));
           platforms.push(copy);
+          // Invalida grade espacial para o visual aparecer imediatamente
+          spatialGridSourceRef.current = null;
           saveSprites(platforms);
           const newIdx = platforms.length - 1;
           snapEditorPlatform(copy, newIdx);
           editorSelectedIndicesRef.current = new Set([newIdx]);
           editorSelectedIdxRef.current = newIdx;
           editorCollisionBoxIdxRef.current = 0;
+          // Centraliza câmera no duplicado para ficar visível
+          editorCamXRef.current = Math.max(0, copy.x + copy.w / 2 - CANVAS_W / 2);
           const text = platCoordText(copy);
           copyPlatText(text, `✓ DUPLICADO: ${text}`);
           return;
