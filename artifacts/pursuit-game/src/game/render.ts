@@ -5087,19 +5087,24 @@ export function drawStaircaseBuildingWall(ctx: CanvasRenderingContext2D, camX: n
     }
   }
 
-  // ── Vinheta nas bordas (funde com o ambiente) ────────────────────────────
-  const fadeW = 70;
-  const gradL = ctx.createLinearGradient(wallX, 0, wallX + fadeW, 0);
-  gradL.addColorStop(0, 'rgba(0,0,0,0.88)');
-  gradL.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = gradL;
-  ctx.fillRect(wallX, wallY, fadeW, wallH);
+  // ── Bordas laterais de concreto (fecham a parede) ───────────────────────
+  const pillarW = 14;
 
-  const gradR = ctx.createLinearGradient(wallX + WORLD_W - fadeW, 0, wallX + WORLD_W, 0);
-  gradR.addColorStop(0, 'rgba(0,0,0,0)');
-  gradR.addColorStop(1, 'rgba(0,0,0,0.88)');
-  ctx.fillStyle = gradR;
-  ctx.fillRect(wallX + WORLD_W - fadeW, wallY, fadeW, wallH);
+  // Borda esquerda
+  ctx.fillStyle = '#1a0e07';
+  ctx.fillRect(wallX, wallY, pillarW, wallH);
+  ctx.fillStyle = 'rgba(255,120,60,0.07)';
+  ctx.fillRect(wallX + pillarW, wallY, 3, wallH);
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(wallX - 2, wallY, 4, wallH);
+
+  // Borda direita
+  ctx.fillStyle = '#1a0e07';
+  ctx.fillRect(wallX + WORLD_W - pillarW, wallY, pillarW, wallH);
+  ctx.fillStyle = 'rgba(255,120,60,0.07)';
+  ctx.fillRect(wallX + WORLD_W - pillarW - 3, wallY, 3, wallH);
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(wallX + WORLD_W - 2, wallY, 4, wallH);
 
   // ── Gradiente de sombra no topo ───────────────────────────────────────────
   const topFade = ctx.createLinearGradient(0, wallY, 0, wallY + 120);
