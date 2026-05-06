@@ -3866,41 +3866,37 @@ export function drawBystanders(
       const t = Math.max(0, b.deadTimer / DEAD_DURATION); // 1→0
       const alpha = t < 0.3 ? t / 0.3 : 1;              // fade out último 30%
 
-      // Sprite de impacto (npc-hit.png): voa para trás sem rotação
+      const angle = (1 - t) * (Math.PI / 2); // roda até 90° deitado
+
+      // Sprite de impacto (npc-hit.png): tomba para frente igual aos outros
       if (b.useHitSprite && npcHitSheet && npcHitSheet.complete && npcHitSheet.naturalWidth > 0) {
-        const hitH = isNewSprite ? 130 : 136; // ligeiramente menor que o NPC em corrida
+        const hitH = isNewSprite ? 130 : 136;
         const hitW = Math.round(hitH * (npcHitSheet.naturalWidth / npcHitSheet.naturalHeight));
-        // Offset vertical: simula o NPC sendo jogado levemente para cima
-        const riseOffset = (1 - t) * 18;
-        const drawX = screenX + displayW / 2 - hitW / 2;
-        const drawY = screenY + displayH - hitH - riseOffset;
+        const footX = screenX + displayW / 2;
+        const footY = screenY + displayH;
         ctx.save();
         ctx.globalAlpha = alpha;
+        ctx.translate(footX, footY);
+        ctx.rotate(b.facingRight ? angle : -angle);
         if (!b.facingRight) {
-          ctx.translate(drawX + hitW, drawY);
           ctx.scale(-1, 1);
-          ctx.drawImage(npcHitSheet, 0, 0, hitW, hitH);
+          ctx.drawImage(npcHitSheet, -hitW / 2, -hitH, hitW, hitH);
         } else {
-          ctx.drawImage(npcHitSheet, drawX, drawY, hitW, hitH);
+          ctx.drawImage(npcHitSheet, -hitW / 2, -hitH, hitW, hitH);
         }
         ctx.restore();
         continue;
       }
 
-      // Animação padrão: colapsa no chão com tint vermelho
-      const angle = (1 - t) * (Math.PI / 2);             // roda até 90° deitado
+      // Animação padrão: colapsa no chão sem overlay vermelho
       const footX = screenX + displayW / 2;
       const footY = screenY + displayH;
-      const dFrame = b.deathFrame ?? 0;                  // frame de morte configurável
+      const dFrame = b.deathFrame ?? 0;
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.translate(footX, footY);
       ctx.rotate(b.facingRight ? angle : -angle);
       ctx.drawImage(sheet, dFrame * frameW, 0, frameW, frameH, -displayW / 2, -displayH, displayW, displayH);
-      // overlay vermelho sangue
-      ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = `rgba(180, 0, 0, ${0.55 * t < 0.01 ? 0.55 : 0.55 * Math.min(1, (1 - t) * 6)})`;
-      ctx.fillRect(-displayW / 2, -displayH, displayW, displayH);
       ctx.restore();
       continue;
     }
