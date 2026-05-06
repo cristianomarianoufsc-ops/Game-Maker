@@ -1841,8 +1841,10 @@ export function updateBystanders(
     if (b.state === 'dead') continue;
     b.animTimer += dt;
     if (b.state === 'sit') {
-      const droneDist = Math.abs(drone.x - b.x);
-      if (droneDist < DRONE_FLEE_DIST) {
+      const droneDist  = Math.abs(drone.x - b.x);
+      const playerDist = Math.abs(player.x - b.x);
+      const playerTriggered = b.playerFleeDist !== undefined && playerDist < b.playerFleeDist;
+      if (droneDist < DRONE_FLEE_DIST || playerTriggered) {
         const speed = b.fleeSpeed ?? FLEE_SPEED;
         b.state = 'flee';
         b.facingRight = b.fleeDir === 'right';

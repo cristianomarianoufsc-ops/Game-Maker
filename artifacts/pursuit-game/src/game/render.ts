@@ -3854,7 +3854,7 @@ export function drawBystanders(
         frameIdx = 1 + (Math.floor(b.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2); // 1 ou 2
       }
     }
-    const displayH = isNewSprite ? 166 : (isSit ? 175 : 166);
+    const displayH = isNewSprite ? 158 : (isSit ? 175 : 166); // sprites 3+4 são 5% menores
     const NPC_FOOT_OFFSET = isNewSprite ? 26 : (isSit ? (b.spriteId === 1 ? 47 : 36) : 26);
     const displayW = Math.round(displayH * (frameW / frameH));
     const screenY = GROUND_Y + NPC_FOOT_OFFSET - displayH;

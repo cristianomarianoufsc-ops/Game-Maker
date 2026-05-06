@@ -157,8 +157,8 @@ function makeInitialBystanders(): Bystander[] {
       deadTimer: 0,
     },
     {
-      // Senhor mais velho — meio da vila, foge devagar para a direita
-      x: 27350,
+      // Senhor mais velho — mais à frente (corre menos, começa na frente)
+      x: 28000,
       y: GROUND_Y - 140,
       w: 60,
       h: 140,
@@ -167,15 +167,16 @@ function makeInitialBystanders(): Bystander[] {
       state: 'sit' as const,
       spriteId: 3 as const,
       animTimer: 0,
-      triggerX: 27350,
+      triggerX: 28000,
       fleeDir: 'right' as const,
       fleeSpeed: 2.8,
       deadTimer: 0,
       deathFrame: 2,
+      playerFleeDist: 1100,
     },
     {
-      // Mulher jovem — meio da vila, foge rápido para a direita
-      x: 27900,
+      // Mulher jovem — atrás do senhor (corre mais, mas não alcança Horácio)
+      x: 27400,
       y: GROUND_Y - 140,
       w: 60,
       h: 140,
@@ -184,11 +185,12 @@ function makeInitialBystanders(): Bystander[] {
       state: 'sit' as const,
       spriteId: 4 as const,
       animTimer: 0,
-      triggerX: 27900,
+      triggerX: 27400,
       fleeDir: 'right' as const,
-      fleeSpeed: 6.5,
+      fleeSpeed: 4.5,
       deadTimer: 0,
       deathFrame: 2,
+      playerFleeDist: 1100,
     },
   ];
 }
