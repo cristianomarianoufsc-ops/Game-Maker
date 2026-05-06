@@ -200,12 +200,13 @@ export interface Bystander {
   vx: number;
   facingRight: boolean;
   state: BystanderState;
-  spriteId: 1 | 2;          // qual das duas sheets usar
+  spriteId: 1 | 2 | 3 | 4;  // qual das sheets usar (1-2 originais, 3=senhor, 4=mulher)
   animTimer: number;
   triggerX: number;          // mantido para compatibilidade (não usado; trigger agora é por distância do drone)
   fleeDir: 'left' | 'right'; // direção de fuga ao sentir o drone
   fleeSpeed?: number;        // velocidade individual de fuga (sobrescreve o padrão)
   deadTimer: number;         // ms até desaparecer após ser atingido
+  deathFrame?: number;       // índice do frame a mostrar no estado morto (padrão 0)
 }
 
 export interface Dog {

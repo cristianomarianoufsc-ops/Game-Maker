@@ -17,6 +17,8 @@ import dogSheetUrl from '@assets/DOG_1776795245228.png';
 import dogIdleUrl from '@assets/image_1776737992484.png';
 import bystander1Url from '@assets/1b_1777223906240.png';
 import bystander2Url from '@assets/2b_1777223906243.png';
+import bystander3Url from '@assets/image_1778075246986.png';
+import bystander4Url from '@assets/mulher_1778075255529.png';
 import standingTireUrl from '@assets/pneu_1776643651883.png';
 import rollingTireUrl from '@assets/pneu2_1776643651884.png';
 import brickTextureUrl from '/brick_texture.png';
@@ -153,6 +155,40 @@ function makeInitialBystanders(): Bystander[] {
       fleeDir: 'right' as const,
       fleeSpeed: 3.4,
       deadTimer: 0,
+    },
+    {
+      // Senhor mais velho — meio da vila, foge devagar para a direita
+      x: 27350,
+      y: GROUND_Y - 140,
+      w: 60,
+      h: 140,
+      vx: 0,
+      facingRight: true,
+      state: 'sit' as const,
+      spriteId: 3 as const,
+      animTimer: 0,
+      triggerX: 27350,
+      fleeDir: 'right' as const,
+      fleeSpeed: 2.8,
+      deadTimer: 0,
+      deathFrame: 2,
+    },
+    {
+      // Mulher jovem — meio da vila, foge rápido para a direita
+      x: 27900,
+      y: GROUND_Y - 140,
+      w: 60,
+      h: 140,
+      vx: 0,
+      facingRight: true,
+      state: 'sit' as const,
+      spriteId: 4 as const,
+      animTimer: 0,
+      triggerX: 27900,
+      fleeDir: 'right' as const,
+      fleeSpeed: 6.5,
+      deadTimer: 0,
+      deathFrame: 2,
     },
   ];
 }
@@ -608,6 +644,8 @@ export default function Game() {
   const dogIdleImgRef = useRef<HTMLImageElement | null>(null);
   const bystander1ImgRef = useRef<HTMLImageElement | null>(null);
   const bystander2ImgRef = useRef<HTMLImageElement | null>(null);
+  const bystander3ImgRef = useRef<HTMLImageElement | null>(null);
+  const bystander4ImgRef = useRef<HTMLImageElement | null>(null);
   const customSpriteImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   // Responsive scale: fit canvas inside available viewport
@@ -1271,6 +1309,28 @@ export default function Game() {
       }
     };
     bystander2Img.src = bystander2Url;
+
+    const bystander3Img = new Image();
+    bystander3Img.onload = () => {
+      const stripped = stripWhiteBackground(bystander3Img);
+      if (stripped.complete && stripped.naturalWidth > 0) {
+        bystander3ImgRef.current = stripped;
+      } else {
+        stripped.onload = () => { bystander3ImgRef.current = stripped; };
+      }
+    };
+    bystander3Img.src = bystander3Url;
+
+    const bystander4Img = new Image();
+    bystander4Img.onload = () => {
+      const stripped = stripWhiteBackground(bystander4Img);
+      if (stripped.complete && stripped.naturalWidth > 0) {
+        bystander4ImgRef.current = stripped;
+      } else {
+        stripped.onload = () => { bystander4ImgRef.current = stripped; };
+      }
+    };
+    bystander4Img.src = bystander4Url;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       if (down && gsRef.current?.gamePhase === 'editor' && editorCollisionModeRef.current) {
@@ -3458,7 +3518,7 @@ export default function Game() {
       drawFlyingTires(ctx, gs.flyingTires, gs.camera.x, rollingTireImgRef.current);
       drawParticles(ctx, gs);
       drawDogs(ctx, gs.dogs, gs.camera.x, dogSheetImgRef.current, dogIdleImgRef.current);
-      drawBystanders(ctx, gs.bystanders, gs.camera.x, bystander1ImgRef.current, bystander2ImgRef.current);
+      drawBystanders(ctx, gs.bystanders, gs.camera.x, bystander1ImgRef.current, bystander2ImgRef.current, bystander3ImgRef.current, bystander4ImgRef.current);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current, ladderClimbImgRef.current, ladderDescendImgRef.current);
       drawFireEscapeFloors(ctx, gs.camera.x, fireEscapeFloorImgRef.current);
       drawTireHideouts(ctx, _renderPlats, _rCamX, standingTireImgRef.current, []);

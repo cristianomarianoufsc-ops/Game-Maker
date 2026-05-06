@@ -3817,10 +3817,15 @@ export function drawBystanders(
   bystanders: Bystander[],
   camX: number,
   sheet1: HTMLImageElement | null,
-  sheet2: HTMLImageElement | null
+  sheet2: HTMLImageElement | null,
+  sheet3: HTMLImageElement | null,
+  sheet4: HTMLImageElement | null
 ): void {
   for (const b of bystanders) {
-    const sheet = b.spriteId === 1 ? sheet1 : sheet2;
+    const sheet = b.spriteId === 1 ? sheet1
+                : b.spriteId === 2 ? sheet2
+                : b.spriteId === 3 ? sheet3
+                : sheet4;
     if (!sheet || !sheet.complete || sheet.naturalWidth === 0) continue;
 
     const screenX = b.x - camX;
@@ -3831,19 +3836,20 @@ export function drawBystanders(
     const frameW = Math.floor(imgW / 3);   // 3 frames lado a lado
     const frameH = imgH;
 
-    // Escolhe frame: 0 = sentado; 1,2 = corrida
+    // Escolhe frame: 0 = sentado/parado; 1,2 = corrida
     let frameIdx = 0;
     if (b.state === 'flee') {
       frameIdx = 1 + (Math.floor(b.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2);
     }
 
-    // Sprites: 851x315px, 3 frames (frameW=283, frameH=315).
-    // Sprite 1 (marrom): caixa sit ocupa ~88% do frame → offset 47 (175*0.12+26).
+    // Sprites 1+2: 851x315px, 3 frames (frameW=283, frameH=315).
+    // Sprite 1 (marrom): caixa sit ocupa ~88% do frame → offset 47.
     // Sprite 2 (verde): caixa sit ligeiramente acima do fundo → offset 36.
-    // Flee: pés tocam o fundo do frame para ambos → offset base 26.
+    // Sprites 3+4 (senhor/mulher): sem pose sentado — offset fixo 26 em todos os estados.
+    const isNewSprite = b.spriteId === 3 || b.spriteId === 4;
     const isSit = b.state === 'sit' || b.state === 'dead';
-    const displayH = isSit ? 175 : 166;
-    const NPC_FOOT_OFFSET = isSit ? (b.spriteId === 1 ? 47 : 36) : 26;
+    const displayH = isNewSprite ? 166 : (isSit ? 175 : 166);
+    const NPC_FOOT_OFFSET = isNewSprite ? 26 : (isSit ? (b.spriteId === 1 ? 47 : 36) : 26);
     const displayW = Math.round(displayH * (frameW / frameH));
     const screenY = GROUND_Y + NPC_FOOT_OFFSET - displayH;
 
@@ -3855,12 +3861,12 @@ export function drawBystanders(
       const angle = (1 - t) * (Math.PI / 2);             // roda até 90° deitado
       const footX = screenX + displayW / 2;
       const footY = screenY + displayH;
+      const dFrame = b.deathFrame ?? 0;                  // frame de morte configurável
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.translate(footX, footY);
       ctx.rotate(b.facingRight ? angle : -angle);
-      // desenha frame sit (frame 0) na posição relativa à âncora (pé)
-      ctx.drawImage(sheet, 0, 0, frameW, frameH, -displayW / 2, -displayH, displayW, displayH);
+      ctx.drawImage(sheet, dFrame * frameW, 0, frameW, frameH, -displayW / 2, -displayH, displayW, displayH);
       // overlay vermelho sangue
       ctx.globalCompositeOperation = 'source-atop';
       ctx.fillStyle = `rgba(180, 0, 0, ${0.55 * t < 0.01 ? 0.55 : 0.55 * Math.min(1, (1 - t) * 6)})`;
