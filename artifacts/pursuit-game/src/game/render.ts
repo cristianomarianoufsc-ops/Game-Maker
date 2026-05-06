@@ -91,12 +91,14 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
   ctx.fillStyle = 'rgba(60,40,25,0.55)';
   ctx.fillRect(sx, wallTopY + 4, w, 3);
 
-  // Painéis verticais (placas de concreto pré-moldado de 4m)
+  // Painéis verticais (placas de concreto pré-moldado de 4m) — só visíveis
   const panelW = 180;
   ctx.strokeStyle = 'rgba(0,0,0,0.55)';
   ctx.lineWidth = 1;
-  const firstPanel = Math.ceil((JUNKYARD_X1) / panelW) * panelW;
-  for (let wx = firstPanel; wx < JUNKYARD_X2; wx += panelW) {
+  const visWX0 = camX;
+  const visWX1 = camX + CANVAS_W;
+  const firstPanel = JUNKYARD_X1 + Math.max(0, Math.floor((visWX0 - JUNKYARD_X1) / panelW) - 1) * panelW;
+  for (let wx = firstPanel; wx < JUNKYARD_X2 && wx < visWX1 + panelW; wx += panelW) {
     const lineX = wx - camX;
     ctx.beginPath();
     ctx.moveTo(lineX, wallTopY + 6);
@@ -104,20 +106,30 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
     ctx.stroke();
   }
 
-  // Manchas de ferrugem e desgaste pseudo-aleatórias
-  for (let wx = JUNKYARD_X1 + 30; wx < JUNKYARD_X2; wx += 73) {
-    const seed = ((wx * 2654435761) >>> 0);
-    const offY = (seed % 90);
-    const sw = 30 + (seed % 50);
-    const sh = 14 + ((seed >> 8) % 22);
-    ctx.fillStyle = 'rgba(85,38,12,0.22)';
-    ctx.fillRect(wx - camX, wallTopY + 18 + offY, sw, sh);
+  // Manchas de ferrugem e desgaste pseudo-aleatórias — só visíveis
+  {
+    const step = 73;
+    const base = JUNKYARD_X1 + 30;
+    const rStart = base + Math.max(0, Math.floor((visWX0 - base) / step) - 1) * step;
+    for (let wx = rStart; wx < JUNKYARD_X2 && wx < visWX1 + step; wx += step) {
+      const seed = ((wx * 2654435761) >>> 0);
+      const offY = (seed % 90);
+      const sw = 30 + (seed % 50);
+      const sh = 14 + ((seed >> 8) % 22);
+      ctx.fillStyle = 'rgba(85,38,12,0.22)';
+      ctx.fillRect(wx - camX, wallTopY + 18 + offY, sw, sh);
+    }
   }
-  for (let wx = JUNKYARD_X1 + 55; wx < JUNKYARD_X2; wx += 119) {
-    const seed = ((wx * 40503) >>> 0);
-    const offY = (seed % 140);
-    ctx.fillStyle = 'rgba(20,12,8,0.35)';
-    ctx.fillRect(wx - camX, wallTopY + 30 + offY, 4 + (seed % 8), 2);
+  {
+    const step = 119;
+    const base = JUNKYARD_X1 + 55;
+    const sStart = base + Math.max(0, Math.floor((visWX0 - base) / step) - 1) * step;
+    for (let wx = sStart; wx < JUNKYARD_X2 && wx < visWX1 + step; wx += step) {
+      const seed = ((wx * 40503) >>> 0);
+      const offY = (seed % 140);
+      ctx.fillStyle = 'rgba(20,12,8,0.35)';
+      ctx.fillRect(wx - camX, wallTopY + 30 + offY, 4 + (seed % 8), 2);
+    }
   }
 
   // Pichações vermelhas (pequenas, escassas)
@@ -133,16 +145,19 @@ export function drawJunkyardBackdrop(ctx: CanvasRenderingContext2D, camX: number
   // ── ARAME FARPADO NO TOPO ──────────────────────────────────────────
   ctx.strokeStyle = '#0a0806';
   ctx.lineWidth = 1.5;
-  // Linha base do arame
+  // Linha base do arame — só o trecho visível
+  const wireX0 = Math.max(sx, 0);
+  const wireX1 = Math.min(sx + w, CANVAS_W);
   ctx.beginPath();
-  ctx.moveTo(sx, wallTopY - 2);
-  ctx.lineTo(sx + w, wallTopY - 2);
+  ctx.moveTo(wireX0, wallTopY - 2);
+  ctx.lineTo(wireX1, wallTopY - 2);
   ctx.stroke();
-  // Espirais
+  // Espirais — skip ao primeiro coil visível, para no último visível
   ctx.strokeStyle = 'rgba(40,30,22,0.9)';
   ctx.lineWidth = 1;
   const coilStep = 26;
-  for (let wx = JUNKYARD_X1; wx < JUNKYARD_X2; wx += coilStep) {
+  const coilStart = JUNKYARD_X1 + Math.max(0, Math.floor((visWX0 - JUNKYARD_X1) / coilStep) - 1) * coilStep;
+  for (let wx = coilStart; wx < JUNKYARD_X2 && wx < visWX1 + coilStep; wx += coilStep) {
     const cx = wx - camX;
     ctx.beginPath();
     ctx.arc(cx, wallTopY - 8, 6, 0, Math.PI * 2);
