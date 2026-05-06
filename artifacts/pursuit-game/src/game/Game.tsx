@@ -139,7 +139,6 @@ function makeInitialBystanders(): Bystander[] {
       fleeDir: 'right' as const,
       fleeSpeed: 4.8,
       deadTimer: 0,
-      useHitSprite: true,
     },
     {
       // Barbudo da direita: virado para a esquerda no frame sentado
@@ -157,6 +156,7 @@ function makeInitialBystanders(): Bystander[] {
       fleeDir: 'right' as const,
       fleeSpeed: 3.4,
       deadTimer: 0,
+      useHitSprite: true,
     },
     {
       // Senhor mais velho — mais à frente (corre menos, começa na frente)
