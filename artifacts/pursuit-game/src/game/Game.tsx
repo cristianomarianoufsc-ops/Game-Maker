@@ -304,7 +304,7 @@ function saveCustomSpritePlatforms(platforms: Platform[]): string | null {
 
 // Remove white/near-white background from a sprite sheet exported without transparency.
 // Uses perceptual brightness so anti-aliased edges fade out smoothly instead of leaving a white fringe.
-function stripWhiteBackground(src: HTMLImageElement): HTMLImageElement {
+function stripWhiteBackground(src: HTMLImageElement, erodeEdge = false): HTMLImageElement {
   const canvas = document.createElement('canvas');
   canvas.width  = src.naturalWidth;
   canvas.height = src.naturalHeight;
@@ -365,6 +365,29 @@ function stripWhiteBackground(src: HTMLImageElement): HTMLImageElement {
     const brightness = r * 0.299 + g * 0.587 + b * 0.114;
     const t = Math.min(1, Math.max(0, (brightness - 160) / 80));
     px[i + 3] = Math.round((1 - t) * px[i + 3]);
+  }
+
+  // Erosão suave de 1px: reduz levemente o alpha de pixels claros na borda do personagem
+  if (erodeEdge) {
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const pos = y * W + x;
+        if (visited[pos]) continue; // já é fundo
+        const ns = [
+          y > 0     ? pos - W : -1,
+          y < H - 1 ? pos + W : -1,
+          x > 0     ? pos - 1 : -1,
+          x < W - 1 ? pos + 1 : -1,
+        ];
+        if (!ns.some(n => n >= 0 && visited[n])) continue; // não está na borda
+        const i = pos * 4;
+        const brightness = px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114;
+        if (brightness > 170) {
+          const fade = Math.min(1, (brightness - 170) / 70);
+          px[i + 3] = Math.round(px[i + 3] * (1 - fade * 0.75));
+        }
+      }
+    }
   }
 
   ctx.putImageData(imageData, 0, 0);
@@ -1334,7 +1357,7 @@ export default function Game() {
 
     const bystander1Img = new Image();
     bystander1Img.onload = () => {
-      const stripped = stripWhiteBackground(bystander1Img);
+      const stripped = stripWhiteBackground(bystander1Img, true);
       if (stripped.complete && stripped.naturalWidth > 0) {
         bystander1ImgRef.current = stripped;
       } else {
@@ -1345,7 +1368,7 @@ export default function Game() {
 
     const bystander2Img = new Image();
     bystander2Img.onload = () => {
-      const stripped = stripWhiteBackground(bystander2Img);
+      const stripped = stripWhiteBackground(bystander2Img, true);
       if (stripped.complete && stripped.naturalWidth > 0) {
         bystander2ImgRef.current = stripped;
       } else {
