@@ -157,7 +157,6 @@ function makeInitialBystanders(): Bystander[] {
       fleeDir: 'right' as const,
       fleeSpeed: 3.4,
       deadTimer: 0,
-      useHitSprite: true,
     },
     {
       // Senhor mais velho — mais à frente (corre menos, começa na frente)
@@ -176,7 +175,6 @@ function makeInitialBystanders(): Bystander[] {
       deadTimer: 0,
       deathFrame: 2,
       playerFleeDist: 1100,
-      useHitSprite: true,
     },
     {
       // Mulher jovem — atrás do senhor (corre mais, mas não alcança Horácio)
@@ -195,7 +193,6 @@ function makeInitialBystanders(): Bystander[] {
       deadTimer: 0,
       deathFrame: 2,
       playerFleeDist: 1100,
-      useHitSprite: true,
     },
   ];
 }
