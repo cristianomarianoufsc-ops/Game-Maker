@@ -2107,6 +2107,7 @@ export default function Game() {
 
     let middleDragging = false;
     let middleLastX = 0;
+    let middleLastY = 0;
 
     const onCanvasMouseDown = (e: MouseEvent) => {
       const gs = gsRef.current;
@@ -2172,6 +2173,8 @@ export default function Game() {
         e.preventDefault();
         middleDragging = true;
         middleLastX = e.clientX;
+        middleLastY = e.clientY;
+        if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
         return;
       }
 
@@ -2739,13 +2742,21 @@ export default function Game() {
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
       const scaleX = CANVAS_W / rect.width;
-      const delta = (e.clientX - middleLastX) * scaleX;
+      const scaleY = CANVAS_H / rect.height;
+      const dx = (e.clientX - middleLastX) * scaleX;
+      const dy = (e.clientY - middleLastY) * scaleY;
       middleLastX = e.clientX;
-      editorCamXRef.current = Math.max(0, editorCamXRef.current - delta);
+      middleLastY = e.clientY;
+      editorCamXRef.current = Math.max(0, editorCamXRef.current - dx);
+      editorCamYRef.current = Math.max(-4000, Math.min(300, editorCamYRef.current - dy));
     };
 
     const onMouseUp = (e: MouseEvent) => {
-      if (e.button === 1) { middleDragging = false; return; }
+      if (e.button === 1) {
+        middleDragging = false;
+        if (canvasRef.current) canvasRef.current.style.cursor = '';
+        return;
+      }
       if (e.button !== 0) return;
 
       // Finalizar marquee de seleção
