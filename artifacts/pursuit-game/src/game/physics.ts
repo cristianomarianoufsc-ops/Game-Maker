@@ -1853,6 +1853,13 @@ export function updateBystanders(
       }
     } else {
       b.x += b.vx;
+      // Colisão com o muro da vila (x:29540) — faz o NPC voltar
+      const VILLAGE_WALL_X = 29540;
+      if (b.vx > 0 && b.x + b.w >= VILLAGE_WALL_X) {
+        b.x = VILLAGE_WALL_X - b.w;
+        b.vx = -b.vx;
+        b.facingRight = false;
+      }
       if (b.x > DESPAWN_RIGHT_X || b.x < DESPAWN_LEFT_X) {
         b.vx = 0;
       }

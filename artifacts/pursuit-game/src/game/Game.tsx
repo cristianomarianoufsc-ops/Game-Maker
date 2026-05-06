@@ -304,30 +304,69 @@ function saveCustomSpritePlatforms(platforms: Platform[]): string | null {
 // Uses perceptual brightness so anti-aliased edges fade out smoothly instead of leaving a white fringe.
 function stripWhiteBackground(src: HTMLImageElement): HTMLImageElement {
   const canvas = document.createElement('canvas');
-  canvas.width = src.naturalWidth;
+  canvas.width  = src.naturalWidth;
   canvas.height = src.naturalHeight;
   const ctx = canvas.getContext('2d')!;
   ctx.drawImage(src, 0, 0);
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const px = imageData.data;
-  for (let i = 0; i < px.length; i += 4) {
+  const W = canvas.width;
+  const H = canvas.height;
+
+  // Decide se um pixel pertence ao fundo branco externo
+  const isBg = (i: number): boolean => {
+    const a = px[i + 3];
+    if (a < 10) return true; // já transparente
     const r = px[i], g = px[i + 1], b = px[i + 2];
-    const brightness = r * 0.299 + g * 0.587 + b * 0.114;
-    // Saturation: 0 = grey/white, 1 = fully saturated color
+    const brightness  = r * 0.299 + g * 0.587 + b * 0.114;
     const maxC = Math.max(r, g, b);
     const minC = Math.min(r, g, b);
-    const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
-    // Target pixels that are bright AND low-saturation (white/near-white background)
-    // Wide fade zone: starts at brightness 80 → fully transparent at 210
-    // Saturation guard raised to 0.28 so anti-aliased edge pixels are also caught
-    if (brightness > 80 && saturation < 0.28) {
-      const t = Math.min(1, (brightness - 80) / 130);
-      px[i + 3] = Math.round((1 - t) * px[i + 3]);
+    const saturation  = maxC > 0 ? (maxC - minC) / maxC : 0;
+    return brightness > 200 && saturation < 0.18;
+  };
+
+  // BFS flood-fill a partir de todas as bordas para encontrar fundo externo
+  const visited = new Uint8Array(W * H);
+  const queue: number[] = [];
+  const seed = (x: number, y: number) => {
+    const pos = y * W + x;
+    if (visited[pos]) return;
+    if (!isBg(pos * 4)) return;
+    visited[pos] = 1;
+    queue.push(pos);
+  };
+  for (let x = 0; x < W; x++) { seed(x, 0); seed(x, H - 1); }
+  for (let y = 0; y < H; y++) { seed(0, y); seed(W - 1, y); }
+
+  let head = 0;
+  while (head < queue.length) {
+    const pos = queue[head++];
+    const y   = Math.floor(pos / W);
+    const x   = pos % W;
+    const neighbors = [
+      y > 0     ? pos - W : -1,
+      y < H - 1 ? pos + W : -1,
+      x > 0     ? pos - 1 : -1,
+      x < W - 1 ? pos + 1 : -1,
+    ];
+    for (const n of neighbors) {
+      if (n < 0 || visited[n]) continue;
+      if (isBg(n * 4)) { visited[n] = 1; queue.push(n); }
     }
   }
+
+  // Apaga somente os pixels do fundo externo (visitados), com fade suave nas bordas
+  for (let pos = 0; pos < W * H; pos++) {
+    if (!visited[pos]) continue;
+    const i = pos * 4;
+    const r = px[i], g = px[i + 1], b = px[i + 2];
+    const brightness = r * 0.299 + g * 0.587 + b * 0.114;
+    const t = Math.min(1, Math.max(0, (brightness - 160) / 80));
+    px[i + 3] = Math.round((1 - t) * px[i + 3]);
+  }
+
   ctx.putImageData(imageData, 0, 0);
   const out = new Image();
-  // data URLs decode synchronously; but guard with onload for safety
   out.src = canvas.toDataURL('image/png');
   return out;
 }
