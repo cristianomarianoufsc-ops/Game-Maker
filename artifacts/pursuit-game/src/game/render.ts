@@ -3868,7 +3868,7 @@ export function drawBystanders(
 
       // Sprite de impacto (npc-hit.png): voa para trás sem rotação
       if (b.useHitSprite && npcHitSheet && npcHitSheet.complete && npcHitSheet.naturalWidth > 0) {
-        const hitH = isNewSprite ? 158 : 166; // mesmo tamanho do NPC em corrida
+        const hitH = isNewSprite ? 130 : 136; // ligeiramente menor que o NPC em corrida
         const hitW = Math.round(hitH * (npcHitSheet.naturalWidth / npcHitSheet.naturalHeight));
         // Offset vertical: simula o NPC sendo jogado levemente para cima
         const riseOffset = (1 - t) * 18;
