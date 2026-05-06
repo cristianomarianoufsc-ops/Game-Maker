@@ -819,7 +819,7 @@ export default function Game() {
     editorUndoStackRef.current.push(snapshot);
     if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
     editorRedoStackRef.current = [];
-    platformsRef.current.push(platform);
+    platformsRef.current = [...platformsRef.current, platform];
     saveSprites(platformsRef.current);
     if (gsRef.current) gsRef.current.platforms = platformsRef.current;
     const idx = platformsRef.current.length - 1;
@@ -861,7 +861,7 @@ export default function Game() {
       if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
       editorRedoStackRef.current = [];
       customSpriteImagesRef.current.set(spriteName, processed);
-      platformsRef.current.push(platform);
+      platformsRef.current = [...platformsRef.current, platform];
       saveSprites(platformsRef.current);
       if (gsRef.current) gsRef.current.platforms = platformsRef.current;
       const idx = platformsRef.current.length - 1;
@@ -3559,7 +3559,7 @@ export default function Game() {
         if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
         editorRedoStackRef.current = [];
         customSpriteImagesRef.current.set(file.name, processed);
-        platformsRef.current.push(platform);
+        platformsRef.current = [...platformsRef.current, platform];
         saveSprites(platformsRef.current);
         if (gsRef.current) gsRef.current.platforms = platformsRef.current;
         const idx = platformsRef.current.length - 1;
