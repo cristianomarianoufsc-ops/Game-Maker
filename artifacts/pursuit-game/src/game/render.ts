@@ -5000,3 +5000,111 @@ export function drawPauseScreen(ctx: CanvasRenderingContext2D, selection: number
 
   ctx.textAlign = 'left';
 }
+
+// ── Parede de tijolos de prédio atrás das escadas de emergência ────────────────
+export function drawStaircaseBuildingWall(ctx: CanvasRenderingContext2D, camX: number): void {
+  const WORLD_X = 31074;
+  const WORLD_W = 622; // até ~31696
+  const wallX   = WORLD_X - camX;
+  const wallY   = -600; // bem acima da escada mais alta
+  const wallH   = GROUND_Y - wallY;
+
+  if (wallX + WORLD_W < -60 || wallX > CANVAS_W + 60) return;
+
+  const screenLeft  = Math.max(wallX, -60);
+  const screenRight = Math.min(wallX + WORLD_W, CANVAS_W + 60);
+
+  // ── Base: gradiente escuro de tijolo ──────────────────────────────────────
+  const baseGrad = ctx.createLinearGradient(wallX, wallY, wallX + WORLD_W, wallY);
+  baseGrad.addColorStop(0,    '#110a05');
+  baseGrad.addColorStop(0.35, '#221108');
+  baseGrad.addColorStop(0.65, '#1b0d07');
+  baseGrad.addColorStop(1,    '#0f0804');
+  ctx.fillStyle = baseGrad;
+  ctx.fillRect(wallX, wallY, WORLD_W, wallH);
+
+  // ── Tijolos ───────────────────────────────────────────────────────────────
+  const brickW  = 54;
+  const brickH  = 22;
+  const firstRow = Math.floor(wallY / brickH) - 1;
+  const lastRow  = Math.ceil((wallY + wallH) / brickH) + 1;
+  const BRICK_COLORS = ['#2c1509', '#38190b', '#45200e', '#281208', '#321609'];
+
+  for (let row = firstRow; row <= lastRow; row++) {
+    const y = row * brickH;
+    if (y + brickH < wallY || y > wallY + wallH) continue;
+    const offset   = row % 2 === 0 ? 0 : brickW / 2;
+    const firstCol = Math.floor((screenLeft  - wallX - offset) / brickW) - 1;
+    const lastCol  = Math.ceil ((screenRight - wallX - offset) / brickW) + 1;
+    for (let col = firstCol; col <= lastCol; col++) {
+      const x = wallX + offset + col * brickW;
+      if (x + brickW < screenLeft || x > screenRight) continue;
+      const tone = Math.abs((row * 17 + col * 31) % 5);
+      ctx.fillStyle = BRICK_COLORS[tone];
+      ctx.fillRect(x + 1, y + 1, brickW - 2, brickH - 2);
+      ctx.fillStyle = 'rgba(255,110,50,0.03)';
+      ctx.fillRect(x + 2, y + 2, brickW - 6, 3);
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.fillRect(x + 1, y + brickH - 4, brickW - 2, 3);
+    }
+  }
+
+  // ── Linhas de argamassa horizontais ──────────────────────────────────────
+  ctx.strokeStyle = 'rgba(8,4,2,0.55)';
+  ctx.lineWidth   = 1.5;
+  for (let y = wallY; y <= wallY + wallH; y += brickH) {
+    ctx.beginPath();
+    ctx.moveTo(screenLeft,  y);
+    ctx.lineTo(screenRight, y);
+    ctx.stroke();
+  }
+
+  // ── Pilares verticais de concreto ─────────────────────────────────────────
+  ctx.strokeStyle = 'rgba(6,3,1,0.60)';
+  ctx.lineWidth   = 6;
+  for (let x = wallX + 54; x < wallX + WORLD_W; x += 108) {
+    if (x < screenLeft - 6 || x > screenRight + 6) continue;
+    ctx.beginPath();
+    ctx.moveTo(x, wallY);
+    ctx.lineTo(x, wallY + wallH);
+    ctx.stroke();
+  }
+
+  // ── Janelas pequenas (fachada de prédio) ──────────────────────────────────
+  const winW   = 18;
+  const winH   = 26;
+  const winSpX = 80;
+  const winSpY = 66;
+  for (let wy = wallY + 28; wy < wallY + wallH - 44; wy += winSpY) {
+    for (let wx = wallX + 22; wx < wallX + WORLD_W - 20; wx += winSpX) {
+      if (wx + winW < screenLeft || wx > screenRight) continue;
+      const seed = (Math.floor((wy - wallY) / winSpY) * 7 + Math.floor((wx - wallX) / winSpX) * 13) % 17;
+      ctx.fillStyle = seed < 4 ? 'rgba(160,75,15,0.30)' : 'rgba(3,1,0,0.92)';
+      ctx.fillRect(wx, wy, winW, winH);
+      ctx.strokeStyle = 'rgba(55,28,12,0.80)';
+      ctx.lineWidth   = 1;
+      ctx.strokeRect(wx, wy, winW, winH);
+    }
+  }
+
+  // ── Vinheta nas bordas (funde com o ambiente) ────────────────────────────
+  const fadeW = 70;
+  const gradL = ctx.createLinearGradient(wallX, 0, wallX + fadeW, 0);
+  gradL.addColorStop(0, 'rgba(0,0,0,0.88)');
+  gradL.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gradL;
+  ctx.fillRect(wallX, wallY, fadeW, wallH);
+
+  const gradR = ctx.createLinearGradient(wallX + WORLD_W - fadeW, 0, wallX + WORLD_W, 0);
+  gradR.addColorStop(0, 'rgba(0,0,0,0)');
+  gradR.addColorStop(1, 'rgba(0,0,0,0.88)');
+  ctx.fillStyle = gradR;
+  ctx.fillRect(wallX + WORLD_W - fadeW, wallY, fadeW, wallH);
+
+  // ── Gradiente de sombra no topo ───────────────────────────────────────────
+  const topFade = ctx.createLinearGradient(0, wallY, 0, wallY + 120);
+  topFade.addColorStop(0, 'rgba(0,0,0,0.75)');
+  topFade.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = topFade;
+  ctx.fillRect(wallX, wallY, WORLD_W, 120);
+}
