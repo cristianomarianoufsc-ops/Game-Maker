@@ -19,6 +19,7 @@ import bystander1Url from '@assets/1b_1777223906240.png';
 import bystander2Url from '@assets/2b_1777223906243.png';
 import bystander3Url from '@assets/image_1778075246986.png';
 import bystander4Url from '@assets/mulher_1778075255529.png';
+import npcHitUrl from '@assets/image_1778079852355.png';
 import standingTireUrl from '@assets/pneu_1776643651883.png';
 import rollingTireUrl from '@assets/pneu2_1776643651884.png';
 import brickTextureUrl from '/brick_texture.png';
@@ -138,6 +139,7 @@ function makeInitialBystanders(): Bystander[] {
       fleeDir: 'right' as const,
       fleeSpeed: 4.8,
       deadTimer: 0,
+      useHitSprite: true,
     },
     {
       // Barbudo da direita: virado para a esquerda no frame sentado
@@ -155,6 +157,7 @@ function makeInitialBystanders(): Bystander[] {
       fleeDir: 'right' as const,
       fleeSpeed: 3.4,
       deadTimer: 0,
+      useHitSprite: true,
     },
     {
       // Senhor mais velho — mais à frente (corre menos, começa na frente)
@@ -173,6 +176,7 @@ function makeInitialBystanders(): Bystander[] {
       deadTimer: 0,
       deathFrame: 2,
       playerFleeDist: 1100,
+      useHitSprite: true,
     },
     {
       // Mulher jovem — atrás do senhor (corre mais, mas não alcança Horácio)
@@ -191,6 +195,7 @@ function makeInitialBystanders(): Bystander[] {
       deadTimer: 0,
       deathFrame: 2,
       playerFleeDist: 1100,
+      useHitSprite: true,
     },
   ];
 }
@@ -687,6 +692,7 @@ export default function Game() {
   const bystander2ImgRef = useRef<HTMLImageElement | null>(null);
   const bystander3ImgRef = useRef<HTMLImageElement | null>(null);
   const bystander4ImgRef = useRef<HTMLImageElement | null>(null);
+  const npcHitImgRef = useRef<HTMLImageElement | null>(null);
   const customSpriteImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
 
   // Responsive scale: fit canvas inside available viewport
@@ -1372,6 +1378,17 @@ export default function Game() {
       }
     };
     bystander4Img.src = bystander4Url;
+
+    const npcHitImg = new Image();
+    npcHitImg.onload = () => {
+      const stripped = stripWhiteBackground(npcHitImg);
+      if (stripped.complete && stripped.naturalWidth > 0) {
+        npcHitImgRef.current = stripped;
+      } else {
+        stripped.onload = () => { npcHitImgRef.current = stripped; };
+      }
+    };
+    npcHitImg.src = npcHitUrl;
 
     const onKey = (e: KeyboardEvent, down: boolean) => {
       if (down && gsRef.current?.gamePhase === 'editor' && editorCollisionModeRef.current) {
@@ -3559,7 +3576,7 @@ export default function Game() {
       drawFlyingTires(ctx, gs.flyingTires, gs.camera.x, rollingTireImgRef.current);
       drawParticles(ctx, gs);
       drawDogs(ctx, gs.dogs, gs.camera.x, dogSheetImgRef.current, dogIdleImgRef.current);
-      drawBystanders(ctx, gs.bystanders, gs.camera.x, bystander1ImgRef.current, bystander2ImgRef.current, bystander3ImgRef.current, bystander4ImgRef.current);
+      drawBystanders(ctx, gs.bystanders, gs.camera.x, bystander1ImgRef.current, bystander2ImgRef.current, bystander3ImgRef.current, bystander4ImgRef.current, npcHitImgRef.current);
       drawPlayer(ctx, gs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current, ladderClimbImgRef.current, ladderDescendImgRef.current);
       drawFireEscapeFloors(ctx, gs.camera.x, fireEscapeFloorImgRef.current);
       drawTireHideouts(ctx, _renderPlats, _rCamX, standingTireImgRef.current, []);

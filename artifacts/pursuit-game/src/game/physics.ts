@@ -1800,11 +1800,11 @@ export function updateBullets(
       }
     }
 
-    // Hit bystander — hitbox generoso (100px largura) para combinar com o sprite visual
+    // Hit bystander — hitbox ajustada ao corpo visual do NPC
     let hitBystander = false;
     for (const by of bystanders) {
       if (by.state === 'dead') continue;
-      if (rectOverlap(b.x - 4, b.y - 4, 8, 8, by.x, by.y, 100, by.h)) {
+      if (rectOverlap(b.x - 4, b.y - 4, 8, 8, by.x + 8, by.y + 5, by.w + 4, by.h - 10)) {
         by.state = 'dead';
         by.vx = 0;
         by.deadTimer = 1400;

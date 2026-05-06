@@ -3819,7 +3819,8 @@ export function drawBystanders(
   sheet1: HTMLImageElement | null,
   sheet2: HTMLImageElement | null,
   sheet3: HTMLImageElement | null,
-  sheet4: HTMLImageElement | null
+  sheet4: HTMLImageElement | null,
+  npcHitSheet: HTMLImageElement | null
 ): void {
   for (const b of bystanders) {
     const sheet = b.spriteId === 1 ? sheet1
@@ -3859,11 +3860,34 @@ export function drawBystanders(
     const displayW = Math.round(displayH * (frameW / frameH));
     const screenY = GROUND_Y + NPC_FOOT_OFFSET - displayH;
 
-    // --- Estado morto: colapsa no chão com tint vermelho e fade ---
+    // --- Estado morto ---
     if (b.state === 'dead') {
       const DEAD_DURATION = 1400;
       const t = Math.max(0, b.deadTimer / DEAD_DURATION); // 1→0
       const alpha = t < 0.3 ? t / 0.3 : 1;              // fade out último 30%
+
+      // Sprite de impacto (npc-hit.png): voa para trás sem rotação
+      if (b.useHitSprite && npcHitSheet && npcHitSheet.complete && npcHitSheet.naturalWidth > 0) {
+        const hitH = displayH * 1.15;
+        const hitW = Math.round(hitH * (npcHitSheet.naturalWidth / npcHitSheet.naturalHeight));
+        // Offset vertical: simula o NPC sendo jogado levemente para cima
+        const riseOffset = (1 - t) * 18;
+        const drawX = screenX + displayW / 2 - hitW / 2;
+        const drawY = screenY + displayH - hitH - riseOffset;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        if (!b.facingRight) {
+          ctx.translate(drawX + hitW, drawY);
+          ctx.scale(-1, 1);
+          ctx.drawImage(npcHitSheet, 0, 0, hitW, hitH);
+        } else {
+          ctx.drawImage(npcHitSheet, drawX, drawY, hitW, hitH);
+        }
+        ctx.restore();
+        continue;
+      }
+
+      // Animação padrão: colapsa no chão com tint vermelho
       const angle = (1 - t) * (Math.PI / 2);             // roda até 90° deitado
       const footX = screenX + displayW / 2;
       const footY = screenY + displayH;
