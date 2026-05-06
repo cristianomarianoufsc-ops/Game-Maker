@@ -13,12 +13,18 @@ A 2D pursuit game with physics, HP/stamina system, and mobile controls, offering
 - To confirm game accessibility: take a screenshot at `path: "/"`
 - To run API server locally (if needed): `pnpm --filter @workspace/api-server run dev`
 
-> **IMPORTANTE — Preview em branco ("Your app is not running"):**
-> O Replit criou um artifact chamado `artifacts/pursuit-game: web` que é o workflow correto para
-> o preview aparecer na aba Preview. Se a tela mostrar "Your app is not running", sempre execute:
-> `restart_workflow("artifacts/pursuit-game: web")`
-> NÃO use `Start application` para o preview — esse workflow existe mas não é o que o painel
-> Preview usa. O correto é sempre `artifacts/pursuit-game: web`.
+> **IMPORTANTE — Como fazer o preview aparecer (SEMPRE fazer isso ao iniciar):**
+>
+> O painel Preview usa **exclusivamente** o workflow `artifacts/pursuit-game: web`.
+> Ao iniciar uma sessão ou se aparecer "Your app is not running", execute **obrigatoriamente**:
+>
+> ```
+> restart_workflow("artifacts/pursuit-game: web")
+> ```
+>
+> - NÃO use `Start application` para o preview — ele NÃO controla o painel Preview visível ao usuário.
+> - O workflow `artifacts/pursuit-game: web` pode estar parado após reinicializações do ambiente.
+> - Confirmado funcionando: reiniciar esse workflow resolve o preview em branco 100% dos casos.
 
 ## Stack
 
@@ -61,7 +67,7 @@ A 2D pursuit game with physics, HP/stamina system, and mobile controls, offering
 
 ## Gotchas
 
-- **Workflow do Preview**: O painel Preview usa exclusivamente o workflow `artifacts/pursuit-game: web`. Se aparecer "Your app is not running", execute `restart_workflow("artifacts/pursuit-game: web")`. O workflow `Start application` NÃO é o que controla o preview visível ao usuário.
+- **Workflow do Preview (CRÍTICO)**: O painel Preview usa exclusivamente o workflow `artifacts/pursuit-game: web`. Esse workflow pode estar parado após reinicializações do ambiente. Ao iniciar qualquer sessão, execute `restart_workflow("artifacts/pursuit-game: web")` imediatamente. O workflow `Start application` NÃO controla o preview visível ao usuário — confirmado em produção.
 - **Dependências ausentes**: Se o servidor não iniciar com `vite: not found` ou `node_modules missing`, rode `pnpm install` na raiz antes de reiniciar qualquer workflow.
 - **Level Editor Persistence**: Uploaded sprites and custom hitboxes depend on `localStorage` until permanently added to project assets.
 - **Autosave Failures**: `git push` failures in `scripts/level-autosave.sh` are silent and do not interrupt the watch process.
