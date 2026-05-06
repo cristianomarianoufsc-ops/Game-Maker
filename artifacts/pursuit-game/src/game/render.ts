@@ -2035,9 +2035,15 @@ export function drawStreetBuildings(
     const sw = g.sw;
     if (sx + sw < -80 || sx > CANVAS_W + 80) continue;
 
+    // Clip visible X range to avoid drawing off-screen (critical for wide groups)
+    const visX0 = Math.max(sx, 0);
+    const visX1 = Math.min(sx + sw, CANVAS_W);
+    if (visX1 <= visX0) continue;
+    const visW = visX1 - visX0;
+
     // ── 1. Mortar base (darkest colour fills the whole column) ──
     ctx.fillStyle = '#1e0c06';
-    ctx.fillRect(sx, 0, sw, bH);
+    ctx.fillRect(visX0, 0, visW, bH);
 
     // ── 2. Individual bricks — staggered rows, mortar (dark base) shows through ──
     for (let row = 0, ry = 0; ry < bH; row++, ry += BRICK_STEP_Y) {
@@ -2045,24 +2051,28 @@ export function drawStreetBuildings(
       ctx.fillStyle = brickColor;
       const rowH   = Math.min(BRICK_H, bH - ry);
       const offset = (row % 2) * Math.round(BRICK_STEP_X / 2);
-      for (let bx = sx - offset; bx < sx + sw; bx += BRICK_STEP_X) {
-        const bx0 = Math.max(bx, sx);
-        const bw  = Math.min(bx + BRICK_W, sx + sw) - bx0;
+      // Skip directly to first brick that overlaps the visible region
+      const groupStart = sx - offset;
+      const skipCount  = Math.max(0, Math.floor((visX0 - groupStart) / BRICK_STEP_X) - 1);
+      const firstBx    = groupStart + skipCount * BRICK_STEP_X;
+      for (let bx = firstBx; bx < sx + sw && bx < CANVAS_W + BRICK_STEP_X; bx += BRICK_STEP_X) {
+        const bx0 = Math.max(bx, sx, 0);
+        const bw  = Math.min(bx + BRICK_W, sx + sw, CANVAS_W) - bx0;
         if (bw > 0) ctx.fillRect(bx0, ry, bw, rowH);
       }
     }
 
     // ── 3. Subtle vertical corner lines (pixel-art depth) ──
     ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.fillRect(sx, 0, 2, bH);
+    ctx.fillRect(visX0, 0, 2, bH);
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillRect(sx + sw - 3, 0, 3, bH);
+    ctx.fillRect(visX1 - 3, 0, 3, bH);
 
     // ── 4. Top shadow fade ──
     ctx.fillStyle = 'rgba(0,0,0,0.50)';
-    ctx.fillRect(sx, 0, sw, 6);
+    ctx.fillRect(visX0, 0, visW, 6);
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.fillRect(sx, 6, sw, 8);
+    ctx.fillRect(visX0, 6, visW, 8);
 
     // Janelas do fundo removidas — as sacadas em drawPlatforms já cuidam disso
   }

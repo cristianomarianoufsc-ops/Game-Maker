@@ -304,7 +304,7 @@ function saveCustomSpritePlatforms(platforms: Platform[]): string | null {
 
 // Remove white/near-white background from a sprite sheet exported without transparency.
 // Uses perceptual brightness so anti-aliased edges fade out smoothly instead of leaving a white fringe.
-function stripWhiteBackground(src: HTMLImageElement, erodeEdge = false): HTMLImageElement {
+function stripWhiteBackground(src: HTMLImageElement, erodeEdge = false, removeGlobalWhite = false): HTMLImageElement {
   const canvas = document.createElement('canvas');
   canvas.width  = src.naturalWidth;
   canvas.height = src.naturalHeight;
@@ -386,6 +386,25 @@ function stripWhiteBackground(src: HTMLImageElement, erodeEdge = false): HTMLIma
           const fade = Math.min(1, (brightness - 170) / 70);
           px[i + 3] = Math.round(px[i + 3] * (1 - fade * 0.75));
         }
+      }
+    }
+  }
+
+  // Remove global white: apaga pixels brancos enclausurados (ex: buraco central do pneu)
+  // que o BFS não consegue alcançar por serem circundados pelo sprite
+  if (removeGlobalWhite) {
+    for (let pos = 0; pos < W * H; pos++) {
+      if (visited[pos]) continue; // já removido pelo BFS
+      const i = pos * 4;
+      if (px[i + 3] < 10) continue; // já transparente
+      const r = px[i], g = px[i + 1], b = px[i + 2];
+      const brightness = r * 0.299 + g * 0.587 + b * 0.114;
+      const maxC = Math.max(r, g, b);
+      const minC = Math.min(r, g, b);
+      const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
+      if (brightness > 200 && saturation < 0.18) {
+        const t = Math.min(1, Math.max(0, (brightness - 160) / 80));
+        px[i + 3] = Math.round((1 - t) * px[i + 3]);
       }
     }
   }
@@ -1319,7 +1338,7 @@ export default function Game() {
 
     const standingTireImg = new Image();
     standingTireImg.onload = () => {
-      const stripped = stripWhiteBackground(standingTireImg);
+      const stripped = stripWhiteBackground(standingTireImg, false, true);
       standingTireImgRef.current = stripped;
       stripped.onload = () => { standingTireImgRef.current = stripped; };
     };
@@ -1327,7 +1346,7 @@ export default function Game() {
 
     const rollingTireImg = new Image();
     rollingTireImg.onload = () => {
-      const stripped = stripWhiteBackground(rollingTireImg);
+      const stripped = stripWhiteBackground(rollingTireImg, false, true);
       rollingTireImgRef.current = stripped;
       stripped.onload = () => { rollingTireImgRef.current = stripped; };
     };
