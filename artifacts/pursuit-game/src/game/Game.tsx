@@ -600,6 +600,10 @@ function getScale() {
   return Math.min(1, scaleX, scaleY);
 }
 
+// Cache de gradientes de poças do chão — keyed por worldX*10000+platY
+// As poças são determinísticas (mesma posição = mesmo gradiente), nunca mudam
+const _puddleGradCache = new Map<number, CanvasGradient>();
+
 export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gsRef = useRef<GameState | null>(null);
@@ -3442,6 +3446,9 @@ export default function Game() {
       // World-space rendering (offset by camera)
       ctx.save();
       ctx.translate(-_rCamX, 0);
+      // Visible world-space X range (used to clamp inner loops to screen)
+      const _visWX0 = _rCamX;
+      const _visWX1 = _rCamX + CANVAS_W;
       // Draw all ground segments with decoration
       for (const plat of _rVisPlats) {
         if (plat.type === 'ground') {
@@ -3451,38 +3458,54 @@ export default function Game() {
           // Government red edge stripe
           ctx.fillStyle = COLORS.groundEdge;
           ctx.fillRect(plat.x, plat.y, plat.w, 4);
-          // Sharp void edges — left and right sides of each segment drop into the abyss
+          // Sharp void edges — only create gradient if the edge is actually on screen
           const edgeW = 4;
-          const edgeGradL = ctx.createLinearGradient(plat.x, 0, plat.x + edgeW, 0);
-          edgeGradL.addColorStop(0, 'rgba(0,0,0,0.9)');
-          edgeGradL.addColorStop(1, 'rgba(0,0,0,0)');
-          ctx.fillStyle = edgeGradL;
-          ctx.fillRect(plat.x, plat.y, edgeW, 90);
-          const edgeGradR = ctx.createLinearGradient(plat.x + plat.w - edgeW, 0, plat.x + plat.w, 0);
-          edgeGradR.addColorStop(0, 'rgba(0,0,0,0)');
-          edgeGradR.addColorStop(1, 'rgba(0,0,0,0.9)');
-          ctx.fillStyle = edgeGradR;
-          ctx.fillRect(plat.x + plat.w - edgeW, plat.y, edgeW, 90);
-          // Cracks in concrete
+          if (plat.x >= _visWX0 - edgeW && plat.x <= _visWX1) {
+            const edgeGradL = ctx.createLinearGradient(plat.x, 0, plat.x + edgeW, 0);
+            edgeGradL.addColorStop(0, 'rgba(0,0,0,0.9)');
+            edgeGradL.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = edgeGradL;
+            ctx.fillRect(plat.x, plat.y, edgeW, 90);
+          }
+          const rightEdgeX = plat.x + plat.w - edgeW;
+          if (rightEdgeX >= _visWX0 && rightEdgeX <= _visWX1 + edgeW) {
+            const edgeGradR = ctx.createLinearGradient(rightEdgeX, 0, rightEdgeX + edgeW, 0);
+            edgeGradR.addColorStop(0, 'rgba(0,0,0,0)');
+            edgeGradR.addColorStop(1, 'rgba(0,0,0,0.9)');
+            ctx.fillStyle = edgeGradR;
+            ctx.fillRect(rightEdgeX, plat.y, edgeW, 90);
+          }
+          // Cracks in concrete — skip to first visible crack, stop at last visible
           ctx.strokeStyle = COLORS.crackLine;
           ctx.lineWidth = 1;
-          for (let cx2 = plat.x + 15; cx2 < plat.x + plat.w - 15; cx2 += 60) {
+          const crackStep = 60;
+          const crackMin = plat.x + 15;
+          const crackMax = plat.x + plat.w - 15;
+          const crackStart = crackMin + Math.max(0, Math.floor((_visWX0 - crackMin) / crackStep) - 1) * crackStep;
+          for (let cx2 = crackStart; cx2 < crackMax && cx2 < _visWX1 + crackStep; cx2 += crackStep) {
             ctx.beginPath();
             ctx.moveTo(cx2, plat.y + 5);
             ctx.lineTo(cx2 + 15, plat.y + 14);
             ctx.stroke();
           }
-          // Puddles — wet pavement reflecting red sky
-          const step = 140;
-          for (let px = plat.x; px < plat.x + plat.w; px += step) {
-            const worldX = Math.floor(px / step);
+          // Puddles — skip to first visible puddle, stop at last visible, cache gradients
+          const pStep = 140;
+          const puddleStart = plat.x + Math.max(0, Math.floor((_visWX0 - plat.x) / pStep) - 1) * pStep;
+          for (let px = puddleStart; px < plat.x + plat.w && px < _visWX1 + pStep; px += pStep) {
+            const worldX = Math.floor(px / pStep);
             const h = ((worldX * 2654435761) >>> 0) % 100;
             if (h > 38) continue;
             const pw = 18 + (h % 3) * 14;
             if (px + pw / 2 > plat.x + plat.w - 12) continue;
-            const pGrad = ctx.createLinearGradient(px, plat.y + 2, px, plat.y + 10);
-            pGrad.addColorStop(0, 'rgba(190,35,10,0.28)');
-            pGrad.addColorStop(1, 'rgba(80,15,5,0.12)');
+            // Cache gradient keyed by world position (never changes for same px/y)
+            const cacheKey = px * 10000 + plat.y;
+            let pGrad = _puddleGradCache.get(cacheKey);
+            if (!pGrad) {
+              pGrad = ctx.createLinearGradient(px, plat.y + 2, px, plat.y + 10);
+              pGrad.addColorStop(0, 'rgba(190,35,10,0.28)');
+              pGrad.addColorStop(1, 'rgba(80,15,5,0.12)');
+              _puddleGradCache.set(cacheKey, pGrad);
+            }
             ctx.fillStyle = pGrad;
             ctx.beginPath();
             ctx.ellipse(px, plat.y + 6, pw / 2, 4.5, 0, 0, Math.PI * 2);
