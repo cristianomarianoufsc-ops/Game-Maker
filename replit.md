@@ -1,35 +1,17 @@
-# Workspace
+# Pursuit — O Preço da Ordem
 
-## Configuração Inicial do Agente (LEIA PRIMEIRO)
+A 2D pursuit game with physics, HP/stamina system, and mobile controls, offering a dynamic player experience.
 
-Toda vez que um novo agente assumir este projeto, execute estes passos antes de qualquer outra coisa:
+## Run & Operate
 
-1. **Instalar dependências** (caso `node_modules` esteja ausente):
-   ```
-   pnpm install
-   ```
-
-2. **Iniciar os workflows obrigatórios** — o preview fica branco/parado se eles não estiverem rodando:
-
-   > ⚠️ **ATENÇÃO — ERRO COMUM:** O workflow do jogo se chama **exatamente** `artifacts/pursuit-game: web`.
-   > NÃO use `Start application` — esse nome está errado e não inicia o preview correto.
-   > Copie o nome abaixo literalmente ao chamar `restart_workflow(...)`.
-
-   ```
-   restart_workflow("artifacts/pursuit-game: web")
-   restart_workflow("Level Autosave")
-   ```
-
-   - `artifacts/pursuit-game: web` — servidor principal do jogo (porta 5000)
-   - `Level Autosave` — vigia de salvamento automático da fase
-
-3. **Confirmar que o jogo está acessível** fazendo um screenshot em `path: "/"` antes de iniciar qualquer tarefa.
-
-> Os workflows `artifacts/api-server: API Server` e `artifacts/mockup-sandbox: Component Preview Server` só precisam ser iniciados se a tarefa exigir o servidor de API ou o sandbox de mockup.
-
-## Overview
-
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+- To install dependencies: `pnpm install`
+- To start the main game server and level autosave:
+  ```
+  restart_workflow("artifacts/pursuit-game: web")
+  restart_workflow("Level Autosave")
+  ```
+- To confirm game accessibility: take a screenshot at `path: "/"`
+- To run API server locally (if needed): `pnpm --filter @workspace/api-server run dev`
 
 ## Stack
 
@@ -43,62 +25,44 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
-## Artifacts
+## Where things live
 
-- **pursuit-game** (`@workspace/pursuit-game`): "Pursuit — O Preço da Ordem" — jogo de perseguição 2D com física, sistema de HP/stamina, e controles mobile. Clonado de https://github.com/cristianomarianoufsc-ops/Game-Maker
-- Movimento recente: mortal curto saindo do wall run quando o jogador pula mantendo a direção contra a parede, usando `@assets/mortal_1776009939272.png`.
-- Movimento recente: subida vertical saindo do wall run quando o jogador aperta apenas pulo, usando `@assets/subida_1776012458574.png`; Horácio impulsiona para cima, agarra a borda do muro e sobe.
-- Movimento recente: sideflip/segundo pulo atualizado para `@assets/SIDE_FLIP_1776053462942.png`, com animação em 5 quadros, sprite ampliado e trilha curta de partículas azuladas.
-- Movimento recente: mergulho ficou mais tolerante; pulo+baixo/baixo+pulo agora têm janela de 420ms, e um pulo inicial ainda pode virar mergulho se o baixo entrar logo depois.
-- Ajuste recente: mergulho não pode mais ser convertido depois que o pulo normal já saiu no ar; continua aceitando a janela enquanto há chão/coyote time. A câmera agora acompanha verticalmente quando Horácio sobe acima da tela.
-- Ajuste recente: drone agora usa velocidade fixa igual à perseguição base inicial (`DRONE_BASE_SPEED`), sem aceleração extra de catch-up quando Horácio abre distância.
-- Editor de fase: deleções de obstáculos/plataformas/paredes agora são salvas no navegador com `localStorage` e reaplicadas após recarregar ou reiniciar a partida; chão continua protegido contra remoção.
-- Editor de fase: objetos do tipo `car` agora usam uma caixa de colisão proporcional menor que o sprite visual, permitindo descer o carro até a base visual sem parecer flutuar; a física, seleção e overlay do editor usam essa caixa física.
-- Editor de fase: objetos selecionados agora têm botão `HITBOX` abaixo de `DUP`; ao ativar, as alças e o arrasto editam somente a caixa de colisão, mantendo o tamanho visual do sprite. O texto copiado inclui `cw`, `ch`, `cox` e `coy` quando houver colisão customizada.
-- Editor de fase: Shift + arrastar uma alça do objeto faz crop visual da imagem (`crop:left,top,right,bottom`) sem alterar a colisão; a caixa de seleção/alças passa a acompanhar a área recortada. `,`/`.` e também Numpad 4/6 navegam entre checkpoints do editor.
-- Editor de fase: mover objetos no editor usa snap magnético pelas caixas de colisão, grudando bordas, centros, topo/base e chão quando estiverem próximos; duplicar (`DUP`) cria a cópia encostada ao original em vez de deixar uma folga. Quando há múltiplos objetos selecionados por marquee, o botão muda para `DUP N` e duplica o grupo inteiro mantendo posições relativas.
-- Movimento: caixas continuam objetos individuais com física/quebra própria, mas a escalada agora detecta pilhas verticais compostas. A partir de 3 caixas empilhadas permitem subir/montar no topo (1 ou 2 caixas bloqueiam escalada como parede normal); 5 ou mais bloqueiam climb/wall run vertical e deixam apenas o pulo normal, sem renovar o movimento em cada caixa individual.
-- Hitboxes inclinadas: caixas de colisão agora podem ter `slopeTop` para transformar o topo em rampa; os carros grandes do ferro velho usam slopes nos vidros frontal/traseiro para Horácio subir do capô/porta-malas até o teto sem agarrar na lateral retangular. No editor, entre em `HITBOX`, clique diretamente na caixa que quer editar, use as setas para mover a hitbox selecionada em 1px (`Shift` = 5px), use `S` ou o botão `+ SLOPE`, e arraste os losangos laranja para ajustar o ângulo. Durante o teste iniciado com `Ctrl`, clicar em um objeto volta para o editor e seleciona aquele objeto.
-- Editor de fase: quando há seleção múltipla por marquee ou `Shift + clique`, o botão `DELETAR` apaga todos os objetos selecionados, assim como o botão `DUP` duplica todos; em modo `HITBOX`, `Delete` continua removendo apenas a hitbox selecionada.
-- Editor de fase: botão `UPLOAD SPRITE` no topo aceita PNG/WebP transparente, cria um objeto do tipo `sprite` com o nome original do arquivo, salva os sprites no `localStorage` e permite mover, redimensionar, recortar e editar hitbox como os outros objetos.
-- Editor de fase: sacadas baixas `platform` com `w:115` e `h:62` agora permitem que a hitbox seja estendida para baixo além da imagem visual pelas alças do modo `HITBOX`, até o chão, para ajustar passagens que exigem rolagem.
-- Física: pilhas conectadas de caixas com altura mínima de 3 caixas agora contam como parede escalável para wall run/subida, mas continuam com `type: 'box'`, mantendo a quebra por tiro do drone.
-- Fase: removidos permanentemente da geração do ferro velho os pneus/carros/caixas listados pelo usuário em x:13050, 14000, 14050, 14700, 15450, 16250, 17100, 18100, 18600, 19100, 19700, 20200, 20400, 21200, 21600, 22400, 22600, 23400, 24350 e 24700; também removida a lixeira x:20000.
-- Fase: carro do ferro velho movido de x:13230 para x:13331; coluna de caixas em x:12440 removida permanentemente.
-- Fase: removidas caixas em x:12505 nos níveis y:-332, -387 e -442; adicionada caixa em x:12570 y:-497.
-- Editor de fase: ao iniciar um teste pelo editor, o estado atual da fase é salvo em memória; após voltar do teste com Ctrl, duplo clique em uma área vazia restaura caixas/objetos destrutíveis para esse estado e limpa caixas destruídas/caindo.
-- Editor de fase: seleção múltipla arrastada agora se comporta como grupo rígido; todas as caixas/objetos selecionados compartilham o mesmo deslocamento, respeitam o limite do chão em conjunto e não se separam durante auto-scroll ou snap magnético.
-- Fase: aplicada chave anexada com 28 adições e 32 remoções no ferro velho; carros reposicionados entre x:12795 e x:15260 e pilhas de caixas reorganizadas em x:13355/13420 e x:14107/14172/14237.
-- Fase: carro x:14858 yOffset:283 substituído por x:14889 yOffset:283; adicionados carros em x:15148 yOffset:375, x:15334 yOffset:283, x:15521 yOffset:186, x:15705 yOffset:102; removidas caixas em x:16150 y:-55 e y:-110 da pilha 4.
-- Editor de fase: aviso de copiado/selecionado deixou de usar tarja central grande e agora aparece como notificação discreta no canto inferior esquerdo para não cobrir botões como DUP, HITBOX e DELETAR.
-- Editor de fase: clicar diretamente em um objeto diferente do atualmente selecionado agora o seleciona imediatamente (com cópia dos parâmetros), sem precisar clicar no vazio primeiro; os botões/alças do objeto anterior não interceptam mais o clique.
-- Fase: sistema de pneus voadores implementado — 8 pilhas de pneus (3–5 pneus cada) posicionadas na zona x:17180–21150; quando o drone acerta uma pilha, ela some e os pneus são lançados individualmente com física de queda (gravidade, quique amortecido, atrito, rolamento) e renderização rotacionada com raios visíveis; após 7 quiques e velocidade mínima, cada pneu desaparece da cena; pilhas destruídas não reaparecem após resetar o teste do editor.
-- Fase: área do ferro velho dobrada — muro final movido de x:16900 para x:21700; chão contínuo estendido de x:12250 até x:21720; zona x:16900–21700 vazia (sem objetos, paredes, lixeiras ou plataformas); muros removidos de x:17600 e x:20900; conteúdo antigo da FREE ZONE 3 e início da WALL ZONE 3 nessa faixa eliminados.
-- Editor de fase: adicionado CP3 na navegação por `.`/`,` e Numpad 6/4 apontando para a região x:16400, antes da zona de pneus voadores.
-- Fase: removidas permanentemente as 8 pilhas de pneus voadores em x:17180, 17620, 18150, 18700, 19280, 19860, 20540 e 21150.
-- Editor de fase: checkpoint ativo agora aparece em uma tarja destacada no topo, com contador CP atual/total e linha vertical mais forte no mundo para facilitar a navegação por `.`/`,` e Numpad 6/4.
-- Editor de fase: adicionados botões clicáveis CP1/CP2/CP3 na barra superior para navegar diretamente entre checkpoints sem usar teclado.
-- Editor de fase: botão `+ CP` cria checkpoints temporários na posição atual da câmera; botão `CP JSON` copia os checkpoints novos como JSON para colar no chat e aplicar permanentemente no código/Git.
-- Editor de fase: aplicado permanentemente o checkpoint `CP4` em x:21788 a partir do JSON exportado pelo editor.
-- Mecânica de pneus pós-CP3: adicionadas pilhas-refúgio (`tireHideout`) usando `@assets/pneu_1776643651883.png`; Horácio renderiza atrás delas, elas bloqueiam tiros do drone sem bloquear o jogador e, ao serem atingidas, viram 4 pneus rolando com `@assets/pneu2_1776643651884.png`.
-- Ajuste visual/físico: pneus rolantes gerados por `tireHideout` ao serem atingidos pelo drone ficaram maiores (raio baseado em 52% da largura da pilha, limitado a 50px).
-- Editor de fase: checkpoints agora podem ser acessados diretamente pelas teclas numéricas horizontais (`1` = CP1, `2` = CP2, ..., `9` = CP9, `0` = CP10), além dos botões e da navegação por `.`/`,` e Numpad 6/4.
-- Fase: aplicada chave do editor removendo o carro x:16400, três caixas em x:16215/16280 e o `tireHideout` x:17179; adicionados três `tireHideout` em x:16186, 16276 e 16366 com `h:113`.
-- Editor de fase: objetos agora têm alça circular de rotação acima da seleção; arrastar gira visualmente o objeto, `Shift` trava em incrementos de 15°, o rótulo/cópia mostra `rot:N°` e a chave de exportação inclui `r` quando a rotação é diferente de zero. A hitbox permanece separada e editável no modo `HITBOX`.
-- Fase: aplicada chave do editor adicionando um objeto `sprite` em x:16528 yOffset:-284 com tamanho 474x474 e rotação 1°, vinculado ao sprite `@assets/carro_abandonado_pixelart_1776652992846.png`.
-- Fase: aplicada chave do editor substituindo o carro sprite de x:16528 yOffset:-284 por x:16542 yOffset:-283, mantendo `carro_abandonado_pixelart_1776652992846.png` e aplicando 5 hitboxes exportadas pelo editor.
-- Fase: aplicada chave do editor adicionando um sprite `homem.webp` em x:17396 yOffset:-112 com tamanho 56x112; como o arquivo ainda não está nos assets do projeto, ele depende do upload salvo no navegador até o arquivo ser anexado.
-- Editor de fase: a chave exportada agora inclui `img:"nome-do-arquivo.png"` para sprites enviados por upload, `cw/ch/cox/coy` para colisão simples e `boxes` para múltiplas hitboxes; o upload também remove fundo preto conectado às bordas, preservando detalhes internos escuros.
-- Editor de fase — auto-save robusto (5 melhorias): (1) badge visual de status no painel SALVAR mostra `salvo`/`modificado`/`salvando`/`erro` com cores distintas; (2) auto-save periódico com debounce de 1.5s via assinatura de conteúdo (posição, tamanho, rotação, crop, hitboxes, sprite) verificada a cada 500ms — pega TODAS as mutações sem precisar de hooks por evento; (3) entrada no editor é bloqueada até `level-patch.json` terminar de carregar (mostra "AGUARDE — carregando fase salva do servidor..." se tentar antes), evitando descarte de edições anteriores; (4) deduplicação no carregamento — entradas em `add` cujo key já existe nas plataformas originais (após atualização do código fonte) são ignoradas, eliminando objetos fantasmas duplicados; (5) `scripts/level-autosave.sh` agora faz `git push origin HEAD --quiet` com timeout de 20s após cada commit — falhas (sem rede, sem credencial) são silenciosas no log e não interrompem o vigia.
-- Editor de fase — histórico de versões: cada salvamento bem-sucedido grava um snapshot timestampado em `artifacts/pursuit-game/public/level-patch.history/<ISO>.json` (rotação automática mantém últimos 30); novo botão "⟲ HISTÓRICO" no canto inferior esquerdo abre painel listando snapshots com data/hora e contagem `+add/-del`; clicar "RESTAURAR" salva o estado atual no histórico (rede de segurança) e recarrega a página com o snapshot escolhido. Endpoints: `GET /api/list-level-patch-history`, `POST /api/restore-level-patch-history` (`{file}`). O diretório do histórico está no `.gitignore` para não poluir o repo — apenas o `level-patch.json` ativo é versionado.
-- Performance — grade espacial: `level-patch.json` cresceu para 124k plataformas / 23.9MB, causando lentidão grave. Solução implementada em `spatialGrid.ts`: grade de células de 512px construída uma vez quando o array de plataformas muda (O(1) check por frame); todos os sistemas agora consultam somente as células próximas (~2k plataformas) em vez de varrer as 124k: physics/`updatePlayer` (~45x menos), render/`drawPlatforms`, `drawTireHideouts`, `drawPotholes`, `drawStaircase`, loop de chão (todos ~45x menos). Cache de `drawStreetBuildings` mudado de string O(n) para comparação de referência O(1). `updateDrone` usa lista pré-cacheada das 2 paredes drone-solid em vez de 124k.
+- `pursuit-game/` (`@workspace/pursuit-game`): Main game application.
+- `scripts/level-autosave.sh`: Watches for and pushes level changes.
+- `artifacts/pursuit-game/public/level-patch.history/`: Timestamped level editor snapshots.
+- `src/spatialGrid.ts`: Spatial grid implementation for performance.
+- `package.json`: For project dependencies and scripts.
 
-## Key Commands
+## Architecture decisions
 
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/api-server run dev` — run API server locally
+- **PNPM Workspaces**: Used for monorepo management, allowing each package to manage its dependencies independently while sharing common tooling.
+- **Drizzle ORM**: Chosen for its type-safe approach to database interactions, integrating well with TypeScript and Zod for validation.
+- **Orval for API Codegen**: Automates the generation of API hooks and Zod schemas from an OpenAPI specification, ensuring API consistency and reducing manual errors.
+- **Level Editor Autosave**: Implemented a robust autosave system with content-based debouncing and version history to prevent data loss and facilitate rollbacks for level designers.
+- **Spatial Grid Optimization**: Introduced a spatial grid for platform management in the game engine to drastically improve rendering and physics performance with large numbers of platforms.
 
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+## Product
+
+- 2D pursuit game with detailed physics (HP, stamina, wall runs, sideflips, dives).
+- Interactive level editor with features like object duplication, hitbox editing, sprite uploading, magnetic snap, and multi-selection.
+- Dynamic environment elements including destructible boxes, climbable stacks, and flying tire physics.
+- Persistent level changes and version history for game levels.
+
+## User preferences
+
+- _Populate as you build_
+
+## Gotchas
+
+- **Workflow Naming**: Always use `artifacts/pursuit-game: web` for the main game server, not `Start application`.
+- **Level Editor Persistence**: Uploaded sprites and custom hitboxes depend on `localStorage` until permanently added to project assets.
+- **Autosave Failures**: `git push` failures in `scripts/level-autosave.sh` are silent and do not interrupt the watch process.
+
+## Pointers
+
+- [pnpm-workspace skill](https://www.npmjs.com/package/pnpm-workspace)
+- [Express 5 Documentation](https://expressjs.com/en/5x/api.html)
+- [Drizzle ORM Documentation](https://orm.drizzle.team/docs)
+- [Zod Documentation](https://zod.dev/)
+- [Orval Documentation](https://orval.dev/)
+- [esbuild Documentation](https://esbuild.github.io/)
