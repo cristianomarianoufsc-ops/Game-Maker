@@ -3836,18 +3836,24 @@ export function drawBystanders(
     const frameW = Math.floor(imgW / 3);   // 3 frames lado a lado
     const frameH = imgH;
 
-    // Escolhe frame: 0 = sentado/parado; 1,2 = corrida
-    let frameIdx = 0;
-    if (b.state === 'flee') {
-      frameIdx = 1 + (Math.floor(b.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2);
-    }
-
     // Sprites 1+2: 851x315px, 3 frames (frameW=283, frameH=315).
     // Sprite 1 (marrom): caixa sit ocupa ~88% do frame → offset 47.
     // Sprite 2 (verde): caixa sit ligeiramente acima do fundo → offset 36.
     // Sprites 3+4 (senhor/mulher): sem pose sentado — offset fixo 26 em todos os estados.
     const isNewSprite = b.spriteId === 3 || b.spriteId === 4;
     const isSit = b.state === 'sit' || b.state === 'dead';
+
+    // Escolhe frame conforme sprite:
+    // Sprites 1+2: 0=sentado, 1+2 alternam na corrida
+    // Sprites 3+4: 0+1 alternam na corrida, 2=impacto (somente no estado morto)
+    let frameIdx = 0;
+    if (b.state === 'flee') {
+      if (isNewSprite) {
+        frameIdx = Math.floor(b.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2; // 0 ou 1
+      } else {
+        frameIdx = 1 + (Math.floor(b.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2); // 1 ou 2
+      }
+    }
     const displayH = isNewSprite ? 166 : (isSit ? 175 : 166);
     const NPC_FOOT_OFFSET = isNewSprite ? 26 : (isSit ? (b.spriteId === 1 ? 47 : 36) : 26);
     const displayW = Math.round(displayH * (frameW / frameH));
