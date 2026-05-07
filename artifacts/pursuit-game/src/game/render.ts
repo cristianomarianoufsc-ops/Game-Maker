@@ -2000,6 +2000,8 @@ let _cachedPlatRef: unknown = null;
 type PlatType2 = { x: number; y: number; w: number; h: number; type: string; isRiverStump?: boolean; hideRender?: boolean };
 type Group2 = { x1: number; x2: number; sw: number; plats: PlatType2[] };
 let _cachedGroups: Group2[] = [];
+// OffscreenCanvas cache — one pre-rendered canvas per building group (keyed by x1)
+let _brickCanvasCache = new Map<number, OffscreenCanvas>();
 
 function buildGroups(platforms: PlatType2[]): Group2[] {
   const elev = platforms
@@ -2032,7 +2034,43 @@ const MORTAR   = 1;  // mortar gap (dark base shows through)
 const BRICK_STEP_X = BRICK_W + MORTAR;
 const BRICK_STEP_Y = BRICK_H + MORTAR;
 
-// ── Large street buildings — drawn directly every frame (no OffscreenCanvas)
+// ── Pre-render one building group into an OffscreenCanvas (called once per group) ──
+function _buildBrickCanvas(g: Group2, bH: number): OffscreenCanvas {
+  const oc = new OffscreenCanvas(Math.max(1, g.sw), Math.max(1, bH));
+  const bctx = oc.getContext('2d')!;
+
+  // 1. Mortar base
+  bctx.fillStyle = '#1e0c06';
+  bctx.fillRect(0, 0, g.sw, bH);
+
+  // 2. Individual bricks (group origin at canvas x=0)
+  for (let row = 0, ry = 0; ry < bH; row++, ry += BRICK_STEP_Y) {
+    bctx.fillStyle = BRICK_ROWS[row % BRICK_ROWS.length];
+    const rowH   = Math.min(BRICK_H, bH - ry);
+    const offset = (row % 2) * Math.round(BRICK_STEP_X / 2);
+    for (let bx = -offset; bx < g.sw; bx += BRICK_STEP_X) {
+      const bx0 = Math.max(bx, 0);
+      const bw  = Math.min(bx + BRICK_W, g.sw) - bx0;
+      if (bw > 0) bctx.fillRect(bx0, ry, bw, rowH);
+    }
+  }
+
+  // 3. Corner lines
+  bctx.fillStyle = 'rgba(255,255,255,0.06)';
+  bctx.fillRect(0, 0, 2, bH);
+  bctx.fillStyle = 'rgba(0,0,0,0.35)';
+  bctx.fillRect(g.sw - 3, 0, 3, bH);
+
+  // 4. Top shadow fade
+  bctx.fillStyle = 'rgba(0,0,0,0.50)';
+  bctx.fillRect(0, 0, g.sw, 6);
+  bctx.fillStyle = 'rgba(0,0,0,0.25)';
+  bctx.fillRect(0, 6, g.sw, 8);
+
+  return oc;
+}
+
+// ── Large street buildings — cached to OffscreenCanvas, drawn with drawImage each frame ──
 export function drawStreetBuildings(
   ctx: CanvasRenderingContext2D,
   platforms: ReturnType<typeof import('./level')['generateLevel']>,
@@ -2041,55 +2079,57 @@ export function drawStreetBuildings(
   if (platforms !== _cachedPlatRef) {
     _cachedGroups  = buildGroups(platforms as PlatType2[]);
     _cachedPlatRef = platforms;
+    _brickCanvasCache.clear();
   }
 
   const bH = GROUND_Y;
+  const supportsOffscreen = typeof OffscreenCanvas !== 'undefined';
 
   for (const g of _cachedGroups) {
     const sx = g.x1 - camX;
     const sw = g.sw;
     if (sx + sw < -80 || sx > CANVAS_W + 80) continue;
 
-    // Clip visible X range to avoid drawing off-screen (critical for wide groups)
     const visX0 = Math.max(sx, 0);
     const visX1 = Math.min(sx + sw, CANVAS_W);
     if (visX1 <= visX0) continue;
     const visW = visX1 - visX0;
 
-    // ── 1. Mortar base (darkest colour fills the whole column) ──
-    ctx.fillStyle = '#1e0c06';
-    ctx.fillRect(visX0, 0, visW, bH);
-
-    // ── 2. Individual bricks — staggered rows, mortar (dark base) shows through ──
-    for (let row = 0, ry = 0; ry < bH; row++, ry += BRICK_STEP_Y) {
-      const brickColor = BRICK_ROWS[row % BRICK_ROWS.length];
-      ctx.fillStyle = brickColor;
-      const rowH   = Math.min(BRICK_H, bH - ry);
-      const offset = (row % 2) * Math.round(BRICK_STEP_X / 2);
-      // Skip directly to first brick that overlaps the visible region
-      const groupStart = sx - offset;
-      const skipCount  = Math.max(0, Math.floor((visX0 - groupStart) / BRICK_STEP_X) - 1);
-      const firstBx    = groupStart + skipCount * BRICK_STEP_X;
-      for (let bx = firstBx; bx < sx + sw && bx < CANVAS_W + BRICK_STEP_X; bx += BRICK_STEP_X) {
-        const bx0 = Math.max(bx, sx, 0);
-        const bw  = Math.min(bx + BRICK_W, sx + sw, CANVAS_W) - bx0;
-        if (bw > 0) ctx.fillRect(bx0, ry, bw, rowH);
+    if (supportsOffscreen) {
+      // ── Fast path: drawImage from pre-rendered OffscreenCanvas ──
+      let brickCanvas = _brickCanvasCache.get(g.x1);
+      if (!brickCanvas) {
+        brickCanvas = _buildBrickCanvas(g, bH);
+        _brickCanvasCache.set(g.x1, brickCanvas);
       }
+      const srcX = visX0 - sx;
+      ctx.drawImage(brickCanvas, srcX, 0, visW, bH, visX0, 0, visW, bH);
+    } else {
+      // ── Fallback: draw directly (older browsers) ──
+      ctx.fillStyle = '#1e0c06';
+      ctx.fillRect(visX0, 0, visW, bH);
+      for (let row = 0, ry = 0; ry < bH; row++, ry += BRICK_STEP_Y) {
+        ctx.fillStyle = BRICK_ROWS[row % BRICK_ROWS.length];
+        const rowH   = Math.min(BRICK_H, bH - ry);
+        const offset = (row % 2) * Math.round(BRICK_STEP_X / 2);
+        const groupStart = sx - offset;
+        const skipCount  = Math.max(0, Math.floor((visX0 - groupStart) / BRICK_STEP_X) - 1);
+        const firstBx    = groupStart + skipCount * BRICK_STEP_X;
+        for (let bx = firstBx; bx < sx + sw && bx < CANVAS_W + BRICK_STEP_X; bx += BRICK_STEP_X) {
+          const bx0 = Math.max(bx, sx, 0);
+          const bw  = Math.min(bx + BRICK_W, sx + sw, CANVAS_W) - bx0;
+          if (bw > 0) ctx.fillRect(bx0, ry, bw, rowH);
+        }
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillRect(visX0, 0, 2, bH);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(visX1 - 3, 0, 3, bH);
+      ctx.fillStyle = 'rgba(0,0,0,0.50)';
+      ctx.fillRect(visX0, 0, visW, 6);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(visX0, 6, visW, 8);
     }
-
-    // ── 3. Subtle vertical corner lines (pixel-art depth) ──
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.fillRect(visX0, 0, 2, bH);
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillRect(visX1 - 3, 0, 3, bH);
-
-    // ── 4. Top shadow fade ──
-    ctx.fillStyle = 'rgba(0,0,0,0.50)';
-    ctx.fillRect(visX0, 0, visW, 6);
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.fillRect(visX0, 6, visW, 8);
-
-    // Janelas do fundo removidas — as sacadas em drawPlatforms já cuidam disso
   }
 }
 
