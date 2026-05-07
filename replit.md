@@ -15,11 +15,21 @@ A 2D pursuit game with physics, HP/stamina system, and mobile controls, offering
 
 > **IMPORTANTE — Como fazer o preview aparecer (SEMPRE fazer isso ao iniciar):**
 >
-> O painel Preview usa o workflow `Start application` (porta 5000).
+> O painel Preview usa o workflow `Start application` (porta 5000, outputType: webview).
 > Ao iniciar uma sessão ou se aparecer "Your app is not running", execute:
 >
 > ```
 > restart_workflow("Start application")
+> ```
+>
+> Se o workflow existir mas o preview ainda não aparecer, reconfigure-o via `configureWorkflow`:
+> ```javascript
+> await configureWorkflow({
+>   name: "Start application",
+>   command: "PORT=5000 BASE_PATH=/ pnpm --filter @workspace/pursuit-game run dev",
+>   waitForPort: 5000,
+>   outputType: "webview"
+> });
 > ```
 >
 > - Se o workflow falhar com `vite: not found`, rode `pnpm install` na raiz primeiro.
