@@ -1815,10 +1815,15 @@ export function updateBullets(
     }
 
     // Hit bystander — hitbox ajustada ao corpo visual do NPC
+    const BYSTANDER_RUN_FRAME_INTERVAL = 140; // ms por frame (igual ao render.ts)
     let hitBystander = false;
     for (const by of bystanders) {
       if (by.state === 'dead') continue;
       if (rectOverlap(b.x - 4, b.y - 4, 8, 8, by.x + 8, by.y + 5, by.w + 4, by.h - 10)) {
+        // NPC de touca (spriteId 1): congela o frame de corrida para cair na mesma pose
+        if (by.spriteId === 1 && by.state === 'flee') {
+          by.frozenFrame = 1 + (Math.floor(by.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2);
+        }
         by.state = 'dead';
         by.vx = 0;
         by.deadTimer = 1400;
@@ -1867,12 +1872,19 @@ export function updateBystanders(
       }
     } else {
       b.x += b.vx;
-      // Colisão com o muro da vila (x:29540) — faz o NPC voltar
+      // Colisão com o muro da vila direito (x:29540) — faz o NPC voltar
       const VILLAGE_WALL_X = 29540;
       if (b.vx > 0 && b.x + b.w >= VILLAGE_WALL_X) {
         b.x = VILLAGE_WALL_X - b.w;
         b.vx = -b.vx;
         b.facingRight = false;
+      }
+      // Colisão com o muro da vila esquerdo (x:25909 w:20) — faz o NPC voltar
+      const VILLAGE_WALL_LEFT_X = 25909 + 20; // borda direita do muro
+      if (b.vx < 0 && b.x <= VILLAGE_WALL_LEFT_X) {
+        b.x = VILLAGE_WALL_LEFT_X;
+        b.vx = -b.vx;
+        b.facingRight = true;
       }
       if (b.x > DESPAWN_RIGHT_X || b.x < DESPAWN_LEFT_X) {
         b.vx = 0;

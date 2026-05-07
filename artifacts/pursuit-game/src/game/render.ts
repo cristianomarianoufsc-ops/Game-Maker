@@ -3907,7 +3907,9 @@ export function drawBystanders(
     // Sprite 2 (verde): caixa sit ligeiramente acima do fundo → offset 36.
     // Sprites 3+4 (senhor/mulher): sem pose sentado — offset fixo 26 em todos os estados.
     const isNewSprite = b.spriteId === 3 || b.spriteId === 4;
-    const isSit = b.state === 'sit' || b.state === 'dead';
+    // NPC de touca (spriteId 1): quando morreu correndo, mantém dimensões de corrida para não saltar de posição
+    const diedFleeing = b.spriteId === 1 && b.state === 'dead' && b.frozenFrame !== undefined;
+    const isSit = (b.state === 'sit' || b.state === 'dead') && !diedFleeing;
 
     // Escolhe frame conforme sprite:
     // Sprites 1+2: 0=sentado, 1+2 alternam na corrida
@@ -3956,7 +3958,8 @@ export function drawBystanders(
       // Animação padrão: colapsa no chão sem overlay vermelho
       const footX = screenX + displayW / 2;
       const footY = screenY + displayH;
-      const dFrame = b.deathFrame ?? 0;
+      // NPC de touca (spriteId 1): usa o frame congelado da corrida; demais usam deathFrame
+      const dFrame = b.frozenFrame ?? b.deathFrame ?? 0;
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.translate(footX, footY);

@@ -209,6 +209,7 @@ export interface Bystander {
   deathFrame?: number;       // índice do frame a mostrar no estado morto (padrão 0)
   playerFleeDist?: number;   // distância do JOGADOR que dispara a fuga (além do drone)
   useHitSprite?: boolean;    // usa sprite de impacto (npc-hit.png) na morte em vez da animação padrão
+  frozenFrame?: number;      // frame congelado no momento da morte (usado por spriteId 1 para cair na pose de corrida)
 }
 
 export interface Dog {
