@@ -7,7 +7,7 @@ A 2D pursuit game with physics, HP/stamina system, and mobile controls, offering
 - To install dependencies: `pnpm install`
 - To start the main game server and level autosave:
   ```
-  restart_workflow("artifacts/pursuit-game: web")
+  restart_workflow("Start application")
   restart_workflow("Level Autosave")
   ```
 - To confirm game accessibility: take a screenshot at `path: "/"`
@@ -15,16 +15,15 @@ A 2D pursuit game with physics, HP/stamina system, and mobile controls, offering
 
 > **IMPORTANTE — Como fazer o preview aparecer (SEMPRE fazer isso ao iniciar):**
 >
-> O painel Preview usa **exclusivamente** o workflow `artifacts/pursuit-game: web`.
-> Ao iniciar uma sessão ou se aparecer "Your app is not running", execute **obrigatoriamente**:
+> O painel Preview usa o workflow `Start application` (porta 5000).
+> Ao iniciar uma sessão ou se aparecer "Your app is not running", execute:
 >
 > ```
-> restart_workflow("artifacts/pursuit-game: web")
+> restart_workflow("Start application")
 > ```
 >
-> - NÃO use `Start application` para o preview — ele NÃO controla o painel Preview visível ao usuário.
-> - O workflow `artifacts/pursuit-game: web` pode estar parado após reinicializações do ambiente.
-> - Confirmado funcionando: reiniciar esse workflow resolve o preview em branco 100% dos casos.
+> - Se o workflow falhar com `vite: not found`, rode `pnpm install` na raiz primeiro.
+> - O workflow `Level Autosave` é opcional (monitora mudanças no editor de fase).
 
 ## Stack
 
