@@ -640,6 +640,7 @@ export default function Game() {
   };
   const spatialGridRef = useRef<SpatialGrid | null>(null);
   const spatialGridSourceRef = useRef<Platform[] | null>(null);
+  const platformIndexMapRef = useRef<Map<Platform, number> | null>(null);
   const droneSolidPlatsRef = useRef<Platform[]>([]);
   const editorSelectedIdxRef = useRef(-1);
   const editorSelectedIndicesRef = useRef<Set<number>>(new Set());
@@ -3107,6 +3108,10 @@ export default function Game() {
       if (spatialGridSourceRef.current !== gs.platforms) {
         spatialGridSourceRef.current = gs.platforms;
         spatialGridRef.current = buildSpatialGrid(gs.platforms);
+        // Mapa Platform→índice para lookup O(1) na colisão de balas
+        const idxMap = new Map<Platform, number>();
+        gs.platforms.forEach((p, i) => idxMap.set(p, i));
+        platformIndexMapRef.current = idxMap;
         droneSolidPlatsRef.current = gs.platforms.filter(
           p => p.type === 'wall' && (p.x === 12100 || p.x === 21700)
         );
@@ -3367,7 +3372,7 @@ export default function Game() {
           gs.bystanders, (bx: number, by: number) => {
             gs.screenShake = 4;
             for (let i = 0; i < 10; i++) spawnP(bx, by, i % 2 === 0 ? '#cc1111' : '#881111');
-          });
+          }, spatialGridRef.current, platformIndexMapRef.current);
 
           updateFallingBoxes(gs.fallingBoxes, gs.platforms, gs.destroyedBoxIndices, gs.destroyedTireIndices);
           updateFlyingTires(gs.flyingTires);

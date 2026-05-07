@@ -14,6 +14,8 @@ import { getPlatformCollisionRects, getSlopeSurfaceY } from './collision';
 import { FIRE_ESCAPE, FIRE_ESCAPE_TOP_FLOOR_H, FIRE_ESCAPES, RIVER } from './level';
 import { spawnRiverRipple } from './render';
 import type { SlopedRect } from './collision';
+import { queryGrid } from './spatialGrid';
+import type { SpatialGrid } from './spatialGrid';
 
 interface BoxStackWall extends SlopedRect {
   boxCount: number;
@@ -1737,10 +1739,15 @@ export function updateBullets(
   flyingTires: FlyingTire[],
   destroyedTireIndices: number[],
   bystanders: Bystander[],
-  onBystanderHit: (bx: number, by: number) => void
+  onBystanderHit: (bx: number, by: number) => void,
+  spatialGrid?: SpatialGrid | null,
+  platformIndexMap?: Map<Platform, number> | null,
 ): Bullet[] {
   const ph = player.isRolling ? PLAYER_ROLL_H : PLAYER_H;
   const surviving: Bullet[] = [];
+  // Build O(1) lookup sets for destroyed indices — avoids O(n) .includes() per platform
+  const destroyedBoxSet = new Set(destroyedBoxIndices);
+  const destroyedTireSet = new Set(destroyedTireIndices);
 
   for (const b of bullets) {
     b.x += b.vx;
@@ -1751,12 +1758,19 @@ export function updateBullets(
     // Out of bounds
     if (b.age > 3000 || b.y > CANVAS_H + 50 || b.x < -500) continue;
 
-    // Hit platform
+    // Hit platform — query only nearby platforms via spatial grid (huge perf win for large levels)
+    const BULLET_MARGIN = 200;
+    const nearbyPlats = spatialGrid
+      ? queryGrid(spatialGrid, b.x - BULLET_MARGIN, b.x + BULLET_MARGIN)
+      : platforms;
+
     let hitPlatform = false;
-    for (let pi = 0; pi < platforms.length; pi++) {
-      const plat = platforms[pi];
-      if (plat.type === 'box'  && destroyedBoxIndices.includes(pi)) continue;
-      if ((plat.type === 'tire' || plat.type === 'tireHideout') && destroyedTireIndices.includes(pi)) continue;
+    for (const plat of nearbyPlats) {
+      // Look up original index — needed for destruction tracking
+      const pi = platformIndexMap ? (platformIndexMap.get(plat) ?? -1) : platforms.indexOf(plat);
+      if (pi === -1) continue;
+      if (plat.type === 'box'  && destroyedBoxSet.has(pi)) continue;
+      if ((plat.type === 'tire' || plat.type === 'tireHideout') && destroyedTireSet.has(pi)) continue;
       // Tiros do drone atravessam plataformas finas (grades das escadas) e a própria escada
       if (plat.type === 'platform') continue;
       if (plat.isLadder) continue;
