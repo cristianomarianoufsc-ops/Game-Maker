@@ -13,18 +13,21 @@ A 2D pursuit game with physics, HP/stamina system, and mobile controls, offering
 - To confirm game accessibility: take a screenshot at `path: "/"`
 - To run API server locally (if needed): `pnpm --filter @workspace/api-server run dev`
 
-> **IMPORTANTE — Como fazer o preview aparecer (SEMPRE fazer isso ao iniciar):**
+> **⚠️ AÇÃO OBRIGATÓRIA — PRIMEIRA COISA A FAZER AO INICIAR QUALQUER SESSÃO:**
 >
-> O painel Preview usa **exclusivamente** o workflow `artifacts/pursuit-game: web`.
-> Ao iniciar uma sessão ou se aparecer tela branca/em branco, execute **obrigatoriamente**:
+> Ao receber qualquer mensagem do usuário, **antes de responder ou fazer qualquer outra coisa**,
+> execute imediatamente:
 >
 > ```
 > restart_workflow("artifacts/pursuit-game: web")
 > ```
 >
-> - O workflow `Start application` NÃO controla o preview visível ao usuário.
-> - Se o workflow falhar com `vite: not found`, rode `pnpm install` na raiz primeiro.
-> - O workflow `Level Autosave` é opcional (monitora mudanças no editor de fase).
+> **Por quê:** Toda vez que o ambiente reinicia (troca de agente, idle, etc.), o workflow para
+> e o preview fica com tela branca. O usuário não deve precisar informar isso — o agente deve
+> agir proativamente. Não espere o usuário reclamar da tela branca.
+>
+> - O workflow `Start application` NÃO controla o preview visível ao usuário. Use apenas `artifacts/pursuit-game: web`.
+> - Se o workflow falhar com `vite: not found`, rode `pnpm install` na raiz primeiro, depois reinicie.
 
 ## Stack
 
