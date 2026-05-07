@@ -7,7 +7,7 @@ A 2D pursuit game with physics, HP/stamina system, and mobile controls, offering
 - To install dependencies: `pnpm install`
 - To start the main game server and level autosave:
   ```
-  restart_workflow("Start application")
+  restart_workflow("artifacts/pursuit-game: web")
   restart_workflow("Level Autosave")
   ```
 - To confirm game accessibility: take a screenshot at `path: "/"`
@@ -15,23 +15,14 @@ A 2D pursuit game with physics, HP/stamina system, and mobile controls, offering
 
 > **IMPORTANTE — Como fazer o preview aparecer (SEMPRE fazer isso ao iniciar):**
 >
-> O painel Preview usa o workflow `Start application` (porta 5000, outputType: webview).
-> Ao iniciar uma sessão ou se aparecer "Your app is not running", execute:
+> O painel Preview usa **exclusivamente** o workflow `artifacts/pursuit-game: web`.
+> Ao iniciar uma sessão ou se aparecer tela branca/em branco, execute **obrigatoriamente**:
 >
 > ```
-> restart_workflow("Start application")
+> restart_workflow("artifacts/pursuit-game: web")
 > ```
 >
-> Se o workflow existir mas o preview ainda não aparecer, reconfigure-o via `configureWorkflow`:
-> ```javascript
-> await configureWorkflow({
->   name: "Start application",
->   command: "PORT=5000 BASE_PATH=/ pnpm --filter @workspace/pursuit-game run dev",
->   waitForPort: 5000,
->   outputType: "webview"
-> });
-> ```
->
+> - O workflow `Start application` NÃO controla o preview visível ao usuário.
 > - Se o workflow falhar com `vite: not found`, rode `pnpm install` na raiz primeiro.
 > - O workflow `Level Autosave` é opcional (monitora mudanças no editor de fase).
 
@@ -76,7 +67,7 @@ A 2D pursuit game with physics, HP/stamina system, and mobile controls, offering
 
 ## Gotchas
 
-- **Workflow do Preview (CRÍTICO)**: O painel Preview usa exclusivamente o workflow `artifacts/pursuit-game: web`. Esse workflow pode estar parado após reinicializações do ambiente. Ao iniciar qualquer sessão, execute `restart_workflow("artifacts/pursuit-game: web")` imediatamente. O workflow `Start application` NÃO controla o preview visível ao usuário — confirmado em produção.
+- **Workflow do Preview (CRÍTICO)**: O painel Preview usa exclusivamente o workflow `artifacts/pursuit-game: web`. Esse workflow pode estar parado após reinicializações do ambiente. Ao iniciar qualquer sessão, execute `restart_workflow("artifacts/pursuit-game: web")` imediatamente. O workflow `Start application` NÃO controla o preview visível ao usuário — confirmado em produção. Se o preview aparecer branco, reiniciar esse workflow resolve 100% dos casos.
 - **Dependências ausentes**: Se o servidor não iniciar com `vite: not found` ou `node_modules missing`, rode `pnpm install` na raiz antes de reiniciar qualquer workflow.
 - **Level Editor Persistence**: Uploaded sprites and custom hitboxes depend on `localStorage` until permanently added to project assets.
 - **Autosave Failures**: `git push` failures in `scripts/level-autosave.sh` are silent and do not interrupt the watch process.
