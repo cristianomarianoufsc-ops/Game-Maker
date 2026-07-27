@@ -1,0 +1,1 @@
+- [Preview do jogo clonado](preview-game-assets.md) — o jogo depende de recursos em `attached_assets`; sincronize-os ao mover o código para outro artifact.

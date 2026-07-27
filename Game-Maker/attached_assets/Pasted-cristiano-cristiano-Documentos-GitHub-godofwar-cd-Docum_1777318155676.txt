@@ -1,0 +1,599 @@
+cristiano@cristiano:~/Documentos/GitHub/godofwar$ cd ~/Documentos/GitHub/godofwar
+git pull origin main
+bash rebuild_runtime.sh                # ~30s
+PS2_TRACE=1 ./build/GodOfWarPCPort GOD_PC_PORT_FINAL/data/SCUS_973.99 2>&1 | tee log_part9.txt
+grep -E "stub PARTE 9|Unknown syscallId=0x7|stub:0x182f28|vif1:cmd|alloc #|13FAB8" log_part9.txt | head -200
+wc -l log_part9.txt
+remote: Enumerating objects: 6, done.
+remote: Counting objects: 100% (6/6), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 4 (delta 2), reused 4 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (4/4), 124.99 KiB | 214.00 KiB/s, done.
+From https://github.com/cristianomarianoufsc-ops/godofwar
+ * branch            main       -> FETCH_HEAD
+   561f717..6a2bd88  main       -> origin/main
+Updating 561f717..6a2bd88
+Fast-forward
+ ...pc-0x294034-Warning-Unimpleme_1777316661598.txt | 381697 ++++++++++++++++++
+ 1 file changed, 381697 insertions(+)
+ create mode 100644 attached_assets/Pasted-1-0x296a50-a2-0x0-a3-0x20-pc-0x294034-Warning-Unimpleme_1777316661598.txt
+[1/3] Recompilando o runtime do PS2...
+[100%] Built target ps2runtime
+
+[2/3] Relinkando o executável GodOfWarPCPort...
+[  1%] Built target ps2runtime
+[100%] Built target gow_recompiled
+[100%] Built target GodOfWarPCPort
+
+[3/3] Pronto! Executável atualizado: build/GodOfWarPCPort
+
+=================================================
+  God of War PC Port
+=================================================
+[Config] Carregando configurações de config.toml
+ELF: GOD_PC_PORT_FINAL/data/SCUS_973.99
+INFO: Initializing raylib 5.5
+INFO: Platform backend: DESKTOP (GLFW)
+INFO: Supported raylib modules:
+INFO:     > rcore:..... loaded (mandatory)
+INFO:     > rlgl:...... loaded (mandatory)
+INFO:     > rshapes:... loaded (optional)
+INFO:     > rtextures:. loaded (optional)
+INFO:     > rtext:..... loaded (optional)
+INFO:     > rmodels:... loaded (optional)
+INFO:     > raudio:.... loaded (optional)
+INFO: DISPLAY: Device initialized successfully
+INFO:     > Display size: 1366 x 768
+INFO:     > Screen size:  640 x 448
+INFO:     > Render size:  640 x 448
+INFO:     > Viewport offsets: 0, 0
+INFO: GLAD: OpenGL extensions loaded successfully
+INFO: GL: Supported extensions count: 207
+INFO: GL: OpenGL device information:
+INFO:     > Vendor:   Intel
+INFO:     > Renderer: Mesa Intel(R) HD Graphics 4000 (IVB GT2)
+INFO:     > Version:  4.2 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.1
+INFO:     > GLSL:     4.20
+INFO: GL: VAO extension detected, VAO functions loaded successfully
+INFO: GL: NPOT textures extension detected, full NPOT textures supported
+INFO: GL: DXT compressed textures supported
+INFO: GL: ETC2/EAC compressed textures supported
+INFO: PLATFORM: DESKTOP (GLFW - X11): Initialized successfully
+INFO: TEXTURE: [ID 1] Texture loaded successfully (1x1 | R8G8B8A8 | 1 mipmaps)
+INFO: TEXTURE: [ID 1] Default texture loaded successfully
+INFO: SHADER: [ID 1] Vertex shader compiled successfully
+INFO: SHADER: [ID 2] Fragment shader compiled successfully
+INFO: SHADER: [ID 3] Program shader loaded successfully
+INFO: SHADER: [ID 3] Default shader loaded successfully
+INFO: RLGL: Render batch vertex buffers loaded successfully in RAM (CPU)
+INFO: RLGL: Render batch vertex buffers loaded successfully in VRAM (GPU)
+INFO: RLGL: Default OpenGL state initialized successfully
+INFO: TEXTURE: [ID 2] Texture loaded successfully (128x128 | GRAY_ALPHA | 1 mipmaps)
+INFO: FONT: Default font loaded successfully (224 glyphs)
+INFO: SYSTEM: Working Directory: /home/cristiano/Documentos/GitHub/godofwar
+INFO: TIMER: Target time per frame: 16.667 milliseconds
+INFO: AUDIO: Device initialized successfully
+INFO:     > Backend:       miniaudio | PulseAudio
+INFO:     > Format:        32-bit IEEE Floating Point -> 32-bit Signed Integer
+INFO:     > Channels:      2 -> 2
+INFO:     > Sample rate:   48000 -> 48000
+INFO:     > Periods size:  3600
+Janela: 640x448 | FPS: 60
+Registrando funções recompiladas...
+Mapeando 5625 funções recompiladas...
+[stub] 0x00080004 registrado (handler IOP — modo diagnostico)
+Carregando ELF: GOD_PC_PORT_FINAL/data/SCUS_973.99
+Loading segment: 0x100000 - 0x35d080 (filesz: 0x1c7018, memsz: 0x25d080)
+Registered code region: 100000 - 35d080
+[game_overrides] applying 'GodOfWarPCPort:sub_0013DA10'
+[game_overrides] God of War: stub PARTE 7 PLANO A registrado em 0x0013DA10 (sub_0013DA10) — bump allocator de 16384 nos em [0x1000000..0x1100000]
+[game_overrides] God of War: stub PARTE 8 PLANO A registrado em 0x00182F28 (handler INTC VBlank — replica fiel das 8 instrucoes em sub_00182EE8 que o detector PS2Recomp perdeu por estarem apos um jr $ra)
+[game_overrides] applied 1 matching override(s).
+ELF file loaded successfully. Entry point: 0x100008
+Iniciando execução...
+[ps2_missing_report] ativado. Relatorio sera salvo em ./ps2_missing.log ao encerrar (ou Ctrl+C).
+[boot_stub] $gp configurado para 0x2cf070
+[boot_stub] FIX 1: sentinel lista circular #1 inicializado em 0x2cf090 -> lista vazia, sub_00100408 retornara imediatamente
+[boot_stub] FIX 6: sentinel lista circular #2 inicializado em 0x2cbbb0 -> lista vazia, sub_0013FAB8 nao loopa
+[boot_stub] init 0x2994a0
+[CreateSema] id=1 init=1 max=1
+[CreateSema] id=2 init=1 max=1
+[Syscall83:override] handler=0x299338 invoked=false pc=0x29937c ra=0x2993ec a0=0x80000000 a1=0x80080000 a2=0x299338 a3=0x2c7080 guestRet=0x0 builtinRet=0x8001218c guest-20c=0x0 builtin-20c=0x80011f80 guest-168=0x0 builtin-168=0x80012024 match=false
+[SyscallOverride:fallback] syscall=0x83 handler=0x299338 pc=0x29937c ra=0x2993ec
+[FindAddress:hit] pc=0x29937c start=0x80000000 end=0x80080000 alignedStart=0x80000000 alignedEnd=0x80080000 target=0x299338 targetNorm=0x299338 result=0x8001218c scannedWords=131072 allZero=false aborted=false
+  firstWords: [0x80000000]=0x0 [0x80000004]=0x0 [0x80000008]=0x0 [0x8000000c]=0x0 [0x80000010]=0x0 [0x80000014]=0x0 [0x80000018]=0x0 [0x8000001c]=0x0
+  nonZeroSample: [0x80000020]=0x20 [0x800002f0]=0x8001 [0x800002f8]=0x1f80 [0x800120e8]=0x299300 [0x8001218c]=0x299338
+  matches: [0x8001218c]=0x299338(exact)
+[Syscall83:override] handler=0x299338 invoked=false pc=0x29937c ra=0x299400 a0=0x80000000 a1=0x80080000 a2=0x299300 a3=0x2c7080 guestRet=0x0 builtinRet=0x800120e8 guest-20c=0x0 builtin-20c=0x80011edc guest-168=0x0 builtin-168=0x80011f80 match=false
+[SyscallOverride:fallback] syscall=0x83 handler=0x299338 pc=0x29937c ra=0x299400
+[FindAddress:hit] pc=0x29937c start=0x80000000 end=0x80080000 alignedStart=0x80000000 alignedEnd=0x80080000 target=0x299300 targetNorm=0x299300 result=0x800120e8 scannedWords=131072 allZero=false aborted=false
+  firstWords: [0x80000000]=0x0 [0x80000004]=0x0 [0x80000008]=0x0 [0x8000000c]=0x0 [0x80000010]=0x0 [0x80000014]=0x0 [0x80000018]=0x0 [0x8000001c]=0x0
+  nonZeroSample: [0x80000020]=0x20 [0x800002f0]=0x8001 [0x800002f8]=0x1f80 [0x800120e8]=0x299300 [0x8001218c]=0x299338
+  matches: [0x800120e8]=0x299300(exact)
+[SyscallOverride:fallback] syscall=0x5a handler=0x299700 pc=0x2996f4 ra=0x2997a8
+[SyscallOverride:fallback] syscall=0x5a handler=0x299700 pc=0x2996f4 ra=0x2997c0
+[SyscallOverride:fallback] syscall=0x5b handler=0x80076000 pc=0x29973c ra=0x2997e8
+[SyscallOverride:fallback] syscall=0x5b handler=0x80076000 pc=0x29973c ra=0x2997e8
+[SyscallOverride:fallback] syscall=0x5b handler=0x80076000 pc=0x29973c ra=0x2997e8
+[SyscallOverride:fallback] syscall=0x5b handler=0x80076000 pc=0x29973c ra=0x2997e8
+[SyscallOverride:fallback] syscall=0x5b handler=0x80076000 pc=0x29973c ra=0x2997e8
+[SyscallOverride:fallback] syscall=0x5b handler=0x80076000 pc=0x29973c ra=0x2997e8
+[CreateSema] id=3 init=0 max=255
+[CreateThread] id=2 entry=0x2947c8 stack=0x326b40 size=0x400 gp=0x2cf070 prio=1
+[SyscallOverride:fallback] syscall=0x5a handler=0x29a918 pc=0x29a90c ra=0x29a9b8
+[SyscallOverride:fallback] syscall=0x5b handler=0x80075000 pc=0x29a954 ra=0x29a9f0
+[SyscallOverride:fallback] syscall=0x5b handler=0x80075000 pc=0x29a954 ra=0x29a9f0
+[SyscallOverride:fallback] syscall=0x5b handler=0x80075000 pc=0x29a954 ra=0x29a9f0
+[SyscallOverride:fallback] syscall=0x5b handler=0x80075000 pc=0x29a954 ra=0x29a9f0
+[SyscallOverride:fallback] syscall=0x5b handler=0x80075000 pc=0x29a954 ra=0x29a9f0
+[SyscallOverride:fallback] syscall=0x5b handler=0x80075000 pc=0x29a954 ra=0x29aa14
+[boot_stub] init 0x293ea0
+[boot_stub] init 0x138cb0
+[boot_stub] init 0x138d48 (4o init, pre-main)
+[138D48] ENTRADA a0=0x0 a1=0x2c7084
+[138D48] JAL [1/11] -> 0x283770
+[138D48] JAL [1/11] 0x283770 NAO REGISTRADA - skip
+[138D48] JAL [1/11] retornou pc=0x138d64
+[138D48] JAL [2/11] -> 0x17aa88
+[138D48] JAL [2/11] retornou pc=0x138d88
+[138D48] JAL [3/11] -> 0x17acb8
+[138D48] JAL [3/11] 0x17acb8 NAO REGISTRADA - skip
+[138D48] JAL [3/11] retornou pc=0x138d90
+[138D48] JAL [4/11] -> 0x138b10
+[138D48] JAL [4/11] 0x138b10 NAO REGISTRADA - skip
+[138D48] JAL [4/11] retornou pc=0x138d98
+[138D48] JAL [5/11] -> 0x1838d0
+[138D48] JAL [5/11] 0x1838d0 NAO REGISTRADA - skip
+[138D48] JAL [5/11] retornou pc=0x138da0
+[138D48] JAL [6/11] -> 0x17a910
+[17A910] ENTRADA
+[17A910] call 1/3 (0x13F8A0) RETORNOU pc=0x17a920
+[watch:GLOBAL_0x32E854] #1 op=WRITE32 addr=0x32e854 size=4 value=0x0 pc=0x17a3d0 ra=0x17a928
+[17A910] call 2/3 (0x17A398) RETORNOU pc=0x17a928
+[182FF0] ENTRADA a0=0x2fd900
+[182FF0] JAL 279A40 (1a chamada)
+[279A40] ENTRADA (SifCheckInit?)
+[279A40] sif_struct=0x2a1690 sif+8=0x0
+[279A40] NAO INICIALIZADO -> func_2940B0 (SifInit?)
+[2940B0] ENTRADA (SifInit?)
+[182FF0] 279A40 (1a) RETORNOU v0=0x0
+[182FF0] JAL 183190 a0=0x2fd900
+[182FF0] 183190 RETORNOU
+[182FF0] JAL 1832E8
+PS2 GsPutIMR: Setting IMR=0xff00
+PS2 GsSetCrt: interlaced=0, videoMode=0, frameMode=0
+[182FF0] 1832E8 RETORNOU
+[182FF0] JAL 13FCA8 a0=0x5c800 a1=0x1 a2=0x0 a3=0x0
+[13FCA8] ENTRADA a0=0x5c800 a1=0x1 a2=0x0 a3=0x0
+[13FCA8] JAL 13D630 a0=0x678
+[13FCA8] 13D630 RETORNOU v0=0x35c338 (s1=v0)
+[13FCA8] loop99 completo, JAL 13E090
+[13FCA8] 13E090 RETORNOU v0=0x35c1b0
+[13FCA8] JAL 13DC78 a0=v0=0x35c1b0 a1=0xb9000 a2=0x40
+[13FCA8] 13DC78 OK, JAL 23AAB0 a0=0x35c338 a1=0x2
+[13FCA8] 23AAB0 OK, JAL 23AB28 a0=0x35c338
+[13FCA8] 23AB28 OK, JAL 13D630#2 a0=0x10
+[13FCA8] 13D630#2 OK, JAL 13FAB8 a0=v0=0x4159c8
+[13FAB8] ENTRADA a0=0x4159c8
+[13FAB8] sentinel_addr=0x2cbbb0 READ32(sentinel)=0x2cbbb0 (s0=0x2cbbb0)
+[13FAB8] s1(a0)=0x4159c8, s1+4=0x1
+[stub:sub_0013DA10] PARTE 7 PLANO A: alloc #1 guestPtr=0x1000000 (a0=0x0 ra=0x13fb14)
+[watch:SENTINEL_0x2cbbb0] #1 op=WRITE32 addr=0x2cbbb4 size=4 value=0x1000000 pc=0x13fb24 ra=0x13fb14
+[watch:SENTINEL_0x2cbbb0] #2 op=WRITE32 addr=0x2cbbb0 size=4 value=0x1000000 pc=0x13fb3c ra=0x13fde0
+[13FCA8] 13FAB8 OK → SAINDO de sub_0013FCA8 v0=s1=0x35c338
+[182FF0] 13FCA8 RETORNOU v0=0x35c338
+[182FF0] JAL 13FB48 a0=0x200 a1=0x1 a2=0x23e7a8 a3=0x4
+[13FAB8] ENTRADA a0=0x416488
+[13FAB8] sentinel_addr=0x2cbbb0 READ32(sentinel)=0x1000000 (s0=0x1000000)
+[13FAB8] s1(a0)=0x416488, s1+4=0x1
+[stub:sub_0013DA10] PARTE 7 PLANO A: alloc #2 guestPtr=0x1000040 (a0=0x0 ra=0x13fb14)
+[watch:SENTINEL_0x2cbbb0] #3 op=WRITE32 addr=0x2cbbb0 size=4 value=0x1000040 pc=0x13fb3c ra=0x13fc78
+[182FF0] 13FB48 RETORNOU v0=0x4159e0
+[182FF0] JAL 182F68
+[279A40] ENTRADA (SifCheckInit?)
+[279A40] sif_struct=0x2a1690 sif+8=0x0
+[279A40] NAO INICIALIZADO -> func_2940B0 (SifInit?)
+[2940B0] ENTRADA (SifInit?)
+[182FF0] 182F68 RETORNOU
+[182FF0] JAL 182E88
+PS2 GsGetIMR: Returning IMR=0xff00
+PS2 GsGetIMR: Returning IMR=0xff00
+PS2 GsPutIMR: Setting IMR=0x182dd80000fd00
+[182FF0] 182E88 RETORNOU
+[182FF0] JAL 140578
+[13FAB8] ENTRADA a0=0x416f48
+[13FAB8] sentinel_addr=0x2cbbb0 READ32(sentinel)=0x1000040 (s0=0x1000040)
+[13FAB8] s1(a0)=0x416f48, s1+4=0x0
+[stub:sub_0013DA10] PARTE 7 PLANO A: alloc #3 guestPtr=0x1000080 (a0=0x0 ra=0x13fb14)
+[watch:SENTINEL_0x2cbbb0] #4 op=WRITE32 addr=0x2cbbb0 size=4 value=0x1000080 pc=0x13fb3c ra=0x13fc78
+[13FAB8] ENTRADA a0=0x417a08
+[13FAB8] sentinel_addr=0x2cbbb0 READ32(sentinel)=0x1000080 (s0=0x1000080)
+[13FAB8] s1(a0)=0x417a08, s1+4=0x2
+[13FAB8] loop iter=1 s0=0x1000040 s0+4=0x1000080
+[13FAB8] loop iter=2 s0=0x1000000 s0+4=0x1000040
+[13FAB8] loop iter=3 s0=0x2cbbb0 s0+4=0x1000000
+[stub:sub_0013DA10] PARTE 7 PLANO A: alloc #4 guestPtr=0x10000c0 (a0=0x0 ra=0x13fb14)
+[watch:SENTINEL_0x2cbbb0] #5 op=WRITE32 addr=0x2cbbb4 size=4 value=0x10000c0 pc=0x13fb24 ra=0x13fb14
+[182FF0] 140578 RETORNOU — entry_182ff0 COMPLETA
+[17A910] call 3/3 (entry_182ff0) RETORNOU pc=0x17a934
+[138D48] JAL [6/11] retornou pc=0x138da8
+[138D48] JAL [7/11] -> 0x21ff60
+[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #1 — frameCount=1 flag=1 altCount=1
+[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #2 — frameCount=2 flag=0 altCount=2
+[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #3 — frameCount=3 flag=1 altCount=3
+[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #4 — frameCount=4 flag=0 altCount=4
+[vif1:cmd] idx=0 opcode=0x0 imm=0x5 num=0 irq=0
+[vif1:cmd] idx=1 opcode=0x10 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=2 opcode=0x0 imm=0xe num=0 irq=0
+[vif1:cmd] idx=3 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=4 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=5 opcode=0x0 imm=0x0 num=1 irq=0
+[vif1:cmd] idx=6 opcode=0x0 imm=0x50 num=0 irq=0
+[vif1:cmd] idx=7 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=8 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=9 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=10 opcode=0x0 imm=0x51 num=0 irq=0
+[vif1:cmd] idx=11 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=12 opcode=0x0 imm=0x8 num=0 irq=0
+[vif1:cmd] idx=13 opcode=0x0 imm=0x2 num=0 irq=0
+[vif1:cmd] idx=14 opcode=0x0 imm=0x52 num=0 irq=0
+[vif1:cmd] idx=15 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=16 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=17 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=18 opcode=0x0 imm=0x53 num=0 irq=0
+[vif1:cmd] idx=19 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=20 opcode=0x7f imm=0xffff num=255 irq=1
+[vif1:cmd] idx=21 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=22 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=23 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=24 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=25 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=26 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=27 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=28 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=29 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=30 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=31 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=32 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=33 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=34 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=35 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=36 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=37 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=38 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=39 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=40 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=41 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=42 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=43 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=44 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=45 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=46 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=47 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=48 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=49 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=50 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=51 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=52 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=53 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=54 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=55 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=56 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=57 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=58 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=59 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=60 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=61 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=62 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=63 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=64 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=65 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=66 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=67 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=68 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=69 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=70 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=71 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=72 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=73 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=74 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=75 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=76 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=77 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=78 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=79 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=80 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=81 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=82 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=83 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=84 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=85 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=86 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=87 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=88 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=89 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=90 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=91 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=92 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=93 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=94 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=95 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=96 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=97 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=98 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=99 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=100 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=101 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=102 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=103 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=104 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=105 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=106 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=107 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=108 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=109 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=110 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=111 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=112 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=113 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=114 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=115 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=116 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=117 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=118 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=119 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=120 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=121 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=122 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=123 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=124 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=125 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=126 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=127 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=128 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=129 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=130 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=131 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=132 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=133 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=134 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=135 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=136 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=137 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=138 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=139 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=140 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=141 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=142 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=143 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=144 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=145 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=146 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=147 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=148 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=149 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=150 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=151 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=152 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=153 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=154 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=155 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=156 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=157 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=158 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=159 opcode=0x0 imm=0x0 num=0 irq=0
+[138D48] JAL [7/11] retornou pc=0x138db0
+[138D48] JAL [8/11] -> 0x17bc80
+[Syscall TODO] encoded=0x0 v1=0x7a v0=0x0 a0=0x80000000 a1=0x296a50 a2=0x0 a3=0x20 pc=0x294034
+Warning: Unimplemented PS2 syscall called. PC=0x294034, RA=0x2966c4, Encoded=0x0, v0=0x0, v1=0x7a, Chosen=0x7a
+  Args: $a0=0x80000000, $a1=0x296a50, $a2=0x0, $a3=0x20
+  -> Unknown syscallId=0x7a hits=1
+
+
+etc..etc..
+
+[Syscall TODO] encoded=0x0 v1=0x7a v0=0x0 a0=0x4 a1=0x296a50 a2=0x0 a3=0x20 pc=0x294034
+Warning: Unimplemented PS2 syscall called. PC=0x294034, RA=0x296718, Encoded=0x0, v0=0x0, v1=0x7a, Chosen=0x7a
+  Args: $a0=0x4, $a1=0x296a50, $a2=0x0, $a3=0x[boot_stub] FIX 6: sentinel lista circular #2 inicializado em 0x2cbbb0 -> lista vazia, sub_0013FAB8 nao loopa
+[13FCA8] 13D630#2 OK, JAL 13FAB8 a0=v0=0x4159c8
+[13FAB8] ENTRADA a0=0x4159c8
+[13FAB8] sentinel_addr=0x2cbbb0 READ32(sentinel)=0x2cbbb0 (s0=0x2cbbb0)
+[13FAB8] s1(a0)=0x4159c8, s1+4=0x1
+[stub:sub_0013DA10] PARTE 7 PLANO A: alloc #1 guestPtr=0x1000000 (a0=0x0 ra=0x13fb14)
+[13FCA8] 13FAB8 OK → SAINDO de sub_0013FCA8 v0=s1=0x35c338
+[13FAB8] ENTRADA a0=0x416488
+[13FAB8] sentinel_addr=0x2cbbb0 READ32(sentinel)=0x1000000 (s0=0x1000000)
+[13FAB8] s1(a0)=0x416488, s1+4=0x1
+[stub:sub_0013DA10] PARTE 7 PLANO A: alloc #2 guestPtr=0x1000040 (a0=0x0 ra=0x13fb14)
+[13FAB8] ENTRADA a0=0x416f48
+[13FAB8] sentinel_addr=0x2cbbb0 READ32(sentinel)=0x1000040 (s0=0x1000040)
+[13FAB8] s1(a0)=0x416f48, s1+4=0x0
+[stub:sub_0013DA10] PARTE 7 PLANO A: alloc #3 guestPtr=0x1000080 (a0=0x0 ra=0x13fb14)
+[13FAB8] ENTRADA a0=0x417a08
+[13FAB8] sentinel_addr=0x2cbbb0 READ32(sentinel)=0x1000080 (s0=0x1000080)
+[13FAB8] s1(a0)=0x417a08, s1+4=0x2
+[13FAB8] loop iter=1 s0=0x1000040 s0+4=0x1000080
+[13FAB8] loop iter=2 s0=0x1000000 s0+4=0x1000040
+[13FAB8] loop iter=3 s0=0x2cbbb0 s0+4=0x1000000
+[stub:sub_0013DA10] PARTE 7 PLANO A: alloc #4 guestPtr=0x10000c0 (a0=0x0 ra=0x13fb14)
+[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #1 — frameCount=1 flag=1 altCount=1
+[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #2 — frameCount=2 flag=0 altCount=2
+[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #3 — frameCount=3 flag=1 altCount=3
+[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #4 — frameCount=4 flag=0 altCount=4
+[vif1:cmd] idx=0 opcode=0x0 imm=0x5 num=0 irq=0
+[vif1:cmd] idx=1 opcode=0x10 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=2 opcode=0x0 imm=0xe num=0 irq=0
+[vif1:cmd] idx=3 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=4 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=5 opcode=0x0 imm=0x0 num=1 irq=0
+[vif1:cmd] idx=6 opcode=0x0 imm=0x50 num=0 irq=0
+[vif1:cmd] idx=7 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=8 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=9 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=10 opcode=0x0 imm=0x51 num=0 irq=0
+[vif1:cmd] idx=11 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=12 opcode=0x0 imm=0x8 num=0 irq=0
+[vif1:cmd] idx=13 opcode=0x0 imm=0x2 num=0 irq=0
+[vif1:cmd] idx=14 opcode=0x0 imm=0x52 num=0 irq=0
+[vif1:cmd] idx=15 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=16 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=17 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=18 opcode=0x0 imm=0x53 num=0 irq=0
+[vif1:cmd] idx=19 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=20 opcode=0x7f imm=0xffff num=255 irq=1
+[vif1:cmd] idx=21 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=22 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=23 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=24 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=25 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=26 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=27 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=28 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=29 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=30 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=31 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=32 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=33 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=34 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=35 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=36 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=37 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=38 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=39 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=40 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=41 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=42 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=43 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=44 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=45 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=46 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=47 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=48 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=49 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=50 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=51 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=52 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=53 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=54 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=55 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=56 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=57 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=58 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=59 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=60 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=61 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=62 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=63 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=64 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=65 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=66 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=67 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=68 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=69 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=70 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=71 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=72 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=73 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=74 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=75 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=76 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=77 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=78 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=79 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=80 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=81 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=82 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=83 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=84 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=85 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=86 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=87 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=88 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=89 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=90 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=91 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=92 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=93 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=94 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=95 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=96 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=97 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=98 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=99 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=100 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=101 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=102 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=103 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=104 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=105 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=106 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=107 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=108 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=109 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=110 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=111 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=112 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=113 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=114 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=115 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=116 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=117 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=118 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=119 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=120 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=121 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=122 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=123 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=124 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=125 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=126 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=127 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=128 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=129 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=130 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=131 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=132 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=133 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=134 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=135 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=136 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=137 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=138 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=139 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=140 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=141 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=142 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=143 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=144 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=145 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=146 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=147 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=148 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=149 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=150 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=151 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=152 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=153 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=154 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=155 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=156 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=157 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=158 opcode=0x0 imm=0x0 num=0 irq=0
+[vif1:cmd] idx=159 opcode=0x0 imm=0x0 num=0 irq=0
+  -> Unknown syscallId=0x7a hits=1
+  -> Unknown syscallId=0x7a hits=5000
+[Syscall TODO] encoded=0x0 v1=0x7a v0=0x0 a0=0x4 a1=0x296a50 a2=0x[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #60 — frameCount=60 flag=0 altCount=60
+Warning: Unimplemented PS2 syscall called. PC=0x294034[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #120 — frameCount=120 flag=0 altCount=120
+  -> Unknown syscallId=0x7a hits=10000
+[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #180 — frameCount=180 flag=0 altCount=180
+  -> Unknown syscallId=0x7a hits=15000
+  -> Unknown syscallId=0x7a hits=20000
+  -> Unknown syscallId=0x7a hits=25000
+[Syscall TODO] encoded=0x0 v1=0x7a v0=0x0 a0=0x4 a1=0x296a50 a2=0x[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #240 — frameCount=240 flag=0 altCount=0 a3=0x32 pc=0x2703412
+  -> Unknown syscallId=0x7a hits=30000
+  -> Unknown syscallId=0x7a hits=35000
+[stub:0x182f28] PARTE 8 PLANO A: VBlank tick #300 — frameCount=300 flag=0 altCount=300
+  -> Unknown syscallId=0x7a hits=40000
+7882220 log_part9.txt
+cristiano@cristiano:~/Documentos/GitHub/godofwar$ ~~~~~
+
