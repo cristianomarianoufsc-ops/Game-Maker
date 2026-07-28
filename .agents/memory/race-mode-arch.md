@@ -1,29 +1,34 @@
 ---
-name: Modo Corrida — arquitetura
-description: Como o modo corrida está implementado em artifacts/pursuit-game
+name: Race mode architecture
+description: Rival rendering, AI, drone targeting, and skin-tone two-pass technique for the corrida (race) game mode.
 ---
 
-## Rival
-- `racePlayerRef` armazena o rival (`Player`); criado via `createGhostPlayer` em `resetGame('race')`.
-- Atualizado por `stepGhostPlayer` a cada frame, com janela de plataformas de ±3200px centrada no rival.
-- Detectado como morto via `isGhostDead`; respawna em `raceCheckpointXRef` (mesmo X do checkpoint da história).
-- Renderizado com `ctx.filter = 'hue-rotate(160deg) saturate(1.5)'` para cor distinta sem alterar sprites.
-- Indicador laranja na borda quando fora da tela.
+# Race Mode Architecture
 
-## Drone
-- Em modo corrida com `raceDroneEnabled`, passa o rival como `targetOverride` para `updateDrone` se `rival.x > player.x`.
-- Fallback automático para o jogador principal quando não há override.
+## Rival player
+- Reuses `createGhostPlayer` / `stepGhostPlayer` from `ghostPlayer.ts`.
+- `racePlayerRef` holds the rival; preserved across player respawns.
+- Rival finish line: `RIVAL_FINISH_X = 36346`.
 
-## Tiros
-- `updateBullets` recebe `[racePlayerRef.current]` como `additionalPlayers` no modo corrida.
+## Rival skin-tone rendering (two-pass)
+The rival wears a differently-coloured outfit but has the same skin tone as the main player.
 
-## Vitória / Derrota
-- Rival cruza `RIVAL_FINISH_X` (36346) antes do jogador → `gamePhase = 'gameover'`.
-- Jogador cruza a mesma linha → vitória normal.
+**Technique:**
+1. `ctx.save()` → `ctx.filter = 'hue-rotate(160deg) saturate(1.5)'` → `_geom = drawPlayer(...)` → `ctx.restore()`
+   Full sprite is tinted (clothes change colour, skin goes green).
+2. Clip to the top ~28% of the **actual rendered sprite** using `_geom.destY` and `_geom.dh`, then call `drawPlayer` again without any filter.
+   This overwrites only the head region with unfiltered (natural) pixels.
 
-## Morte do jogador no modo corrida
-- Bloco `else if (gs.gameMode === 'race')` em `Game.tsx` antes do bloco de história.
-- Consome vida, respawna no `storyCheckpointX`, preserva `racePlayerRef` (rival continua rodando).
-- `raceDroneEnabled` copiado de `raceDroneEnabledRef.current` para o novo estado.
+**Why `_geom.destY`, not `_rival.y`:**
+`drawPlayer` anchors the sprite at the feet and draws upward. Due to `FOOT_OFFSET = 28` and a display height much larger than `PLAYER_H = 50`, the sprite top (`destY`) is roughly 44–70px **above** the collision-box top (`p.y`). Using `p.y` as the clip origin misses the head entirely, leaving it green.
+`drawPlayer` returns `PlayerRenderGeom | null` — always use the returned `destY/dh/destX/dw` for any overlay that needs to align with the visible sprite.
 
-**Why:** Rival deve ser independente do ciclo de vida do jogador para manter o desafio mesmo após mortes.
+**Why:**
+`drawPlayer` returns `PlayerRenderGeom` including `destX`, `destY`, `dw`, `dh` in screen coordinates (pre-flip transform). Use this for any sprite-aligned overlay.
+
+## Drone targeting
+- In race mode, drone targets the leader via `targetOverride` in `updateDrone`.
+- `raceDroneEnabled` flag on `GameState` disables drone in "Corrida sem drone".
+
+## Colour
+- `hue-rotate(160deg) saturate(1.5)` shifts pinkish-orange clothes to blue-violet.

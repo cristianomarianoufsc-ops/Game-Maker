@@ -5623,21 +5623,24 @@ export default function Game() {
             kongVaultStartImgRef.current, kongVaultAirImgRef.current,
             poseDisplayOverridesRef.current);
 
-          // Passo 1: desenha o rival inteiro com hue-rotate (roupa colorida)
+          // Passo 1: desenha o rival inteiro com hue-rotate (roupa colorida).
+          // Captura o geom retornado para saber onde o sprite foi realmente desenhado.
           ctx.save();
           ctx.filter = 'hue-rotate(160deg) saturate(1.5)';
-          _drawRival();
+          const _geom = _drawRival();
           ctx.restore();
 
-          // Passo 2: recorta a região da cabeça (~30% do topo) e redesenha
-          // sem filtro para restaurar a cor de pele original
-          const _headH = Math.round(_rival.h * 0.30);
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(_rsx, _rival.y, _rival.w, _headH);
-          ctx.clip();
-          _drawRival();
-          ctx.restore();
+          // Passo 2: recorta os ~28% superiores do sprite real (onde está a cabeça)
+          // e redesenha sem filtro para restaurar a cor de pele original.
+          if (_geom) {
+            const _headH = Math.round(_geom.dh * 0.28);
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(_geom.destX - 2, _geom.destY, _geom.dw + 4, _headH);
+            ctx.clip();
+            _drawRival();
+            ctx.restore();
+          }
         } else {
           // Rival fora da tela — seta laranja indicando direção e distância
           const _toRight = _rsx >= CANVAS_W + 20;
