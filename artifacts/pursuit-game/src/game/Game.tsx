@@ -4765,7 +4765,10 @@ export default function Game() {
         }
         gJustPressed.current = false;
 
-        if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
+        const _droneActive =
+          (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) &&
+          !(gs.gameMode === 'race' && !gs.raceDroneEnabled);
+        if (_droneActive) {
           const _prevBulletCount = gs.bullets.length;
           // Modo corrida com drone: aponta para o corredor líder
           const _raceDroneTarget = (
@@ -5641,7 +5644,10 @@ export default function Game() {
       drawFireEscapeFloors(ctx, gs.camera.x, fireEscapeFloorImgRef.current);
       drawTireHideouts(ctx, _renderPlats, _rCamX, standingTireImgRef.current, []);
       drawEndingBuilding(ctx, gs.camera.x);
-      if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
+      if (
+        (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) &&
+        !(gs.gameMode === 'race' && !gs.raceDroneEnabled)
+      ) {
         drawDrone(ctx, gs);
         drawBullets(ctx, gs);
       }
