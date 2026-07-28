@@ -34,3 +34,11 @@ The rival wears a differently-coloured outfit but has the same skin tone as the 
 
 ## Colour
 - `hue-rotate(160deg) saturate(1.5)` shifts pinkish-orange clothes to blue-violet.
+
+## Round series
+- Corrida uses a best-of series: target 1 ends in 1 round, target 2 can reach 3 rounds, and target 3 can reach 5 rounds.
+- The round resets both runners to the circuit start while preserving the score; the HUD displays the current round and wins.
+
+**Why:** This matches the requested fighting-game structure while keeping the race track reusable between rounds.
+
+**How to apply:** Keep race score/round state in `GameState`; do not reset it when restarting between rounds, only when starting a new series.

@@ -686,6 +686,7 @@ export default function Game() {
   const raceFocusRef = useRef(0);
   const raceDroneEnabledRef = useRef(true);
   const raceCheckpointsEnabledRef = useRef(true);
+  const raceRoundTargetRef = useRef<1 | 2 | 3>(1);
   const ghostSpawnRef = useRef<{ x: number; y: number }>({ x: 100, y: 0 });
   const ghostTrailRef = useRef<{ x: number; y: number; d: string }[]>([]);
   const ghostLastDecisionRef = useRef<string>('IDLE');
@@ -1328,6 +1329,10 @@ export default function Game() {
     gameMode,
     raceDroneEnabled: gameMode === 'race' ? raceDroneEnabledRef.current : false,
     raceCheckpointsEnabled: gameMode === 'race' ? raceCheckpointsEnabledRef.current : false,
+    raceRoundTarget: gameMode === 'race' ? raceRoundTargetRef.current : 1,
+    raceRoundNumber: 1,
+    racePlayerWins: 0,
+    raceRivalWins: 0,
     score: 0,
     time: 0,
     particles: [],
@@ -2874,6 +2879,8 @@ export default function Game() {
               raceDroneEnabledRef.current = !raceDroneEnabledRef.current;
             } else if (raceFocusRef.current === 1) {
               raceCheckpointsEnabledRef.current = !raceCheckpointsEnabledRef.current;
+            } else if (raceFocusRef.current === 2) {
+              raceRoundTargetRef.current = (raceRoundTargetRef.current % 3 + 1) as 1 | 2 | 3;
             } else {
               raceMenuOpenRef.current = false;
               resetGame('race');
@@ -4083,20 +4090,22 @@ export default function Game() {
               raceDroneEnabledRef.current = !raceDroneEnabledRef.current;
             } else if (raceFocusRef.current === 1) {
               raceCheckpointsEnabledRef.current = !raceCheckpointsEnabledRef.current;
+            } else if (raceFocusRef.current === 2) {
+              raceRoundTargetRef.current = (raceRoundTargetRef.current % 3 + 1) as 1 | 2 | 3;
             }
             raceLeftJustPressed.current = false;
             raceRightJustPressed.current = false;
           } else if (pauseUpJustPressed.current) {
-            raceFocusRef.current = (raceFocusRef.current - 1 + 3) % 3;
+            raceFocusRef.current = (raceFocusRef.current - 1 + 4) % 4;
             pauseUpJustPressed.current = false;
           } else if (pauseDownJustPressed.current) {
-            raceFocusRef.current = (raceFocusRef.current + 1) % 3;
+            raceFocusRef.current = (raceFocusRef.current + 1) % 4;
             pauseDownJustPressed.current = false;
           } else if (escJustPressed.current) {
             raceMenuOpenRef.current = false;
             escJustPressed.current = false;
           } else if (spaceJustPressed.current || enterJustPressed.current) {
-            if (raceFocusRef.current === 2) {
+            if (raceFocusRef.current === 3) {
               raceMenuOpenRef.current = false;
               resetGame('race');
             }
@@ -4706,7 +4715,10 @@ export default function Game() {
             // Rival cruzou o muro final antes do jogador → derrota
             const RIVAL_FINISH_X = 36346;
             if (_rival.x + _rival.w > RIVAL_FINISH_X && gs.gamePhase === 'playing') {
-              gs.gamePhase = 'gameover';
+              gs.raceRivalWins += 1;
+              gs.raceRoundNumber = Math.min(gs.raceRoundNumber + 1, gs.raceRoundTarget * 2 - 1);
+              gs.gamePhase = 'victory';
+              gs.victoryTimer = 2400;
               stopBeat();
             }
           }
@@ -5002,8 +5014,12 @@ export default function Game() {
         // ── Trigger de vitória: Horácio passou o muro final ──
         const VICTORY_TRIGGER_X = 36346; // borda direita do muro (x:36321 + w:25)
         if ((!editorTestModeRef.current || editorRealStoryModeRef.current) && gs.player.x + PLAYER_W > VICTORY_TRIGGER_X && gs.player.state !== 'dead' && gs.player.onGround) {
+          if (gs.gameMode === 'race') {
+            gs.racePlayerWins += 1;
+            gs.raceRoundNumber = Math.min(gs.raceRoundNumber + 1, gs.raceRoundTarget * 2 - 1);
+          }
           gs.gamePhase = 'victory';
-          gs.victoryTimer = 3600;
+          gs.victoryTimer = gs.gameMode === 'race' ? 2400 : 3600;
           stopBeat();
           playVictory();
         }
@@ -5072,6 +5088,10 @@ export default function Game() {
               newState.drone.stuckLastX = gs.drone.stuckLastX;
               newState.raceDroneEnabled = raceDroneEnabledRef.current;
               newState.raceCheckpointsEnabled = raceCheckpointsEnabledRef.current;
+              newState.raceRoundTarget = gs.raceRoundTarget;
+              newState.raceRoundNumber = gs.raceRoundNumber;
+              newState.racePlayerWins = gs.racePlayerWins;
+              newState.raceRivalWins = gs.raceRivalWins;
               clearKeys();
               gsRef.current = newState;
               // Rival continua independentemente — racePlayerRef é preservado
@@ -5319,8 +5339,29 @@ export default function Game() {
           const targetCamX = gs.player.x - CANVAS_W * CAMERA_LEAD_X;
           gs.camera.x += (targetCamX - gs.camera.x) * 0.045;
         }
-        // ESPAÇO reinicia após a tela de vitória aparecer
-        if (gs.victoryTimer <= 0 && spaceJustPressed.current) {
+        // Entre rounds, volta automaticamente ao início do circuito mantendo o placar.
+        // A série termina quando um corredor alcança o número de vitórias escolhido.
+        if (gs.gameMode === 'race' && gs.victoryTimer <= 0) {
+          const seriesOver =
+            gs.racePlayerWins >= gs.raceRoundTarget ||
+            gs.raceRivalWins >= gs.raceRoundTarget;
+          if (!seriesOver) {
+            const playerWins = gs.racePlayerWins;
+            const rivalWins = gs.raceRivalWins;
+            const roundTarget = gs.raceRoundTarget;
+            resetGame('race');
+            const next = gsRef.current;
+            if (next) {
+              next.raceRoundTarget = roundTarget;
+              next.racePlayerWins = playerWins;
+              next.raceRivalWins = rivalWins;
+              next.raceRoundNumber = playerWins + rivalWins + 1;
+            }
+          } else if (spaceJustPressed.current) {
+            resetGame('race');
+            spaceJustPressed.current = false;
+          }
+        } else if (gs.victoryTimer <= 0 && spaceJustPressed.current) {
           resetGame(gs.gameMode);
           spaceJustPressed.current = false;
         }
@@ -5844,6 +5885,7 @@ export default function Game() {
           raceFocusRef.current,
           raceDroneEnabledRef.current,
           raceCheckpointsEnabledRef.current,
+          raceRoundTargetRef.current,
         );
         if (showOptionsRef.current) drawOptionsScreen(ctx);
       }

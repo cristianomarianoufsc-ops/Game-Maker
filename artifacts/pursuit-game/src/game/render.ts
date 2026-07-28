@@ -4894,6 +4894,21 @@ export function drawHUD(
   ctx.fillText(`${String(Math.floor(secs / 60)).padStart(2,'0')}:${String(secs % 60).padStart(2,'0')}`, CANVAS_W / 2, 29);
   ctx.textAlign = 'left';
 
+  if (gs.gameMode === 'race') {
+    const maxRounds = gs.raceRoundTarget * 2 - 1;
+    const roundLabel = `ROUND ${Math.min(gs.raceRoundNumber, maxRounds)}/${maxRounds}`;
+    const scoreLabel = `HORÁCIO ${gs.racePlayerWins}  ×  ${gs.raceRivalWins} RIVAL`;
+    ctx.fillStyle = 'rgba(18,15,30,0.94)';
+    ctx.fillRect(CANVAS_W / 2 - 116, 42, 232, 28);
+    ctx.strokeStyle = 'rgba(255,170,55,0.75)';
+    ctx.strokeRect(CANVAS_W / 2 - 116, 42, 232, 28);
+    ctx.fillStyle = 'rgba(255,205,100,1)';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${roundLabel}  |  ${scoreLabel}`, CANVAS_W / 2, 59);
+    ctx.textAlign = 'left';
+  }
+
   if (gs.gameMode === 'wall-test') {
     ctx.fillStyle = 'rgba(0,200,255,0.82)';
     ctx.font = 'bold 11px monospace';
@@ -4967,6 +4982,7 @@ export function drawMenuScreen(
   raceFocus = 0,
   raceDroneEnabled = true,
   raceCheckpointsEnabled = true,
+  raceRoundTarget: 1 | 2 | 3 = 1,
 ): void {
   const cx = CANVAS_W / 2;
   const cy = CANVAS_H / 2;
@@ -5117,9 +5133,9 @@ export function drawMenuScreen(
     ctx.fillStyle = 'rgba(0,0,0,0.92)';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     ctx.fillStyle = 'rgba(18,15,30,0.99)';
-    ctx.fillRect(cx - 230, cy - 132, 460, 264);
+    ctx.fillRect(cx - 230, cy - 165, 460, 330);
     ctx.strokeStyle = 'rgba(255,160,50,0.85)';
-    ctx.strokeRect(cx - 230, cy - 132, 460, 264);
+    ctx.strokeRect(cx - 230, cy - 165, 460, 330);
     ctx.fillStyle = 'rgba(255,190,70,0.95)';
     ctx.font = 'bold 18px monospace';
     ctx.textAlign = 'center';
@@ -5127,6 +5143,7 @@ export function drawMenuScreen(
     const items = [
       { label: 'DRONE:', value: raceDroneEnabled ? 'SIM' : 'NÃO', configurable: true },
       { label: 'CHECKPOINTS:', value: raceCheckpointsEnabled ? 'SIM' : 'NÃO', configurable: true },
+      { label: 'VITÓRIAS P/ VENCER:', value: String(raceRoundTarget), configurable: true },
       { label: 'INICIAR', value: '', configurable: false },
     ];
     items.forEach((label, index) => {
@@ -5146,7 +5163,7 @@ export function drawMenuScreen(
     });
     ctx.fillStyle = 'rgba(150,140,175,0.65)';
     ctx.font = '9px monospace';
-    ctx.fillText('↑ ↓  ESCOLHER   |   ← →  ALTERAR   |   ESPAÇO / ENTER  INICIAR', cx, cy + 108);
+    ctx.fillText('↑ ↓  ESCOLHER   |   ← →  ALTERAR   |   ESPAÇO / ENTER  INICIAR', cx, cy + 148);
     ctx.restore();
   }
 

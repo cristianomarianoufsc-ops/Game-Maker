@@ -273,6 +273,10 @@ export interface GameState {
   gameMode: 'story' | 'race' | 'wall-test';
   raceDroneEnabled: boolean;
   raceCheckpointsEnabled: boolean;
+  raceRoundTarget: 1 | 2 | 3;
+  raceRoundNumber: number;
+  racePlayerWins: number;
+  raceRivalWins: number;
   score: number;
   time: number;
   particles: Particle[];
