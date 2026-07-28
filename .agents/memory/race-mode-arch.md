@@ -38,7 +38,7 @@ The rival wears a differently-coloured outfit but has the same skin tone as the 
 
 ## Round series
 - Corrida uses a best-of series: target 1 ends in 1 round, target 2 can reach 3 rounds, and target 3 can reach 5 rounds.
-- The round resets both runners to the circuit start while preserving the score; the HUD displays the current round and wins.
+- In multi-round races, the winner alone resets to the circuit start while the loser keeps the position reached; the HUD displays the current round and wins.
 
 **Why:** This matches the requested fighting-game structure while keeping the race track reusable between rounds.
 

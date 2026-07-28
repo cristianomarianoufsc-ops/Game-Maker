@@ -681,6 +681,7 @@ export default function Game() {
   const racePlayerRef = useRef<Player | null>(null);
   const raceRoundWinnerRef = useRef<'player' | 'rival' | null>(null);
   const raceRoundLoserXRef = useRef(80);
+  const raceInterRoundTransitionRef = useRef(false);
   const raceCheckpointXRef = useRef(0);
   const raceReplayArmedRef = useRef(false);
   const raceTictacSnapDoneRef = useRef(false);
@@ -1416,6 +1417,7 @@ export default function Game() {
       : null;
     raceRoundWinnerRef.current = null;
     raceRoundLoserXRef.current = 80;
+    raceInterRoundTransitionRef.current = false;
     raceCheckpointXRef.current = 0;
     raceReplayArmedRef.current = false;
     raceTictacSnapDoneRef.current = false;
@@ -4723,9 +4725,16 @@ export default function Game() {
               raceRoundLoserXRef.current = gs.player.x;
               gs.raceRivalWins += 1;
               gs.raceRoundNumber = Math.min(gs.raceRoundNumber + 1, gs.raceRoundTarget * 2 - 1);
+              const seriesOver = gs.raceRivalWins >= gs.raceRoundTarget;
               gs.gamePhase = 'victory';
-              gs.victoryTimer = 2400;
-              stopBeat();
+              // Round intermediário: transição instantânea, sem corrida/fade.
+              // A tela de vitória só aparece quando a série realmente termina.
+              gs.victoryTimer = seriesOver ? 2400 : 0;
+              if (seriesOver) {
+                stopBeat();
+              } else {
+                raceInterRoundTransitionRef.current = true;
+              }
             }
           }
         }
@@ -5022,16 +5031,27 @@ export default function Game() {
         // ── Trigger de vitória: Horácio passou o muro final ──
         const VICTORY_TRIGGER_X = 36346; // borda direita do muro (x:36321 + w:25)
         if ((!editorTestModeRef.current || editorRealStoryModeRef.current) && gs.player.x + PLAYER_W > VICTORY_TRIGGER_X && gs.player.state !== 'dead' && gs.player.onGround) {
+          let raceSeriesOver = true;
           if (gs.gameMode === 'race') {
             raceRoundWinnerRef.current = 'player';
             raceRoundLoserXRef.current = racePlayerRef.current?.x ?? 80;
             gs.racePlayerWins += 1;
             gs.raceRoundNumber = Math.min(gs.raceRoundNumber + 1, gs.raceRoundTarget * 2 - 1);
+            raceSeriesOver = gs.racePlayerWins >= gs.raceRoundTarget;
+            if (!raceSeriesOver) {
+              // Round intermediário: não mostra a animação de vitória.
+              // O próximo frame já reposiciona o vencedor para a nova volta.
+              gs.gamePhase = 'victory';
+              gs.victoryTimer = 0;
+              raceInterRoundTransitionRef.current = true;
+            }
           }
-          gs.gamePhase = 'victory';
-          gs.victoryTimer = gs.gameMode === 'race' ? 2400 : 3600;
-          stopBeat();
-          playVictory();
+          if (raceSeriesOver) {
+            gs.gamePhase = 'victory';
+            gs.victoryTimer = gs.gameMode === 'race' ? 2400 : 3600;
+            stopBeat();
+            playVictory();
+          }
         }
 
         // ── Grito ao cair no buraco (pés 30px abaixo do chão = entrou no pothole) ─
@@ -5963,17 +5983,21 @@ export default function Game() {
       if (gs.gamePhase === 'paused') drawPauseScreen(ctx, pauseSelection.current);
       if (gs.gamePhase === 'gameover') drawGameOverScreen(ctx, gs.player.distanceTraveled, gs.time);
       if (gs.gamePhase === 'victory') {
+        const isInterRoundTransition =
+          gs.gameMode === 'race' && raceInterRoundTransitionRef.current;
         // Fade in progressivo para o preto a partir de 1800ms restantes
         const FADE_START = 1800;
         const fadeAlpha = gs.victoryTimer < FADE_START ? Math.min(1, 1 - gs.victoryTimer / FADE_START) : 0;
-        if (fadeAlpha > 0) {
+        if (!isInterRoundTransition && fadeAlpha > 0) {
           ctx.save();
           ctx.globalAlpha = fadeAlpha;
           ctx.fillStyle = '#000';
           ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
           ctx.restore();
         }
-        if (gs.victoryTimer <= 0) drawVictoryScreen(ctx, gs.player.distanceTraveled, gs.time);
+        if (!isInterRoundTransition && gs.victoryTimer <= 0) {
+          drawVictoryScreen(ctx, gs.player.distanceTraveled, gs.time);
+        }
       }
 
       animRef.current = requestAnimationFrame(loop);
