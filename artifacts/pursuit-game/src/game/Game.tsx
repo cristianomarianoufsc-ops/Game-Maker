@@ -1332,7 +1332,7 @@ export default function Game() {
     fallingBoxes: [],
     flyingTires: [],
     destroyedTireIndices: [],
-    dogs: gameMode === 'story' ? [
+    dogs: gameMode === 'story' || gameMode === 'race' ? [
       {
         x: 19250,
         y: GROUND_Y - 75,
@@ -1349,7 +1349,9 @@ export default function Game() {
         growlTimer: 2500,
       },
     ] : [],
-    bystanders: gameMode === 'story' ? applyNpcVolumes(makeInitialBystanders()) : [],
+    bystanders: gameMode === 'story' || gameMode === 'race'
+      ? applyNpcVolumes(makeInitialBystanders())
+      : [],
     junkyardHealthGiven: false,
     postJunkyardHealthGiven: false,
     secondCheckpointGiven: false,
@@ -4893,7 +4895,7 @@ export default function Game() {
         // Para o som de pânico quando não há mais bystanders ativos
         if (gs.bystanders.length === 0) stopCrowdPanic();
 
-        // ── Gritos ambientes na zona da vila (x 25909–32000, modo história) ──
+        // ── Gritos ambientes na zona da vila (x 25909–32000) ────────────────
         const VILLAGE_ZONE_START = 25909;
         const VILLAGE_ZONE_END   = 32000;
         if (
