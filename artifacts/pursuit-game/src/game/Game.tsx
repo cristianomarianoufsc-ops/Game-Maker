@@ -685,7 +685,7 @@ export default function Game() {
   const raceMenuOpenRef = useRef(false);
   const raceFocusRef = useRef(0);
   const raceDroneEnabledRef = useRef(true);
-  const raceCheckpointsEnabledRef = useRef(true);
+  const raceCheckpointsEnabledRef = useRef(false);
   const raceRoundTargetRef = useRef<1 | 2 | 3>(1);
   const ghostSpawnRef = useRef<{ x: number; y: number }>({ x: 100, y: 0 });
   const ghostTrailRef = useRef<{ x: number; y: number; d: string }[]>([]);
