@@ -450,7 +450,7 @@ export function updatePlayer(
 
   // Detecção de teto baixo: se o jogador está em pé com pouco espaço acima, força agachamento
   // Ativa quando há plataforma a menos de CEILING_CLEARANCE px acima da cabeça
-  if (p.onGround && !p.isRolling && !p.forcedCrouch && p.state !== 'hurt' && p.state !== 'dead') {
+  if (p.onGround && !p.isRolling && !p.forcedCrouch && (p.state as string) !== 'hurt' && (p.state as string) !== 'dead') {
     const CEILING_CLEARANCE = 18; // px de folga acima da cabeça que aciona forcedCrouch
     const headY = p.y; // topo do personagem em pé
     const lowCeiling = platforms.some(plat => {
@@ -834,8 +834,8 @@ export function updatePlayer(
       !p.isWallFlipping &&
       !p.isWallClimbUp &&
       !p.isDivejumping &&
-      p.state !== 'hurt' &&
-      p.state !== 'dead'
+      (p.state as string) !== 'hurt' &&
+      (p.state as string) !== 'dead'
     ) {
       p.isSideFlipping = true;
       p.sideFlipTimer = SIDEFLIP_DURATION;
@@ -867,7 +867,7 @@ export function updatePlayer(
     // Roll via baixo+frente — inicia ANTES da colisão (usa prevOnGround)
     // para que a hitbox reduzida já esteja ativa ao resolver colisões com sacadas
     if (keys.down && prevOnGround && !p.isRolling && !p.isClimbing &&
-        p.state !== 'hurt' && p.state !== 'dead' &&
+        (p.state as string) !== 'hurt' && (p.state as string) !== 'dead' &&
         (keys.left || keys.right || Math.abs(p.vx) > 1)) {
       p.forcedCrouch = false;
       p.y += PLAYER_H - PLAYER_ROLL_H;
@@ -1080,7 +1080,7 @@ export function updatePlayer(
   if (
     p.onTictacWall && p.touchingWall && keys.space &&
     !p.tictacJumpConsumed && !p.isWallRunning && !p.isWallClimbUp && !p.isClimbing &&
-    p.state !== 'hurt' && p.state !== 'dead'
+    (p.state as string) !== 'hurt' && (p.state as string) !== 'dead'
   ) {
     p.tictacJumpConsumed = true;
     p.onGround = false;
@@ -1151,7 +1151,7 @@ export function updatePlayer(
   // Verifica ANTES de resetar fallApexY para usar o pico acumulado durante o voo.
   // Dive jump é isento: o rolamento de pouso do mergulho absorve o impacto por design.
   const LETHAL_FALL_HEIGHT = 800;
-  if (!prevOnGround && p.onGround && p.state !== 'dead' && !p.isDivejumping) {
+  if (!prevOnGround && p.onGround && (p.state as string) !== 'dead' && !p.isDivejumping) {
     const fallDist = p.y - p.fallApexY;
     if (fallDist >= LETHAL_FALL_HEIGHT) {
       p.health = 0;
@@ -1564,9 +1564,13 @@ export function updateDrone(
   spawnParticle: (x: number, y: number, color: string) => void,
   platforms: Platform[] = [],
   customOffsetX?: number,
-  customOffsetY?: number
+  customOffsetY?: number,
+  targetOverride?: Player,
 ): number {
   let shakeAmount = 0;
+  // Race mode passes the runner currently in front. Keeping the rest of the
+  // drone algorithm unchanged preserves the story-mode behavior exactly.
+  player = targetOverride ?? player;
 
   const offsetX = customOffsetX ?? DRONE_TARGET_OFFSET_X;
   const offsetYBase = customOffsetY ?? DRONE_TARGET_OFFSET_Y;
@@ -2053,6 +2057,7 @@ export function updateBullets(
   spatialGrid?: SpatialGrid | null,
   platformIndexMap?: Map<Platform, number> | null,
   onCarHit?: (vol: number) => void,
+  additionalPlayers: Player[] = [],
 ): Bullet[] {
   const ph = player.isRolling ? PLAYER_ROLL_H : PLAYER_H;
   const surviving: Bullet[] = [];
@@ -2119,21 +2124,30 @@ export function updateBullets(
     }
     if (hitPlatform) continue;
 
-    // Hit player (immune during side flip)
-    if (!player.invincible && !player.sideFlipImmune && player.state !== 'dead') {
-      if (rectOverlap(b.x - 4, b.y - 4, 8, 8, player.x, player.y, player.w, ph)) {
-        player.health--;
-        player.invincible = true;
-        player.invincibleTimer = HIT_INVINCIBILITY;
-        player.hurtStunTimer = HIT_STUN_DURATION;
-        player.vx = 0;
-        player.isRolling = false;
-        player.autoRoll = false;
-        player.state = 'hurt';
-        if (player.health <= 0) player.state = 'dead';
+    // Hit any active runner. The first target is the regular player; race mode
+    // can pass the rival as an additional target without duplicating bullet logic.
+    const bulletTargets = [player, ...additionalPlayers];
+    let hitRunner = false;
+    for (const target of bulletTargets) {
+      const targetH = target.isRolling ? PLAYER_ROLL_H : PLAYER_H;
+      if (!target.invincible && !target.sideFlipImmune && target.state !== 'dead' &&
+          rectOverlap(b.x - 4, b.y - 4, 8, 8, target.x, target.y, target.w, targetH)) {
+        target.health--;
+        target.invincible = true;
+        target.invincibleTimer = HIT_INVINCIBILITY;
+        target.hurtStunTimer = HIT_STUN_DURATION;
+        target.vx = 0;
+        target.isRolling = false;
+        target.autoRoll = false;
+        target.state = 'hurt';
+        if (target.health <= 0) target.state = 'dead';
         onHit();
-        continue;
+        hitRunner = true;
+        break;
       }
+    }
+    if (hitRunner) {
+      continue;
     }
 
     // Hit bystander — hitbox ajustada ao corpo visual do NPC

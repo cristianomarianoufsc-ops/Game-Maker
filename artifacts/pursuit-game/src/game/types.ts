@@ -270,7 +270,8 @@ export interface GameState {
   camera: Camera;
   platforms: Platform[];
   gamePhase: 'menu' | 'playing' | 'paused' | 'gameover' | 'victory' | 'editor' | 'training';
-  gameMode: 'story' | 'wall-test';
+  gameMode: 'story' | 'race' | 'wall-test';
+  raceDroneEnabled: boolean;
   score: number;
   time: number;
   particles: Particle[];

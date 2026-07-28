@@ -1,1 +1,2 @@
 - [Preview do jogo clonado](preview-game-assets.md) — o jogo depende de recursos em `attached_assets`; sincronize-os ao mover o código para outro artifact.
+- [Modo Corrida — arquitetura](race-mode-arch.md) — rival usa ghostPlayer AI; hue-rotate 160° para cor diferente; drone mira o líder via targetOverride.

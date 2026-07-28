@@ -200,6 +200,7 @@ export function createGhostPlayer(x: number, y: number): Player {
     isSideFlipping: false, sideFlipTimer: 0, sideFlipImmune: false,
     killedByFall: false,
     kongVaultPhase: null, kongVaultTimer: 0, kongVaultLanding: false, kongVaultIsObstacle: false,
+    kongVaultFromDive: false,
   };
 }
 

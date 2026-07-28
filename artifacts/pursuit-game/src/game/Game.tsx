@@ -676,6 +676,11 @@ export default function Game() {
   const ghostReplayFramesRef = useRef<Keys[] | null>(null);
   const ghostPlayerRef = useRef<Player | null>(null);
   const ghostEnabledRef = useRef(false);
+  const racePlayerRef = useRef<Player | null>(null);
+  const raceCheckpointXRef = useRef(0);
+  const raceMenuOpenRef = useRef(false);
+  const raceFocusRef = useRef(0);
+  const raceDroneEnabledRef = useRef(true);
   const ghostSpawnRef = useRef<{ x: number; y: number }>({ x: 100, y: 0 });
   const ghostTrailRef = useRef<{ x: number; y: number; d: string }[]>([]);
   const ghostLastDecisionRef = useRef<string>('IDLE');
@@ -1316,6 +1321,7 @@ export default function Game() {
     platforms: gameMode === 'wall-test' ? generateWallTestLevel() : platformsRef.current,
     gamePhase: 'menu',
     gameMode,
+    raceDroneEnabled: gameMode === 'race' ? raceDroneEnabledRef.current : false,
     score: 0,
     time: 0,
     particles: [],
@@ -1376,7 +1382,7 @@ export default function Game() {
 
   const resetGame = useCallback((gameMode: GameState['gameMode'] = 'story') => {
     // Ao iniciar modo história, garante que o modo editor não interfere
-    if (gameMode === 'story') {
+    if (gameMode === 'story' || gameMode === 'race') {
       editorTestModeRef.current = false;
       stopBeat();
       setMusicType('mp3');
@@ -1386,6 +1392,12 @@ export default function Game() {
       stopBeat();
     }
     clearKeys();
+    ghostEnabledRef.current = false;
+    ghostPlayerRef.current = null;
+    racePlayerRef.current = gameMode === 'race'
+      ? createGhostPlayer(100, GROUND_Y - PLAYER_H)
+      : null;
+    raceCheckpointXRef.current = 0;
     gsRef.current = {
       ...makeInitialState(gameMode),
       gamePhase: 'playing',
@@ -1948,7 +1960,25 @@ export default function Game() {
           break;
         case 'Delete':
           if (down && gsRef.current?.gamePhase === 'editor') {
-            editorDeleteBoxJustPressed.current = true;
+            // Ctrl+Delete ou Delete sem Ctrl: remove selecionado; sem Ctrl also deletes checkpoint
+            const _eDelCp = editorCustomCheckpointsRef.current;
+            const _eDelIdx = editorCheckpointIdxRef.current;
+            if (_eDelIdx >= 0 && _eDelIdx < _eDelCp.length) {
+              // Há checkpoint selecionado → confirmar exclusão (mesmo comportamento do Backspace)
+              const _pending = editorCheckpointDeleteConfirmRef.current;
+              if (!_pending || _pending.idx !== _eDelIdx || _pending.until < Date.now()) {
+                editorCheckpointDeleteConfirmRef.current = { idx: _eDelIdx, until: Date.now() + 3000 };
+                editorCopiedMsgRef.current = {
+                  text: `⚠ Aperte de novo para excluir ${_eDelCp[_eDelIdx].label}`,
+                  until: Date.now() + 3000,
+                };
+              } else {
+                // Segunda pressão dentro do prazo → confirma exclusão
+                editorDeleteBoxJustPressed.current = true;
+              }
+            } else {
+              editorDeleteBoxJustPressed.current = true;
+            }
             e.preventDefault();
           }
           break;
@@ -1976,7 +2006,6 @@ export default function Game() {
             e.preventDefault();
           }
           break;
-        case 'Delete':
         case 'Backspace':
         case 'Minus':
         case 'NumpadSubtract':
@@ -2804,7 +2833,7 @@ export default function Game() {
       const gs = gsRef.current;
       if (!gs) return;
 
-      // Cliques no menu inicial (botões MODO HISTÓRIA, OPÇÕES, engrenagem)
+        // Cliques no menu inicial (incluindo o submenu de corrida)
       if (gs.gamePhase === 'menu' && e.button === 0 && !showOptionsRef.current) {
         // Inicia trilha do menu (chiptune) na primeira interação do usuário
         if (!menuMutedRef.current) {
@@ -2816,7 +2845,21 @@ export default function Game() {
         const rect = canvas.getBoundingClientRect();
         const mx = (e.clientX - rect.left) * (CANVAS_W / rect.width);
         const my = (e.clientY - rect.top) * (CANVAS_H / rect.height);
-        const { storyBtnX, storyBtnY, storyBtnW, storyBtnH, trainBtnX, trainBtnY, trainBtnW, trainBtnH, optBtnX, optBtnY, optBtnW, optBtnH, gearCx, gearCy, gearR, muteBtnX, muteBtnY, muteBtnW, muteBtnH } = getMenuHitAreas();
+        const { storyBtnX, storyBtnY, storyBtnW, storyBtnH, raceBtnX, raceBtnY, raceBtnW, raceBtnH, trainBtnX, trainBtnY, trainBtnW, trainBtnH, optBtnX, optBtnY, optBtnW, optBtnH, gearCx, gearCy, gearR, muteBtnX, muteBtnY, muteBtnW, muteBtnH } = getMenuHitAreas();
+        if (raceMenuOpenRef.current) {
+          const raceItemY = CANVAS_H / 2 - 34 + raceFocusRef.current * 42;
+          const clickedRaceItem = my >= raceItemY - 20 && my <= raceItemY + 12;
+          if (clickedRaceItem) {
+            if (raceFocusRef.current === 2) {
+              raceMenuOpenRef.current = false;
+            } else {
+              raceDroneEnabledRef.current = raceFocusRef.current === 0;
+              raceMenuOpenRef.current = false;
+              resetGame('race');
+            }
+          }
+          return;
+        }
         // Clique no botão mute
         if (mx >= muteBtnX && mx <= muteBtnX + muteBtnW && my >= muteBtnY && my <= muteBtnY + muteBtnH) {
           menuMutedRef.current = !menuMutedRef.current;
@@ -2831,6 +2874,11 @@ export default function Game() {
         }
         if (mx >= storyBtnX && mx <= storyBtnX + storyBtnW && my >= storyBtnY && my <= storyBtnY + storyBtnH) {
           resetGame('story');
+          return;
+        }
+        if (mx >= raceBtnX && mx <= raceBtnX + raceBtnW && my >= raceBtnY && my <= raceBtnY + raceBtnH) {
+          raceMenuOpenRef.current = true;
+          raceFocusRef.current = 0;
           return;
         }
         if (mx >= trainBtnX && mx <= trainBtnX + trainBtnW && my >= trainBtnY && my <= trainBtnY + trainBtnH) {
@@ -3979,10 +4027,10 @@ export default function Game() {
             _tp.onGround = false; _tp.coyoteTime = 0;
             _tp.jumpCount = 0; _tp.doubleJumpReady = true;
             _tp.isRolling = false; _tp.isDivejumping = false;
-            _tp.isWallRunning = false; _tp.wallRunTime = 0;
+            _tp.isWallRunning = false; _tp.wallRunTimer = 0;
             _tp.touchingWall = false; _tp.isSideFlipping = false;
             _tp.kongVaultPhase = null; _tp.kongVaultIsObstacle = false;
-            _tp.state = 'alive'; _tp.health = PLAYER_MAX_HEALTH;
+            _tp.state = 'idle'; _tp.health = PLAYER_MAX_HEALTH;
             _tp.invincible = false; _tp.facingRight = true;
             _tp.autoRoll = false; _tp.landingCrouch = false;
             gs.camera.x = 0; gs.camera.y = 0;
@@ -4008,11 +4056,32 @@ export default function Game() {
           enterJustPressed.current = false;
           trainingJustPressed.current = false;
           // Não processa mais nada do menu enquanto opções estão abertas
+        } else if (raceMenuOpenRef.current) {
+          if (pauseUpJustPressed.current) {
+            raceFocusRef.current = (raceFocusRef.current - 1 + 3) % 3;
+            pauseUpJustPressed.current = false;
+          } else if (pauseDownJustPressed.current) {
+            raceFocusRef.current = (raceFocusRef.current + 1) % 3;
+            pauseDownJustPressed.current = false;
+          } else if (escJustPressed.current) {
+            raceMenuOpenRef.current = false;
+            escJustPressed.current = false;
+          } else if (spaceJustPressed.current || enterJustPressed.current) {
+            if (raceFocusRef.current === 2) {
+              raceMenuOpenRef.current = false;
+            } else {
+              raceDroneEnabledRef.current = raceFocusRef.current === 0;
+              raceMenuOpenRef.current = false;
+              resetGame('race');
+            }
+            spaceJustPressed.current = false;
+            enterJustPressed.current = false;
+          }
         } else if (pauseUpJustPressed.current) {
-          menuFocusRef.current = (menuFocusRef.current - 1 + 3) % 3;
+          menuFocusRef.current = (menuFocusRef.current - 1 + 4) % 4;
           pauseUpJustPressed.current = false;
         } else if (pauseDownJustPressed.current) {
-          menuFocusRef.current = (menuFocusRef.current + 1) % 3;
+          menuFocusRef.current = (menuFocusRef.current + 1) % 4;
           pauseDownJustPressed.current = false;
         } else if (trainingJustPressed.current) {
           trainingJustPressed.current = false;
@@ -4023,10 +4092,10 @@ export default function Game() {
           _tp.onGround = false; _tp.coyoteTime = 0;
           _tp.jumpCount = 0; _tp.doubleJumpReady = true;
           _tp.isRolling = false; _tp.isDivejumping = false;
-          _tp.isWallRunning = false; _tp.wallRunTime = 0;
+          _tp.isWallRunning = false; _tp.wallRunTimer = 0;
           _tp.touchingWall = false; _tp.isSideFlipping = false;
           _tp.kongVaultPhase = null; _tp.kongVaultIsObstacle = false;
-          _tp.state = 'alive'; _tp.health = PLAYER_MAX_HEALTH;
+          _tp.state = 'idle'; _tp.health = PLAYER_MAX_HEALTH;
           _tp.invincible = false; _tp.facingRight = true;
           _tp.autoRoll = false; _tp.landingCrouch = false;
           gs.camera.x = 0; gs.camera.y = 0;
@@ -4060,15 +4129,19 @@ export default function Game() {
             stopDogAmbient();
             gs.gamePhase = 'editor';
           }
-        } else if (spaceJustPressed.current) {
-          if (menuFocusRef.current === 2) {
+        } else if (spaceJustPressed.current || enterJustPressed.current) {
+          if (menuFocusRef.current === 3) {
             showOptionsRef.current = true;
-          } else if (menuFocusRef.current === 1) {
+          } else if (menuFocusRef.current === 2) {
             trainingJustPressed.current = true;
+          } else if (menuFocusRef.current === 1) {
+            raceMenuOpenRef.current = true;
+            raceFocusRef.current = 0;
           } else {
             resetGame('story');
           }
           spaceJustPressed.current = false;
+          enterJustPressed.current = false;
         }
       } else if (gs.gamePhase === 'editor') {
         // Detecta mudanças no conteúdo (move/resize/hitbox/crop/rotação/sprite)
@@ -4528,6 +4601,38 @@ export default function Game() {
           }
         }
 
+        // ── Rival da Corrida ─────────────────────────────────────────────────
+        if (gs.gameMode === 'race' && racePlayerRef.current) {
+          const _rival = racePlayerRef.current;
+          if (isGhostDead(_rival)) {
+            // Respawna no último checkpoint do rival
+            const _rCpX = raceCheckpointXRef.current > 0 ? raceCheckpointXRef.current : 80;
+            racePlayerRef.current = createGhostPlayer(_rCpX, GROUND_Y - PLAYER_H);
+          } else {
+            // Usa janela de plataformas centrada no rival (igual ao ghost player)
+            const _RIVAL_WINDOW = 3200;
+            const _rivalPlats = gs.platforms.filter(
+              pp => pp.x + pp.w >= _rival.x - _RIVAL_WINDOW && pp.x <= _rival.x + _RIVAL_WINDOW
+            );
+            stepGhostPlayer(_rival, _rivalPlats, dt, spawnP);
+
+            // Checkpoints próprios do rival (mesmos X do modo história)
+            if (_rival.x > 21720 && raceCheckpointXRef.current < 21720) {
+              raceCheckpointXRef.current = _rival.x;
+            }
+            if (_rival.x > 30598 && raceCheckpointXRef.current < 30598) {
+              raceCheckpointXRef.current = _rival.x;
+            }
+
+            // Rival cruzou o muro final antes do jogador → derrota
+            const RIVAL_FINISH_X = 36346;
+            if (_rival.x + _rival.w > RIVAL_FINISH_X && gs.gamePhase === 'playing') {
+              gs.gamePhase = 'gameover';
+              stopBeat();
+            }
+          }
+        }
+
         // ── Sons de pulo e pouso ─────────────────────────────────────────────
         if (gs.player.jumpCount > _prevJumpCount) {
           if (gs.player.jumpCount === 2) playDoubleJump();
@@ -4662,7 +4767,12 @@ export default function Game() {
 
         if (gs.gameMode !== 'wall-test' || editorDroneEnabledRef.current) {
           const _prevBulletCount = gs.bullets.length;
-          const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP, droneSolidPlatsRef.current);
+          // Modo corrida com drone: aponta para o corredor líder
+          const _raceDroneTarget = (
+            gs.gameMode === 'race' && gs.raceDroneEnabled && racePlayerRef.current &&
+            (racePlayerRef.current as Player).x > gs.player.x
+          ) ? (racePlayerRef.current as Player) : undefined;
+          const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP, droneSolidPlatsRef.current, undefined, undefined, _raceDroneTarget);
           if (shakeAmount > 0) gs.screenShake = shakeAmount;
           if (gs.bullets.length > _prevBulletCount) {
             // Só toca se o drone estiver visível na tela de Horácio;
@@ -4685,7 +4795,8 @@ export default function Game() {
           }, (_vol: number) => { playTireHit(0.7 * (sfxCategoryVolumesRef.current['tire'] ?? 1)); }, (_vol: number) => { playBoxHit(0.7 * (sfxCategoryVolumesRef.current['box'] ?? 1)); },
           (_vol: number) => { playMetalHit(0.7 * _vol * (sfxCategoryVolumesRef.current['obstacle'] ?? 0.5)); },
           spatialGridRef.current, platformIndexMapRef.current,
-          (_vol: number) => { playCarHit(0.7 * _vol * (sfxCategoryVolumesRef.current['car'] ?? 1)); });
+          (_vol: number) => { playCarHit(0.7 * _vol * (sfxCategoryVolumesRef.current['car'] ?? 1)); },
+          gs.gameMode === 'race' && racePlayerRef.current ? [racePlayerRef.current as Player] : []);
 
           updateFallingBoxes(gs.fallingBoxes, gs.platforms, gs.destroyedBoxIndices, gs.destroyedTireIndices);
           updateFlyingTires(gs.flyingTires);
@@ -4837,6 +4948,33 @@ export default function Game() {
             newState.camera.x = Math.max(0, editorLastSpawnXRef.current - CANVAS_W * CAMERA_LEAD_X);
             clearKeys();
             gsRef.current = newState;
+          } else if (gs.gameMode === 'race') {
+            // ── Modo corrida: consome vida, rival segue correndo ──────────
+            gs.lives = (gs.lives ?? 3) - 1;
+            if (gs.lives <= 0) {
+              gs.gamePhase = 'gameover';
+            } else {
+              const _raceCpX = gs.storyCheckpointX > 0 ? gs.storyCheckpointX : 80;
+              const _raceLives = gs.lives;
+              const _raceTime = gs.time;
+              const newState = makeInitialState('race');
+              newState.gamePhase = 'playing';
+              newState.time = _raceTime;
+              newState.lives = _raceLives;
+              newState.storyCheckpointX = _raceCpX;
+              newState.player.x = _raceCpX;
+              newState.player.y = GROUND_Y - PLAYER_H;
+              newState.player.vx = 0;
+              newState.player.vy = 0;
+              newState.camera.x = Math.max(0, _raceCpX - CANVAS_W * CAMERA_LEAD_X);
+              newState.drone.x = _raceCpX - 320;
+              newState.drone.y = GROUND_Y - 200;
+              newState.drone.stuckLastX = _raceCpX - 320;
+              newState.raceDroneEnabled = raceDroneEnabledRef.current;
+              clearKeys();
+              gsRef.current = newState;
+              // Rival continua independentemente — racePlayerRef é preservado
+            }
           } else {
             // ── Modo história: consome uma vida ──────────────────────────
             gs.lives = (gs.lives ?? 3) - 1;
@@ -5041,7 +5179,7 @@ export default function Game() {
             );
             // Sala de treino: Horácio nunca morre — restaura HP e estado após hit
             if (gs.player.state === 'dead' || gs.player.state === 'hurt') {
-              gs.player.state = 'alive';
+              gs.player.state = 'idle';
             }
             if (gs.player.health <= 0) {
               gs.player.health = PLAYER_MAX_HEALTH;
@@ -5465,6 +5603,41 @@ export default function Game() {
       if (gs.gamePhase !== 'editor') {
         lastPlayerGeomRef.current = _drawHoracio();
       }
+
+      // ── Rival da Corrida (cor diferente via hue-rotate) ──────────────────
+      if (gs.gameMode === 'race' && racePlayerRef.current) {
+        const _rival = racePlayerRef.current as Player;
+        const _rsx = _rival.x - gs.camera.x;
+        if (_rsx > -_rival.w - 20 && _rsx < CANVAS_W + 20) {
+          const _rivalGs = { ...gs, player: _rival } as GameState;
+          ctx.save();
+          ctx.filter = 'hue-rotate(160deg) saturate(1.5)';
+          drawPlayer(ctx, _rivalGs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current, ladderClimbImgRef.current, ladderDescendImgRef.current, kongVaultStartImgRef.current, kongVaultAirImgRef.current, poseDisplayOverridesRef.current);
+          ctx.restore();
+        } else {
+          // Rival fora da tela — seta laranja indicando direção e distância
+          const _toRight = _rsx >= CANVAS_W + 20;
+          const _dist = Math.round(Math.abs(_rival.x - gs.player.x));
+          const _edgeX = _toRight ? CANVAS_W - 14 : 14;
+          const _edgeY = Math.max(28, Math.min(CANVAS_H - 50, _rival.y));
+          const _arrowDir = _toRight ? 1 : -1;
+          ctx.save();
+          ctx.globalAlpha = 0.85;
+          ctx.fillStyle = 'rgba(255,110,30,0.95)';
+          ctx.beginPath();
+          ctx.moveTo(_edgeX + _arrowDir * 10, _edgeY);
+          ctx.lineTo(_edgeX - _arrowDir * 6, _edgeY - 7);
+          ctx.lineTo(_edgeX - _arrowDir * 6, _edgeY + 7);
+          ctx.closePath();
+          ctx.fill();
+          ctx.font = 'bold 9px monospace';
+          ctx.fillStyle = 'rgba(255,200,80,0.95)';
+          ctx.textAlign = _toRight ? 'right' : 'left';
+          ctx.fillText(`RIVAL ${_dist}px`, _toRight ? _edgeX - 14 : _edgeX + 14, _edgeY + 4);
+          ctx.restore();
+        }
+      }
+
       drawFireEscapeFloors(ctx, gs.camera.x, fireEscapeFloorImgRef.current);
       drawTireHideouts(ctx, _renderPlats, _rCamX, standingTireImgRef.current, []);
       drawEndingBuilding(ctx, gs.camera.x);
@@ -5535,7 +5708,7 @@ export default function Game() {
       }
 
       if (gs.gamePhase === 'menu') {
-        drawMenuScreen(ctx, menuFocusRef.current, menuMutedRef.current);
+        drawMenuScreen(ctx, menuFocusRef.current, menuMutedRef.current, raceMenuOpenRef.current, raceFocusRef.current);
         if (showOptionsRef.current) drawOptionsScreen(ctx);
       }
       if (gs.gamePhase === 'editor') {

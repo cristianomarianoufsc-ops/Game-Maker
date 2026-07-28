@@ -2632,7 +2632,7 @@ export function drawPlatforms(
       continue;
     }
 
-    if (plat.type === 'tireHideout') {
+    if ((plat.type as string) === 'tireHideout') {
       restorePlatformRotation();
       continue;
     }
@@ -4416,7 +4416,8 @@ export function drawPlayerPoseEditorHandles(
 
 export function drawDrone(
   ctx: CanvasRenderingContext2D,
-  gs: GameState
+  gs: GameState,
+  targetOverride?: import('./types').Player,
 ): void {
   const d = gs.drone;
   const sx = d.x - gs.camera.x;
@@ -4427,7 +4428,7 @@ export function drawDrone(
   ctx.rotate(d.wobble);
 
   // Searchlight beam (subtle)
-  const beamTarget = gs.player;
+  const beamTarget = targetOverride ?? gs.player;
   const bdx = (beamTarget.x - gs.camera.x + PLAYER_W / 2) - (sx + DRONE_W / 2);
   const bdy = (beamTarget.y + PLAYER_H / 2) - (sy + DRONE_H / 2);
   const bAngle = Math.atan2(bdy, bdx);
@@ -4902,7 +4903,7 @@ export function drawHUD(
   }
 
   // Drone warning (when close)
-  if (gs.gameMode !== 'wall-test' && gs.drone && gs.player.x - gs.drone.x < 350) {
+  if (gs.gameMode !== 'wall-test' && gs.raceDroneEnabled && gs.drone && gs.player.x - gs.drone.x < 350) {
     const alpha = 0.4 + Math.sin(Date.now() * 0.008) * 0.3;
     ctx.fillStyle = `rgba(255,40,40,${alpha})`;
     ctx.font = 'bold 11px monospace';
@@ -4934,33 +4935,37 @@ export function getMenuHitAreas() {
   const storyBtnW = 200;
   const storyBtnH = 40;
   const storyBtnX = cx - storyBtnW / 2;
-  const storyBtnY = cy - 64;
+  const storyBtnY = cy - 48;
+  const raceBtnW = 200;
+  const raceBtnH = 34;
+  const raceBtnX = cx - raceBtnW / 2;
+  const raceBtnY = cy - 4;
   const trainBtnW = 170;
   const trainBtnH = 34;
   const trainBtnX = cx - trainBtnW / 2;
-  const trainBtnY = cy - 10;
+  const trainBtnY = cy + 36;
   const optBtnW = 140;
   const optBtnH = 28;
   const optBtnX = cx - optBtnW / 2;
-  const optBtnY = cy + 38;
+  const optBtnY = cy + 78;
   const gearCx = cx + 210 - 22;
   const gearCy = cy - 138 + 22;
   const gearR = 16;
   // Botão mute — canto inferior-esquerdo do painel
   const muteBtnX = cx - 210 + 8;
-  const muteBtnY = cy - 138 + 278 - 28;
+  const muteBtnY = cy - 138 + 300 - 28;
   const muteBtnW = 76;
   const muteBtnH = 20;
-  return { storyBtnX, storyBtnY, storyBtnW, storyBtnH, trainBtnX, trainBtnY, trainBtnW, trainBtnH, optBtnX, optBtnY, optBtnW, optBtnH, gearCx, gearCy, gearR, muteBtnX, muteBtnY, muteBtnW, muteBtnH };
+  return { storyBtnX, storyBtnY, storyBtnW, storyBtnH, raceBtnX, raceBtnY, raceBtnW, raceBtnH, trainBtnX, trainBtnY, trainBtnW, trainBtnH, optBtnX, optBtnY, optBtnW, optBtnH, gearCx, gearCy, gearR, muteBtnX, muteBtnY, muteBtnW, muteBtnH };
 }
 
-export function drawMenuScreen(ctx: CanvasRenderingContext2D, menuFocus = 0, menuMuted = false): void {
+export function drawMenuScreen(ctx: CanvasRenderingContext2D, menuFocus = 0, menuMuted = false, raceMenuOpen = false, raceFocus = 0): void {
   const cx = CANVAS_W / 2;
   const cy = CANVAS_H / 2;
   const panelX = cx - 210;
   const panelY = cy - 138;
   const panelW = 420;
-  const panelH = 278;
+  const panelH = 300;
 
   ctx.fillStyle = 'rgba(0,0,0,0.72)';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
@@ -4983,7 +4988,7 @@ export function drawMenuScreen(ctx: CanvasRenderingContext2D, menuFocus = 0, men
   ctx.fillRect(panelX, panelY, panelW, 3);
 
   // Gear icon — top-right corner of panel (editor de fase)
-  const { gearCx, gearCy, gearR, storyBtnX, storyBtnY, storyBtnW, storyBtnH, trainBtnX, trainBtnY, trainBtnW, trainBtnH, optBtnX, optBtnY, optBtnW, optBtnH } = getMenuHitAreas();
+  const { gearCx, gearCy, gearR, storyBtnX, storyBtnY, storyBtnW, storyBtnH, raceBtnX, raceBtnY, raceBtnW, raceBtnH, trainBtnX, trainBtnY, trainBtnW, trainBtnH, optBtnX, optBtnY, optBtnW, optBtnH } = getMenuHitAreas();
   ctx.fillStyle = 'rgba(55,50,85,0.85)';
   ctx.beginPath();
   ctx.arc(gearCx, gearCy, gearR, 0, Math.PI * 2);
@@ -5033,8 +5038,22 @@ export function drawMenuScreen(ctx: CanvasRenderingContext2D, menuFocus = 0, men
   ctx.font = '9px monospace';
   ctx.fillText('ESPAÇO', cx, storyBtnY + (storyFocused ? 34 : 33));
 
-  // SALA DE TREINO button  (focus 1)
-  const trainFocused = menuFocus === 1;
+  // CORRIDA button (focus 1)
+  const raceFocused = menuFocus === 1;
+  ctx.fillStyle = raceFocused ? 'rgba(255,150,40,0.15)' : UNFOCUSED_BG;
+  ctx.fillRect(raceBtnX, raceBtnY, raceBtnW, raceBtnH);
+  ctx.strokeStyle = raceFocused ? 'rgba(255,170,55,1)' : UNFOCUSED_BORDER;
+  ctx.lineWidth = raceFocused ? 2 : 1;
+  ctx.strokeRect(raceBtnX, raceBtnY, raceBtnW, raceBtnH);
+  ctx.fillStyle = raceFocused ? 'rgba(255,190,70,1)' : UNFOCUSED_TEXT;
+  ctx.font = raceFocused ? 'bold 14px monospace' : '11px monospace';
+  ctx.fillText('CORRIDA', cx, raceBtnY + (raceFocused ? 18 : 20));
+  ctx.fillStyle = raceFocused ? 'rgba(255,175,50,0.7)' : UNFOCUSED_SUB;
+  ctx.font = '9px monospace';
+  ctx.fillText('ESPAÇO', cx, raceBtnY + (raceFocused ? 29 : 28));
+
+  // SALA DE TREINO button (focus 2)
+  const trainFocused = menuFocus === 2;
   ctx.fillStyle = trainFocused ? FOCUSED_BG : UNFOCUSED_BG;
   ctx.fillRect(trainBtnX, trainBtnY, trainBtnW, trainBtnH);
   ctx.strokeStyle = trainFocused ? FOCUSED_BORDER : UNFOCUSED_BORDER;
@@ -5047,8 +5066,8 @@ export function drawMenuScreen(ctx: CanvasRenderingContext2D, menuFocus = 0, men
   ctx.font = '9px monospace';
   ctx.fillText('T', cx, trainBtnY + (trainFocused ? 30 : 29));
 
-  // OPÇÕES button  (focus 2)
-  const optFocused = menuFocus === 2;
+  // OPÇÕES button (focus 3)
+  const optFocused = menuFocus === 3;
   ctx.fillStyle = optFocused ? FOCUSED_BG : UNFOCUSED_BG;
   ctx.fillRect(optBtnX, optBtnY, optBtnW, optBtnH);
   ctx.strokeStyle = optFocused ? FOCUSED_BORDER : UNFOCUSED_BORDER;
@@ -5084,6 +5103,36 @@ export function drawMenuScreen(ctx: CanvasRenderingContext2D, menuFocus = 0, men
   ctx.font = '8px monospace';
   ctx.fillText('Música: "Aggressor" Kevin MacLeod (incompetech.com)', CANVAS_W - 10, CANVAS_H - 18);
   ctx.fillText('Licensed under Creative Commons: By Attribution 4.0 — creativecommons.org/licenses/by/4.0/', CANVAS_W - 10, CANVAS_H - 8);
+
+  if (raceMenuOpen) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.92)';
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    ctx.fillStyle = 'rgba(18,15,30,0.99)';
+    ctx.fillRect(cx - 230, cy - 112, 460, 224);
+    ctx.strokeStyle = 'rgba(255,160,50,0.85)';
+    ctx.strokeRect(cx - 230, cy - 112, 460, 224);
+    ctx.fillStyle = 'rgba(255,190,70,0.95)';
+    ctx.font = 'bold 18px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('MODO CORRIDA', cx, cy - 76);
+    const items = ['CORRIDA COM DRONE', 'CORRIDA SEM DRONE', 'VOLTAR'];
+    items.forEach((label, index) => {
+      const y = cy - 34 + index * 42;
+      const focused = raceFocus === index;
+      ctx.fillStyle = focused ? 'rgba(255,150,40,0.18)' : 'rgba(40,38,55,0.08)';
+      ctx.fillRect(cx - 170, y - 20, 340, 32);
+      ctx.strokeStyle = focused ? 'rgba(255,180,70,1)' : 'rgba(110,105,130,0.35)';
+      ctx.strokeRect(cx - 170, y - 20, 340, 32);
+      ctx.fillStyle = focused ? 'rgba(255,205,100,1)' : 'rgba(150,145,165,0.65)';
+      ctx.font = focused ? 'bold 13px monospace' : '11px monospace';
+      ctx.fillText(label, cx, y + 1);
+    });
+    ctx.fillStyle = 'rgba(150,140,175,0.65)';
+    ctx.font = '9px monospace';
+    ctx.fillText('↑ ↓  ESCOLHER   |   ESPAÇO / ENTER  CONFIRMAR', cx, cy + 86);
+    ctx.restore();
+  }
 
   ctx.textAlign = 'left';
 }
