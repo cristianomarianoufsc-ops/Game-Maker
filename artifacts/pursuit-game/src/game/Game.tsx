@@ -4080,9 +4080,9 @@ export default function Game() {
         } else if (raceMenuOpenRef.current) {
           if (raceLeftJustPressed.current || raceRightJustPressed.current) {
             if (raceFocusRef.current === 0) {
-              raceDroneEnabledRef.current = raceRightJustPressed.current;
+              raceDroneEnabledRef.current = !raceDroneEnabledRef.current;
             } else if (raceFocusRef.current === 1) {
-              raceCheckpointsEnabledRef.current = raceRightJustPressed.current;
+              raceCheckpointsEnabledRef.current = !raceCheckpointsEnabledRef.current;
             }
             raceLeftJustPressed.current = false;
             raceRightJustPressed.current = false;
