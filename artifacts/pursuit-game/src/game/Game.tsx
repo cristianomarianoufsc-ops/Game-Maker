@@ -678,6 +678,8 @@ export default function Game() {
   const ghostEnabledRef = useRef(false);
   const racePlayerRef = useRef<Player | null>(null);
   const raceCheckpointXRef = useRef(0);
+  const raceReplayArmedRef = useRef(false);
+  const raceTictacSnapDoneRef = useRef(false);
   const raceMenuOpenRef = useRef(false);
   const raceFocusRef = useRef(0);
   const raceDroneEnabledRef = useRef(true);
@@ -1398,6 +1400,8 @@ export default function Game() {
       ? createGhostPlayer(100, GROUND_Y - PLAYER_H)
       : null;
     raceCheckpointXRef.current = 0;
+    raceReplayArmedRef.current = false;
+    raceTictacSnapDoneRef.current = false;
     gsRef.current = {
       ...makeInitialState(gameMode),
       gamePhase: 'playing',
@@ -4608,12 +4612,63 @@ export default function Game() {
             // Respawna no último checkpoint do rival
             const _rCpX = raceCheckpointXRef.current > 0 ? raceCheckpointXRef.current : 80;
             racePlayerRef.current = createGhostPlayer(_rCpX, GROUND_Y - PLAYER_H);
+            // O checkpoint do segundo rio fica antes da gravação da escadaria.
+            // Permite repetir o trecho gravado numa nova tentativa do rival.
+            raceReplayArmedRef.current = _rCpX >= ghostAutoReplayStartXRef.current - 80;
+            raceTictacSnapDoneRef.current = _rCpX >= 36260;
           } else {
             // Usa janela de plataformas centrada no rival (igual ao ghost player)
             const _RIVAL_WINDOW = 3200;
             const _rivalPlats = gs.platforms.filter(
               pp => pp.x + pp.w >= _rival.x - _RIVAL_WINDOW && pp.x <= _rival.x + _RIVAL_WINDOW
             );
+
+            // ── Replay da escadaria/telhado ─────────────────────────────────
+            // O ghost de teste usa a gravação do Horácio para transpor o muro
+            // alto em x=31676. O rival da corrida deve usar exatamente a mesma
+            // sequência de inputs, em vez de tentar a IA procedural nessa zona.
+            if (
+              !raceReplayArmedRef.current &&
+              ghostAutoReplayDataRef.current &&
+              ghostAutoReplayDataRef.current.length > 0
+            ) {
+              const _trigX = ghostAutoReplayStartXRef.current;
+              const _rivalCX = _rival.x + _rival.w / 2;
+              if (_rivalCX >= _trigX - 40 && _rivalCX < _trigX + 80) {
+                raceReplayArmedRef.current = true;
+                _rival.x = ghostAutoReplayStartXRef.current;
+                _rival.y = ghostAutoReplayStartYRef.current;
+                _rival.vx = 0;
+                _rival.vy = 0;
+                loadGhostRecording(_rival, ghostAutoReplayDataRef.current);
+              }
+            }
+
+            // ── Snap do tic-tac final ────────────────────────────────────────
+            // A gravação termina antes do muro curto final. Normaliza o estado
+            // do rival com os mesmos valores usados pelo ghost de teste para
+            // garantir a entrada consistente no wall-run/ejeção do tic-tac.
+            const RACE_TICTAC_SNAP_X = 36260;
+            const _rivalCXSnap = _rival.x + _rival.w / 2;
+            if (
+              !raceTictacSnapDoneRef.current &&
+              _rivalCXSnap >= RACE_TICTAC_SNAP_X - 10 &&
+              _rivalCXSnap < RACE_TICTAC_SNAP_X + 80
+            ) {
+              raceTictacSnapDoneRef.current = true;
+              _rival.y = GROUND_Y - PLAYER_H;
+              _rival.vy = 0;
+              _rival.vx = PLAYER_SPEED;
+              _rival.onGround = true;
+              _rival.jumpCount = 0;
+              _rival.doubleJumpReady = false;
+              _rival.isWallRunning = false;
+              _rival.isWallClimbUp = false;
+              _rival.isWallHanging = false;
+              _rival.isSideFlipping = false;
+              _rival.isRolling = false;
+            }
+
             stepGhostPlayer(_rival, _rivalPlats, dt, spawnP);
 
             // Checkpoints próprios do rival (mesmos X do modo história)
