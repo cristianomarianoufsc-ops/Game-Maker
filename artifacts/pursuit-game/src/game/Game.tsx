@@ -4827,11 +4827,22 @@ export default function Game() {
           !(gs.gameMode === 'race' && !gs.raceDroneEnabled);
         if (_droneActive) {
           const _prevBulletCount = gs.bullets.length;
-          // Modo corrida com drone: aponta para o corredor líder
-          const _raceDroneTarget = (
-            gs.gameMode === 'race' && gs.raceDroneEnabled && racePlayerRef.current &&
-            (racePlayerRef.current as Player).x > gs.player.x
-          ) ? (racePlayerRef.current as Player) : undefined;
+          // Modo corrida com drone: aponta sempre para o corredor vivo que
+          // estiver mais à frente. Se o líder morrer, o alvo troca para o
+          // outro corredor imediatamente — nunca acompanha o respawn.
+          let _raceDroneTarget: Player | undefined;
+          if (gs.gameMode === 'race' && gs.raceDroneEnabled && racePlayerRef.current) {
+            const _racePlayer = racePlayerRef.current as Player;
+            const _horacioAlive = gs.player.state !== 'dead';
+            const _rivalAlive = _racePlayer.state !== 'dead';
+            if (_horacioAlive && _rivalAlive) {
+              _raceDroneTarget = _racePlayer.x > gs.player.x ? _racePlayer : gs.player;
+            } else if (_rivalAlive) {
+              _raceDroneTarget = _racePlayer;
+            } else {
+              _raceDroneTarget = gs.player;
+            }
+          }
           const shakeAmount = updateDrone(gs.drone, gs.player, gs.bullets, dt, spawnP, droneSolidPlatsRef.current, undefined, undefined, _raceDroneTarget);
           if (shakeAmount > 0) gs.screenShake = shakeAmount;
           if (gs.bullets.length > _prevBulletCount) {
@@ -5027,9 +5038,14 @@ export default function Game() {
               newState.player.vx = 0;
               newState.player.vy = 0;
               newState.camera.x = Math.max(0, _raceCpX - CANVAS_W * CAMERA_LEAD_X);
-              newState.drone.x = _raceCpX - 320;
-              newState.drone.y = GROUND_Y - 200;
-              newState.drone.stuckLastX = _raceCpX - 320;
+              // O drone é uma entidade independente da corrida: preserva a
+              // posição e o impulso atuais em vez de nascer junto do jogador.
+              newState.drone.x = gs.drone.x;
+              newState.drone.y = gs.drone.y;
+              newState.drone.vx = gs.drone.vx;
+              newState.drone.vy = gs.drone.vy;
+              newState.drone.stuckTimer = gs.drone.stuckTimer;
+              newState.drone.stuckLastX = gs.drone.stuckLastX;
               newState.raceDroneEnabled = raceDroneEnabledRef.current;
               clearKeys();
               gsRef.current = newState;
