@@ -30,6 +30,7 @@ The rival wears a differently-coloured outfit but has the same skin tone as the 
 - In race mode, drone targets the living leader via `targetOverride` in `updateDrone`; if one runner dies, it switches to the other without respawning with either runner.
 - `raceDroneEnabled` flag on `GameState` disables drone in "Corrida sem drone".
 - The drone's position and momentum must survive player respawns; race respawn logic must never place it at the player's checkpoint.
+- Race setup has independent Drone and Checkpoints toggles; Iniciar only starts the race. Checkpoints reuse the story triggers and respawn behavior.
 
 ## Colour
 - `hue-rotate(160deg) saturate(1.5)` shifts pinkish-orange clothes to blue-violet.

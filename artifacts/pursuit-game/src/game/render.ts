@@ -4959,7 +4959,15 @@ export function getMenuHitAreas() {
   return { storyBtnX, storyBtnY, storyBtnW, storyBtnH, raceBtnX, raceBtnY, raceBtnW, raceBtnH, trainBtnX, trainBtnY, trainBtnW, trainBtnH, optBtnX, optBtnY, optBtnW, optBtnH, gearCx, gearCy, gearR, muteBtnX, muteBtnY, muteBtnW, muteBtnH };
 }
 
-export function drawMenuScreen(ctx: CanvasRenderingContext2D, menuFocus = 0, menuMuted = false, raceMenuOpen = false, raceFocus = 0): void {
+export function drawMenuScreen(
+  ctx: CanvasRenderingContext2D,
+  menuFocus = 0,
+  menuMuted = false,
+  raceMenuOpen = false,
+  raceFocus = 0,
+  raceDroneEnabled = true,
+  raceCheckpointsEnabled = true,
+): void {
   const cx = CANVAS_W / 2;
   const cy = CANVAS_H / 2;
   const panelX = cx - 210;
@@ -5109,16 +5117,20 @@ export function drawMenuScreen(ctx: CanvasRenderingContext2D, menuFocus = 0, men
     ctx.fillStyle = 'rgba(0,0,0,0.92)';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     ctx.fillStyle = 'rgba(18,15,30,0.99)';
-    ctx.fillRect(cx - 230, cy - 112, 460, 224);
+    ctx.fillRect(cx - 230, cy - 132, 460, 264);
     ctx.strokeStyle = 'rgba(255,160,50,0.85)';
-    ctx.strokeRect(cx - 230, cy - 112, 460, 224);
+    ctx.strokeRect(cx - 230, cy - 132, 460, 264);
     ctx.fillStyle = 'rgba(255,190,70,0.95)';
     ctx.font = 'bold 18px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('MODO CORRIDA', cx, cy - 76);
-    const items = ['CORRIDA COM DRONE', 'CORRIDA SEM DRONE', 'VOLTAR'];
+    const items = [
+      `DRONE: ${raceDroneEnabled ? 'SIM' : 'NÃO'}`,
+      `CHECKPOINTS: ${raceCheckpointsEnabled ? 'SIM' : 'NÃO'}`,
+      'INICIAR',
+    ];
     items.forEach((label, index) => {
-      const y = cy - 34 + index * 42;
+      const y = cy - 38 + index * 46;
       const focused = raceFocus === index;
       ctx.fillStyle = focused ? 'rgba(255,150,40,0.18)' : 'rgba(40,38,55,0.08)';
       ctx.fillRect(cx - 170, y - 20, 340, 32);
@@ -5130,7 +5142,7 @@ export function drawMenuScreen(ctx: CanvasRenderingContext2D, menuFocus = 0, men
     });
     ctx.fillStyle = 'rgba(150,140,175,0.65)';
     ctx.font = '9px monospace';
-    ctx.fillText('↑ ↓  ESCOLHER   |   ESPAÇO / ENTER  CONFIRMAR', cx, cy + 86);
+    ctx.fillText('↑ ↓  ESCOLHER   |   ESPAÇO / ENTER  ALTERAR / INICIAR', cx, cy + 108);
     ctx.restore();
   }
 

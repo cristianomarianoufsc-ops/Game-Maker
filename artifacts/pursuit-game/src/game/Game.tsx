@@ -683,6 +683,7 @@ export default function Game() {
   const raceMenuOpenRef = useRef(false);
   const raceFocusRef = useRef(0);
   const raceDroneEnabledRef = useRef(true);
+  const raceCheckpointsEnabledRef = useRef(true);
   const ghostSpawnRef = useRef<{ x: number; y: number }>({ x: 100, y: 0 });
   const ghostTrailRef = useRef<{ x: number; y: number; d: string }[]>([]);
   const ghostLastDecisionRef = useRef<string>('IDLE');
@@ -1324,6 +1325,7 @@ export default function Game() {
     gamePhase: 'menu',
     gameMode,
     raceDroneEnabled: gameMode === 'race' ? raceDroneEnabledRef.current : false,
+    raceCheckpointsEnabled: gameMode === 'race' ? raceCheckpointsEnabledRef.current : false,
     score: 0,
     time: 0,
     particles: [],
@@ -2853,13 +2855,14 @@ export default function Game() {
         const my = (e.clientY - rect.top) * (CANVAS_H / rect.height);
         const { storyBtnX, storyBtnY, storyBtnW, storyBtnH, raceBtnX, raceBtnY, raceBtnW, raceBtnH, trainBtnX, trainBtnY, trainBtnW, trainBtnH, optBtnX, optBtnY, optBtnW, optBtnH, gearCx, gearCy, gearR, muteBtnX, muteBtnY, muteBtnW, muteBtnH } = getMenuHitAreas();
         if (raceMenuOpenRef.current) {
-          const raceItemY = CANVAS_H / 2 - 34 + raceFocusRef.current * 42;
+          const raceItemY = CANVAS_H / 2 - 38 + raceFocusRef.current * 46;
           const clickedRaceItem = my >= raceItemY - 20 && my <= raceItemY + 12;
           if (clickedRaceItem) {
-            if (raceFocusRef.current === 2) {
-              raceMenuOpenRef.current = false;
+            if (raceFocusRef.current === 0) {
+              raceDroneEnabledRef.current = !raceDroneEnabledRef.current;
+            } else if (raceFocusRef.current === 1) {
+              raceCheckpointsEnabledRef.current = !raceCheckpointsEnabledRef.current;
             } else {
-              raceDroneEnabledRef.current = raceFocusRef.current === 0;
               raceMenuOpenRef.current = false;
               resetGame('race');
             }
@@ -4073,10 +4076,11 @@ export default function Game() {
             raceMenuOpenRef.current = false;
             escJustPressed.current = false;
           } else if (spaceJustPressed.current || enterJustPressed.current) {
-            if (raceFocusRef.current === 2) {
-              raceMenuOpenRef.current = false;
+            if (raceFocusRef.current === 0) {
+              raceDroneEnabledRef.current = !raceDroneEnabledRef.current;
+            } else if (raceFocusRef.current === 1) {
+              raceCheckpointsEnabledRef.current = !raceCheckpointsEnabledRef.current;
             } else {
-              raceDroneEnabledRef.current = raceFocusRef.current === 0;
               raceMenuOpenRef.current = false;
               resetGame('race');
             }
@@ -4612,7 +4616,9 @@ export default function Game() {
           const _rival = racePlayerRef.current;
           if (isGhostDead(_rival)) {
             // Respawna no último checkpoint do rival
-            const _rCpX = raceCheckpointXRef.current > 0 ? raceCheckpointXRef.current : 80;
+            const _rCpX = gs.raceCheckpointsEnabled && raceCheckpointXRef.current > 0
+              ? raceCheckpointXRef.current
+              : 80;
             racePlayerRef.current = createGhostPlayer(_rCpX, GROUND_Y - PLAYER_H);
             // O checkpoint do segundo rio fica antes da gravação da escadaria.
             // Permite repetir o trecho gravado numa nova tentativa do rival.
@@ -4674,10 +4680,10 @@ export default function Game() {
             stepGhostPlayer(_rival, _rivalPlats, dt, spawnP);
 
             // Checkpoints próprios do rival (mesmos X do modo história)
-            if (_rival.x > 21720 && raceCheckpointXRef.current < 21720) {
+            if (gs.raceCheckpointsEnabled && _rival.x > 21720 && raceCheckpointXRef.current < 21720) {
               raceCheckpointXRef.current = _rival.x;
             }
-            if (_rival.x > 30598 && raceCheckpointXRef.current < 30598) {
+            if (gs.raceCheckpointsEnabled && _rival.x > 30598 && raceCheckpointXRef.current < 30598) {
               raceCheckpointXRef.current = _rival.x;
             }
 
@@ -4932,7 +4938,7 @@ export default function Game() {
         // ── Bônus de vida ao sair do ferro velho (x>21700, modo história) ──
         const POST_JUNKYARD_HEALTH_TRIGGER_X = 21720;
         if (
-          gs.gameMode === 'story' &&
+          (gs.gameMode === 'story' || (gs.gameMode === 'race' && gs.raceCheckpointsEnabled)) &&
           !gs.postJunkyardHealthGiven &&
           gs.player.x > POST_JUNKYARD_HEALTH_TRIGGER_X &&
           gs.player.state !== 'dead'
@@ -4956,7 +4962,7 @@ export default function Game() {
         // ── Segundo checkpoint: muro x:30578, após o prédio de escada ──
         const SECOND_CP_TRIGGER_X = 30598; // borda direita do muro (x:30578 + w:20)
         if (
-          gs.gameMode === 'story' &&
+          (gs.gameMode === 'story' || (gs.gameMode === 'race' && gs.raceCheckpointsEnabled)) &&
           !gs.secondCheckpointGiven &&
           gs.player.x > SECOND_CP_TRIGGER_X &&
           gs.player.state !== 'dead'
@@ -5025,7 +5031,9 @@ export default function Game() {
             if (gs.lives <= 0) {
               gs.gamePhase = 'gameover';
             } else {
-              const _raceCpX = gs.storyCheckpointX > 0 ? gs.storyCheckpointX : 80;
+              const _raceCpX = gs.raceCheckpointsEnabled && gs.storyCheckpointX > 0
+                ? gs.storyCheckpointX
+                : 80;
               const _raceLives = gs.lives;
               const _raceTime = gs.time;
               const newState = makeInitialState('race');
@@ -5047,6 +5055,7 @@ export default function Game() {
               newState.drone.stuckTimer = gs.drone.stuckTimer;
               newState.drone.stuckLastX = gs.drone.stuckLastX;
               newState.raceDroneEnabled = raceDroneEnabledRef.current;
+              newState.raceCheckpointsEnabled = raceCheckpointsEnabledRef.current;
               clearKeys();
               gsRef.current = newState;
               // Rival continua independentemente — racePlayerRef é preservado
@@ -5811,7 +5820,15 @@ export default function Game() {
       }
 
       if (gs.gamePhase === 'menu') {
-        drawMenuScreen(ctx, menuFocusRef.current, menuMutedRef.current, raceMenuOpenRef.current, raceFocusRef.current);
+        drawMenuScreen(
+          ctx,
+          menuFocusRef.current,
+          menuMutedRef.current,
+          raceMenuOpenRef.current,
+          raceFocusRef.current,
+          raceDroneEnabledRef.current,
+          raceCheckpointsEnabledRef.current,
+        );
         if (showOptionsRef.current) drawOptionsScreen(ctx);
       }
       if (gs.gamePhase === 'editor') {
