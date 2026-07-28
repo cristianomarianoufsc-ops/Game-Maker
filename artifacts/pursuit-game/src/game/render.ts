@@ -1438,12 +1438,16 @@ export function drawPotholes(
 // Backdrop após o muro x:25929 até x:29457 — casas de madeira pobres
 // em primeiro plano de fundo, formando uma vila/favela onde o drone
 // encontra os 2 NPCs. A partir do muro x:29457 volta o cenário de prédios.
+// SHANTY_CLIP_X2: clip estende até x:29540 (início do muro) para que a última
+// casa da fileira (x:29280, ~324px) não seja cortada ao meio — a parede encobre
+// a borda do clip, produzindo uma transição limpa.
 const SHANTY_X1 = 25929;
-const SHANTY_X2 = 29457;
+const SHANTY_X2 = 29457;       // limite dos loops de casas/poças (não iniciar nova casa na lacuna)
+const SHANTY_CLIP_X2 = 29540;  // limite do clip — coincide com o início do muro x:29540
 
 export function drawShantyVillage(ctx: CanvasRenderingContext2D, camX: number): void {
   const sx = SHANTY_X1 - camX;
-  const ex = SHANTY_X2 - camX;
+  const ex = SHANTY_CLIP_X2 - camX;   // clip vai até o muro, não até SHANTY_X2
   if (ex < -20 || sx > CANVAS_W + 20) return;
 
   ctx.save();
