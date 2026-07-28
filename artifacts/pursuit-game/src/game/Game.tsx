@@ -679,6 +679,8 @@ export default function Game() {
   const ghostPlayerRef = useRef<Player | null>(null);
   const ghostEnabledRef = useRef(false);
   const racePlayerRef = useRef<Player | null>(null);
+  const raceRoundWinnerRef = useRef<'player' | 'rival' | null>(null);
+  const raceRoundLoserXRef = useRef(80);
   const raceCheckpointXRef = useRef(0);
   const raceReplayArmedRef = useRef(false);
   const raceTictacSnapDoneRef = useRef(false);
@@ -1412,6 +1414,8 @@ export default function Game() {
     racePlayerRef.current = gameMode === 'race'
       ? createGhostPlayer(100, GROUND_Y - PLAYER_H)
       : null;
+    raceRoundWinnerRef.current = null;
+    raceRoundLoserXRef.current = 80;
     raceCheckpointXRef.current = 0;
     raceReplayArmedRef.current = false;
     raceTictacSnapDoneRef.current = false;
@@ -4715,6 +4719,8 @@ export default function Game() {
             // Rival cruzou o muro final antes do jogador → derrota
             const RIVAL_FINISH_X = 36346;
             if (_rival.x + _rival.w > RIVAL_FINISH_X && gs.gamePhase === 'playing') {
+              raceRoundWinnerRef.current = 'rival';
+              raceRoundLoserXRef.current = gs.player.x;
               gs.raceRivalWins += 1;
               gs.raceRoundNumber = Math.min(gs.raceRoundNumber + 1, gs.raceRoundTarget * 2 - 1);
               gs.gamePhase = 'victory';
@@ -5017,6 +5023,8 @@ export default function Game() {
         const VICTORY_TRIGGER_X = 36346; // borda direita do muro (x:36321 + w:25)
         if ((!editorTestModeRef.current || editorRealStoryModeRef.current) && gs.player.x + PLAYER_W > VICTORY_TRIGGER_X && gs.player.state !== 'dead' && gs.player.onGround) {
           if (gs.gameMode === 'race') {
+            raceRoundWinnerRef.current = 'player';
+            raceRoundLoserXRef.current = racePlayerRef.current?.x ?? 80;
             gs.racePlayerWins += 1;
             gs.raceRoundNumber = Math.min(gs.raceRoundNumber + 1, gs.raceRoundTarget * 2 - 1);
           }
@@ -5341,8 +5349,10 @@ export default function Game() {
           const targetCamX = gs.player.x - CANVAS_W * CAMERA_LEAD_X;
           gs.camera.x += (targetCamX - gs.camera.x) * 0.045;
         }
-        // Entre rounds, volta automaticamente ao início do circuito mantendo o placar.
-        // A série termina quando um corredor alcança o número de vitórias escolhido.
+        // Entre rounds, somente o vencedor volta ao início do circuito.
+        // O perdedor permanece no ponto onde estava, como se o vencedor tivesse
+        // dado uma volta completa na fase. A série termina quando um corredor
+        // alcança o número de vitórias escolhido.
         if (gs.gameMode === 'race' && gs.victoryTimer <= 0) {
           const seriesOver =
             gs.racePlayerWins >= gs.raceRoundTarget ||
@@ -5351,13 +5361,48 @@ export default function Game() {
             const playerWins = gs.racePlayerWins;
             const rivalWins = gs.raceRivalWins;
             const roundTarget = gs.raceRoundTarget;
+            const roundWinner = raceRoundWinnerRef.current;
+            const roundLoserX = raceRoundLoserXRef.current;
+            const savedTime = gs.time;
             resetGame('race');
             const next = gsRef.current;
             if (next) {
+              next.time = savedTime;
               next.raceRoundTarget = roundTarget;
               next.racePlayerWins = playerWins;
               next.raceRivalWins = rivalWins;
               next.raceRoundNumber = playerWins + rivalWins + 1;
+              if (roundWinner === 'player') {
+                next.player.x = 80;
+                next.player.y = GROUND_Y - PLAYER_H;
+                next.player.vx = 0;
+                next.player.vy = 0;
+                next.player.state = 'idle';
+                if (racePlayerRef.current) {
+                  racePlayerRef.current.x = Math.max(80, roundLoserX);
+                  racePlayerRef.current.y = GROUND_Y - PLAYER_H;
+                  racePlayerRef.current.vx = 0;
+                  racePlayerRef.current.vy = 0;
+                  racePlayerRef.current.state = 'idle';
+                  racePlayerRef.current.onGround = true;
+                }
+                next.camera.x = 0;
+              } else {
+                next.player.x = Math.max(80, roundLoserX);
+                next.player.y = GROUND_Y - PLAYER_H;
+                next.player.vx = 0;
+                next.player.vy = 0;
+                next.player.state = 'idle';
+                if (racePlayerRef.current) {
+                  racePlayerRef.current.x = 80;
+                  racePlayerRef.current.y = GROUND_Y - PLAYER_H;
+                  racePlayerRef.current.vx = 0;
+                  racePlayerRef.current.vy = 0;
+                  racePlayerRef.current.state = 'idle';
+                  racePlayerRef.current.onGround = true;
+                }
+                next.camera.x = Math.max(0, next.player.x - CANVAS_W * CAMERA_LEAD_X);
+              }
             }
           } else if (spaceJustPressed.current) {
             resetGame('race');
