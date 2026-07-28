@@ -4963,10 +4963,12 @@ export default function Game() {
 
         if (gs.screenShake > 0) gs.screenShake = Math.max(0, gs.screenShake - 0.4);
 
-        // ── Bônus de vida ao sair do ferro velho (x>21700, modo história) ──
+        // ── Bônus de vida ao sair do ferro velho ───────────────────────────
+        // Na Corrida, checkpoints desligados impedem apenas o respawn neles;
+        // a recompensa de sangue continua sendo concedida ao atravessá-los.
         const POST_JUNKYARD_HEALTH_TRIGGER_X = 21720;
         if (
-          (gs.gameMode === 'story' || (gs.gameMode === 'race' && gs.raceCheckpointsEnabled)) &&
+          (gs.gameMode === 'story' || gs.gameMode === 'race') &&
           !gs.postJunkyardHealthGiven &&
           gs.player.x > POST_JUNKYARD_HEALTH_TRIGGER_X &&
           gs.player.state !== 'dead'
@@ -4990,7 +4992,7 @@ export default function Game() {
         // ── Segundo checkpoint: muro x:30578, após o prédio de escada ──
         const SECOND_CP_TRIGGER_X = 30598; // borda direita do muro (x:30578 + w:20)
         if (
-          (gs.gameMode === 'story' || (gs.gameMode === 'race' && gs.raceCheckpointsEnabled)) &&
+          (gs.gameMode === 'story' || gs.gameMode === 'race') &&
           !gs.secondCheckpointGiven &&
           gs.player.x > SECOND_CP_TRIGGER_X &&
           gs.player.state !== 'dead'
