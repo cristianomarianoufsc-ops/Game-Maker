@@ -1,45 +1,40 @@
-# [Project name]
+# Pursuit — Jogo de Perseguição 2D
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Jogo 2D de perseguição com modo corrida contra IA, construído em React + Vite.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- **Jogo (frontend):** workflow `Pursuit Game` — `PORT=5173 BASE_PATH=/ pnpm --filter @workspace/pursuit-game run dev`
+- **API server:** `pnpm --filter @workspace/api-server run dev` (porta 8080)
+- `pnpm run typecheck` — typecheck completo em todos os pacotes
+- `pnpm run build` — typecheck + build de todos os pacotes
+- `pnpm --filter @workspace/db run push` — push do schema no banco (dev)
+- `DATABASE_URL` é gerenciado automaticamente pelo Replit (PostgreSQL provisionado)
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Frontend: React + Vite (`artifacts/pursuit-game`)
+- API: Express 5 (`artifacts/api-server`)
+- DB: PostgreSQL + Drizzle ORM (`lib/db`)
+- Validação: Zod (`zod/v4`), `drizzle-zod`
+- API codegen: Orval (a partir do spec OpenAPI em `lib/api-spec`)
+- Build: esbuild (bundle CJS)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
-
-## Architecture decisions
-
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
-
-## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
+- `artifacts/pursuit-game/` — jogo React/Vite (frontend)
+- `artifacts/api-server/` — servidor Express 5
+- `lib/db/src/schema/` — schema Drizzle (fonte da verdade para o banco)
+- `lib/api-spec/` — spec OpenAPI (fonte da verdade para contratos de API)
+- `attached_assets/` — assets do jogo (sprites, imagens)
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Comunicação em português BR
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- O jogo depende dos assets em `attached_assets/` — sincronize ao mover código
+- Modo Corrida: rival usa ghostPlayer AI; hue-rotate 160° para cor diferente; drone mira o líder via targetOverride
+- PORT e BASE_PATH precisam ser passados explicitamente ao rodar o frontend fora do workflow gerenciado
