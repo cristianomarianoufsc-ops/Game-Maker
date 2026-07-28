@@ -2154,12 +2154,11 @@ export function updateBullets(
     const BYSTANDER_RUN_FRAME_INTERVAL = 140; // ms por frame (igual ao render.ts)
     let hitBystander = false;
     for (const by of bystanders) {
+      // Somente o senhor negro (spriteId 3) pode ser atingido pelo drone.
+      // Os demais NPCs da vila permanecem imunes aos tiros em todos os modos.
+      if (by.spriteId !== 3) continue;
       if (by.state === 'dead') continue;
       if (rectOverlap(b.x - 4, b.y - 4, 8, 8, by.x + 8, by.y + 5, by.w + 4, by.h - 10)) {
-        // NPC de touca (spriteId 1): congela o frame de corrida para cair na mesma pose
-        if (by.spriteId === 1 && by.state === 'flee') {
-          by.frozenFrame = 1 + (Math.floor(by.animTimer / BYSTANDER_RUN_FRAME_INTERVAL) % 2);
-        }
         by.state = 'dead';
         by.vx = 0;
         by.deadTimer = 1400;
