@@ -661,6 +661,8 @@ export default function Game() {
   const pauseSelection = useRef(0); // 0 = continuar, 1 = menu inicial
   const pauseDownJustPressed = useRef(false);
   const pauseUpJustPressed = useRef(false);
+  const raceLeftJustPressed = useRef(false);
+  const raceRightJustPressed = useRef(false);
   const lastJumpPressTime = useRef(0);
   const lastDownPressTime = useRef(0);
   const DIVE_COMBO_WINDOW = 420;
@@ -1384,6 +1386,8 @@ export default function Game() {
     zJustPressed.current = false;
     pauseUpJustPressed.current = false;
     pauseDownJustPressed.current = false;
+    raceLeftJustPressed.current = false;
+    raceRightJustPressed.current = false;
   }, []);
 
   const resetGame = useCallback((gameMode: GameState['gameMode'] = 'story') => {
@@ -1911,8 +1915,16 @@ export default function Game() {
         }
       }
       switch (e.code) {
-        case 'ArrowLeft':  case 'KeyA': k.left  = down; break;
-        case 'ArrowRight': case 'KeyD': k.right = down; break;
+        case 'ArrowLeft':
+          k.left = down;
+          if (down) raceLeftJustPressed.current = true;
+          break;
+        case 'ArrowRight':
+          k.right = down;
+          if (down) raceRightJustPressed.current = true;
+          break;
+        case 'KeyA': k.left = down; break;
+        case 'KeyD': k.right = down; break;
         case 'ArrowUp':   case 'KeyW':
           k.up = down;
           if (down) {
@@ -4066,7 +4078,15 @@ export default function Game() {
           trainingJustPressed.current = false;
           // Não processa mais nada do menu enquanto opções estão abertas
         } else if (raceMenuOpenRef.current) {
-          if (pauseUpJustPressed.current) {
+          if (raceLeftJustPressed.current || raceRightJustPressed.current) {
+            if (raceFocusRef.current === 0) {
+              raceDroneEnabledRef.current = raceRightJustPressed.current;
+            } else if (raceFocusRef.current === 1) {
+              raceCheckpointsEnabledRef.current = raceRightJustPressed.current;
+            }
+            raceLeftJustPressed.current = false;
+            raceRightJustPressed.current = false;
+          } else if (pauseUpJustPressed.current) {
             raceFocusRef.current = (raceFocusRef.current - 1 + 3) % 3;
             pauseUpJustPressed.current = false;
           } else if (pauseDownJustPressed.current) {
@@ -4076,11 +4096,7 @@ export default function Game() {
             raceMenuOpenRef.current = false;
             escJustPressed.current = false;
           } else if (spaceJustPressed.current || enterJustPressed.current) {
-            if (raceFocusRef.current === 0) {
-              raceDroneEnabledRef.current = !raceDroneEnabledRef.current;
-            } else if (raceFocusRef.current === 1) {
-              raceCheckpointsEnabledRef.current = !raceCheckpointsEnabledRef.current;
-            } else {
+            if (raceFocusRef.current === 2) {
               raceMenuOpenRef.current = false;
               resetGame('race');
             }

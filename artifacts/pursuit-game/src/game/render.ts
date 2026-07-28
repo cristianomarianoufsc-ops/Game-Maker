@@ -5125,9 +5125,9 @@ export function drawMenuScreen(
     ctx.textAlign = 'center';
     ctx.fillText('MODO CORRIDA', cx, cy - 76);
     const items = [
-      `DRONE: ${raceDroneEnabled ? 'SIM' : 'NÃO'}`,
-      `CHECKPOINTS: ${raceCheckpointsEnabled ? 'SIM' : 'NÃO'}`,
-      'INICIAR',
+      { label: 'DRONE:', value: raceDroneEnabled ? 'SIM' : 'NÃO', configurable: true },
+      { label: 'CHECKPOINTS:', value: raceCheckpointsEnabled ? 'SIM' : 'NÃO', configurable: true },
+      { label: 'INICIAR', value: '', configurable: false },
     ];
     items.forEach((label, index) => {
       const y = cy - 38 + index * 46;
@@ -5138,11 +5138,15 @@ export function drawMenuScreen(
       ctx.strokeRect(cx - 170, y - 20, 340, 32);
       ctx.fillStyle = focused ? 'rgba(255,205,100,1)' : 'rgba(150,145,165,0.65)';
       ctx.font = focused ? 'bold 13px monospace' : '11px monospace';
-      ctx.fillText(label, cx, y + 1);
+      if (label.configurable) {
+        ctx.fillText(`${label.label}   ◀  ${label.value}  ▶`, cx, y + 1);
+      } else {
+        ctx.fillText(label.label, cx, y + 1);
+      }
     });
     ctx.fillStyle = 'rgba(150,140,175,0.65)';
     ctx.font = '9px monospace';
-    ctx.fillText('↑ ↓  ESCOLHER   |   ESPAÇO / ENTER  ALTERAR / INICIAR', cx, cy + 108);
+    ctx.fillText('↑ ↓  ESCOLHER   |   ← →  ALTERAR   |   ESPAÇO / ENTER  INICIAR', cx, cy + 108);
     ctx.restore();
   }
 
