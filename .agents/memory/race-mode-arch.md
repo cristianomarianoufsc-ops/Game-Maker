@@ -32,6 +32,7 @@ The rival wears a differently-coloured outfit but has the same skin tone as the 
 - The drone's position and momentum must survive player respawns; race respawn logic must never place it at the player's checkpoint.
 - Race setup has independent Drone and Checkpoints toggles; Iniciar only starts the race. Crossing race checkpoint triggers always grants the blood/health reward; the toggle controls only race respawn behavior.
 - In multi-round races, only the round winner resets to x=80; the loser keeps the position reached, treating the next round as a completed lap.
+- Intermediate round transitions preserve the currently playing music; audio restarts only when starting a new race or showing the final series victory.
 
 ## Colour
 - `hue-rotate(160deg) saturate(1.5)` shifts pinkish-orange clothes to blue-violet.

@@ -1398,13 +1398,18 @@ export default function Game() {
     raceRightJustPressed.current = false;
   }, []);
 
-  const resetGame = useCallback((gameMode: GameState['gameMode'] = 'story') => {
+  const resetGame = useCallback((
+    gameMode: GameState['gameMode'] = 'story',
+    preserveMusic = false,
+  ) => {
     // Ao iniciar modo história, garante que o modo editor não interfere
     if (gameMode === 'story' || gameMode === 'race') {
       editorTestModeRef.current = false;
-      stopBeat();
-      setMusicType('mp3');
-      startBeat();
+      if (!preserveMusic) {
+        stopBeat();
+        setMusicType('mp3');
+        startBeat();
+      }
       initDogAmbient(dogGrowlUrl); // pré-carrega o grunido do cachorro em loop
     } else {
       stopBeat();
@@ -5384,7 +5389,7 @@ export default function Game() {
             const roundWinner = raceRoundWinnerRef.current;
             const roundLoserX = raceRoundLoserXRef.current;
             const savedTime = gs.time;
-            resetGame('race');
+            resetGame('race', true);
             const next = gsRef.current;
             if (next) {
               next.time = savedTime;
