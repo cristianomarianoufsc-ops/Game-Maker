@@ -5607,15 +5607,36 @@ export default function Game() {
         lastPlayerGeomRef.current = _drawHoracio();
       }
 
-      // ── Rival da Corrida (cor diferente via hue-rotate) ──────────────────
+      // ── Rival da Corrida ─────────────────────────────────────────────────
+      // Técnica de 2 passes: 1º roupa com hue-rotate, 2º cabeça sem filtro
+      // para restaurar a cor de pele natural.
       if (gs.gameMode === 'race' && racePlayerRef.current) {
         const _rival = racePlayerRef.current as Player;
         const _rsx = _rival.x - gs.camera.x;
         if (_rsx > -_rival.w - 20 && _rsx < CANVAS_W + 20) {
           const _rivalGs = { ...gs, player: _rival } as GameState;
+          const _drawRival = () => drawPlayer(ctx, _rivalGs,
+            spriteImgRef.current, runSheetImgRef.current, idleImgRef.current,
+            rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current,
+            wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current,
+            sideFlipSheetImgRef.current, ladderClimbImgRef.current, ladderDescendImgRef.current,
+            kongVaultStartImgRef.current, kongVaultAirImgRef.current,
+            poseDisplayOverridesRef.current);
+
+          // Passo 1: desenha o rival inteiro com hue-rotate (roupa colorida)
           ctx.save();
           ctx.filter = 'hue-rotate(160deg) saturate(1.5)';
-          drawPlayer(ctx, _rivalGs, spriteImgRef.current, runSheetImgRef.current, idleImgRef.current, rollSheetImgRef.current, jumpSheetImgRef.current, diveSheetImgRef.current, wallRunSheetImgRef.current, mortalSheetImgRef.current, subidaSheetImgRef.current, sideFlipSheetImgRef.current, ladderClimbImgRef.current, ladderDescendImgRef.current, kongVaultStartImgRef.current, kongVaultAirImgRef.current, poseDisplayOverridesRef.current);
+          _drawRival();
+          ctx.restore();
+
+          // Passo 2: recorta a região da cabeça (~30% do topo) e redesenha
+          // sem filtro para restaurar a cor de pele original
+          const _headH = Math.round(_rival.h * 0.30);
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(_rsx, _rival.y, _rival.w, _headH);
+          ctx.clip();
+          _drawRival();
           ctx.restore();
         } else {
           // Rival fora da tela — seta laranja indicando direção e distância
