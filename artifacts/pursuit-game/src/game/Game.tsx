@@ -263,6 +263,17 @@ function getPlatformKey(platform: Platform): string {
   return `${platform.type}:${platform.x}:${platform.y}:${platform.w}:${platform.h}:${Math.round(platform.rotation ?? 0)}`;
 }
 
+// These junkyard boxes are part of the permanent level layout. Older editor
+// sessions may have stored deletion keys for their former positions; those
+// stale local entries must not hide the restored source-level boxes.
+function isPermanentJunkyardBox(platform: Platform): boolean {
+  return platform.type === 'box' &&
+    platform.x >= 12400 &&
+    platform.x <= 12650 &&
+    platform.w === 65 &&
+    platform.h === 55;
+}
+
 function isEditorPointInsidePlatform(wx: number, wy: number, platform: Platform): boolean {
   // True balconies (sacadas) draw a 72px window above plat.y — include that in the hit area
   const isSacada = platform.type === 'platform' && platform.y <= GROUND_Y - 70 && platform.h > 20;
@@ -291,7 +302,11 @@ function saveDeletedPlatformKeys(keys: Set<string>): void {
 }
 
 function applyDeletedPlatformKeys(platforms: Platform[], keys: Set<string>): Platform[] {
-  return platforms.filter((platform) => platform.type === 'ground' || !keys.has(getPlatformKey(platform)));
+  return platforms.filter((platform) =>
+    platform.type === 'ground' ||
+    isPermanentJunkyardBox(platform) ||
+    !keys.has(getPlatformKey(platform))
+  );
 }
 
 function loadCustomSpritePlatforms(): Platform[] {
@@ -1576,7 +1591,9 @@ export default function Game() {
       .then((patch: { add?: Platform[]; del?: string[]; checkpoints?: { label: string; x: number }[]; poseOverrides?: Record<string, AttachedSpriteDisplay> } | null) => {
         if (!patch) { finishPatchLoad(); return; }
         const delKeys = new Set<string>(patch.del ?? []);
-        const patchedBase = originalPlatforms.filter(p => !delKeys.has(platBaseKey(p)));
+        const patchedBase = originalPlatforms.filter(p =>
+          isPermanentJunkyardBox(p) || !delKeys.has(platBaseKey(p))
+        );
         // Dedup: ignora entradas em add cujo key já está no original (resolve
         // conflito entre código fonte atualizado e patch antigo).
         const originalKeySet = new Set(originalPlatforms.map(platBaseKey));
