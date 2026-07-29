@@ -4573,7 +4573,10 @@ export default function Game() {
             ) {
               const _trigX = ghostAutoReplayStartXRef.current;
               const _ghostCX = _ghost.x + _ghost.w / 2;
-              if (_ghostCX >= _trigX - 40 && _ghostCX < _trigX + 80) {
+              // O rival/ghost pode avançar até ~325px em um frame (dt máximo
+              // de 50ms). Não use uma faixa estreita com limite superior:
+              // atravessar essa faixa fazia o replay nunca ser carregado.
+              if (_ghostCX >= _trigX - 40 && _ghostCX < _trigX + 420) {
                 ghostAutoReplayArmedRef.current = true;
                 // Snapa o ghost para a posição exata onde a gravação foi feita
                 _ghost.x  = ghostAutoReplayStartXRef.current;
@@ -4708,7 +4711,10 @@ export default function Game() {
             ) {
               const _trigX = ghostAutoReplayStartXRef.current;
               const _rivalCX = _rival.x + _rival.w / 2;
-              if (_rivalCX >= _trigX - 40 && _rivalCX < _trigX + 80) {
+              // O rival roda independente do jogador e pode saltar a faixa
+              // estreita em um frame de 50ms. Armá-lo até +420px evita que ele
+              // chegue ao final usando a IA procedural por replay não carregado.
+              if (_rivalCX >= _trigX - 40 && _rivalCX < _trigX + 420) {
                 raceReplayArmedRef.current = true;
                 _rival.x = ghostAutoReplayStartXRef.current;
                 _rival.y = ghostAutoReplayStartYRef.current;
@@ -4726,8 +4732,8 @@ export default function Game() {
             const _rivalCXSnap = _rival.x + _rival.w / 2;
             if (
               !raceTictacSnapDoneRef.current &&
-              _rivalCXSnap >= RACE_TICTAC_SNAP_X - 10 &&
-              _rivalCXSnap < RACE_TICTAC_SNAP_X + 80
+              _rivalCXSnap >= RACE_TICTAC_SNAP_X - 80 &&
+              _rivalCXSnap < RACE_TICTAC_SNAP_X + 420
             ) {
               raceTictacSnapDoneRef.current = true;
               _rival.y = GROUND_Y - PLAYER_H;
