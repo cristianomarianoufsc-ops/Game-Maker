@@ -682,6 +682,7 @@ export default function Game() {
   const raceRoundWinnerRef = useRef<'player' | 'rival' | null>(null);
   const raceRoundLoserXRef = useRef(80);
   const raceInterRoundTransitionRef = useRef(false);
+  const raceRivalRiver2FailuresRef = useRef(0);
   const raceCheckpointXRef = useRef(0);
   const raceReplayArmedRef = useRef(false);
   const raceTictacSnapDoneRef = useRef(false);
@@ -1423,6 +1424,7 @@ export default function Game() {
     raceRoundWinnerRef.current = null;
     raceRoundLoserXRef.current = 80;
     raceInterRoundTransitionRef.current = false;
+    raceRivalRiver2FailuresRef.current = 0;
     raceCheckpointXRef.current = 0;
     raceReplayArmedRef.current = false;
     raceTictacSnapDoneRef.current = false;
@@ -4652,9 +4654,24 @@ export default function Game() {
           const _rival = racePlayerRef.current;
           if (isGhostDead(_rival)) {
             // Respawna no último checkpoint do rival
-            const _rCpX = gs.raceCheckpointsEnabled && raceCheckpointXRef.current > 0
+            const _fellInRiver2 = _rival.x > 29400 && _rival.x < 30550;
+            if (_fellInRiver2) {
+              raceRivalRiver2FailuresRef.current += 1;
+            } else {
+              raceRivalRiver2FailuresRef.current = 0;
+            }
+            const _needsRiver2Recovery = raceRivalRiver2FailuresRef.current >= 3;
+            // A IA do rival é determinística. Se ela falhar três vezes no
+            // mesmo rio, não pode ficar em um loop infinito de respawn:
+            // recupera na margem de saída, antes do muro x:30578.
+            const _rCpX = _needsRiver2Recovery
+              ? 30480
+              : gs.raceCheckpointsEnabled && raceCheckpointXRef.current > 0
               ? raceCheckpointXRef.current
               : 80;
+            if (_needsRiver2Recovery) {
+              raceRivalRiver2FailuresRef.current = 0;
+            }
             racePlayerRef.current = createGhostPlayer(_rCpX, GROUND_Y - PLAYER_H);
             // O checkpoint do segundo rio fica antes da gravação da escadaria.
             // Permite repetir o trecho gravado numa nova tentativa do rival.
