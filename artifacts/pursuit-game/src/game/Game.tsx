@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { createGhostPlayer, stepGhostPlayer, isGhostDead, loadGhostRecording } from './ghostPlayer';
+import { createGhostPlayer, stepGhostPlayer, isGhostDead, loadGhostRecording, isGhostReplayActive } from './ghostPlayer';
 import type { GameState, Keys, Player, Drone, Platform, Bystander } from './types';
 import spriteUrl from '/horacio_transparent.png';
 import runSheetUrl from '/run_sheet_transparent.png';
@@ -4694,11 +4694,16 @@ export default function Game() {
             raceReplayArmedRef.current = _rCpX >= ghostAutoReplayStartXRef.current - 80;
             raceTictacSnapDoneRef.current = _rCpX >= 36260;
           } else {
-            // Usa janela de plataformas centrada no rival (igual ao ghost player)
-            const _RIVAL_WINDOW = 3200;
-            const _rivalPlats = gs.platforms.filter(
-              pp => pp.x + pp.w >= _rival.x - _RIVAL_WINDOW && pp.x <= _rival.x + _RIVAL_WINDOW
-            );
+            // Exatamente a mesma janela física usada pelo ghost de teste.
+            // Uma janela maior muda quais paredes são detectadas por
+            // computeGhostKeys e pode alterar a escolha do muro do tic-tac.
+            const _RIVAL_WINDOW = 900;
+            const _rivalPlatsNear = spatialGridRef.current
+              ? queryGrid(spatialGridRef.current, _rival.x - _RIVAL_WINDOW, _rival.x + _RIVAL_WINDOW)
+              : gs.platforms;
+            const _rivalPlats = _destroyedPlatSet
+              ? _rivalPlatsNear.filter(p => !_destroyedPlatSet.has(p))
+              : _rivalPlatsNear;
 
             // ── Replay da escadaria/telhado ─────────────────────────────────
             // O ghost de teste usa a gravação do Horácio para transpor o muro
@@ -4733,6 +4738,7 @@ export default function Game() {
             const _rivalCXSnap = _rival.x + _rival.w / 2;
             if (
               !raceTictacSnapDoneRef.current &&
+              !isGhostReplayActive(_rival) &&
               _rivalCXSnap >= RACE_TICTAC_SNAP_X - 80 &&
               _rivalCXSnap < RACE_TICTAC_SNAP_X + 420
             ) {
@@ -4755,7 +4761,10 @@ export default function Game() {
               _rivalPlats,
               dt,
               spawnP,
-              gs.gameMode === 'race' && !gs.raceDroneEnabled,
+              // O ghost de teste não recebe a permissão especial da Corrida.
+              // Durante o replay isso precisa ser idêntico para que as mesmas
+              // entradas produzam o mesmo estado físico.
+              isGhostReplayActive(_rival) ? false : (gs.gameMode === 'race' && !gs.raceDroneEnabled),
             );
 
             // Checkpoints próprios do rival (mesmos X do modo história)

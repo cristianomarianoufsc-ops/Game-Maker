@@ -147,6 +147,12 @@ export function loadGhostRecording(ghost: Player, frames: Keys[]): void {
   ai.replayIdx    = 0;
 }
 
+/** True while computeGhostKeys is still returning recorded input frames. */
+export function isGhostReplayActive(ghost: Player): boolean {
+  const ai = getAI(ghost);
+  return ai.replayFrames !== null && ai.replayIdx < ai.replayFrames.length;
+}
+
 // ── Cria um ghost player na posição indicada ─────────────────────────────────
 export function createGhostPlayer(x: number, y: number): Player {
   return {
