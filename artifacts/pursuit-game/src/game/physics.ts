@@ -541,7 +541,10 @@ export function updatePlayer(
         (wallSide === 'right' && keys.right) ||
         (wallSide === 'left' && keys.left);
       const neutralVerticalClimb = (keys.space || keys.up) && !keys.left && !keys.right;
-      if (canClimbWall && (keys.space || keys.up) && pressingForwardIntoWall && wallSide && !p.wallNoHang) {
+      const boxClimbInput = allowBoxClimb
+        ? (keys.space || keys.up)
+        : (keys.space || keys.up) && pressingForwardIntoWall;
+      if (canClimbWall && boxClimbInput && wallSide && !p.wallNoHang) {
         p.isWallRunning = false;
         p.isWallClimbUp = true;
         p.wallClimbStartX = p.x;
@@ -1001,12 +1004,15 @@ export function updatePlayer(
     !p.isWallClimbUp &&
     p.state !== 'hurt' &&
     p.wallRunOnBox &&
-    // Altura relativa à plataforma de origem do pulo — não à posição aérea nem ao chão absoluto
-    (p.jumpOriginGroundY - p.wallTopY) > MIN_BOX_CLIMB_HEIGHT &&
-    (p.jumpOriginGroundY - p.wallTopY) <= MAX_BOX_CLIMB_HEIGHT &&
+    // Altura relativa à plataforma de origem do pulo — no modo Corrida sem
+    // drone, a pilha inteira pode ser escalada.
+    (allowBoxClimb ||
+      ((p.jumpOriginGroundY - p.wallTopY) > MIN_BOX_CLIMB_HEIGHT &&
+       (p.jumpOriginGroundY - p.wallTopY) <= MAX_BOX_CLIMB_HEIGHT)) &&
     (keys.up || keys.space) &&
-    ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
-      (p.wallSide === 'left' && (keys.left || incomingVx < 0))) &&
+    (allowBoxClimb ||
+      ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
+       (p.wallSide === 'left' && (keys.left || incomingVx < 0)))) &&
     p.vy < 0;
 
   if (_boxClimbConditions && p.wallSide) {
