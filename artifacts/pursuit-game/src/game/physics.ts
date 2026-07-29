@@ -335,7 +335,8 @@ export function updatePlayer(
   keys: Keys,
   platforms: Platform[],
   dt: number,
-  spawnParticle: (x: number, y: number, color: string) => void
+  spawnParticle: (x: number, y: number, color: string) => void,
+  allowBoxClimb = false,
 ): void {
   const prevOnGround = p.onGround;
   const previousWallSide = p.wallSide;
@@ -534,8 +535,8 @@ export function updatePlayer(
       }
       const isTallBoxStack = p.wallRunOnBox && (GROUND_Y - p.wallTopY) > MAX_BOX_CLIMB_HEIGHT;
       const _timerWindow = p.wallRunTimer < WALLRUN_DURATION - 160;
-      const canClimbWall   = (!p.wallRunOnBox || !isTallBoxStack) && _timerWindow;
-      const canJumpOffWall = (!p.wallRunOnBox || isTallBoxStack) && _timerWindow;
+      const canClimbWall   = (!p.wallRunOnBox || !isTallBoxStack || allowBoxClimb) && _timerWindow;
+      const canJumpOffWall = (!p.wallRunOnBox || isTallBoxStack) && !allowBoxClimb && _timerWindow;
       const pressingForwardIntoWall =
         (wallSide === 'right' && keys.right) ||
         (wallSide === 'left' && keys.left);
@@ -848,7 +849,8 @@ export function updatePlayer(
     // Wall climb simples — bloqueado em caixas (muito baixas: pula em cima; muito altas: inalcançável)
     // Usa jumpOriginGroundY (pés na plataforma de origem) para não ser enganado pela posição aérea do pulo
     const _boxHeight = p.jumpOriginGroundY - p.wallTopY;
-    const _climbBannedOnBox = p.wallRunOnBox && (_boxHeight <= MIN_BOX_CLIMB_HEIGHT || _boxHeight > MAX_BOX_CLIMB_HEIGHT);
+    const _climbBannedOnBox = !allowBoxClimb &&
+      p.wallRunOnBox && (_boxHeight <= MIN_BOX_CLIMB_HEIGHT || _boxHeight > MAX_BOX_CLIMB_HEIGHT);
     if (p.touchingWall && keys.up && !p.onGround && !_climbBannedOnBox && !p.onTictacWall && !p.wallNoHang) {
       p.isClimbing = true;
       p.vy = -CLIMB_SPEED;

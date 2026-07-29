@@ -1110,10 +1110,11 @@ export function stepGhostPlayer(
   platforms: Platform[],
   dt: number,
   spawnParticle: (x: number, y: number, color: string) => void,
+  allowBoxClimb = false,
 ): string {
   if (ghost.state === 'dead') return 'DEAD';
   const keys = computeGhostKeys(ghost, platforms, dt);
-  updatePlayer(ghost, keys, platforms, dt, spawnParticle);
+  updatePlayer(ghost, keys, platforms, dt, spawnParticle, allowBoxClimb);
   return getAI(ghost).decision;
 }
 

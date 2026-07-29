@@ -263,20 +263,12 @@ export function generateLevel(): Platform[] {
   const BOX_W = 65;
   const junkyardBoxStacks: Platform[] = [
     // Pilha A — entrada (x:12440-12570)
-    { x: 12505, y: GY - 55,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12505, y: GY - 110,           w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12505, y: GY - 165,           w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12505, y: GY - 220,           w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12505, y: GY - 277,           w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12570, y: GY - 55,             w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12570, y: GY - 110,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12570, y: GY - 165,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12570, y: GY - 220,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12570, y: GY - 277,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12570, y: GY - 332,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12570, y: GY - 387,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12570, y: GY - 442,            w: BOX_W, h: BOX_H, type: 'box' },
-    { x: 12570, y: GY - 497,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 275,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 275,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 330,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 385,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 440,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 495,            w: BOX_W, h: BOX_H, type: 'box' },
 
     // Pilha 2 — entre o pneu e o segundo carro
     { x: 13355, y: GY - BOX_H,         w: BOX_W, h: BOX_H, type: 'box' },

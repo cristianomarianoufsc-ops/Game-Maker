@@ -4493,7 +4493,14 @@ export default function Game() {
         const _prevVy = gs.player.vy;
         const _prevJumpCount = gs.player.jumpCount;
         const _prevPlayerState = gs.player.state;
-        updatePlayer(gs.player, effectiveKeys, activePlatforms, dt, spawnP);
+        updatePlayer(
+          gs.player,
+          effectiveKeys,
+          activePlatforms,
+          dt,
+          spawnP,
+          gs.gameMode === 'race' && !gs.raceDroneEnabled,
+        );
 
         // ── Ghost Horácio IA ─────────────────────────────────────────────────
         if (ghostEnabledRef.current) {
@@ -4719,7 +4726,13 @@ export default function Game() {
               _rival.isRolling = false;
             }
 
-            stepGhostPlayer(_rival, _rivalPlats, dt, spawnP);
+            stepGhostPlayer(
+              _rival,
+              _rivalPlats,
+              dt,
+              spawnP,
+              gs.gameMode === 'race' && !gs.raceDroneEnabled,
+            );
 
             // Checkpoints próprios do rival (mesmos X do modo história)
             if (gs.raceCheckpointsEnabled && _rival.x > 21720 && raceCheckpointXRef.current < 21720) {
