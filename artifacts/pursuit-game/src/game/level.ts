@@ -263,6 +263,14 @@ export function generateLevel(): Platform[] {
   const BOX_W = 65;
   const junkyardBoxStacks: Platform[] = [
     // Pilha A — entrada (x:12440-12570)
+    { x: 12570, y: GY - 220,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 220,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 165,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 165,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 110,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 110,            w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12570, y: GY - 55,             w: BOX_W, h: BOX_H, type: 'box' },
+    { x: 12505, y: GY - 55,             w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 275,            w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 275,            w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 330,            w: BOX_W, h: BOX_H, type: 'box' },
