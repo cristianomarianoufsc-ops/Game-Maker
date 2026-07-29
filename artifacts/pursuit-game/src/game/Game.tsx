@@ -4711,10 +4711,11 @@ export default function Game() {
             ) {
               const _trigX = ghostAutoReplayStartXRef.current;
               const _rivalCX = _rival.x + _rival.w / 2;
-              // O rival roda independente do jogador e pode saltar a faixa
-              // estreita em um frame de 50ms. Armá-lo até +420px evita que ele
-              // chegue ao final usando a IA procedural por replay não carregado.
-              if (_rivalCX >= _trigX - 40 && _rivalCX < _trigX + 420) {
+              // O replay é obrigatório para o trecho programado. Se o rival já
+              // estiver muito à frente quando a gravação terminar de carregar,
+              // não podemos deixar a IA assumir silenciosamente: reposicionamos
+              // no início exato e executamos todos os frames, como no ghost.
+              if (_rivalCX >= _trigX - 40) {
                 raceReplayArmedRef.current = true;
                 _rival.x = ghostAutoReplayStartXRef.current;
                 _rival.y = ghostAutoReplayStartYRef.current;
