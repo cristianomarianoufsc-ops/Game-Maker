@@ -4761,10 +4761,13 @@ export default function Game() {
               _rivalPlats,
               dt,
               spawnP,
-              // O ghost de teste não recebe a permissão especial da Corrida.
-              // Durante o replay isso precisa ser idêntico para que as mesmas
-              // entradas produzam o mesmo estado físico.
-              isGhostReplayActive(_rival) ? false : (gs.gameMode === 'race' && !gs.raceDroneEnabled),
+              // SEMPRE false — idêntico ao ghost de teste.
+              // allowBoxClimb=true desativa canJumpOffWall em physics.ts
+              // (linha: `&& !allowBoxClimb`), impedindo a ejeção lateral
+              // do wall-run que é obrigatória para alcançar a placa tic-tac
+              // no muro x:36321. Passar false garante que o rival executa
+              // exatamente a mesma sequência que o ghost de história.
+              false,
             );
 
             // Checkpoints próprios do rival (mesmos X do modo história)
