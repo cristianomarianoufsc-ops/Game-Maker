@@ -658,6 +658,11 @@ function getScale() {
 // As poças são determinísticas (mesma posição = mesmo gradiente), nunca mudam
 const _puddleGradCache = new Map<number, CanvasGradient>();
 
+// Em uma nova rodada, o jogador que perdeu para o rival pode ter chegado
+// parcialmente à zona final. Nunca o deixe reaparecer depois da primeira
+// parede do tic-tac, senão o desafio fica sem entrada física possível.
+const RACE_TICTAC_RESTART_X = 36000;
+
 export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gsRef = useRef<GameState | null>(null);
@@ -5416,8 +5421,13 @@ export default function Game() {
         }
       } else if (gs.gamePhase === 'victory') {
         gs.victoryTimer = Math.max(0, gs.victoryTimer - dt);
-        // Horácio auto-corre para a direita enquanto a animação ocorre
-        if (gs.victoryTimer > 200) {
+        // Horácio auto-corre apenas na vitória dele (ou na fuga da História).
+        // Quando o rival vence, manter o jogador parado evita que a transição
+        // pareça uma vitória do jogador e não altera seu estado físico.
+        const shouldAutoRun =
+          gs.victoryTimer > 200 &&
+          (gs.gameMode !== 'race' || raceRoundWinnerRef.current === 'player');
+        if (shouldAutoRun) {
           const RUN_VX_PPS = 240; // px/s
           gs.player.x += RUN_VX_PPS * (dt / 1000);
           gs.player.state = 'run';
@@ -5468,7 +5478,10 @@ export default function Game() {
                 }
                 next.camera.x = 0;
               } else {
-                next.player.x = Math.max(80, roundLoserX);
+                next.player.x = Math.min(
+                  Math.max(80, roundLoserX),
+                  RACE_TICTAC_RESTART_X,
+                );
                 next.player.y = GROUND_Y - PLAYER_H;
                 next.player.vx = 0;
                 next.player.vy = 0;
