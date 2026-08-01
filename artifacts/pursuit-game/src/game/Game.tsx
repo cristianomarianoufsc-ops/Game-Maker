@@ -6062,7 +6062,7 @@ export default function Game() {
           if (raceWasLost) {
             drawRaceDefeatScreen(ctx, gs.player.distanceTraveled, gs.time);
           } else {
-            drawVictoryScreen(ctx, gs.player.distanceTraveled, gs.time);
+            drawVictoryScreen(ctx, gs.player.distanceTraveled, gs.time, gs.gameMode === 'race');
           }
         }
       }

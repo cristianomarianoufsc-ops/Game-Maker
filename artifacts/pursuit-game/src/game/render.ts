@@ -6525,7 +6525,12 @@ export function drawEditorUI(
   }
 }
 
-export function drawVictoryScreen(ctx: CanvasRenderingContext2D, score: number, time: number): void {
+export function drawVictoryScreen(
+  ctx: CanvasRenderingContext2D,
+  score: number,
+  time: number,
+  isRaceVictory = false,
+): void {
   ctx.fillStyle = 'rgba(0,0,0,0.97)';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
@@ -6548,7 +6553,7 @@ export function drawVictoryScreen(ctx: CanvasRenderingContext2D, score: number, 
 
   ctx.fillStyle = '#3ec870';
   ctx.font = 'bold 36px monospace';
-  ctx.fillText('ESCAPOU', cx, cy - 80);
+  ctx.fillText(isRaceVictory ? 'VOCÊ VENCEU' : 'ESCAPOU', cx, cy - 80);
 
   ctx.fillStyle = 'rgba(200,190,220,0.65)';
   ctx.font = '12px monospace';
