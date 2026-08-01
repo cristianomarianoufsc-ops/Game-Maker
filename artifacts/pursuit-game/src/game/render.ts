@@ -6583,6 +6583,61 @@ export function drawVictoryScreen(ctx: CanvasRenderingContext2D, score: number, 
   ctx.textAlign = 'left';
 }
 
+export function drawRaceDefeatScreen(ctx: CanvasRenderingContext2D, score: number, time: number): void {
+  ctx.fillStyle = 'rgba(0,0,0,0.97)';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  const cx = CANVAS_W / 2;
+  const cy = CANVAS_H / 2;
+
+  ctx.fillStyle = 'rgba(26,16,20,0.99)';
+  ctx.fillRect(cx - 220, cy - 145, 440, 295);
+  ctx.strokeStyle = 'rgba(210,65,75,0.72)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - 220, cy - 145, 440, 295);
+  ctx.fillStyle = 'rgba(220,65,75,0.68)';
+  ctx.fillRect(cx - 220, cy - 145, 440, 3);
+
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = 'rgba(255,95,105,0.62)';
+  ctx.font = '9px monospace';
+  ctx.fillText('RESULTADO DA CORRIDA — RIVAL CHEGOU PRIMEIRO', cx, cy - 122);
+
+  ctx.fillStyle = '#e0525d';
+  ctx.font = 'bold 36px monospace';
+  ctx.fillText('VOCÊ PERDEU', cx, cy - 80);
+
+  ctx.fillStyle = 'rgba(230,205,215,0.72)';
+  ctx.font = '12px monospace';
+  ctx.fillText('O RIVAL ESCAPOU ANTES DE VOCÊ', cx, cy - 48);
+  ctx.fillText(`DISTÂNCIA: ${Math.floor(score / 10)}m`, cx, cy - 24);
+  const secs = Math.floor(time / 1000);
+  ctx.fillText(
+    `TEMPO: ${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`,
+    cx, cy - 6
+  );
+
+  ctx.strokeStyle = 'rgba(100,70,85,0.42)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 180, cy + 10);
+  ctx.lineTo(cx + 180, cy + 10);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(170,145,165,0.56)';
+  ctx.font = 'italic 10px monospace';
+  ctx.fillText('"Desta vez, ele foi mais rápido."', cx, cy + 36);
+  ctx.fillText('"A corrida ainda não acabou."', cx, cy + 54);
+
+  const blink = Math.floor(Date.now() / 600) % 2 === 0;
+  ctx.fillStyle = blink ? 'rgba(240,85,95,0.95)' : 'rgba(240,85,95,0.38)';
+  ctx.font = 'bold 13px monospace';
+  ctx.fillText('[ ESPAÇO — CORRER DE NOVO ]', cx, cy + 100);
+
+  ctx.textAlign = 'left';
+}
+
 export function drawGameOverScreen(ctx: CanvasRenderingContext2D, score: number, time: number): void {
   ctx.fillStyle = 'rgba(0,0,0,0.78)';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);

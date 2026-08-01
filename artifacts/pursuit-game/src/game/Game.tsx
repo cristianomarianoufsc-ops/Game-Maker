@@ -58,7 +58,7 @@ import {
   drawStreetBuildings, drawPlatforms, drawFlyingTires, drawTireHideouts,
   drawStartingBackWall, drawPlayer, drawDrone, drawBullets, drawParticles,
   drawHUD, drawControls, drawMenuScreen, drawGameOverScreen, drawPauseScreen, getMenuHitAreas,
-  drawEditorUI, getMusicVolumeSliderRect, getSfxCategoryVolumeSliderRect, drawDogs, drawBystanders, drawVictoryScreen, drawEndingBuilding,
+  drawEditorUI, getMusicVolumeSliderRect, getSfxCategoryVolumeSliderRect, drawDogs, drawBystanders, drawVictoryScreen, drawRaceDefeatScreen, drawEndingBuilding,
   drawOptionsScreen, drawTrainingRoom, drawPlayerPoseEditorHandles, drawHoracioSpriteInfo, drawBystanderInfo, getBystanderPanelLayout,
   getHoracioVolumePanelLayout, drawHoracioVolumePanel,
   computeKongVaultGeom,
@@ -6056,7 +6056,14 @@ export default function Game() {
           ctx.restore();
         }
         if (!isInterRoundTransition && gs.victoryTimer <= 0) {
-          drawVictoryScreen(ctx, gs.player.distanceTraveled, gs.time);
+          const raceWasLost =
+            gs.gameMode === 'race' &&
+            gs.raceRivalWins >= gs.raceRoundTarget;
+          if (raceWasLost) {
+            drawRaceDefeatScreen(ctx, gs.player.distanceTraveled, gs.time);
+          } else {
+            drawVictoryScreen(ctx, gs.player.distanceTraveled, gs.time);
+          }
         }
       }
 

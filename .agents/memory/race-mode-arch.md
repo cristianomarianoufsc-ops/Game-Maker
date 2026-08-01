@@ -33,6 +33,7 @@ The rival wears a differently-coloured outfit but has the same skin tone as the 
 - Race setup has independent Drone and Checkpoints toggles; Iniciar only starts the race. Crossing race checkpoint triggers always grants the blood/health reward; the toggle controls only race respawn behavior.
 - In multi-round races, only the round winner resets to x=80; the loser keeps the position reached, treating the next round as a completed lap.
 - Intermediate round transitions preserve the currently playing music; audio restarts only when starting a new race or showing the final series victory.
+- Final race results distinguish player escape from rival victory: the player's win uses the green escape screen, while the rival's series win uses a red defeat screen.
 - In race mode with the drone disabled, junkyard box stacks are climbable for both Horácio and the rival; other modes retain the normal box-climb limits.
 - Race replay triggers must tolerate large per-frame position jumps; narrow start/snap windows can be skipped by the independent rival.
 
