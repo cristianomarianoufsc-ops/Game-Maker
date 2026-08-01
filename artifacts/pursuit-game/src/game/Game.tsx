@@ -658,11 +658,6 @@ function getScale() {
 // As poças são determinísticas (mesma posição = mesmo gradiente), nunca mudam
 const _puddleGradCache = new Map<number, CanvasGradient>();
 
-// Em uma nova rodada, o jogador que perdeu para o rival pode ter chegado
-// parcialmente à zona final. Nunca o deixe reaparecer depois da primeira
-// parede do tic-tac, senão o desafio fica sem entrada física possível.
-const RACE_TICTAC_RESTART_X = 36000;
-
 export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gsRef = useRef<GameState | null>(null);
@@ -5454,48 +5449,54 @@ export default function Game() {
             const roundWinner = raceRoundWinnerRef.current;
             const roundLoserX = raceRoundLoserXRef.current;
             const savedTime = gs.time;
-            resetGame('race', true);
-            const next = gsRef.current;
-            if (next) {
+            if (roundWinner === 'rival') {
+              // O rival começa a próxima volta do início, mas Horácio continua
+              // exatamente onde estava: não resetar o estado do jogador, câmera,
+              // drone ou objetos destruídos evita teletransporte e mudanças na
+              // corrida em andamento.
+              gs.time = savedTime;
+              gs.raceRoundTarget = roundTarget;
+              gs.racePlayerWins = playerWins;
+              gs.raceRivalWins = rivalWins;
+              gs.raceRoundNumber = playerWins + rivalWins + 1;
+              racePlayerRef.current = createGhostPlayer(80, GROUND_Y - PLAYER_H);
+              raceCheckpointXRef.current = 0;
+              raceReplayArmedRef.current = false;
+              raceTictacSnapDoneRef.current = false;
+              raceRoundWinnerRef.current = null;
+              raceRoundLoserXRef.current = gs.player.x;
+              raceInterRoundTransitionRef.current = false;
+              gs.gamePhase = 'playing';
+              gs.victoryTimer = 0;
+            } else {
+              // Quando Horácio vence, mantém a regra existente: ele volta ao
+              // começo e o rival permanece no ponto alcançado.
+              resetGame('race', true);
+              const next = gsRef.current;
+              if (!next) {
+                spaceJustPressed.current = false;
+                editorSpawnJustPressed.current = false;
+                return;
+              }
               next.time = savedTime;
               next.raceRoundTarget = roundTarget;
               next.racePlayerWins = playerWins;
               next.raceRivalWins = rivalWins;
               next.raceRoundNumber = playerWins + rivalWins + 1;
-              if (roundWinner === 'player') {
-                next.player.x = 80;
-                next.player.y = GROUND_Y - PLAYER_H;
-                next.player.vx = 0;
-                next.player.vy = 0;
-                next.player.state = 'idle';
-                if (racePlayerRef.current) {
-                  racePlayerRef.current.x = Math.max(80, roundLoserX);
-                  racePlayerRef.current.y = GROUND_Y - PLAYER_H;
-                  racePlayerRef.current.vx = 0;
-                  racePlayerRef.current.vy = 0;
-                  racePlayerRef.current.state = 'idle';
-                  racePlayerRef.current.onGround = true;
-                }
-                next.camera.x = 0;
-              } else {
-                next.player.x = Math.min(
-                  Math.max(80, roundLoserX),
-                  RACE_TICTAC_RESTART_X,
-                );
-                next.player.y = GROUND_Y - PLAYER_H;
-                next.player.vx = 0;
-                next.player.vy = 0;
-                next.player.state = 'idle';
-                if (racePlayerRef.current) {
-                  racePlayerRef.current.x = 80;
-                  racePlayerRef.current.y = GROUND_Y - PLAYER_H;
-                  racePlayerRef.current.vx = 0;
-                  racePlayerRef.current.vy = 0;
-                  racePlayerRef.current.state = 'idle';
-                  racePlayerRef.current.onGround = true;
-                }
-                next.camera.x = Math.max(0, next.player.x - CANVAS_W * CAMERA_LEAD_X);
+              next.player.x = 80;
+              next.player.y = GROUND_Y - PLAYER_H;
+              next.player.vx = 0;
+              next.player.vy = 0;
+              next.player.state = 'idle';
+              if (racePlayerRef.current) {
+                racePlayerRef.current.x = Math.max(80, roundLoserX);
+                racePlayerRef.current.y = GROUND_Y - PLAYER_H;
+                racePlayerRef.current.vx = 0;
+                racePlayerRef.current.vy = 0;
+                racePlayerRef.current.state = 'idle';
+                racePlayerRef.current.onGround = true;
               }
+              next.camera.x = 0;
             }
           } else if (spaceJustPressed.current) {
             resetGame('race');
