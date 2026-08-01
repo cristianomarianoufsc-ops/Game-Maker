@@ -6547,10 +6547,6 @@ export function drawVictoryScreen(
 
   ctx.textAlign = 'center';
 
-  ctx.fillStyle = 'rgba(60,200,100,0.50)';
-  ctx.font = '9px monospace';
-  ctx.fillText('PROTOCOLO DE PERSEGUIÇÃO — ALVO PERDIDO', cx, cy - 122);
-
   ctx.fillStyle = '#3ec870';
   ctx.font = 'bold 36px monospace';
   ctx.fillText(isRaceVictory ? 'VOCÊ VENCEU' : 'ESCAPOU', cx, cy - 80);
@@ -6571,14 +6567,11 @@ export function drawVictoryScreen(
   ctx.lineTo(cx + 180, cy - 16);
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(140,130,165,0.5)';
-  ctx.font = 'italic 10px monospace';
-  ctx.fillText('"Correr não é covardia."', cx, cy + 8);
-  ctx.fillText('"É a única resposta honesta ao absurdo."', cx, cy + 26);
-
-  ctx.fillStyle = 'rgba(180,175,210,0.72)';
-  ctx.font = '11px monospace';
-  ctx.fillText('— O PREÇO DA ORDEM, Horácio', cx, cy + 50);
+   if (isRaceVictory) {
+     ctx.fillStyle = 'rgba(140,220,165,0.78)';
+     ctx.font = 'bold 13px monospace';
+     ctx.fillText('RIVAL VENCIDO', cx, cy + 28);
+   }
 
   const blink = Math.floor(Date.now() / 600) % 2 === 0;
   ctx.fillStyle = blink ? 'rgba(60,200,100,0.90)' : 'rgba(60,200,100,0.32)';
