@@ -4510,13 +4510,21 @@ export default function Game() {
         const _prevVy = gs.player.vy;
         const _prevJumpCount = gs.player.jumpCount;
         const _prevPlayerState = gs.player.state;
+        // No modo Corrida sem drone, caixas podem ser escaladas no ferro-velho,
+        // mas o trecho final precisa permitir a ejeção lateral do wall-run
+        // para alcançar a parede de tic-tac. A física usa allowBoxClimb para
+        // bloquear essa ejeção, então ele só fica ativo antes da região final.
+        const _playerAllowBoxClimb =
+          gs.gameMode === 'race' &&
+          !gs.raceDroneEnabled &&
+          gs.player.x < 35000;
         updatePlayer(
           gs.player,
           effectiveKeys,
           activePlatforms,
           dt,
           spawnP,
-          gs.gameMode === 'race' && !gs.raceDroneEnabled,
+          _playerAllowBoxClimb,
         );
 
         // ── Ghost Horácio IA ─────────────────────────────────────────────────
@@ -4781,19 +4789,26 @@ export default function Game() {
             // Rival cruzou o muro final antes do jogador → derrota
             const RIVAL_FINISH_X = 36346;
             if (_rival.x + _rival.w > RIVAL_FINISH_X && gs.gamePhase === 'playing') {
-              raceRoundWinnerRef.current = 'rival';
-              raceRoundLoserXRef.current = gs.player.x;
               gs.raceRivalWins += 1;
               gs.raceRoundNumber = Math.min(gs.raceRoundNumber + 1, gs.raceRoundTarget * 2 - 1);
               const seriesOver = gs.raceRivalWins >= gs.raceRoundTarget;
-              gs.gamePhase = 'victory';
-              // Round intermediário: transição instantânea, sem corrida/fade.
-              // A tela de vitória só aparece quando a série realmente termina.
-              gs.victoryTimer = seriesOver ? 2400 : 0;
               if (seriesOver) {
+                raceRoundWinnerRef.current = 'rival';
+                raceRoundLoserXRef.current = gs.player.x;
+                gs.gamePhase = 'victory';
+                gs.victoryTimer = 2400;
                 stopBeat();
               } else {
-                raceInterRoundTransitionRef.current = true;
+                // O rival reinicia a volta imediatamente. Horácio continua no
+                // mesmo frame e no mesmo estado, sem passar por victory, para
+                // não interromper o movimento nem o tic-tac do jogador.
+                racePlayerRef.current = createGhostPlayer(80, GROUND_Y - PLAYER_H);
+                raceCheckpointXRef.current = 0;
+                raceReplayArmedRef.current = false;
+                raceTictacSnapDoneRef.current = false;
+                raceRoundWinnerRef.current = null;
+                raceRoundLoserXRef.current = gs.player.x;
+                raceInterRoundTransitionRef.current = false;
               }
             }
           }

@@ -35,6 +35,7 @@ The rival wears a differently-coloured outfit but has the same skin tone as the 
 - Intermediate round transitions preserve the currently playing music; audio restarts only when starting a new race or showing the final series victory.
 - Final race results distinguish modes and outcomes: History uses the green "ESCAPOU" screen, Race uses green "VOCÊ VENCEU", and a rival series win uses a red defeat screen.
 - In race mode with the drone disabled, junkyard box stacks are climbable for both Horácio and the rival; other modes retain the normal box-climb limits.
+- Na Corrida sem drone, `allowBoxClimb` deve ser desligado antes da região final; essa flag também bloqueia a ejeção lateral necessária para o tic-tac.
 - Race replay triggers must tolerate large per-frame position jumps; narrow start/snap windows can be skipped by the independent rival.
 
 ## Colour
@@ -48,3 +49,7 @@ The rival wears a differently-coloured outfit but has the same skin tone as the 
 **Why:** This matches the requested fighting-game structure while keeping the race track reusable between rounds.
 
 **How to apply:** Keep race score/round state in `GameState`; do not reset it when restarting between rounds, only when starting a new series.
+
+**Why:** A física usa a mesma opção de escalada de caixas para desativar a ejeção do wall-run. Mantê-la ativa até a parede final faz Horácio ficar preso no trecho do tic-tac, especialmente quando o drone está desligado.
+
+**How to apply:** Permita a escalada de caixas apenas até o fim do ferro-velho; no trecho final use a física normal para preservar a sequência wall-run → ejeção → parede de tic-tac.
