@@ -271,7 +271,7 @@ export interface GameState {
   bullets: Bullet[];
   camera: Camera;
   platforms: Platform[];
-  gamePhase: 'menu' | 'playing' | 'paused' | 'gameover' | 'victory' | 'editor' | 'training';
+  gamePhase: 'menu' | 'playing' | 'race-countdown' | 'paused' | 'gameover' | 'victory' | 'editor' | 'training';
   gameMode: 'story' | 'race' | 'wall-test';
   raceDroneEnabled: boolean;
   raceCheckpointsEnabled: boolean;
@@ -286,6 +286,7 @@ export interface GameState {
   droneAlert: DroneAlert | null;
   droneIntroduced: boolean;
   victoryTimer: number;
+  raceCountdownTimer: number;
   destroyedBoxIndices: number[];
   fallingBoxes: FallingBox[];
   flyingTires: FlyingTire[];

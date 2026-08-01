@@ -1389,6 +1389,7 @@ export default function Game() {
     droneAlert: null,
     droneIntroduced: false,
     victoryTimer: 0,
+    raceCountdownTimer: 0,
   }), []);
 
   const registerCustomSpriteImage = useCallback((platform: Platform) => {
@@ -1442,9 +1443,11 @@ export default function Game() {
     raceCheckpointXRef.current = 0;
     raceReplayArmedRef.current = false;
     raceTictacSnapDoneRef.current = false;
+    const isRace = gameMode === 'race';
     gsRef.current = {
       ...makeInitialState(gameMode),
-      gamePhase: 'playing',
+      gamePhase: isRace ? 'race-countdown' : 'playing',
+      raceCountdownTimer: isRace ? 3500 : 0,
     };
   }, [makeInitialState, clearKeys]);
 
@@ -4450,6 +4453,14 @@ export default function Game() {
             gs.gamePhase = 'menu';
           }
         }
+      } else if (gs.gamePhase === 'race-countdown') {
+        // Congela todas as teclas durante a contagem regressiva
+        clearKeys();
+        gs.raceCountdownTimer -= dt;
+        if (gs.raceCountdownTimer <= 0) {
+          gs.raceCountdownTimer = 0;
+          gs.gamePhase = 'playing';
+        }
       } else if (gs.gamePhase === 'playing') {
         if (editorSpawnJustPressed.current && editorTestModeRef.current) {
           // Ctrl pressionado durante teste do editor: volta pro editor onde o jogador está
@@ -5486,7 +5497,8 @@ export default function Game() {
               raceRoundWinnerRef.current = null;
               raceRoundLoserXRef.current = gs.player.x;
               raceInterRoundTransitionRef.current = false;
-              gs.gamePhase = 'playing';
+              gs.gamePhase = 'race-countdown';
+              gs.raceCountdownTimer = 3500;
               gs.victoryTimer = 0;
             } else {
               // Quando Horácio vence, mantém a regra existente: ele volta ao
@@ -5517,6 +5529,8 @@ export default function Game() {
                 racePlayerRef.current.onGround = true;
               }
               next.camera.x = 0;
+              next.gamePhase = 'race-countdown';
+              next.raceCountdownTimer = 3500;
             }
           } else if (spaceJustPressed.current) {
             resetGame('race');
