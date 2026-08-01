@@ -185,7 +185,7 @@ export function createGhostPlayer(x: number, y: number): Player {
     isCrouching: false, forcedCrouch: false,
     isDivejumping: false,
     isWallRunning: false, wallRunTimer: 0,
-    wallRunOnBox: false, wallRunBoxStackCount: 0, wallRunBoxStackHeight: 0,
+    wallRunOnBox: false, wallRunBoxStackCount: 0, wallRunBoxStackHeight: 0, wallRunBoxClimbAllowed: true,
     isWallFlipping: false, wallFlipTimer: 0,
     isWallClimbUp: false,
     wallClimbTimer: 0,

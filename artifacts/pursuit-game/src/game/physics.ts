@@ -20,6 +20,7 @@ import type { SpatialGrid } from './spatialGrid';
 
 interface BoxStackWall extends SlopedRect {
   boxCount: number;
+  storyPhysics: boolean;
 }
 
 // Altura máxima acima do chão (em px) que Horácio pode escalar em caixas (~4 caixas de 55px)
@@ -123,7 +124,14 @@ function getStackedBoxWall(platforms: Platform[], box: Platform): BoxStackWall |
   const bottom = Math.max(...stack.map((plat) => plat.y + plat.h));
   const columnHeight = bottom - top;
 
-  return { x: left, y: top, w: right - left, h: columnHeight, boxCount: stack.length };
+  return {
+    x: left,
+    y: top,
+    w: right - left,
+    h: columnHeight,
+    boxCount: stack.length,
+    storyPhysics: box.raceStoryPhysics === true,
+  };
 }
 
 function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, boxWall: BoxStackWall | null = null, lowImpulse = false): void {
@@ -139,10 +147,16 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, box
     p.wallTopY = hit.y;
     p.wallLowImpulse = lowImpulse;
     if (p.vx > 0) p.vx = 0;
-    if (!p.isWallRunning) {
-      p.wallRunOnBox = isBox;
+    if (isBox) {
+      p.wallRunOnBox = true;
       p.wallRunBoxStackCount = boxWall?.boxCount ?? 0;
       p.wallRunBoxStackHeight = boxWall?.h ?? 0;
+      p.wallRunBoxClimbAllowed = !boxWall?.storyPhysics;
+    } else if (!p.isWallRunning) {
+      p.wallRunOnBox = isBox;
+      p.wallRunBoxStackCount = 0;
+      p.wallRunBoxStackHeight = 0;
+      p.wallRunBoxClimbAllowed = true;
     }
   } else if (overlapRight <= overlapLeft && vx <= 0) {
     p.x = hit.x + hit.w;
@@ -152,10 +166,16 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, box
     p.wallTopY = hit.y;
     p.wallLowImpulse = lowImpulse;
     if (p.vx < 0) p.vx = 0;
-    if (!p.isWallRunning) {
-      p.wallRunOnBox = isBox;
+    if (isBox) {
+      p.wallRunOnBox = true;
       p.wallRunBoxStackCount = boxWall?.boxCount ?? 0;
       p.wallRunBoxStackHeight = boxWall?.h ?? 0;
+      p.wallRunBoxClimbAllowed = !boxWall?.storyPhysics;
+    } else if (!p.isWallRunning) {
+      p.wallRunOnBox = isBox;
+      p.wallRunBoxStackCount = 0;
+      p.wallRunBoxStackHeight = 0;
+      p.wallRunBoxClimbAllowed = true;
     }
   }
 }
@@ -285,6 +305,7 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
       if (!p.isWallRunning) {
         p.wallRunOnBox = true;
         p.wallRunBoxStackCount = 1;
+        p.wallRunBoxClimbAllowed = plat.raceStoryPhysics !== true;
       }
     } else if (minOverlap === overlapRight && p.vx <= 0) {
       p.x = hit.x + hit.w;
@@ -296,6 +317,7 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
       if (!p.isWallRunning) {
         p.wallRunOnBox = true;
         p.wallRunBoxStackCount = 1;
+        p.wallRunBoxClimbAllowed = plat.raceStoryPhysics !== true;
       }
     }
     return false;
@@ -357,6 +379,7 @@ export function updatePlayer(
     p.wallRunOnBox = false;
     p.wallRunBoxStackCount = 0;
     p.wallRunBoxStackHeight = 0;
+    p.wallRunBoxClimbAllowed = true;
   }
   p.isCrouching = false;
 
@@ -535,13 +558,14 @@ export function updatePlayer(
       }
       const isTallBoxStack = p.wallRunOnBox && (GROUND_Y - p.wallTopY) > MAX_BOX_CLIMB_HEIGHT;
       const _timerWindow = p.wallRunTimer < WALLRUN_DURATION - 160;
-      const canClimbWall   = (!p.wallRunOnBox || !isTallBoxStack || allowBoxClimb) && _timerWindow;
-      const canJumpOffWall = (!p.wallRunOnBox || isTallBoxStack) && !allowBoxClimb && _timerWindow;
+      const boxClimbAllowed = allowBoxClimb && (!p.wallRunOnBox || p.wallRunBoxClimbAllowed);
+      const canClimbWall   = (!p.wallRunOnBox || !isTallBoxStack || boxClimbAllowed) && _timerWindow;
+      const canJumpOffWall = (!p.wallRunOnBox || isTallBoxStack) && !boxClimbAllowed && _timerWindow;
       const pressingForwardIntoWall =
         (wallSide === 'right' && keys.right) ||
         (wallSide === 'left' && keys.left);
       const neutralVerticalClimb = (keys.space || keys.up) && !keys.left && !keys.right;
-      const boxClimbInput = allowBoxClimb
+      const boxClimbInput = boxClimbAllowed
         ? (keys.space || keys.up)
         : (keys.space || keys.up) && pressingForwardIntoWall;
       if (canClimbWall && boxClimbInput && wallSide && !p.wallNoHang) {
@@ -852,7 +876,8 @@ export function updatePlayer(
     // Wall climb simples — bloqueado em caixas (muito baixas: pula em cima; muito altas: inalcançável)
     // Usa jumpOriginGroundY (pés na plataforma de origem) para não ser enganado pela posição aérea do pulo
     const _boxHeight = p.jumpOriginGroundY - p.wallTopY;
-    const _climbBannedOnBox = !allowBoxClimb &&
+    const boxClimbAllowed = allowBoxClimb && (!p.wallRunOnBox || p.wallRunBoxClimbAllowed);
+    const _climbBannedOnBox = !boxClimbAllowed &&
       p.wallRunOnBox && (_boxHeight <= MIN_BOX_CLIMB_HEIGHT || _boxHeight > MAX_BOX_CLIMB_HEIGHT);
     if (p.touchingWall && keys.up && !p.onGround && !_climbBannedOnBox && !p.onTictacWall && !p.wallNoHang) {
       p.isClimbing = true;
@@ -993,6 +1018,7 @@ export function updatePlayer(
 
   // Box climb trigger direto — caixas ≤ 4 blocos, sem passar por wall-run
   // Ativa quando o jogador pula em direção à caixa e pressiona up/space
+  const directBoxClimbAllowed = allowBoxClimb && (!p.wallRunOnBox || p.wallRunBoxClimbAllowed);
   const _boxClimbConditions =
     !p.isWallRunning &&
     !p.isClimbing &&
@@ -1006,11 +1032,11 @@ export function updatePlayer(
     p.wallRunOnBox &&
     // Altura relativa à plataforma de origem do pulo — no modo Corrida sem
     // drone, a pilha inteira pode ser escalada.
-    (allowBoxClimb ||
+    (directBoxClimbAllowed ||
       ((p.jumpOriginGroundY - p.wallTopY) > MIN_BOX_CLIMB_HEIGHT &&
        (p.jumpOriginGroundY - p.wallTopY) <= MAX_BOX_CLIMB_HEIGHT)) &&
     (keys.up || keys.space) &&
-    (allowBoxClimb ||
+    (directBoxClimbAllowed ||
       ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||
        (p.wallSide === 'left' && (keys.left || incomingVx < 0)))) &&
     p.vy < 0;

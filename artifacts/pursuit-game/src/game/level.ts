@@ -74,6 +74,35 @@ export const RIVER2 = {
 //  WALL ZONE 3   x:22100  → 25000   paredes (≥4), buracos grandes, parkour difícil
 // ──────────────────────────────────────────────────────────────────
 
+// Na Corrida, somente estas caixas reutilizam a física da História. A lista é
+// intencionalmente explícita: há outras caixas próximas que devem continuar
+// com a física especial da Corrida.
+const RACE_STORY_BOX_ROWS: Record<number, number[]> = {
+  13355: [55, 110],
+  13420: [55, 110],
+  21180: [55, 110, 165],
+  21245: [55, 110, 165],
+  21310: [55, 110, 165, 220],
+  21375: [55, 110, 165, 220],
+  21440: [55, 110, 165, 220, 275],
+  21505: [55, 110, 165, 220, 275, 330],
+  21570: [55, 110, 165, 220, 275, 330, 385],
+  21635: [55, 110, 165, 220, 275, 330, 385],
+};
+
+export function isRaceStoryPhysicsBox(platform: Platform): boolean {
+  if (platform.type !== 'box' || platform.w !== 65 || platform.h !== 55) return false;
+  return RACE_STORY_BOX_ROWS[platform.x]?.includes(GROUND_Y - platform.y) ?? false;
+}
+
+export function markRaceStoryPhysicsBoxes(platforms: Platform[]): Platform[] {
+  return platforms.map((platform) =>
+    platform.type === 'box'
+      ? { ...platform, raceStoryPhysics: isRaceStoryPhysicsBox(platform) }
+      : platform,
+  );
+}
+
 export function generateLevel(): Platform[] {
   const platforms: Platform[] = [];
 
@@ -261,6 +290,7 @@ export function generateLevel(): Platform[] {
   const GY = GROUND_Y;
   const BOX_H = 55;
   const BOX_W = 65;
+
   const junkyardBoxStacks: Platform[] = [
     // Pilha A — entrada (x:12440-12570)
     { x: 12570, y: GY - 220,            w: BOX_W, h: BOX_H, type: 'box' },

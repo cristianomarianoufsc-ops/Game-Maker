@@ -33,7 +33,7 @@ import {
   PLAYER_MAX_HEALTH, SHOOT_COOLDOWN, BULLET_SPEED, CAMERA_LEAD_X, COLORS,
   DIVE_ENERGY_MAX, PLAYER_SPEED,
 } from './constants';
-import { generateLevel, generateBuildings, generateWallTestLevel, generateTrainingLevel } from './level';
+import { generateLevel, generateBuildings, generateWallTestLevel, generateTrainingLevel, markRaceStoryPhysicsBoxes } from './level';
 import {
   updatePlayer, updateDrone, updateBullets, updateParticles, spawnParticleHelper,
   updateFallingBoxes, updateFlyingTires, updateDogs, updateBystanders,
@@ -127,6 +127,7 @@ function makePlayer(): Player {
     wallRunOnBox: false,
     wallRunBoxStackCount: 0,
     wallRunBoxStackHeight: 0,
+    wallRunBoxClimbAllowed: true,
     isWallFlipping: false,
     wallFlipTimer: 0,
     isWallClimbUp: false,
@@ -1571,10 +1572,10 @@ export default function Game() {
     customSpriteImagesRef.current = new Map();
     basePlatforms.forEach(registerCustomSpriteImage);
     customSpritePlatforms.forEach(registerCustomSpriteImage);
-    platformsRef.current = [
+    platformsRef.current = markRaceStoryPhysicsBoxes([
       ...basePlatforms,
       ...customSpritePlatforms,
-    ];
+    ]);
     gsRef.current = makeInitialState();
 
     // Carrega level-patch.json do servidor e aplica as mudanças salvas.
@@ -1607,12 +1608,16 @@ export default function Game() {
             saveDeletedPlatformKeys(deletedPlatformKeysRef.current);
           }
         }
-        const addPlatforms = rawAddPlatforms
+        const addPlatforms = markRaceStoryPhysicsBoxes(rawAddPlatforms
           .filter(p => !originalKeySet.has(platBaseKey(p)))
-          .filter(p => !deletedPlatformKeysRef.current.has(platBaseKey(p)));
+          .filter(p => !deletedPlatformKeysRef.current.has(platBaseKey(p))));
         addPlatforms.forEach(registerCustomSpriteImage);
         const withDeleted = applyDeletedPlatformKeys(patchedBase, deletedPlatformKeysRef.current);
-        platformsRef.current = [...withDeleted, ...customSpritePlatforms, ...addPlatforms];
+        platformsRef.current = markRaceStoryPhysicsBoxes([
+          ...withDeleted,
+          ...customSpritePlatforms,
+          ...addPlatforms,
+        ]);
         if (gsRef.current) gsRef.current.platforms = platformsRef.current;
         // Restaura checkpoints personalizados salvos
         if (patch.checkpoints && patch.checkpoints.length > 0) {

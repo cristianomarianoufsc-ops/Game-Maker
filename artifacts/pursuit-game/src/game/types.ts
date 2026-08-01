@@ -16,6 +16,7 @@ export interface CollisionBox extends Rect {
 
 export interface Platform extends Rect {
   type: 'ground' | 'platform' | 'wall' | 'obstacle' | 'car' | 'tire' | 'tireHideout' | 'box' | 'sprite' | 'pothole';
+  raceStoryPhysics?: boolean;
   climbable?: boolean;
   climbableSide?: 'left' | 'right' | 'both';
   isLadder?: boolean;
@@ -121,6 +122,7 @@ export interface Player {
   wallRunOnBox: boolean;
   wallRunBoxStackCount: number;
   wallRunBoxStackHeight: number;
+  wallRunBoxClimbAllowed: boolean;
   isWallFlipping: boolean;
   wallFlipTimer: number;
   isWallClimbUp: boolean;
