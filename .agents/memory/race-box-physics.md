@@ -11,10 +11,10 @@ Na Corrida, a permissão de escalada especial não deve ser aplicada por faixa d
 
 **How to apply:** Recalcule a marca pelas coordenadas finais após carregar ou editar o nível, e use a mesma decisão na física de Horácio e do rival.
 
-## Contato sem escalada em pilhas altas
+## Regra histórica das caixas
 
-Em pilhas conectadas com mais de quatro caixas, a colisão lateral deve usar o topo da caixa atualmente tocada, mas a decisão de permitir escalada deve usar a altura total da pilha. Assim o personagem alcança a quarta caixa, fica agarrado brevemente e desce, sem passar pelo topo.
+A colisão deve usar a face da caixa individual que foi realmente tocada; a pilha conectada serve apenas para identificar a pilha. A altura relativa à face tocada mantém a regra histórica: três caixas podem ser atravessadas/escaladas, enquanto a quarta caixa segura o personagem e não permite passar.
 
-**Why:** Usar o topo da pilha inteira fazia Horácio parar cedo; usar apenas a altura da face tocada podia liberar a escalada de uma pilha que deveria continuar bloqueada.
+**Why:** Usar o retângulo envolvente da pilha como superfície de colisão transforma a caixa da base em uma parede e faz Horácio agarrar cedo demais.
 
-**How to apply:** Mantenha separadas a altura do contato (`wallTopY`) e a altura total da pilha (`wallRunBoxStackHeight`) em História e Corrida com drone; preserve a exceção de escalada da Corrida sem drone para pilhas permitidas.
+**How to apply:** Preserve `wallTopY` da caixa real no contato e mantenha a exceção de escalada da Corrida sem drone separada da física da História e da Corrida com drone.

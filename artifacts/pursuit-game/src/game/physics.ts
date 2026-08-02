@@ -21,7 +21,6 @@ import type { SpatialGrid } from './spatialGrid';
 interface BoxStackWall extends SlopedRect {
   boxCount: number;
   storyPhysics: boolean;
-  stackHeight: number;
 }
 
 // Altura máxima acima do chão (em px) que Horácio pode escalar em caixas (~4 caixas de 55px)
@@ -127,17 +126,11 @@ function getStackedBoxWall(platforms: Platform[], box: Platform): BoxStackWall |
 
   return {
     x: left,
-    // Use the top of the box currently being touched as the contact height.
-    // The old implementation used the highest box in the whole connected
-    // component here, so the first junkyard stack behaved as if its top box
-    // were already blocking the lower boxes. Horácio then stopped at box 3
-    // instead of reaching box 4 and briefly holding the side before falling.
-    y: box.y,
+    y: top,
     w: right - left,
-    h: bottom - box.y,
+    h: columnHeight,
     boxCount: stack.length,
     storyPhysics: box.raceStoryPhysics === true,
-    stackHeight: columnHeight,
   };
 }
 
@@ -157,7 +150,7 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, box
     if (isBox) {
       p.wallRunOnBox = true;
       p.wallRunBoxStackCount = boxWall?.boxCount ?? 0;
-      p.wallRunBoxStackHeight = boxWall?.stackHeight ?? boxWall?.h ?? 0;
+      p.wallRunBoxStackHeight = boxWall?.h ?? 0;
       p.wallRunBoxClimbAllowed = !boxWall?.storyPhysics;
     } else if (!p.isWallRunning) {
       p.wallRunOnBox = isBox;
@@ -176,7 +169,7 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, box
     if (isBox) {
       p.wallRunOnBox = true;
       p.wallRunBoxStackCount = boxWall?.boxCount ?? 0;
-      p.wallRunBoxStackHeight = boxWall?.stackHeight ?? boxWall?.h ?? 0;
+      p.wallRunBoxStackHeight = boxWall?.h ?? 0;
       p.wallRunBoxClimbAllowed = !boxWall?.storyPhysics;
     } else if (!p.isWallRunning) {
       p.wallRunOnBox = isBox;
@@ -280,7 +273,11 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
   }
 
   if (climbableBoxWall && (minOverlap === overlapLeft || minOverlap === overlapRight)) {
-    resolveClimbableWallContact(p, climbableBoxWall, p.vx, climbableBoxWall);
+    // Keep the actual box face as the collision surface. The connected stack
+    // is metadata for climb rules only; using its bounding rectangle here
+    // turns the bottom of a tall stack into a wall and prevents the lower
+    // three-box section from being crossed.
+    resolveClimbableWallContact(p, hit, p.vx, climbableBoxWall);
     return false;
   }
 
@@ -563,11 +560,7 @@ export function updatePlayer(
           Math.random() < 0.5 ? '#ffcc44' : '#ff8822',
         );
       }
-      // A connected junkyard stack can be much taller than the box face
-      // currently touching Horácio. Use the complete stack height here:
-      // reaching the fourth face must remain a brief wall contact, not turn
-      // into a climb over the stack.
-      const isTallBoxStack = p.wallRunOnBox && p.wallRunBoxStackHeight > MAX_BOX_CLIMB_HEIGHT;
+      const isTallBoxStack = p.wallRunOnBox && (GROUND_Y - p.wallTopY) > MAX_BOX_CLIMB_HEIGHT;
       const _timerWindow = p.wallRunTimer < WALLRUN_DURATION - 160;
       const boxClimbAllowed = allowBoxClimb && (!p.wallRunOnBox || p.wallRunBoxClimbAllowed);
       const canClimbWall   = (!p.wallRunOnBox || !isTallBoxStack || boxClimbAllowed) && _timerWindow;
@@ -892,8 +885,7 @@ export function updatePlayer(
       p.wallRunOnBox &&
       (
         _boxHeight <= MIN_BOX_CLIMB_HEIGHT ||
-        _boxHeight > MAX_BOX_CLIMB_HEIGHT ||
-        p.wallRunBoxStackHeight > MAX_BOX_CLIMB_HEIGHT
+        _boxHeight > MAX_BOX_CLIMB_HEIGHT
       );
     if (p.touchingWall && keys.up && !p.onGround && !_climbBannedOnBox && !p.onTictacWall && !p.wallNoHang) {
       p.isClimbing = true;
@@ -1050,8 +1042,7 @@ export function updatePlayer(
     // drone, a pilha inteira pode ser escalada.
     (directBoxClimbAllowed ||
       ((p.jumpOriginGroundY - p.wallTopY) > MIN_BOX_CLIMB_HEIGHT &&
-       (p.jumpOriginGroundY - p.wallTopY) <= MAX_BOX_CLIMB_HEIGHT &&
-       p.wallRunBoxStackHeight <= MAX_BOX_CLIMB_HEIGHT)) &&
+       (p.jumpOriginGroundY - p.wallTopY) <= MAX_BOX_CLIMB_HEIGHT)) &&
     (keys.up || keys.space) &&
     (directBoxClimbAllowed ||
       ((p.wallSide === 'right' && (keys.right || incomingVx > 0)) ||

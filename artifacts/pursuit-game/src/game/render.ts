@@ -3584,8 +3584,7 @@ export function drawPlayer(
   const RENDER_MAX_BOX_CLIMB_HEIGHT = 220;
   // Usa jumpOriginGroundY — mesma referência do physics.ts para evitar falsos positivos durante o pulo
   const isSlipperyBoxContact = p.touchingWall && p.wallRunOnBox &&
-    (p.wallRunBoxStackHeight > RENDER_MAX_BOX_CLIMB_HEIGHT ||
-      (p.jumpOriginGroundY - p.wallTopY) > RENDER_MAX_BOX_CLIMB_HEIGHT) &&
+    (p.jumpOriginGroundY - p.wallTopY) > RENDER_MAX_BOX_CLIMB_HEIGHT &&
     !p.onGround && !p.isWallRunning;
   if (isSlipperyBoxContact && subidaSheetImg && subidaSheetImg.complete && subidaSheetImg.naturalWidth > 0) {
     const frameW = subidaSheetImg.naturalWidth / WALL_CLIMB_SHEET.frameCount;
