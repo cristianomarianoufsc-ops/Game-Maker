@@ -30,6 +30,7 @@ if (!basePath) {
 
 const levelPatchPath = path.resolve(import.meta.dirname, 'public', 'level-patch.json');
 const levelPatchHistoryDir = path.resolve(import.meta.dirname, 'public', '.level-patch-history');
+const gameSettingsPath = path.resolve(import.meta.dirname, 'public', 'game-settings.json');
 
 function readRequestBody(req: import('http').IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -48,6 +49,61 @@ function editorPersistencePlugin() {
   return {
     name: 'pursuit-editor-persistence',
     configureServer(server: { middlewares: { use: (path: string, handler: (req: any, res: any, next: () => void) => void) => void } }) {
+      server.middlewares.use('/__editor/game-settings', async (req, res, next) => {
+        if (req.method !== 'GET') return next();
+        try {
+          const settings = await fs.readFile(gameSettingsPath, 'utf8');
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Cache-Control', 'no-store');
+          res.end(settings);
+        } catch (error) {
+          res.statusCode = 500;
+          res.end(`settings read failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+        }
+        return;
+      });
+
+      server.middlewares.use('/__editor/save-game-settings', async (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        try {
+          const body = JSON.parse(await readRequestBody(req));
+          if (!body || typeof body !== 'object' || Array.isArray(body)) {
+            res.statusCode = 400;
+            res.end('invalid settings');
+            return;
+          }
+
+          const current = JSON.parse(await fs.readFile(gameSettingsPath, 'utf8'));
+          const nextSettings: Record<string, unknown> = { ...current };
+
+          if (typeof body.musicVolume === 'number' && Number.isFinite(body.musicVolume)) {
+            nextSettings.musicVolume = Math.min(1, Math.max(0, body.musicVolume));
+          }
+
+          for (const key of ['sfxVolumes', 'npcVolumes']) {
+            const values = body[key];
+            if (!values || typeof values !== 'object' || Array.isArray(values)) continue;
+            const normalized: Record<string, number> = {};
+            for (const [name, value] of Object.entries(values)) {
+              if (typeof value === 'number' && Number.isFinite(value)) {
+                normalized[name] = Math.min(1, Math.max(0, value));
+              }
+            }
+            nextSettings[key] = normalized;
+          }
+
+          await fs.writeFile(gameSettingsPath, JSON.stringify(nextSettings, null, 2) + '\n');
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ ok: true, settings: nextSettings }));
+        } catch (error) {
+          res.statusCode = 500;
+          res.end(`settings save failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+        }
+        return;
+      });
+
       server.middlewares.use('/__editor/save-level-patch', async (req, res, next) => {
         if (req.method !== 'POST') return next();
         try {
