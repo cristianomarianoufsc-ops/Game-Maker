@@ -293,7 +293,8 @@ export function generateLevel(): Platform[] {
 
   const junkyardBoxStacks: Platform[] = [
     // Pilha A — entrada (x:12440-12570)
-    { x: 12570, y: GY - 220,            w: BOX_W, h: BOX_H, type: 'box' },
+    // x:12570 sem GY-220: mantém gap de 55 px entre GY-165 e GY-275,
+    // dividindo a coluna em 3 caixas climbáveis (baixo) + 5 desconectadas (cima).
     { x: 12505, y: GY - 220,            w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12570, y: GY - 165,            w: BOX_W, h: BOX_H, type: 'box' },
     { x: 12505, y: GY - 165,            w: BOX_W, h: BOX_H, type: 'box' },
