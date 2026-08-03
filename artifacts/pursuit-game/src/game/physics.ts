@@ -273,11 +273,7 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
   }
 
   if (climbableBoxWall && (minOverlap === overlapLeft || minOverlap === overlapRight)) {
-    // Keep the actual box face as the collision surface. The connected stack
-    // is metadata for climb rules only; using its bounding rectangle here
-    // turns the bottom of a tall stack into a wall and prevents the lower
-    // three-box section from being crossed.
-    resolveClimbableWallContact(p, hit, p.vx, climbableBoxWall);
+    resolveClimbableWallContact(p, climbableBoxWall, p.vx, climbableBoxWall);
     return false;
   }
 
@@ -882,11 +878,7 @@ export function updatePlayer(
     const _boxHeight = p.jumpOriginGroundY - p.wallTopY;
     const boxClimbAllowed = allowBoxClimb && (!p.wallRunOnBox || p.wallRunBoxClimbAllowed);
     const _climbBannedOnBox = !boxClimbAllowed &&
-      p.wallRunOnBox &&
-      (
-        _boxHeight <= MIN_BOX_CLIMB_HEIGHT ||
-        _boxHeight > MAX_BOX_CLIMB_HEIGHT
-      );
+      p.wallRunOnBox && (_boxHeight <= MIN_BOX_CLIMB_HEIGHT || _boxHeight > MAX_BOX_CLIMB_HEIGHT);
     if (p.touchingWall && keys.up && !p.onGround && !_climbBannedOnBox && !p.onTictacWall && !p.wallNoHang) {
       p.isClimbing = true;
       p.vy = -CLIMB_SPEED;
