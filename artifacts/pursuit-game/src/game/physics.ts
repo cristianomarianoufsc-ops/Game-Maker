@@ -134,6 +134,37 @@ function getStackedBoxWall(platforms: Platform[], box: Platform): BoxStackWall |
   };
 }
 
+function isJunkyardUpperTargetBox(platform: Platform): boolean {
+  return platform.type === 'box' &&
+    platform.x === 12505 &&
+    platform.w === 65 &&
+    platform.h === 55 &&
+    Math.round(GROUND_Y - platform.y) === 275;
+}
+
+function isJunkyardLowerTargetBox(platform: Platform): boolean {
+  return platform.type === 'box' &&
+    platform.x === 12505 &&
+    platform.w === 65 &&
+    platform.h === 55 &&
+    Math.round(GROUND_Y - platform.y) === 220;
+}
+
+// A pilha A tem duas caixas alinhadas que podem estar sobrepostas na mesma
+// trajetória de salto. Nos modos História e Corrida com drone, a caixa de
+// cima deve receber o primeiro contato; a Corrida sem drone mantém a ordem
+// original porque usa a física especial de escalada.
+function orderJunkyardUpperBoxFirst(platforms: Platform[]): Platform[] {
+  const upperIndex = platforms.findIndex(isJunkyardUpperTargetBox);
+  const lowerIndex = platforms.findIndex(isJunkyardLowerTargetBox);
+  if (upperIndex < 0 || lowerIndex < 0 || upperIndex < lowerIndex) return platforms;
+
+  const ordered = [...platforms];
+  const [upper] = ordered.splice(upperIndex, 1);
+  ordered.splice(lowerIndex, 0, upper);
+  return ordered;
+}
+
 function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, boxWall: BoxStackWall | null = null, lowImpulse = false): void {
   const overlapLeft = p.x + p.w - hit.x;
   const overlapRight = hit.x + hit.w - p.x;
@@ -359,6 +390,7 @@ export function updatePlayer(
   dt: number,
   spawnParticle: (x: number, y: number, color: string) => void,
   allowBoxClimb = false,
+  prioritizeUpperJunkyardBox = false,
 ): void {
   const prevOnGround = p.onGround;
   const previousWallSide = p.wallSide;
@@ -955,7 +987,14 @@ export function updatePlayer(
       const insidePothole = !touchingClimbableWall &&
         potholes.some(ph => playerCenterX > ph.x && playerCenterX < ph.x + ph.w);
 
-      for (const plat of platforms) {
+      // Durante a subida, História e Corrida com drone devem tocar primeiro a
+      // caixa GY-275 da pilha x:12505. Ao descer, e na Corrida sem drone,
+      // preservamos a ordem normal das plataformas.
+      const collisionPlatforms =
+        prioritizeUpperJunkyardBox && p.vy < 0
+          ? orderJunkyardUpperBoxFirst(platforms)
+          : platforms;
+      for (const plat of collisionPlatforms) {
         if (plat.type === 'tireHideout' && !plat.cushionOnLand) continue;
         if (plat.type === 'pothole') continue; // pothole não tem colisão sólida
         // Se o jogador está sobre um pothole, ignora colisão de chão para deixar cair

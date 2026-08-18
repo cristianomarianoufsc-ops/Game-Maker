@@ -4534,6 +4534,9 @@ export default function Game() {
           gs.gameMode === 'race' &&
           !gs.raceDroneEnabled &&
           gs.player.x < 35000;
+        const _prioritizeUpperJunkyardBox =
+          gs.gameMode === 'story' ||
+          (gs.gameMode === 'race' && gs.raceDroneEnabled);
         updatePlayer(
           gs.player,
           effectiveKeys,
@@ -4541,6 +4544,7 @@ export default function Game() {
           dt,
           spawnP,
           _playerAllowBoxClimb,
+          _prioritizeUpperJunkyardBox,
         );
 
         // ── Ghost Horácio IA ─────────────────────────────────────────────────
@@ -4639,7 +4643,14 @@ export default function Game() {
               _ghost.isSideFlipping = false;
               _ghost.isRolling      = false;
             }
-            ghostLastDecisionRef.current = stepGhostPlayer(_ghost, ghostActivePlatforms, dt, spawnP);
+            ghostLastDecisionRef.current = stepGhostPlayer(
+              _ghost,
+              ghostActivePlatforms,
+              dt,
+              spawnP,
+              false,
+              _prioritizeUpperJunkyardBox,
+            );
             // Registra posição na trilha a cada 3 frames (~50ms @ 60fps)
             ghostTrailTickRef.current++;
             if (ghostTrailTickRef.current >= 3) {
@@ -4792,6 +4803,7 @@ export default function Game() {
               // Solução: usa true no geral (para caixas) e false apenas na zona
               // do tic-tac (x ≥ 35000), replicando exatamente o ghost de história.
               _rival.x < 35000,
+              _prioritizeUpperJunkyardBox,
             );
 
             // Checkpoints próprios do rival (mesmos X do modo história)
