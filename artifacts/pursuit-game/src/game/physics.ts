@@ -139,7 +139,7 @@ function isJunkyardUpperTargetBox(platform: Platform): boolean {
     platform.x === 12505 &&
     platform.w === 65 &&
     platform.h === 55 &&
-    Math.round(GROUND_Y - platform.y) === 275;
+    Math.round(GROUND_Y - platform.y) === 277;
 }
 
 function isJunkyardLowerTargetBox(platform: Platform): boolean {
