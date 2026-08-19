@@ -272,6 +272,7 @@ function clonePlatformSnapshot(snapshot: Platform[]): Platform[] {
 }
 
 const CONTROLS_H = 68; // px reserved below canvas for mobile buttons
+const RACE_RIVAL_START_X = 140; // uma passada à frente do jogador (x=100)
 const EDITOR_DELETED_PLATFORMS_STORAGE_KEY = 'pursuit-deleted-platforms-v1';
 const EDITOR_CUSTOM_SPRITES_STORAGE_KEY = 'pursuit-custom-sprites-v1';
 
@@ -1462,7 +1463,7 @@ export default function Game() {
     ghostEnabledRef.current = false;
     ghostPlayerRef.current = null;
     racePlayerRef.current = gameMode === 'race'
-      ? createGhostPlayer(100, GROUND_Y - PLAYER_H)
+      ? createGhostPlayer(RACE_RIVAL_START_X, GROUND_Y - PLAYER_H)
       : null;
     raceRoundWinnerRef.current = null;
     raceRoundLoserXRef.current = 80;
@@ -4879,7 +4880,7 @@ export default function Game() {
                 // O rival reinicia a volta imediatamente. Horácio continua no
                 // mesmo frame e no mesmo estado, sem passar por victory, para
                 // não interromper o movimento nem o tic-tac do jogador.
-                racePlayerRef.current = createGhostPlayer(80, GROUND_Y - PLAYER_H);
+               racePlayerRef.current = createGhostPlayer(RACE_RIVAL_START_X, GROUND_Y - PLAYER_H);
                 raceCheckpointXRef.current = 0;
                 raceReplayArmedRef.current = false;
                 raceTictacSnapDoneRef.current = false;
@@ -5550,7 +5551,7 @@ export default function Game() {
               gs.racePlayerWins = playerWins;
               gs.raceRivalWins = rivalWins;
               gs.raceRoundNumber = playerWins + rivalWins + 1;
-              racePlayerRef.current = createGhostPlayer(80, GROUND_Y - PLAYER_H);
+                racePlayerRef.current = createGhostPlayer(RACE_RIVAL_START_X, GROUND_Y - PLAYER_H);
               raceCheckpointXRef.current = 0;
               raceReplayArmedRef.current = false;
               raceTictacSnapDoneRef.current = false;
@@ -6095,6 +6096,40 @@ export default function Game() {
 
       if (gs.gamePhase !== 'training') drawHUD(ctx, gs);
       if (showControls.current && gs.gamePhase === 'playing') drawControls(ctx);
+
+      // Contagem regressiva da corrida — fica em coordenadas da tela para
+      // permanecer centralizada mesmo quando a câmera acompanha o jogador.
+      if (gs.gamePhase === 'race-countdown') {
+        const countdown = gs.raceCountdownTimer;
+        const label = countdown > 2500
+          ? '3'
+          : countdown > 1500
+            ? '2'
+            : countdown > 500
+              ? '1'
+              : 'GO!';
+        const isGo = label === 'GO!';
+        const centerX = CANVAS_W / 2;
+        const centerY = CANVAS_H / 2;
+        ctx.save();
+        ctx.fillStyle = isGo ? 'rgba(40, 160, 105, 0.78)' : 'rgba(12, 18, 38, 0.78)';
+        ctx.fillRect(centerX - 150, centerY - 105, 300, 210);
+        ctx.strokeStyle = isGo ? 'rgba(125, 255, 185, 0.95)' : 'rgba(50, 210, 255, 0.95)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(centerX - 150, centerY - 105, 300, 210);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `900 ${isGo ? 84 : 112}px monospace`;
+        ctx.shadowColor = isGo ? 'rgba(110, 255, 180, 0.8)' : 'rgba(30, 220, 255, 0.8)';
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = '#f4ffff';
+        ctx.fillText(label, centerX, centerY - 4);
+        ctx.shadowBlur = 0;
+        ctx.font = 'bold 13px monospace';
+        ctx.fillStyle = 'rgba(225, 240, 255, 0.86)';
+        ctx.fillText(isGo ? 'CORRA!' : 'PREPARE-SE', centerX, centerY + 72);
+        ctx.restore();
+      }
 
       // Barra de modo teste do editor
       if (gs.gamePhase === 'playing' && editorTestModeRef.current) {
