@@ -1,0 +1,572 @@
+{
+  "add": [
+    {
+      "x": 8000,
+      "y": 409,
+      "w": 98,
+      "h": 90,
+      "type": "pothole"
+    },
+    {
+      "x": 36261,
+      "y": 122,
+      "w": 60,
+      "h": 25,
+      "type": "platform",
+      "noGroup": true,
+      "knockOff": true,
+      "collisionBoxes": [
+        {
+          "x": -9,
+          "y": 1,
+          "w": 69,
+          "h": 41
+        }
+      ],
+      "freeHitbox": true
+    },
+    {
+      "x": 36144,
+      "y": 28,
+      "w": 25,
+      "h": 231,
+      "type": "wall",
+      "climbable": true,
+      "noClimbOver": true,
+      "tictacWall": true
+    },
+    {
+      "type": "wall",
+      "x": 25909,
+      "y": 228,
+      "w": 20,
+      "h": 182,
+      "climbable": true
+    },
+    {
+      "type": "tireHideout",
+      "x": 17084,
+      "y": 294,
+      "w": 90,
+      "h": 116
+    },
+    {
+      "type": "tireHideout",
+      "x": 17316,
+      "y": 294,
+      "w": 90,
+      "h": 116
+    },
+    {
+      "type": "tireHideout",
+      "x": 17527,
+      "y": 294,
+      "w": 90,
+      "h": 116
+    },
+    {
+      "type": "tireHideout",
+      "x": 17724,
+      "y": 294,
+      "w": 90,
+      "h": 116
+    },
+    {
+      "type": "tireHideout",
+      "x": 17910,
+      "y": 294,
+      "w": 90,
+      "h": 116
+    },
+    {
+      "type": "tireHideout",
+      "x": 18142,
+      "y": 294,
+      "w": 90,
+      "h": 116
+    },
+    {
+      "type": "tireHideout",
+      "x": 18353,
+      "y": 294,
+      "w": 90,
+      "h": 116
+    },
+    {
+      "type": "tireHideout",
+      "x": 18550,
+      "y": 294,
+      "w": 90,
+      "h": 116
+    },
+    {
+      "type": "tireHideout",
+      "x": 18730,
+      "y": 294,
+      "w": 90,
+      "h": 116
+    },
+    {
+      "type": "tireHideout",
+      "x": 19828,
+      "y": 294,
+      "w": 90,
+      "h": 116
+    },
+    {
+      "type": "obstacle",
+      "x": 20648,
+      "y": 308,
+      "w": 239,
+      "h": 102,
+      "vaultTrigger": true,
+      "collisionBoxes": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 239,
+          "h": 91
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 355,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21505,
+      "y": 355,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21440,
+      "y": 355,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21375,
+      "y": 355,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21310,
+      "y": 355,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21245,
+      "y": 355,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21180,
+      "y": 355,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 300,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21505,
+      "y": 300,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21440,
+      "y": 300,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21375,
+      "y": 300,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21310,
+      "y": 300,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21245,
+      "y": 300,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21180,
+      "y": 355,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21505,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21440,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21375,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21310,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21245,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21180,
+      "y": 300,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 300,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21505,
+      "y": 190,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21440,
+      "y": 190,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21375,
+      "y": 190,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21310,
+      "y": 190,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21245,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21180,
+      "y": 300,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 190,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21505,
+      "y": 135,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21440,
+      "y": 135,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 300,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21505,
+      "y": 80,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 190,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21180,
+      "y": 245,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 135,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 80,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "box",
+      "x": 21570,
+      "y": 25,
+      "w": 65,
+      "h": 55,
+      "raceStoryPhysics": true
+    },
+    {
+      "type": "wall",
+      "x": 21700,
+      "y": 26,
+      "w": 20,
+      "h": 384,
+      "climbable": true
+    },
+    {
+      "type": "wall",
+      "x": 22562,
+      "y": -851,
+      "w": 19,
+      "h": 1261
+    },
+    {
+      "type": "obstacle",
+      "x": 31636,
+      "y": -310,
+      "w": 40,
+      "h": 40
+    }
+  ],
+  "del": [
+    "obstacle:3400:352:90:58:0",
+    "obstacle:22000:352:90:58:0",
+    "obstacle:24500:352:90:58:0",
+    "box:12505:190:65:55:0",
+    "box:12505:133:65:55:0",
+    "box:12570:-87:65:55:0",
+    "box:13355:245:65:55:0",
+    "sprite:17407:299:180:135:0",
+    "platform:22490:285:115:62:0",
+    "platform:24290:285:115:62:0",
+    "wall:21700:10:20:400:0",
+    "wall:23100:100:20:310:0",
+    "wall:24100:120:20:290:0",
+    "platform:31870:-504:80:70:0",
+    "platform:36163:5:183:30:0"
+  ],
+  "checkpoints": [
+    {
+      "label": "CP1",
+      "x": 6500
+    },
+    {
+      "label": "CP2",
+      "x": 12100
+    },
+    {
+      "label": "CP3",
+      "x": 16400
+    },
+    {
+      "label": "CP4",
+      "x": 21788
+    },
+    {
+      "label": "CP5",
+      "x": 24584
+    },
+    {
+      "label": "CP6",
+      "x": 26132
+    },
+    {
+      "label": "CP7",
+      "x": 29499
+    },
+    {
+      "label": "CP8",
+      "x": 30789
+    },
+    {
+      "label": "CP9",
+      "x": 31739
+    },
+    {
+      "label": "CP10",
+      "x": 34649
+    }
+  ],
+  "poseOverrides": {
+    "ladder": {
+      "dw": 113,
+      "dh": 126,
+      "flip": false,
+      "ox": 0,
+      "oy": 0
+    },
+    "kongVaultStart": {
+      "dw": 139,
+      "dh": 102,
+      "flip": true,
+      "ox": 61,
+      "oy": -47
+    },
+    "kongVaultAir": {
+      "dw": 106,
+      "dh": 115,
+      "flip": true,
+      "ox": -7,
+      "oy": -23
+    },
+    "wallclimb": {
+      "dw": null,
+      "dh": null,
+      "flip": false,
+      "ox": 4,
+      "oy": 2
+    }
+  }
+}

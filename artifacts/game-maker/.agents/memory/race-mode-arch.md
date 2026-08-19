@@ -1,0 +1,55 @@
+---
+name: Race mode architecture
+description: Rival rendering, AI, drone targeting, and skin-tone two-pass technique for the corrida (race) game mode.
+---
+
+# Race Mode Architecture
+
+## Rival player
+- Reuses `createGhostPlayer` / `stepGhostPlayer` from `ghostPlayer.ts`.
+- `racePlayerRef` holds the rival; preserved across player respawns.
+- Rival finish line: `RIVAL_FINISH_X = 36346`.
+
+## Rival skin-tone rendering (two-pass)
+The rival wears a differently-coloured outfit but has the same skin tone as the main player.
+
+**Technique:**
+1. `ctx.save()` → `ctx.filter = 'hue-rotate(160deg) saturate(1.5)'` → `_geom = drawPlayer(...)` → `ctx.restore()`
+   Full sprite is tinted (clothes change colour, skin goes green).
+2. Clip to the top ~28% of the **actual rendered sprite** using `_geom.destY` and `_geom.dh`, then call `drawPlayer` again without any filter.
+   This overwrites only the head region with unfiltered (natural) pixels.
+
+**Why `_geom.destY`, not `_rival.y`:**
+`drawPlayer` anchors the sprite at the feet and draws upward. Due to `FOOT_OFFSET = 28` and a display height much larger than `PLAYER_H = 50`, the sprite top (`destY`) is roughly 44–70px **above** the collision-box top (`p.y`). Using `p.y` as the clip origin misses the head entirely, leaving it green.
+`drawPlayer` returns `PlayerRenderGeom | null` — always use the returned `destY/dh/destX/dw` for any overlay that needs to align with the visible sprite.
+
+**Why:**
+`drawPlayer` returns `PlayerRenderGeom` including `destX`, `destY`, `dw`, `dh` in screen coordinates (pre-flip transform). Use this for any sprite-aligned overlay.
+
+## Drone targeting
+- In race mode, drone targets the living leader via `targetOverride` in `updateDrone`; if one runner dies, it switches to the other without respawning with either runner.
+- `raceDroneEnabled` flag on `GameState` disables drone in "Corrida sem drone".
+- The drone's position and momentum must survive player respawns; race respawn logic must never place it at the player's checkpoint.
+- Race setup has independent Drone and Checkpoints toggles; Iniciar only starts the race. Crossing race checkpoint triggers always grants the blood/health reward; the toggle controls only race respawn behavior.
+- In multi-round races, only the round winner resets to x=80; the loser keeps the position reached, treating the next round as a completed lap.
+- Intermediate round transitions preserve the currently playing music; audio restarts only when starting a new race or showing the final series victory.
+- Final race results distinguish modes and outcomes: History uses the green "ESCAPOU" screen, Race uses green "VOCÊ VENCEU", and a rival series win uses a red defeat screen.
+- In race mode with the drone disabled, junkyard box stacks are climbable for both Horácio and the rival; other modes retain the normal box-climb limits.
+- Na Corrida sem drone, `allowBoxClimb` deve ser desligado antes da região final; essa flag também bloqueia a ejeção lateral necessária para o tic-tac.
+- Race replay triggers must tolerate large per-frame position jumps; narrow start/snap windows can be skipped by the independent rival.
+
+## Colour
+- `hue-rotate(160deg) saturate(1.5)` shifts pinkish-orange clothes to blue-violet.
+
+## Round series
+- Corrida uses a best-of series: target 1 ends in 1 round, target 2 can reach 3 rounds, and target 3 can reach 5 rounds.
+- In multi-round races, the winner alone resets to the circuit start while the loser keeps the position reached; the HUD displays the current round and wins.
+- If the rival wins an intermediate round, the player keeps the exact current position and physical state; only the rival resets for the next lap.
+
+**Why:** This matches the requested fighting-game structure while keeping the race track reusable between rounds.
+
+**How to apply:** Keep race score/round state in `GameState`; do not reset it when restarting between rounds, only when starting a new series.
+
+**Why:** A física usa a mesma opção de escalada de caixas para desativar a ejeção do wall-run. Mantê-la ativa até a parede final faz Horácio ficar preso no trecho do tic-tac, especialmente quando o drone está desligado.
+
+**How to apply:** Permita a escalada de caixas apenas até o fim do ferro-velho; no trecho final use a física normal para preservar a sequência wall-run → ejeção → parede de tic-tac.

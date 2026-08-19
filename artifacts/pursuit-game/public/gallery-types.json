@@ -1,0 +1,9 @@
+{
+  "types": [
+    "box",
+    "obstacle",
+    "pothole",
+    "wall",
+    "platform"
+  ]
+}

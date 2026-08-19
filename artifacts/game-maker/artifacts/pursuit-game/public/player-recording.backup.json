@@ -1,0 +1,2217 @@
+{
+  "startX": 31107.3516817232,
+  "startY": 360,
+  "frames": [
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": true,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": true,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    },
+    {
+      "left": false,
+      "right": false,
+      "up": false,
+      "down": false,
+      "space": false,
+      "shift": false,
+      "z": false,
+      "dive": false
+    }
+  ],
+  "savedAt": "2026-07-23T19:56:00.485Z"
+}
