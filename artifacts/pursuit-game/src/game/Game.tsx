@@ -4237,7 +4237,9 @@ export default function Game() {
           spaceJustPressed.current = false;
           editorTestModeRef.current = false;
           stopDogAmbient();
-          gs.gamePhase = 'menu';
+          // O Editor pode ter sido usado em modo de teste com drone; ao voltar
+          // ao menu, descartar o estado runtime dos objetos.
+          gsRef.current = { ...makeInitialState('story'), gamePhase: 'menu' };
         } else if (editorSpawnJustPressed.current) {
           editorSpawnJustPressed.current = false;
           const spawnX = editorMouseWorldRef.current.x;
@@ -4450,7 +4452,10 @@ export default function Game() {
             stopBeat();
             stopDogAmbient();
             menuFocusRef.current = 0;
-            gs.gamePhase = 'menu';
+            // Sair da pausa para o menu inicia uma sessão nova. Isso limpa
+            // caixas/pneus destruídos sem reconstruir a fase quando Esc apenas
+            // abre a pausa.
+            gsRef.current = { ...makeInitialState('story'), gamePhase: 'menu' };
           }
         }
       } else if (gs.gamePhase === 'race-countdown') {
@@ -5284,7 +5289,7 @@ export default function Game() {
           // ESC → volta direto ao menu inicial
           escJustPressed.current = false;
           spaceJustPressed.current = false;
-          gs.gamePhase = 'menu';
+          gsRef.current = { ...makeInitialState('story'), gamePhase: 'menu' };
           showOptionsRef.current = false;
           gs.camera.x = 0; gs.camera.y = 0;
           gs.particles = [];
