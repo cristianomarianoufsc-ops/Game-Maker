@@ -304,7 +304,11 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
   }
 
   if (climbableBoxWall && (minOverlap === overlapLeft || minOverlap === overlapRight)) {
-    resolveClimbableWallContact(p, climbableBoxWall, p.vx, climbableBoxWall);
+    // A pilha identifica a regra de escalada, mas a superfície real do
+    // contato é a caixa individual que acabou de ser tocada. Usar o
+    // retângulo envolvente aqui fazia a GY-220 agir como a parede inteira
+    // até a GY-275 e empurrava Horácio de volta cedo demais.
+    resolveClimbableWallContact(p, hit, p.vx, climbableBoxWall);
     return false;
   }
 
