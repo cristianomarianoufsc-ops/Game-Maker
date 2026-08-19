@@ -256,6 +256,21 @@ function makeDrone(): Drone {
   };
 }
 
+// Runtime physics mutates platform positions (for example when a box falls).
+// Always clone the level template before handing it to a game session so a
+// destroyed/moved object can never become the next session's starting state.
+function clonePlatformSnapshot(snapshot: Platform[]): Platform[] {
+  return snapshot.map((p) => ({
+    ...p,
+    collisionBoxes: p.collisionBoxes
+      ? p.collisionBoxes.map((b) => ({
+          ...b,
+          slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
+        }))
+      : undefined,
+  })) as Platform[];
+}
+
 const CONTROLS_H = 68; // px reserved below canvas for mobile buttons
 const EDITOR_DELETED_PLATFORMS_STORAGE_KEY = 'pursuit-deleted-platforms-v1';
 const EDITOR_CUSTOM_SPRITES_STORAGE_KEY = 'pursuit-custom-sprites-v1';
@@ -765,6 +780,9 @@ export default function Game() {
   const spatialGridSourceRef = useRef<Platform[] | null>(null);
   const platformIndexMapRef = useRef<Map<Platform, number> | null>(null);
   const droneSolidPlatsRef = useRef<Platform[]>([]);
+  // Stable level data for the current editor configuration. Runtime physics
+  // receives clones, so falling boxes and other moving objects do not mutate it.
+  const runtimeLevelSnapshotRef = useRef<Platform[] | null>(null);
   const playerHealthBeforeDeathRef = useRef<number>(PLAYER_MAX_HEALTH);
   const editorSelectedIdxRef = useRef(-1);
   const editorSelectedIndicesRef = useRef<Set<number>>(new Set());
@@ -1343,7 +1361,9 @@ export default function Game() {
     drone: makeDrone(),
     bullets: [],
     camera: { x: 0, y: 0 },
-    platforms: gameMode === 'wall-test' ? generateWallTestLevel() : platformsRef.current,
+    platforms: gameMode === 'wall-test'
+      ? generateWallTestLevel()
+      : clonePlatformSnapshot(runtimeLevelSnapshotRef.current ?? platformsRef.current),
     gamePhase: 'menu',
     gameMode,
     raceDroneEnabled: gameMode === 'race' ? raceDroneEnabledRef.current : false,
@@ -1419,6 +1439,13 @@ export default function Game() {
     gameMode: GameState['gameMode'] = 'story',
     preserveMusic = false,
   ) => {
+    // Restore the stable editor-configured level before starting every new
+    // session. This is essential after a drone/box test or after leaving a
+    // previous story/race run.
+    const stablePlatforms = runtimeLevelSnapshotRef.current ?? platformsRef.current;
+    runtimeLevelSnapshotRef.current = clonePlatformSnapshot(stablePlatforms);
+    platformsRef.current = clonePlatformSnapshot(runtimeLevelSnapshotRef.current);
+
     // Ao iniciar modo história, garante que o modo editor não interfere
     if (gameMode === 'story' || gameMode === 'race') {
       editorTestModeRef.current = false;
@@ -1449,6 +1476,21 @@ export default function Game() {
       gamePhase: isRace ? 'race-countdown' : 'playing',
       raceCountdownTimer: isRace ? 3500 : 0,
     };
+  }, [makeInitialState, clearKeys]);
+
+  const resetToMenu = useCallback(() => {
+    const editorTestSnapshot = editorTestSnapshotRef.current;
+    const stablePlatforms = editorTestSnapshot ?? runtimeLevelSnapshotRef.current ?? platformsRef.current;
+    const restoredPlatforms = clonePlatformSnapshot(stablePlatforms);
+    platformsRef.current = restoredPlatforms;
+    runtimeLevelSnapshotRef.current = clonePlatformSnapshot(restoredPlatforms);
+    editorTestSnapshotRef.current = null;
+    editorTestModeRef.current = false;
+    editorRealStoryModeRef.current = false;
+    editorDroneEnabledRef.current = false;
+    stopDogAmbient();
+    clearKeys();
+    gsRef.current = { ...makeInitialState('story'), gamePhase: 'menu' };
   }, [makeInitialState, clearKeys]);
 
   // Assinatura de conteúdo de uma plataforma — inclui tudo que importa para
@@ -1579,6 +1621,7 @@ export default function Game() {
       ...basePlatforms,
       ...customSpritePlatforms,
     ]);
+    runtimeLevelSnapshotRef.current = clonePlatformSnapshot(platformsRef.current);
     gsRef.current = makeInitialState();
 
     // Carrega level-patch.json do servidor e aplica as mudanças salvas.
@@ -1621,7 +1664,8 @@ export default function Game() {
           ...customSpritePlatforms,
           ...addPlatforms,
         ]);
-        if (gsRef.current) gsRef.current.platforms = platformsRef.current;
+        runtimeLevelSnapshotRef.current = clonePlatformSnapshot(platformsRef.current);
+        if (gsRef.current) gsRef.current.platforms = clonePlatformSnapshot(runtimeLevelSnapshotRef.current);
         // Restaura checkpoints personalizados salvos
         if (patch.checkpoints && patch.checkpoints.length > 0) {
           editorCustomCheckpointsRef.current = patch.checkpoints;
@@ -2345,15 +2389,6 @@ export default function Game() {
         })) : undefined,
       })) as Platform[];
 
-    const clonePlatformSnapshot = (snapshot: Platform[]): Platform[] =>
-      snapshot.map(p => ({
-        ...p,
-        collisionBoxes: p.collisionBoxes ? p.collisionBoxes.map(b => ({
-          ...b,
-          slopeTop: b.slopeTop ? { ...b.slopeTop } : undefined,
-        })) : undefined,
-      })) as Platform[];
-
     const pushEditorHistory = () => {
       editorUndoStackRef.current.push(snapshotPlatforms());
       if (editorUndoStackRef.current.length > 50) editorUndoStackRef.current.shift();
@@ -2439,6 +2474,7 @@ export default function Game() {
       const restored = clonePlatformSnapshot(snapshot);
       platformsRef.current = restored;
       gsRef.current.platforms = restored;
+      runtimeLevelSnapshotRef.current = clonePlatformSnapshot(restored);
       gsRef.current.destroyedBoxIndices = [];
       gsRef.current.fallingBoxes = [];
       gsRef.current.flyingTires = [];
@@ -4198,6 +4234,14 @@ export default function Game() {
             editorSaveStatusMessageRef.current = '';
             stopBeat();
             stopDogAmbient();
+            // Enter the editor from a clean level template, never from a
+            // runtime-mutated set of platforms.
+            const editorPlatforms = clonePlatformSnapshot(
+              runtimeLevelSnapshotRef.current ?? platformsRef.current,
+            );
+            platformsRef.current = editorPlatforms;
+            runtimeLevelSnapshotRef.current = clonePlatformSnapshot(editorPlatforms);
+            gs.platforms = editorPlatforms;
             gs.gamePhase = 'editor';
           }
         } else if (spaceJustPressed.current || enterJustPressed.current) {
@@ -4238,8 +4282,8 @@ export default function Game() {
           editorTestModeRef.current = false;
           stopDogAmbient();
           // O Editor pode ter sido usado em modo de teste com drone; ao voltar
-          // ao menu, descartar o estado runtime dos objetos.
-          gsRef.current = { ...makeInitialState('story'), gamePhase: 'menu' };
+          // ao menu, restaura a cópia limpa capturada antes do teste.
+          resetToMenu();
         } else if (editorSpawnJustPressed.current) {
           editorSpawnJustPressed.current = false;
           const spawnX = editorMouseWorldRef.current.x;
@@ -4455,7 +4499,7 @@ export default function Game() {
             // Sair da pausa para o menu inicia uma sessão nova. Isso limpa
             // caixas/pneus destruídos sem reconstruir a fase quando Esc apenas
             // abre a pausa.
-            gsRef.current = { ...makeInitialState('story'), gamePhase: 'menu' };
+            resetToMenu();
           }
         }
       } else if (gs.gamePhase === 'race-countdown') {
@@ -5289,7 +5333,7 @@ export default function Game() {
           // ESC → volta direto ao menu inicial
           escJustPressed.current = false;
           spaceJustPressed.current = false;
-          gsRef.current = { ...makeInitialState('story'), gamePhase: 'menu' };
+          resetToMenu();
           showOptionsRef.current = false;
           gs.camera.x = 0; gs.camera.y = 0;
           gs.particles = [];
@@ -5458,8 +5502,7 @@ export default function Game() {
           // Volta ao menu inicial com vidas zeradas (estado fresco)
           stopBeat();
           stopDogAmbient();
-          clearKeys();
-          gsRef.current = { ...makeInitialState(gs.gameMode), gamePhase: 'menu' };
+          resetToMenu();
           spaceJustPressed.current = false;
         }
       } else if (gs.gamePhase === 'victory') {
@@ -6150,7 +6193,7 @@ export default function Game() {
       }
       cancelAnimationFrame(animRef.current);
     };
-  }, [makeInitialState, resetGame]);
+  }, [makeInitialState, resetGame, resetToMenu]);
 
   const handleSpriteUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
