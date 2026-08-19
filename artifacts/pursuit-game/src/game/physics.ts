@@ -211,7 +211,13 @@ function resolveClimbableWallContact(p: Player, hit: SlopedRect, vx: number, box
   }
 }
 
-function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climbableBoxWall?: BoxStackWall | null): boolean {
+function resolvePlayerPlatform(
+  p: Player,
+  plat: Platform,
+  hit: SlopedRect,
+  climbableBoxWall?: BoxStackWall | null,
+  useIndividualBoxContact = false,
+): boolean {
   const ph = (p.isRolling || p.forcedCrouch) ? PLAYER_ROLL_H : PLAYER_H;
   if (!rectOverlap(p.x, p.y, p.w, ph, hit.x, hit.y, hit.w, hit.h)) return false;
 
@@ -308,7 +314,10 @@ function resolvePlayerPlatform(p: Player, plat: Platform, hit: SlopedRect, climb
     // contato é a caixa individual que acabou de ser tocada. Usar o
     // retângulo envolvente aqui fazia a GY-220 agir como a parede inteira
     // até a GY-275 e empurrava Horácio de volta cedo demais.
-    resolveClimbableWallContact(p, hit, p.vx, climbableBoxWall);
+    // A Corrida sem drone mantém deliberadamente o comportamento anterior:
+    // usa a parede lógica da pilha para permitir a escalada.
+    const contactSurface = useIndividualBoxContact ? hit : climbableBoxWall;
+    resolveClimbableWallContact(p, contactSurface, p.vx, climbableBoxWall);
     return false;
   }
 
@@ -1017,7 +1026,13 @@ export function updatePlayer(
         if (plat.vaultTrigger && p.kongVaultPhase === 'air') continue;
         const climbableBoxWall = getStackedBoxWall(platforms, plat);
         for (const hit of getPlatformCollisionRects(plat)) {
-          resolvePlayerPlatform(p, plat, hit, climbableBoxWall);
+          resolvePlayerPlatform(
+            p,
+            plat,
+            hit,
+            climbableBoxWall,
+            prioritizeUpperJunkyardBox,
+          );
         }
       }
     }
