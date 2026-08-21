@@ -1396,6 +1396,9 @@ export default function Game() {
         patrolLeft: 19211,
         patrolRight: 20745,
         growlTimer: 2500,
+        homeX: 19250,
+        chaseTarget: null,
+        returningHome: false,
       },
     ] : [],
     bystanders: gameMode === 'story' || gameMode === 'race'
@@ -5087,12 +5090,17 @@ export default function Game() {
 
         updateDogs(
           gs.dogs, gs.player, dt,
-          (_vol: number) => {
+          (target: Player, _vol: number) => {
             gs.screenShake = 5;
-            for (let i = 0; i < 6; i++) spawnP(gs.player.x + PLAYER_W / 2, gs.player.y + PLAYER_H / 2, '#cc2222');
-            playDogBite(0.6 * (sfxCategoryVolumesRef.current['dog'] ?? 1));
+            for (let i = 0; i < 6; i++) {
+              spawnP(target.x + target.w / 2, target.y + target.h / 2, '#cc2222');
+            }
+            if (target === gs.player) {
+              playDogBite(0.6 * (sfxCategoryVolumesRef.current['dog'] ?? 1));
+            }
           },
           () => { /* growl periódico silenciado — som ambiente já cobre */ },
+          gs.gameMode === 'race' && racePlayerRef.current ? [racePlayerRef.current] : [],
         );
 
         updateBystanders(gs.bystanders, gs.player, gs.drone, gs.droneIntroduced, dt, (spriteId, vol) => {

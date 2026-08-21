@@ -263,6 +263,9 @@ export interface Dog {
   patrolRight: number;
   growlTimer: number;
   sfxVolume?: number; // volume individual da mordida/rosnado deste cachorro (0-1, padrão 1)
+  homeX?: number; // posição de origem para retornar quando o alvo sai da área
+  chaseTarget?: Player | null; // corredor atualmente perseguido
+  returningHome?: boolean; // precisa voltar à origem antes de escolher outro corredor
 }
 
 export interface GameState {
