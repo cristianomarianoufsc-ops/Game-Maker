@@ -2365,6 +2365,14 @@ export function updateDogs(
     const isAlive = (runner: Player): boolean => runner.state !== 'dead';
     const runners = [player, ...additionalPlayers];
     const homeX = dog.homeX ?? dog.x;
+    const findDetectableRunner = (): Player | null => runners
+      .filter(runner => isAlive(runner) && isInPatrolZone(runner))
+      .map(runner => ({
+        runner,
+        distance: Math.abs((runner.x + runner.w / 2) - dogCX),
+      }))
+      .filter(entry => entry.distance < DETECT_RANGE && !isOnSafeObstacle(entry.runner))
+      .sort((a, b) => a.distance - b.distance)[0]?.runner ?? null;
 
     // O alvo fica preso ao primeiro corredor detectado. Quando ele sai da área,
     // o cão volta à origem antes de procurar o outro corredor.
@@ -2376,29 +2384,32 @@ export function updateDogs(
     }
 
     if (dog.returningHome) {
-      const homeDistance = homeX - dog.x;
-      if (Math.abs(homeDistance) <= RUN_SPEED) {
-        dog.x = homeX;
-        dog.vx = 0;
+      // O retorno pode ser interrompido se o segundo corredor entrar no
+      // campo de visão antes de o cachorro chegar em casa.
+      const visibleRunner = findDetectableRunner();
+      if (visibleRunner) {
+        target = visibleRunner;
+        dog.chaseTarget = visibleRunner;
         dog.returningHome = false;
-        dog.animState = 'idle';
-        dog.animTimer = 0;
       } else {
-        dog.vx = homeDistance > 0 ? RUN_SPEED : -RUN_SPEED;
-        dog.facingRight = dog.vx > 0;
-        dog.animState = 'run';
+        const homeDistance = homeX - dog.x;
+        if (Math.abs(homeDistance) <= RUN_SPEED) {
+          dog.x = homeX;
+          dog.vx = 0;
+          dog.returningHome = false;
+          dog.animState = 'idle';
+          dog.animTimer = 0;
+        } else {
+          dog.vx = homeDistance > 0 ? RUN_SPEED : -RUN_SPEED;
+          dog.facingRight = dog.vx > 0;
+          dog.animState = 'run';
+        }
       }
-    } else {
+    }
+
+    if (!dog.returningHome) {
       if (!target) {
-        const detectable = runners
-          .filter(runner => isAlive(runner) && isInPatrolZone(runner))
-          .map(runner => ({
-            runner,
-            distance: Math.abs((runner.x + runner.w / 2) - dogCX),
-          }))
-          .filter(entry => entry.distance < DETECT_RANGE && !isOnSafeObstacle(entry.runner))
-          .sort((a, b) => a.distance - b.distance);
-        target = detectable[0]?.runner ?? null;
+        target = findDetectableRunner();
         dog.chaseTarget = target;
       }
 
@@ -2413,31 +2424,50 @@ export function updateDogs(
         dog.animState = 'run';
         dog.vx = dx > 0 ? CHASE_SPEED : -CHASE_SPEED;
         dog.facingRight = dx > 0;
-
-        if (distX < BITE_RANGE_X && distY < BITE_RANGE_Y && dog.biteCooldown <= 0) {
-          dog.animState = 'bite';
-          dog.biteTimer = BITE_DURATION;
-          dog.biteCooldown = BITE_COOLDOWN;
-          dog.vx = 0;
-
-          if (!target.invincible && !target.sideFlipImmune && target.state !== 'dead') {
-            target.health--;
-            target.invincible = true;
-            target.invincibleTimer = HIT_INVINCIBILITY;
-            target.hurtStunTimer = HIT_STUN_DURATION;
-            target.vx = 0;
-            target.isRolling = false;
-            target.autoRoll = false;
-            target.state = 'hurt';
-            if (target.health <= 0) target.state = 'dead';
-            onBite(target, dog.sfxVolume ?? 1);
-          }
-        }
       } else {
         dog.vx = 0;
         if (dog.animState !== 'idle') {
           dog.animState = 'idle';
           dog.animTimer = 0;
+        }
+      }
+    }
+
+    // Defesa de proximidade: qualquer corredor que encoste no cachorro pode
+    // ser mordido, mesmo que o alvo principal esteja à frente.
+    if (dog.biteTimer <= 0 && dog.biteCooldown <= 0) {
+      const contactRunner = runners
+        .filter(runner => isAlive(runner) && !isOnSafeObstacle(runner))
+        .map(runner => {
+          const runnerCX = runner.x + runner.w / 2;
+          const runnerCY = runner.y + (runner.isRolling ? PLAYER_ROLL_H : PLAYER_H) / 2;
+          return {
+            runner,
+            distX: Math.abs(runnerCX - dogCX),
+            distY: Math.abs(runnerCY - dogCY),
+          };
+        })
+        .filter(entry => entry.distX < BITE_RANGE_X && entry.distY < BITE_RANGE_Y)
+        .sort((a, b) => a.distX - b.distX)[0];
+
+      if (contactRunner) {
+        const bitten = contactRunner.runner;
+        dog.animState = 'bite';
+        dog.biteTimer = BITE_DURATION;
+        dog.biteCooldown = BITE_COOLDOWN;
+        dog.vx = 0;
+
+        if (!bitten.invincible && !bitten.sideFlipImmune && bitten.state !== 'dead') {
+          bitten.health--;
+          bitten.invincible = true;
+          bitten.invincibleTimer = HIT_INVINCIBILITY;
+          bitten.hurtStunTimer = HIT_STUN_DURATION;
+          bitten.vx = 0;
+          bitten.isRolling = false;
+          bitten.autoRoll = false;
+          bitten.state = 'hurt';
+          if (bitten.health <= 0) bitten.state = 'dead';
+          onBite(bitten, dog.sfxVolume ?? 1);
         }
       }
     }
