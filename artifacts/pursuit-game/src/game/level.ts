@@ -536,7 +536,19 @@ export function generateLevel(): Platform[] {
   // (drawBlockingWall usa plat.y/w/h reais → textura acompanha redimensionamento no editor)
   // noClimbOver: Horácio não sobe por cima do muro mesmo escalando.
   platforms.push({ x: 36321, y: GROUND_Y - 289, w: 25, h: 289, type: 'wall', climbable: true, noHang: true, hideRender: true } as Platform);
-  platforms.push({ x: 36163, y: GROUND_Y - 405, w: 183, h: 30, type: 'platform', noGroup: true } as Platform);
+  // Pequena plataforma do tic-tac final — a textura e a colisão usam a mesma
+  // geometria visual; freeHitbox preserva a caixa que ultrapassa a plataforma.
+  platforms.push({
+    x: 36287,
+    y: GROUND_Y - 288,
+    w: 34,
+    h: 25,
+    type: 'platform',
+    noGroup: true,
+    knockOff: true,
+    collisionBoxes: [{ x: -5, y: 1, w: 39, h: 41 }],
+    freeHitbox: true,
+  } as Platform);
 
   return platforms;
 }

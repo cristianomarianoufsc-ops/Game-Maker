@@ -16,6 +16,24 @@
       "type": "pothole"
     },
     {
+      "x": 36287,
+      "y": 122,
+      "w": 34,
+      "h": 25,
+      "type": "platform",
+      "noGroup": true,
+      "knockOff": true,
+      "collisionBoxes": [
+        {
+          "x": -5,
+          "y": 1,
+          "w": 39,
+          "h": 41
+        }
+      ],
+      "freeHitbox": true
+    },
+    {
       "x": 36144,
       "y": 28,
       "w": 25,
