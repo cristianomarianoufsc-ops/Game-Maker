@@ -1003,10 +1003,8 @@ export function updatePlayer(
       // Durante a subida, História e Corrida com drone devem tocar primeiro a
       // caixa GY-275 da pilha x:12505. Ao descer, e na Corrida sem drone,
       // preservamos a ordem normal das plataformas.
-      const prioritizeUpperJunkyardBoxThisStep =
-        prioritizeUpperJunkyardBox && p.vy < 0;
       const collisionPlatforms =
-        prioritizeUpperJunkyardBoxThisStep
+        prioritizeUpperJunkyardBox && p.vy < 0
           ? orderJunkyardUpperBoxFirst(platforms)
           : platforms;
       for (const plat of collisionPlatforms) {
@@ -1014,25 +1012,12 @@ export function updatePlayer(
         if (plat.type === 'pothole') continue; // pothole não tem colisão sólida
         // Se o jogador está sobre um pothole, ignora colisão de chão para deixar cair
         if (plat.type === 'ground' && insidePothole) continue;
-        // Na subida da pilha A, a quarta caixa não deve interromper o salto
-        // antes que a caixa GY-275 seja alcançada. Ao descer, ela volta a ser
-        // sólida normalmente; a Corrida sem drone nunca entra nesta exceção.
-        if (
-          prioritizeUpperJunkyardBoxThisStep &&
-          isJunkyardLowerTargetBox(plat)
-        ) continue;
         // Durante a fase aérea do kong vault, ignora colisão com o objeto do vault
         // para o personagem passar por cima livremente sem ter o vx zerado
         if (plat.vaultTrigger && p.kongVaultPhase === 'air') continue;
         const climbableBoxWall = getStackedBoxWall(platforms, plat);
         for (const hit of getPlatformCollisionRects(plat)) {
-          resolvePlayerPlatform(
-            p,
-            plat,
-            hit,
-            climbableBoxWall,
-            prioritizeUpperJunkyardBox,
-          );
+          resolvePlayerPlatform(p, plat, hit, climbableBoxWall);
         }
       }
     }
